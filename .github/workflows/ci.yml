@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Check repository policy
+        shell: pwsh
+        run: ./scripts/Test-RepositoryPolicy.ps1
+
+      - name: Restore
+        run: dotnet restore LilacMacro.slnx --locked-mode
+
+      - name: Build
+        run: dotnet build LilacMacro.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test LilacMacro.slnx -c Release --no-build
+
+      - name: Verify formatting
+        run: dotnet format LilacMacro.slnx --verify-no-changes --no-restore

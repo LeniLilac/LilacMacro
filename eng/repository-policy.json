@@ -1,0 +1,9 @@
+{
+  "line_limits": {
+    "production": 500,
+    "tests": 800,
+    "scripts": 500,
+    "agents": 120
+  },
+  "debt_ceilings": {}
+}

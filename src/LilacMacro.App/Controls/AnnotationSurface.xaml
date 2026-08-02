@@ -1,0 +1,32 @@
+<UserControl x:Class="LilacMacro.App.Controls.AnnotationSurface"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#1C202A">
+    <Grid>
+        <ScrollViewer x:Name="Viewport"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalContentAlignment="Center"
+                      VerticalContentAlignment="Center"
+                      PanningMode="Both"
+                      PreviewMouseWheel="Viewport_OnPreviewMouseWheel"
+                      PreviewMouseDown="Viewport_OnPreviewMouseDown"
+                      PreviewMouseUp="Viewport_OnPreviewMouseUp"
+                      MouseMove="Viewport_OnPanMouseMove"
+                      LostMouseCapture="Viewport_OnLostMouseCapture"
+                      SizeChanged="Viewport_OnSizeChanged">
+            <Grid x:Name="ImageSurface" Width="1280" Height="720" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Grid.LayoutTransform>
+                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                </Grid.LayoutTransform>
+                <Image x:Name="FrameImage" Stretch="Fill" SnapsToDevicePixels="True" />
+                <Canvas x:Name="Overlay"
+                        Background="Transparent"
+                        Cursor="Cross"
+                        MouseLeftButtonDown="Overlay_OnMouseLeftButtonDown"
+                        MouseMove="Overlay_OnMouseMove"
+                        MouseLeftButtonUp="Overlay_OnMouseLeftButtonUp" />
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

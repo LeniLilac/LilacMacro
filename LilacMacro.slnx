@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LilacMacro.App/LilacMacro.App.csproj" />
+    <Project Path="src/LilacMacro.Core/LilacMacro.Core.csproj" />
+    <Project Path="src/LilacMacro.Windows/LilacMacro.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LilacMacro.Tests/LilacMacro.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/LilacMacro.DatasetTool/LilacMacro.DatasetTool.csproj" />
+  </Folder>
+</Solution>

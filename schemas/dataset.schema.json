@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "title": "LilacMacro dataset",
+  "description": "A self-describing, client-pixel dataset for reviewed Roblox UI evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "format",
+    "coordinate_space",
+    "image_root",
+    "schema_version",
+    "id",
+    "name",
+    "notes",
+    "created_at_utc",
+    "source_window_title",
+    "source_process_id",
+    "client_width",
+    "client_height",
+    "requested_frame_count",
+    "requested_duration_seconds",
+    "is_finalized",
+    "frames"
+  ],
+  "properties": {
+    "$schema": { "const": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json" },
+    "format": { "const": "lilacmacro.dataset" },
+    "coordinate_space": { "const": "roblox_client_pixels_half_open" },
+    "image_root": { "const": "images" },
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "format": "uuid" },
+    "name": { "type": "string", "maxLength": 120 },
+    "notes": { "type": "string" },
+    "created_at_utc": { "type": "string", "format": "date-time" },
+    "source_window_title": { "type": "string", "minLength": 1 },
+    "source_process_id": { "type": "integer", "minimum": 1 },
+    "client_width": { "type": "integer", "minimum": 1 },
+    "client_height": { "type": "integer", "minimum": 1 },
+    "requested_frame_count": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "requested_duration_seconds": { "type": "number", "minimum": 0, "maximum": 600 },
+    "is_finalized": { "type": "boolean" },
+    "frames": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/frame" }
+    }
+  },
+  "$defs": {
+    "pixel_rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "ocr_trial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_name",
+        "detector_model_name",
+        "device",
+        "text",
+        "confidence",
+        "model_load_milliseconds",
+        "inference_milliseconds",
+        "runtime_version",
+        "ran_at_utc",
+        "model_was_cached",
+        "regions"
+      ],
+      "properties": {
+        "model_name": { "enum": ["PP-OCRv6_small_rec", "PP-OCRv6_tiny_rec"] },
+        "detector_model_name": { "enum": ["", "PP-OCRv6_small_det", "PP-OCRv6_tiny_det"] },
+        "device": { "enum": ["cpu", "gpu:0"] },
+        "text": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "model_load_milliseconds": { "type": "integer", "minimum": 0 },
+        "inference_milliseconds": { "type": "integer", "minimum": 0 },
+        "runtime_version": { "type": "string", "minLength": 1 },
+        "ran_at_utc": { "type": "string", "format": "date-time" },
+        "model_was_cached": { "type": "boolean" },
+        "regions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ocr_text_region" }
+        }
+      }
+    },
+    "ocr_text_region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bounds",
+        "text",
+        "detection_confidence",
+        "recognition_confidence"
+      ],
+      "properties": {
+        "bounds": { "$ref": "#/$defs/pixel_rect" },
+        "text": { "type": "string" },
+        "detection_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "recognition_confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "bounds", "label", "notes", "ocr_trials"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "bounds": { "$ref": "#/$defs/pixel_rect" },
+        "label": { "type": "string" },
+        "notes": { "type": "string" },
+        "ocr_trials": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ocr_trial" }
+        }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_name",
+        "captured_at_utc",
+        "sha256",
+        "width",
+        "height",
+        "verdict",
+        "notes",
+        "annotations"
+      ],
+      "properties": {
+        "file_name": { "type": "string", "pattern": "^[^/\\\\]+\\.png$" },
+        "captured_at_utc": { "type": "string", "format": "date-time" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "verdict": { "enum": ["unreviewed", "positive", "negative", "ignore"] },
+        "notes": { "type": "string" },
+        "annotations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/annotation" }
+        }
+      }
+    }
+  }
+}

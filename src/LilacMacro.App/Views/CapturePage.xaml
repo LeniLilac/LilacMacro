@@ -1,0 +1,101 @@
+<UserControl x:Class="LilacMacro.App.Views.CapturePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="38,30,38,38">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="CAPTURE" FontSize="19" FontWeight="Black" />
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="0.9*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock Text="ROBLOX SIZE" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="14" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="14" />
+                                    <ColumnDefinition Width="1.2*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="WIDTH" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,5" />
+                                    <TextBox x:Name="WidthText" Text="1280" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="HEIGHT" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,5" />
+                                    <TextBox x:Name="HeightText" Text="720" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="PRESET" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,5" />
+                                    <ComboBox x:Name="PresetCombo" SelectionChanged="Preset_OnChanged">
+                                        <ComboBoxItem Content="1280 × 720" Tag="1280,720" IsSelected="True" />
+                                        <ComboBoxItem Content="1600 × 900" Tag="1600,900" />
+                                        <ComboBoxItem Content="1920 × 1080" Tag="1920,1080" />
+                                        <ComboBoxItem Content="808 × 611" Tag="808,611" />
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ObservedText" Text="ROBLOX: checking" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Content="FIND + APPLY SIZE" Style="{StaticResource PrimaryButtonStyle}" Click="ApplySize_OnClick" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="DATASET" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,12" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="14" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="IMAGES" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,5" />
+                                    <TextBox x:Name="FrameCountText" Text="30" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="SECONDS" Style="{StaticResource EyebrowStyle}" Margin="0,0,0,5" />
+                                    <TextBox x:Name="DurationText" Text="10" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="DATASET ROOT" Style="{StaticResource EyebrowStyle}" Margin="0,15,0,5" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="DatasetRootText" />
+                                <Button Grid.Column="2" Content="BROWSE" Style="{StaticResource ButtonStyle}" Click="Browse_OnClick" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" VerticalAlignment="Top" Background="{StaticResource YellowBrush}">
+                    <StackPanel>
+                        <TextBlock Text="STATUS" Style="{StaticResource EyebrowStyle}" />
+                        <TextBlock x:Name="RunHeadline" Text="SIZE REQUIRED" FontSize="22" FontWeight="Black" Margin="0,9,0,5" TextWrapping="Wrap" />
+                        <TextBlock x:Name="RunDetail" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource InkSoftBrush}" TextWrapping="Wrap" />
+                        <ProgressBar x:Name="CaptureProgressBar" Minimum="0" Maximum="1" Value="0" Margin="0,20,0,7" />
+                        <TextBlock x:Name="ProgressText" Text="0 / 0" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Bold" />
+                        <Button x:Name="StartButton" Content="START DATASET CAPTURE" Style="{StaticResource PrimaryButtonStyle}" Margin="0,22,0,9" Click="Start_OnClick" />
+                        <Button x:Name="CancelButton" Content="CANCEL" Style="{StaticResource DangerButtonStyle}" IsEnabled="False" Click="Cancel_OnClick" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

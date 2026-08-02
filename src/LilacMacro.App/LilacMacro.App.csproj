@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>LilacMacro.App</RootNamespace>
+    <AssemblyName>LilacMacro</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LilacMacro.Core\LilacMacro.Core.csproj" />
+    <ProjectReference Include="..\LilacMacro.Windows\LilacMacro.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\tools\ocr_worker.py" Link="tools\ocr_worker.py" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\scripts\Setup-Ocr.ps1" Link="scripts\Setup-Ocr.ps1" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

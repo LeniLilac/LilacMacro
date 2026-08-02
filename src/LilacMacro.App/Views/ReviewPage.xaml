@@ -1,0 +1,169 @@
+<UserControl x:Class="LilacMacro.App.Views.ReviewPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:LilacMacro.App.Controls">
+    <Grid Margin="28,22,28,28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="REVIEW + OCR" FontSize="19" FontWeight="Black" Margin="0,0,0,5" />
+                <TextBlock x:Name="DatasetPathText" Text="No dataset open" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{StaticResource InkSoftBrush}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <Border Grid.Column="1" Style="{StaticResource ChipStyle}" Background="{StaticResource MutedBrush}" VerticalAlignment="Top">
+                <TextBlock x:Name="SaveStatusText" Text="NO DATASET" FontSize="10" FontWeight="Black" />
+            </Border>
+        </Grid>
+
+        <Grid x:Name="WorkspaceGrid" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="154" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="334" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="8">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                    <TextBlock Text="FRAMES" Style="{StaticResource EyebrowStyle}" Margin="5,4,0,9" />
+                    <ListBox x:Name="FrameList" Grid.Row="1" BorderThickness="0" Background="Transparent" SelectionChanged="FrameList_OnSelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{StaticResource InkBrush}" BorderThickness="2" Background="White" CornerRadius="3" Padding="4">
+                                    <StackPanel>
+                                        <Image Source="{Binding Thumbnail}" Height="66" Stretch="UniformToFill" />
+                                        <Grid Margin="2,5,2,1">
+                                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Number}" FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="Black" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Verdict}" FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PinkBrush}" />
+                                            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding RegionCount}" FontFamily="{StaticResource MonoFont}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource InkSoftBrush}" Margin="0,2,0,0" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="10" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Button x:Name="AnnotateViewButton" Content="ANNOTATE" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Click="AnnotateView_OnClick" />
+                    <Button x:Name="OcrMapViewButton" Grid.Column="1" Content="OCR MAP" Style="{StaticResource ButtonStyle}" Click="OcrMapView_OnClick" />
+                    <StackPanel x:Name="ZoomControls" Grid.Column="3" Orientation="Horizontal" Margin="0,0,10,0">
+                        <Button Content="-" Width="38" Padding="0" Style="{StaticResource ButtonStyle}" Click="ZoomOut_OnClick" />
+                        <TextBlock x:Name="ZoomText" Text="FIT" Width="50" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="Black" TextAlignment="Center" VerticalAlignment="Center" />
+                        <Button Content="+" Width="38" Padding="0" Style="{StaticResource ButtonStyle}" Click="ZoomIn_OnClick" />
+                        <Button Content="FIT" Margin="7,0,0,0" Style="{StaticResource ButtonStyle}" Click="ZoomFit_OnClick" />
+                    </StackPanel>
+                    <ComboBox x:Name="MapModelCombo" Grid.Column="4" Width="205" SelectionChanged="MapModel_OnChanged">
+                        <ComboBoxItem Content="PP-OCRv6 small" Tag="PP-OCRv6_small_rec" IsSelected="True" />
+                        <ComboBoxItem Content="PP-OCRv6 tiny" Tag="PP-OCRv6_tiny_rec" />
+                    </ComboBox>
+                </Grid>
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="8" Background="#1C202A">
+                    <Grid>
+                        <controls:AnnotationSurface x:Name="AnnotationCanvas" RegionCreated="AnnotationCanvas_OnRegionCreated" RegionSelected="AnnotationCanvas_OnRegionSelected" ZoomChanged="AnnotationCanvas_OnZoomChanged" />
+                        <controls:OcrVisualization x:Name="OcrMap" Visibility="Collapsed" ZoomChanged="OcrMap_OnZoomChanged" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Grid.Column="4" Style="{StaticResource CardStyle}" Padding="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="15">
+                        <TextBlock Text="DATASET" Style="{StaticResource EyebrowStyle}" />
+                        <TextBlock Text="NAME" Style="{StaticResource EyebrowStyle}" Margin="0,11,0,5" />
+                        <TextBox x:Name="DatasetNameText" TextChanged="DatasetField_OnTextChanged" />
+                        <TextBlock Text="OVERALL NOTE" Style="{StaticResource EyebrowStyle}" Margin="0,11,0,5" />
+                        <TextBox x:Name="DatasetNotesText" MinHeight="65" VerticalContentAlignment="Top" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="DatasetField_OnTextChanged" />
+                        <Button x:Name="FinalizeButton" Content="FINALIZE DATASET" Style="{StaticResource PrimaryButtonStyle}" Margin="0,11,0,0" Click="Finalize_OnClick" />
+
+                        <Border Height="2" Background="{StaticResource InkBrush}" Margin="0,17" />
+                        <TextBlock Text="FRAME" Style="{StaticResource EyebrowStyle}" />
+                        <TextBlock Text="VERDICT" Style="{StaticResource EyebrowStyle}" Margin="0,11,0,5" />
+                        <ComboBox x:Name="VerdictCombo" SelectionChanged="Verdict_OnChanged" />
+                        <TextBlock Text="FRAME NOTE" Style="{StaticResource EyebrowStyle}" Margin="0,11,0,5" />
+                        <TextBox x:Name="FrameNotesText" MinHeight="55" VerticalContentAlignment="Top" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="FrameNotes_OnTextChanged" />
+
+                        <Border Height="2" Background="{StaticResource InkBrush}" Margin="0,17" />
+                        <TextBlock Text="SELECTED REGION" Style="{StaticResource EyebrowStyle}" />
+                        <TextBlock x:Name="NoRegionText" Text="NO REGION" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource InkSoftBrush}" Margin="0,9,0,0" />
+                        <StackPanel x:Name="RegionPanel" Visibility="Collapsed">
+                            <Border Background="{StaticResource YellowBrush}" BorderBrush="{StaticResource InkBrush}" BorderThickness="2" CornerRadius="3" Padding="9" Margin="0,9,0,0">
+                                <StackPanel>
+                                    <TextBlock x:Name="CoordinatesText" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Black" TextWrapping="Wrap" />
+                                    <TextBlock x:Name="EdgesText" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{StaticResource InkSoftBrush}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Text="LABEL" Style="{StaticResource EyebrowStyle}" Margin="0,11,0,5" />
+                            <TextBox x:Name="RegionLabelText" TextChanged="RegionField_OnTextChanged" />
+                            <TextBlock Text="REGION NOTE" Style="{StaticResource EyebrowStyle}" Margin="0,11,0,5" />
+                            <TextBox x:Name="RegionNotesText" MinHeight="52" VerticalContentAlignment="Top" AcceptsReturn="True" TextWrapping="Wrap" TextChanged="RegionField_OnTextChanged" />
+                            <Button Content="DELETE REGION" Style="{StaticResource DangerButtonStyle}" Margin="0,9,0,0" Click="DeleteRegion_OnClick" />
+
+                            <Border Height="2" Background="{StaticResource InkBrush}" Margin="0,17" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="OCR TEST" Style="{StaticResource EyebrowStyle}" VerticalAlignment="Center" />
+                                <CheckBox x:Name="KeepOcrLoadedToggle" Grid.Column="1" Content="KEEP LOADED" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Checked="KeepOcrLoaded_OnChanged" Unchecked="KeepOcrLoaded_OnChanged" />
+                            </Grid>
+                            <TextBlock x:Name="OcrInstallText" Text="OCR runtime not set up" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,8" />
+                            <Button x:Name="SetupOcrButton" Content="SET UP OCR RUNTIME" Style="{StaticResource ButtonStyle}" Margin="0,0,0,9" Click="SetupOcr_OnClick" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="92" /></Grid.ColumnDefinitions>
+                                <ComboBox x:Name="OcrModelCombo" SelectionChanged="OcrModel_OnChanged">
+                                    <ComboBoxItem Content="PP-OCRv6 small" Tag="PP-OCRv6_small_rec" IsSelected="True" />
+                                    <ComboBoxItem Content="PP-OCRv6 tiny" Tag="PP-OCRv6_tiny_rec" />
+                                </ComboBox>
+                                <ComboBox x:Name="OcrDeviceCombo" Grid.Column="2" SelectionChanged="OcrDevice_OnChanged">
+                                    <ComboBoxItem Content="CPU" Tag="cpu" IsSelected="True" />
+                                    <ComboBoxItem Content="GPU" Tag="gpu:0" />
+                                </ComboBox>
+                            </Grid>
+                            <Grid Margin="0,9,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Button x:Name="RunOcrButton" Content="RUN SELECTED" Style="{StaticResource PrimaryButtonStyle}" Click="RunOcr_OnClick" />
+                                <Button x:Name="CompareOcrButton" Grid.Column="2" Content="COMPARE BOTH" Style="{StaticResource ButtonStyle}" Click="CompareOcr_OnClick" />
+                            </Grid>
+                            <TextBlock x:Name="OcrStatusText" Text="No OCR results for this region." FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource InkSoftBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                            <ItemsControl x:Name="OcrResults" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource MutedBrush}" BorderBrush="{StaticResource InkBrush}" BorderThickness="2" CornerRadius="3" Padding="9" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Model}" FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="Black" />
+                                                <TextBlock Text="{Binding Text}" FontSize="15" FontWeight="Bold" TextWrapping="Wrap" Margin="0,5,0,5" />
+                                                <TextBlock Text="{Binding Confidence}" FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="Bold" />
+                                                <TextBlock Text="{Binding Timings}" FontFamily="{StaticResource MonoFont}" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                                <TextBlock Text="{Binding LineData}" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                                <TextBlock Text="{Binding Runtime}" FontFamily="{StaticResource MonoFont}" FontSize="9" Foreground="{StaticResource InkSoftBrush}" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button x:Name="UseOcrTextButton" Content="USE LATEST TEXT AS LABEL" Style="{StaticResource ButtonStyle}" IsEnabled="False" Click="UseOcrText_OnClick" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Border x:Name="EmptyState" Grid.Row="2" Style="{StaticResource CardStyle}" Background="{StaticResource YellowBrush}" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="NO DATASET" FontSize="27" FontWeight="Black" HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

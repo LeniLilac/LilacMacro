@@ -1,0 +1,55 @@
+[CmdletBinding()]
+param(
+    [ValidateSet('cpu', 'gpu')]
+    [string]$Device = 'cpu'
+)
+
+$ErrorActionPreference = 'Stop'
+
+$ocrRoot = Join-Path $env:LOCALAPPDATA 'LilacMacro\ocr'
+$venvRoot = Join-Path $ocrRoot 'venv'
+$venvPython = Join-Path $venvRoot 'Scripts\python.exe'
+$runtimeMarker = Join-Path $ocrRoot 'runtime-device.txt'
+
+if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
+    throw 'Python Launcher is not installed. Install Python 3.12, then run this script again.'
+}
+
+$python312 = (& py -3.12 -c "import sys; print(sys.executable)" 2>$null).Trim()
+if ($LASTEXITCODE -ne 0 -or -not $python312) {
+    throw 'Python 3.12 is not installed. Install the Python.Python.3.12 winget package, then run this script again.'
+}
+
+New-Item -ItemType Directory -Path $ocrRoot -Force | Out-Null
+if (Test-Path -LiteralPath $runtimeMarker) {
+    Remove-Item -LiteralPath $runtimeMarker -Force
+}
+if (-not (Test-Path -LiteralPath $venvPython)) {
+    & $python312 -m venv $venvRoot
+    if ($LASTEXITCODE -ne 0) { throw 'Could not create the LilacMacro OCR environment.' }
+}
+
+& $venvPython -m pip install --disable-pip-version-check --upgrade pip
+if ($LASTEXITCODE -ne 0) { throw 'Could not update pip in the LilacMacro OCR environment.' }
+
+& $venvPython -m pip uninstall --disable-pip-version-check -y paddlepaddle paddlepaddle-gpu
+
+if ($Device -eq 'gpu') {
+    if (-not (Get-Command nvidia-smi -ErrorAction SilentlyContinue)) {
+        throw 'NVIDIA driver tools were not found.'
+    }
+    & $venvPython -m pip install --disable-pip-version-check 'paddlepaddle-gpu==3.2.0' -i 'https://www.paddlepaddle.org.cn/packages/stable/cu126/'
+    if ($LASTEXITCODE -ne 0) { throw 'Could not install the PaddlePaddle CUDA 12.6 runtime.' }
+}
+else {
+    & $venvPython -m pip install --disable-pip-version-check 'paddlepaddle==3.2.0' -i 'https://www.paddlepaddle.org.cn/packages/stable/cpu/'
+    if ($LASTEXITCODE -ne 0) { throw 'Could not install the PaddlePaddle CPU runtime.' }
+}
+
+& $venvPython -m pip install --disable-pip-version-check 'paddleocr==3.7.0'
+if ($LASTEXITCODE -ne 0) { throw 'Could not install PaddleOCR.' }
+
+& $venvPython -c "import paddle, paddleocr; assert '$Device' != 'gpu' or (paddle.device.is_compiled_with_cuda() and paddle.device.cuda.device_count() > 0); print(f'OCR ready: PaddlePaddle {paddle.__version__}, PaddleOCR {paddleocr.__version__}')"
+if ($LASTEXITCODE -ne 0) { throw 'The OCR environment was installed but failed its import check.' }
+
+[IO.File]::WriteAllText($runtimeMarker, $Device, [Text.UTF8Encoding]::new($false))
