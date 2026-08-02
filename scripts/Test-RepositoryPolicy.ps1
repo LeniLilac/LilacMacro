@@ -9,8 +9,8 @@ $failures = [System.Collections.Generic.List[string]]::new()
 
 Push-Location $repositoryRoot
 try {
-    $sourceFiles = & rg --files -g '*.cs' -g '*.xaml' -g '*.ps1' -g '*.py' -g 'AGENTS.md'
-    if ($LASTEXITCODE -ne 0) { throw 'rg failed while enumerating repository source files.' }
+    $sourceFiles = & git -C $repositoryRoot ls-files --cached --others --exclude-standard -- '*.cs' '*.xaml' '*.ps1' '*.py' 'AGENTS.md'
+    if ($LASTEXITCODE -ne 0) { throw 'Git failed while enumerating repository source files.' }
 
     foreach ($relativePath in $sourceFiles) {
         $normalized = $relativePath.Replace('\', '/')
