@@ -12,16 +12,19 @@ namespace LilacMacro.App;
 
 public partial class MainWindow : Window
 {
-    private const int CaptureHotkeyId = 0x4C4D;
+    private const int TimedCaptureHotkeyId = 0x4C4D;
+    private const int ManualCaptureHotkeyId = 0x4C4E;
     private readonly WorkspaceController _workspace = new();
     private readonly OcrRunner _ocr = new();
     private readonly Dictionary<PageKind, IWorkspacePage> _pages;
     private readonly CapturePage _capturePage;
-    private GlobalHotkeyRegistration? _captureHotkey;
+    private GlobalHotkeyRegistration? _timedCaptureHotkey;
+    private GlobalHotkeyRegistration? _manualCaptureHotkey;
     private HwndSource? _windowSource;
     private PageKind _currentPage = PageKind.Capture;
     private bool _closingAfterFlush;
-    private bool _hotkeyCaptureStarting;
+    private bool _timedHotkeyCaptureStarting;
+    private bool _manualHotkeyCaptureStarting;
 
     public MainWindow()
     {
@@ -44,7 +47,7 @@ public partial class MainWindow : Window
         try
         {
             await _workspace.InitializeAsync();
-            RegisterCaptureHotkey();
+            RegisterCaptureHotkeys();
             await NavigateAsync(PageKind.Capture);
         }
         catch (Exception error)
@@ -53,7 +56,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RegisterCaptureHotkey()
+    private void RegisterCaptureHotkeys()
     {
         try
         {
@@ -61,11 +64,44 @@ public partial class MainWindow : Window
             _windowSource = HwndSource.FromHwnd(handle)
                 ?? throw new InvalidOperationException("Could not attach the capture key to LilacMacro.");
             _windowSource.AddHook(WindowMessageHook);
-            _captureHotkey = new GlobalHotkeyRegistration(
+            RegisterManualCaptureHotkey(handle);
+            RegisterTimedCaptureHotkey(handle);
+        }
+        catch (Exception)
+        {
+            ManualCaptureKeyPill.Background = (Brush)FindResource("DangerBrush");
+            ManualCaptureKeyPillText.Text = "F5 UNAVAILABLE";
+            CaptureKeyPill.Background = (Brush)FindResource("DangerBrush");
+            CaptureKeyPillText.Text = "F6 UNAVAILABLE";
+        }
+    }
+
+    private void RegisterManualCaptureHotkey(nint handle)
+    {
+        try
+        {
+            _manualCaptureHotkey = new GlobalHotkeyRegistration(
                 handle,
-                CaptureHotkeyId,
+                ManualCaptureHotkeyId,
+                GlobalHotkeyRegistration.F5VirtualKey);
+            UpdateManualCaptureKeyStatus();
+        }
+        catch (Exception)
+        {
+            ManualCaptureKeyPill.Background = (Brush)FindResource("DangerBrush");
+            ManualCaptureKeyPillText.Text = "F5 UNAVAILABLE";
+        }
+    }
+
+    private void RegisterTimedCaptureHotkey(nint handle)
+    {
+        try
+        {
+            _timedCaptureHotkey = new GlobalHotkeyRegistration(
+                handle,
+                TimedCaptureHotkeyId,
                 GlobalHotkeyRegistration.F6VirtualKey);
-            UpdateCaptureKeyStatus();
+            UpdateTimedCaptureKeyStatus();
         }
         catch (Exception)
         {
@@ -76,36 +112,77 @@ public partial class MainWindow : Window
 
     private nint WindowMessageHook(nint window, int message, nint parameter, nint data, ref bool handled)
     {
-        if (_captureHotkey?.Matches(message, parameter) != true) return 0;
-        handled = true;
-        if (!_capturePage.IsCapturing && !_hotkeyCaptureStarting) _ = RunHotkeyCaptureAsync();
+        if (_manualCaptureHotkey?.Matches(message, parameter) == true)
+        {
+            handled = true;
+            if (_capturePage.CanCaptureManualFrame && !_manualHotkeyCaptureStarting)
+            {
+                _ = RunManualFrameHotkeyAsync();
+            }
+            return 0;
+        }
+        if (_timedCaptureHotkey?.Matches(message, parameter) == true)
+        {
+            handled = true;
+            if (!_capturePage.IsCapturing &&
+                !_capturePage.IsManualSessionActive &&
+                !_timedHotkeyCaptureStarting)
+            {
+                _ = RunTimedCaptureHotkeyAsync();
+            }
+        }
         return 0;
     }
 
-    private async Task RunHotkeyCaptureAsync()
+    private async Task RunTimedCaptureHotkeyAsync()
     {
-        _hotkeyCaptureStarting = true;
+        _timedHotkeyCaptureStarting = true;
         try
         {
-            if (_currentPage == PageKind.Review && _pages[PageKind.Review] is ReviewPage review)
-            {
-                await review.FlushPendingAsync();
-            }
+            await FlushReviewAsync();
             await _capturePage.CaptureFromHotkeyAsync();
         }
         finally
         {
-            _hotkeyCaptureStarting = false;
-            UpdateCaptureKeyStatus();
+            _timedHotkeyCaptureStarting = false;
+            UpdateTimedCaptureKeyStatus();
         }
     }
 
-    private void CapturePage_OnCaptureStateChanged(object? sender, EventArgs eventArgs) => UpdateCaptureKeyStatus();
-
-    private void UpdateCaptureKeyStatus()
+    private async Task RunManualFrameHotkeyAsync()
     {
-        if (_captureHotkey is null) return;
-        CaptureKeyPill.Background = (Brush)FindResource(_capturePage.CaptureState switch
+        _manualHotkeyCaptureStarting = true;
+        try
+        {
+            await FlushReviewAsync();
+            bool captured = await _capturePage.CaptureManualFrameFromHotkeyAsync();
+            if (captured && _currentPage == PageKind.Review && _pages[PageKind.Review] is ReviewPage review)
+            {
+                await review.RefreshAsync();
+            }
+        }
+        finally
+        {
+            _manualHotkeyCaptureStarting = false;
+            UpdateManualCaptureKeyStatus();
+        }
+    }
+
+    private Task FlushReviewAsync() =>
+        _currentPage == PageKind.Review && _pages[PageKind.Review] is ReviewPage review
+            ? review.FlushPendingAsync()
+            : Task.CompletedTask;
+
+    private void CapturePage_OnCaptureStateChanged(object? sender, EventArgs eventArgs)
+    {
+        UpdateTimedCaptureKeyStatus();
+        UpdateManualCaptureKeyStatus();
+    }
+
+    private void UpdateTimedCaptureKeyStatus()
+    {
+        if (_timedCaptureHotkey is null) return;
+        CaptureKeyPill.Background = (Brush)FindResource(_capturePage.TimedCaptureState switch
         {
             CaptureRunState.Capturing => "AccentBrush",
             CaptureRunState.Complete => "SuccessBrush",
@@ -113,7 +190,7 @@ public partial class MainWindow : Window
             CaptureRunState.Cancelled => "YellowBrush",
             _ => "MutedBrush",
         });
-        CaptureKeyPillText.Text = _capturePage.CaptureState switch
+        CaptureKeyPillText.Text = _capturePage.TimedCaptureState switch
         {
             CaptureRunState.Capturing => "F6 CAPTURING",
             CaptureRunState.Complete => "F6 COMPLETE",
@@ -121,6 +198,28 @@ public partial class MainWindow : Window
             CaptureRunState.Cancelled => "F6 CANCELLED",
             _ => "F6 READY",
         };
+    }
+
+    private void UpdateManualCaptureKeyStatus()
+    {
+        if (_manualCaptureHotkey is null) return;
+        if (_capturePage.ManualCaptureState == CaptureRunState.Capturing)
+        {
+            ManualCaptureKeyPill.Background = (Brush)FindResource("AccentBrush");
+            ManualCaptureKeyPillText.Text = "F5 CAPTURING";
+            return;
+        }
+        if (!_capturePage.IsManualSessionActive)
+        {
+            ManualCaptureKeyPill.Background = (Brush)FindResource("MutedBrush");
+            ManualCaptureKeyPillText.Text = "F5 IDLE";
+            return;
+        }
+        ManualCaptureKeyPill.Background = (Brush)FindResource(
+            _capturePage.ManualCaptureState == CaptureRunState.Failed ? "DangerBrush" : "SuccessBrush");
+        ManualCaptureKeyPillText.Text = _capturePage.ManualCaptureState == CaptureRunState.Failed
+            ? "F5 FAILED"
+            : "F5 READY";
     }
 
     private async Task NavigateAsync(PageKind target)
@@ -174,6 +273,8 @@ public partial class MainWindow : Window
         {
             DatasetPillText.Text = "NO DATASET";
         }
+        UpdateTimedCaptureKeyStatus();
+        UpdateManualCaptureKeyStatus();
     }
 
     private void SetActiveNavigation(PageKind active)
@@ -195,7 +296,8 @@ public partial class MainWindow : Window
         {
             _closingAfterFlush = true;
             if (_windowSource is not null) _windowSource.RemoveHook(WindowMessageHook);
-            _captureHotkey?.Dispose();
+            _manualCaptureHotkey?.Dispose();
+            _timedCaptureHotkey?.Dispose();
             _ocr.Dispose();
             _workspace.Dispose();
             _ = Dispatcher.BeginInvoke(Close);

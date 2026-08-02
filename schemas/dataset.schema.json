@@ -38,7 +38,8 @@
     "source_process_id": { "type": "integer", "minimum": 1 },
     "client_width": { "type": "integer", "minimum": 1 },
     "client_height": { "type": "integer", "minimum": 1 },
-    "requested_frame_count": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "capture_mode": { "enum": ["timed", "manual"] },
+    "requested_frame_count": { "type": "integer", "minimum": 0, "maximum": 1000 },
     "requested_duration_seconds": { "type": "number", "minimum": 0, "maximum": 600 },
     "is_finalized": { "type": "boolean" },
     "frames": {
@@ -46,6 +47,23 @@
       "items": { "$ref": "#/$defs/frame" }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "required": ["capture_mode"],
+        "properties": { "capture_mode": { "const": "manual" } }
+      },
+      "then": {
+        "properties": {
+          "requested_frame_count": { "const": 0 },
+          "requested_duration_seconds": { "const": 0 }
+        }
+      },
+      "else": {
+        "properties": { "requested_frame_count": { "minimum": 1 } }
+      }
+    }
+  ],
   "$defs": {
     "pixel_rect": {
       "type": "object",

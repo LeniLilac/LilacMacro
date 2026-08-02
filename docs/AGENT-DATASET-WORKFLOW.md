@@ -14,7 +14,7 @@ The command first validates every declared image, SHA-256 digest, dimension, ann
 
 ## Inspection order
 
-1. Read `summary.md` for scope, privacy, dimensions, and counts.
+1. Read `summary.md` for scope, privacy, capture mode, dimensions, and counts.
 2. Read `agent-index.json` and line-delimited `frames.jsonl` for machine-friendly paths and metadata.
 3. Inspect the chronological `contact-sheets/contact-sheet-*.png` files before opening individual frames.
 4. Inspect an exact image under `images/` only when a contact sheet shows a transition or ambiguity worth expanding.

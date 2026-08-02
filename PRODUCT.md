@@ -10,7 +10,7 @@ LilacMacro is a private, single-user Windows tool for its owner. It supports the
 
 ## Product Purpose
 
-LilacMacro creates trustworthy image-detection inputs before macro playback is built. Success means the Roblox client is verified at an explicitly chosen pixel size, an exact number of fresh frames is captured across a requested time window, and each dataset can be named and reviewed with pixel-accurate boxes, labels, frame verdicts, notes, and repeatable PP-OCRv6 detection + recognition trials on selected regions.
+LilacMacro creates trustworthy image-detection inputs before macro playback is built. Success means the Roblox client is verified at an explicitly chosen pixel size, fresh frames are captured either on a timer or one-by-one, and each dataset can be named and reviewed with pixel-accurate boxes, labels, frame verdicts, notes, and repeatable PP-OCRv6 detection + recognition trials on selected regions.
 
 ## Brand Personality
 
@@ -29,6 +29,8 @@ Do not resemble a generic dark neon gamer dashboard, translucent glass UI, bland
 - Make annotation fast: image navigation, box creation, labeling, and notes stay in one workspace.
 - Compare OCR models on the same saved crop; confidence is evidence, never authorization by itself.
 - Keep image navigation direct: wheel to zoom around the pointer and middle-drag to pan in annotation and OCR-map views.
+- Let the OCR map expand to the full canvas when source imagery is unnecessary.
+- Keep F5 dedicated to an active manual session and F6 dedicated to independent timed drafts.
 - Store personal captures outside the repository and save review changes atomically.
 
 ## Accessibility & Inclusion

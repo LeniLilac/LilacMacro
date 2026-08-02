@@ -346,6 +346,7 @@ public partial class ReviewPage : UserControl, IWorkspacePage
     {
         AnnotationCanvas.Visibility = Visibility.Visible;
         OcrMap.Visibility = Visibility.Collapsed;
+        MapOnlyToggle.Visibility = Visibility.Collapsed;
         AnnotateViewButton.Background = (Brush)FindResource("AccentBrush");
         OcrMapViewButton.Background = (Brush)FindResource("CardBrush");
         ZoomControls.IsEnabled = true;
@@ -359,10 +360,17 @@ public partial class ReviewPage : UserControl, IWorkspacePage
         RenderSurfaces();
         AnnotationCanvas.Visibility = Visibility.Collapsed;
         OcrMap.Visibility = Visibility.Visible;
+        MapOnlyToggle.Visibility = Visibility.Visible;
         AnnotateViewButton.Background = (Brush)FindResource("CardBrush");
         OcrMapViewButton.Background = (Brush)FindResource("AccentBrush");
         ZoomControls.IsEnabled = true;
         ZoomText.Text = $"{OcrMap.Zoom:P0}";
+    }
+
+    private void MapOnly_OnChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        if (!IsLoaded) return;
+        OcrMap.SetTextOnly(MapOnlyToggle.IsChecked == true);
     }
 
     private void OcrModel_OnChanged(object sender, SelectionChangedEventArgs eventArgs) => RenderOcrResults();

@@ -37,6 +37,8 @@ public sealed record DatasetManifest
 
     public required int ClientHeight { get; init; }
 
+    public DatasetCaptureMode CaptureMode { get; init; } = DatasetCaptureMode.Timed;
+
     public required int RequestedFrameCount { get; init; }
 
     public required double RequestedDurationSeconds { get; init; }

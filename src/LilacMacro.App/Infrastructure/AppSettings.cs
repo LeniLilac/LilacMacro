@@ -1,3 +1,5 @@
+using LilacMacro.Core.Datasets;
+
 namespace LilacMacro.App.Infrastructure;
 
 public sealed record AppSettings
@@ -9,6 +11,8 @@ public sealed record AppSettings
     public int FrameCount { get; init; } = 30;
 
     public double DurationSeconds { get; init; } = 10;
+
+    public DatasetCaptureMode CaptureMode { get; init; } = DatasetCaptureMode.Timed;
 
     public string DatasetRoot { get; init; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),

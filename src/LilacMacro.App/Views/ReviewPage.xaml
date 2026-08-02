@@ -57,16 +57,17 @@
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="10" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                 <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                     <Button x:Name="AnnotateViewButton" Content="ANNOTATE" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Click="AnnotateView_OnClick" />
                     <Button x:Name="OcrMapViewButton" Grid.Column="1" Content="OCR MAP" Style="{StaticResource ButtonStyle}" Click="OcrMapView_OnClick" />
-                    <StackPanel x:Name="ZoomControls" Grid.Column="3" Orientation="Horizontal" Margin="0,0,10,0">
+                    <CheckBox x:Name="MapOnlyToggle" Grid.Column="2" Content="MAP ONLY" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="12,0,0,0" Visibility="Collapsed" Checked="MapOnly_OnChanged" Unchecked="MapOnly_OnChanged" />
+                    <StackPanel x:Name="ZoomControls" Grid.Column="4" Orientation="Horizontal" Margin="0,0,10,0">
                         <Button Content="-" Width="38" Padding="0" Style="{StaticResource ButtonStyle}" Click="ZoomOut_OnClick" />
                         <TextBlock x:Name="ZoomText" Text="FIT" Width="50" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="Black" TextAlignment="Center" VerticalAlignment="Center" />
                         <Button Content="+" Width="38" Padding="0" Style="{StaticResource ButtonStyle}" Click="ZoomIn_OnClick" />
                         <Button Content="FIT" Margin="7,0,0,0" Style="{StaticResource ButtonStyle}" Click="ZoomFit_OnClick" />
                     </StackPanel>
-                    <ComboBox x:Name="MapModelCombo" Grid.Column="4" Width="205" SelectionChanged="MapModel_OnChanged">
+                    <ComboBox x:Name="MapModelCombo" Grid.Column="5" Width="205" SelectionChanged="MapModel_OnChanged">
                         <ComboBoxItem Content="PP-OCRv6 small" Tag="PP-OCRv6_small_rec" IsSelected="True" />
                         <ComboBoxItem Content="PP-OCRv6 tiny" Tag="PP-OCRv6_tiny_rec" />
                     </ComboBox>

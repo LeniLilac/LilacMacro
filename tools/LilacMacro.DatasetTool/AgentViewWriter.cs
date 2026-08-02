@@ -351,6 +351,7 @@ internal sealed class AgentViewWriter
             source_manifest = RelativePath(output, dataset.ManifestPath),
             dataset_id = dataset.Manifest.Id,
             dataset_name = dataset.Manifest.Name,
+            capture_mode = dataset.Manifest.CaptureMode.ToString().ToLowerInvariant(),
             coordinate_space = dataset.Manifest.CoordinateSpace,
             frame_count = dataset.Manifest.Frames.Count,
             annotation_count = cropPaths.Count,
@@ -382,6 +383,7 @@ internal sealed class AgentViewWriter
         markdown.AppendLine();
         markdown.AppendLine($"- Dataset ID: `{manifest.Id}`");
         markdown.AppendLine($"- State: `{(manifest.IsFinalized ? "finalized" : "draft")}`");
+        markdown.AppendLine($"- Capture mode: `{manifest.CaptureMode.ToString().ToLowerInvariant()}`");
         markdown.AppendLine($"- Capture: `{manifest.ClientWidth} × {manifest.ClientHeight}` client pixels");
         markdown.AppendLine($"- Frames: `{manifest.Frames.Count}`");
         markdown.AppendLine($"- Regions: `{cropPaths.Count}`");

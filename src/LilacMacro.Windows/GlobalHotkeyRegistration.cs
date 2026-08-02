@@ -6,6 +6,7 @@ namespace LilacMacro.Windows;
 public sealed class GlobalHotkeyRegistration : IDisposable
 {
     public const int WindowMessage = 0x0312;
+    public const uint F5VirtualKey = 0x74;
     public const uint F6VirtualKey = 0x75;
     private const uint NoRepeat = 0x4000;
     private readonly nint _window;

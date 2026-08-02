@@ -17,9 +17,50 @@ public sealed class DatasetStore
         DateTimeOffset createdAtUtc,
         CancellationToken cancellationToken = default)
     {
+        plan.Validate();
+
+        return await CreateDraftCoreAsync(
+            rootDirectory,
+            plan.TargetSize,
+            DatasetCaptureMode.Timed,
+            plan.FrameCount,
+            plan.Duration.TotalSeconds,
+            windowTitle,
+            processId,
+            createdAtUtc,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task<DatasetLocation> CreateManualDraftAsync(
+        string rootDirectory,
+        Geometry.PixelSize targetSize,
+        string windowTitle,
+        int processId,
+        DateTimeOffset createdAtUtc,
+        CancellationToken cancellationToken = default) => CreateDraftCoreAsync(
+            rootDirectory,
+            Geometry.PixelSize.Create(targetSize.Width, targetSize.Height),
+            DatasetCaptureMode.Manual,
+            0,
+            0,
+            windowTitle,
+            processId,
+            createdAtUtc,
+            cancellationToken);
+
+    private async Task<DatasetLocation> CreateDraftCoreAsync(
+        string rootDirectory,
+        Geometry.PixelSize targetSize,
+        DatasetCaptureMode captureMode,
+        int requestedFrameCount,
+        double requestedDurationSeconds,
+        string windowTitle,
+        int processId,
+        DateTimeOffset createdAtUtc,
+        CancellationToken cancellationToken)
+    {
         ArgumentException.ThrowIfNullOrWhiteSpace(rootDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(windowTitle);
-        plan.Validate();
 
         Directory.CreateDirectory(rootDirectory);
         Guid id = Guid.NewGuid();
@@ -33,10 +74,11 @@ public sealed class DatasetStore
             CreatedAtUtc = createdAtUtc,
             SourceWindowTitle = windowTitle,
             SourceProcessId = processId,
-            ClientWidth = plan.TargetSize.Width,
-            ClientHeight = plan.TargetSize.Height,
-            RequestedFrameCount = plan.FrameCount,
-            RequestedDurationSeconds = plan.Duration.TotalSeconds,
+            ClientWidth = targetSize.Width,
+            ClientHeight = targetSize.Height,
+            CaptureMode = captureMode,
+            RequestedFrameCount = requestedFrameCount,
+            RequestedDurationSeconds = requestedDurationSeconds,
         };
         DatasetLocation location = new(directory, manifest);
         await SaveAsync(location, cancellationToken).ConfigureAwait(false);
@@ -220,6 +262,13 @@ public sealed class DatasetStore
         if (manifest.ClientWidth <= 0 || manifest.ClientHeight <= 0)
         {
             throw new InvalidDataException("Dataset client dimensions must be positive.");
+        }
+        if (manifest.CaptureMode is not (DatasetCaptureMode.Timed or DatasetCaptureMode.Manual) ||
+            manifest.CaptureMode == DatasetCaptureMode.Timed && manifest.RequestedFrameCount < 1 ||
+            manifest.CaptureMode == DatasetCaptureMode.Manual &&
+            (manifest.RequestedFrameCount != 0 || manifest.RequestedDurationSeconds != 0))
+        {
+            throw new InvalidDataException("Dataset capture mode metadata is invalid.");
         }
         if (manifest.Frames.Any(frame =>
                 Path.GetFileName(frame.FileName) != frame.FileName ||

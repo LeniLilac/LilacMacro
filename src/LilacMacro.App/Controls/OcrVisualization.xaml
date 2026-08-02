@@ -17,11 +17,11 @@
                 <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
             </Grid.LayoutTransform>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="SourceColumn" Width="*" />
+                <ColumnDefinition x:Name="GapColumn" Width="14" />
+                <ColumnDefinition x:Name="TextColumn" Width="*" />
             </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Background="#1C202A" BorderBrush="{StaticResource InkBrush}" BorderThickness="2">
+            <Border x:Name="SourcePanel" Grid.Column="0" Background="#1C202A" BorderBrush="{StaticResource InkBrush}" BorderThickness="2">
                 <Viewbox Stretch="Uniform">
                     <Grid x:Name="SourceSurface" Width="1280" Height="720">
                         <Image x:Name="SourceImage" Stretch="Fill" SnapsToDevicePixels="True" />

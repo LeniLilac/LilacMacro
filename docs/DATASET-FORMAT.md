@@ -3,7 +3,7 @@
 `dataset.json` is UTF-8 JSON with snake-case property names. Schema version 1 records:
 
 - dataset identity, name, notes, creation time, and draft/final state;
-- requested frame count and capture duration;
+- capture mode plus requested frame count and duration;
 - source Roblox process and actual client dimensions;
 - one entry per PNG with capture time, SHA-256 digest, frame verdict, notes, and annotations;
 - each annotation's stable ID, label, note, integer pixel rectangle, and zero or more OCR trials;
@@ -11,6 +11,8 @@
 - each detected text line's original-frame half-open rectangle, text, recognition confidence, and detector confidence when Paddle exposes it.
 
 Rectangles are half-open client-image coordinates: `x` and `y` are inclusive, while `width` and `height` describe the covered extent. Manual rectangles must fit inside their frame; OCR text rectangles must also fit inside their manual parent rectangle. Drags narrower or shorter than three pixels are ignored.
+
+`capture_mode` is `timed` or `manual`. Timed manifests store their requested target count and duration. Manual manifests store both requested fields as `0`; their actual frame count is the length of `frames`. Version 1 manifests created before this field existed are interpreted as `timed`.
 
 Manifests are written to a sibling temporary file and atomically replaced. Images are encoded to a temporary filename before being moved into `images`.
 

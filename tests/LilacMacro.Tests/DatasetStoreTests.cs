@@ -62,6 +62,7 @@ public sealed class DatasetStoreTests
 
             Assert.Equal("lilacmacro.dataset", loaded.Manifest.Format);
             Assert.Equal("roblox_client_pixels_half_open", loaded.Manifest.CoordinateSpace);
+            Assert.Equal(DatasetCaptureMode.Timed, loaded.Manifest.CaptureMode);
             Assert.Equal("Wave 12", loadedTrial.Text);
             Assert.Equal("3.7.0", loadedTrial.RuntimeVersion);
             Assert.Equal("PP-OCRv6_small_det", loadedTrial.DetectorModelName);
@@ -70,6 +71,40 @@ public sealed class DatasetStoreTests
             Assert.Equal(new PixelRect(18, 20, 72, 18), Assert.Single(loadedTrial.Regions).Bounds);
             Assert.DoesNotContain("\"right\"", manifestJson, StringComparison.Ordinal);
             Assert.DoesNotContain("\"bottom\"", manifestJson, StringComparison.Ordinal);
+            Assert.Contains("\"capture_mode\": \"timed\"", manifestJson, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ManualDraft_AppendsIndividuallyCapturedFrames()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "LilacMacro.Tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            DatasetStore store = new();
+            DatasetLocation draft = await store.CreateManualDraftAsync(
+                root,
+                PixelSize.Create(320, 240),
+                "Roblox",
+                42,
+                DateTimeOffset.UtcNow);
+            byte[] png = PngEncoder.Encode(new RgbImage(320, 240, new byte[320 * 240 * 3], takeOwnership: true));
+
+            await store.AddFrameAsync(draft, png, 320, 240, DateTimeOffset.UtcNow);
+            await store.AddFrameAsync(draft, png, 320, 240, DateTimeOffset.UtcNow.AddSeconds(1));
+            DatasetLocation loaded = await store.LoadAsync(draft.DirectoryPath);
+
+            Assert.Equal(DatasetCaptureMode.Manual, loaded.Manifest.CaptureMode);
+            Assert.Equal(0, loaded.Manifest.RequestedFrameCount);
+            Assert.Equal(0, loaded.Manifest.RequestedDurationSeconds);
+            Assert.Collection(
+                loaded.Manifest.Frames,
+                frame => Assert.Equal("frame-0001.png", frame.FileName),
+                frame => Assert.Equal("frame-0002.png", frame.FileName));
         }
         finally
         {

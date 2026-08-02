@@ -65,6 +65,9 @@
                     <Border x:Name="DatasetPill" Style="{StaticResource ChipStyle}" Background="{StaticResource YellowBrush}" Margin="0,0,9,0">
                         <TextBlock x:Name="DatasetPillText" Text="NO DATASET" FontSize="11" FontWeight="Bold" />
                     </Border>
+                    <Border x:Name="ManualCaptureKeyPill" Style="{StaticResource ChipStyle}" Background="{StaticResource MutedBrush}" Margin="0,0,9,0">
+                        <TextBlock x:Name="ManualCaptureKeyPillText" Text="F5 STARTING" FontSize="11" FontWeight="Bold" />
+                    </Border>
                     <Border x:Name="CaptureKeyPill" Style="{StaticResource ChipStyle}" Background="{StaticResource MutedBrush}">
                         <TextBlock x:Name="CaptureKeyPillText" Text="F6 STARTING" FontSize="11" FontWeight="Bold" />
                     </Border>

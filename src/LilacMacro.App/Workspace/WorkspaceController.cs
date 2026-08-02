@@ -16,6 +16,7 @@ public sealed class WorkspaceController : IDisposable
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly RobloxCaptureService _capture;
     private AppSettings _settings = new();
+    private DatasetLocation? _manualCaptureDataset;
 
     public WorkspaceController()
     {
@@ -34,11 +35,15 @@ public sealed class WorkspaceController : IDisposable
 
     public double DurationSeconds => _settings.DurationSeconds;
 
+    public DatasetCaptureMode CaptureMode => _settings.CaptureMode;
+
     public string DatasetRoot => _settings.DatasetRoot;
 
     public DatasetLocation? ActiveDataset { get; private set; }
 
     public DatasetLocation? RecentDataset { get; private set; }
+
+    public bool IsManualCaptureActive => _manualCaptureDataset is not null;
 
     public bool WindowIsReady => RobloxWindow is not null && ObservedClientSize == TargetSize;
 
@@ -76,10 +81,16 @@ public sealed class WorkspaceController : IDisposable
         int targetHeight,
         int frameCount,
         double durationSeconds,
+        DatasetCaptureMode captureMode,
         string datasetRoot,
         CancellationToken cancellationToken = default)
     {
+        if (IsManualCaptureActive) throw new InvalidOperationException("Finish the manual capture before changing settings.");
         PixelSize target = PixelSize.Create(targetWidth, targetHeight);
+        if (captureMode is not (DatasetCaptureMode.Timed or DatasetCaptureMode.Manual))
+        {
+            throw new ArgumentOutOfRangeException(nameof(captureMode));
+        }
         CapturePlan plan = new()
         {
             TargetSize = target,
@@ -94,6 +105,7 @@ public sealed class WorkspaceController : IDisposable
             TargetHeight = target.Height,
             FrameCount = plan.FrameCount,
             DurationSeconds = plan.Duration.TotalSeconds,
+            CaptureMode = captureMode,
             DatasetRoot = Path.GetFullPath(datasetRoot),
         };
         await _settingsStore.SaveAsync(_settings, cancellationToken);
@@ -105,6 +117,10 @@ public sealed class WorkspaceController : IDisposable
         IProgress<CaptureProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        if (IsManualCaptureActive)
+        {
+            throw new InvalidOperationException("Finish the manual capture before starting a timed dataset.");
+        }
         if (!await _operationGate.WaitAsync(0, cancellationToken))
         {
             throw new InvalidOperationException("Another LilacMacro operation is already running.");
@@ -172,9 +188,102 @@ public sealed class WorkspaceController : IDisposable
         }
     }
 
+    public async Task<DatasetLocation> StartManualCaptureAsync(CancellationToken cancellationToken = default)
+    {
+        if (!await _operationGate.WaitAsync(0, cancellationToken))
+        {
+            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        }
+        try
+        {
+            if (_manualCaptureDataset is not null)
+            {
+                throw new InvalidOperationException("A manual capture is already active.");
+            }
+            RobloxWindow window = RobloxWindow ?? _windows.FindBest()
+                ?? throw new InvalidOperationException("Start Roblox in windowed mode before capturing.");
+            RobloxWindow = window;
+            if (_windows.GetClientBounds(window).Size != TargetSize)
+            {
+                await _windows.ResizeClientAsync(window, TargetSize, cancellationToken);
+            }
+
+            DatasetLocation location = await _datasets.CreateManualDraftAsync(
+                DatasetRoot,
+                TargetSize,
+                window.Title,
+                window.ProcessId,
+                DateTimeOffset.UtcNow,
+                cancellationToken);
+            _manualCaptureDataset = location;
+            ActiveDataset = location;
+            RecentDataset = location;
+            ObservedClientSize = _windows.GetClientBounds(window).Size;
+            Changed?.Invoke(this, EventArgs.Empty);
+            return location;
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
+    }
+
+    public async Task<DatasetFrame> CaptureManualFrameAsync(CancellationToken cancellationToken = default)
+    {
+        if (!await _operationGate.WaitAsync(0, cancellationToken))
+        {
+            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        }
+        try
+        {
+            DatasetLocation location = _manualCaptureDataset
+                ?? throw new InvalidOperationException("Start a manual capture first.");
+            RobloxWindow window = RobloxWindow
+                ?? throw new InvalidOperationException("The manual capture's Roblox window is no longer available.");
+            if (window.ProcessId != location.Manifest.SourceProcessId)
+            {
+                throw new InvalidOperationException("The manual capture's Roblox process changed.");
+            }
+
+            PixelSize observed = _windows.GetClientBounds(window).Size;
+            ObservedClientSize = observed;
+            if (observed != TargetSize)
+            {
+                Changed?.Invoke(this, EventArgs.Empty);
+                throw new InvalidOperationException($"Roblox is {observed}; manual capture requires {TargetSize}.");
+            }
+
+            CapturedPng image = await Task.Run(() => _capture.Capture(window), cancellationToken);
+            DatasetFrame frame = await _datasets.AddFrameAsync(
+                location,
+                image.Bytes,
+                image.Size.Width,
+                image.Size.Height,
+                DateTimeOffset.UtcNow,
+                cancellationToken);
+            ObservedClientSize = _windows.GetClientBounds(window).Size;
+            Changed?.Invoke(this, EventArgs.Empty);
+            return frame;
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
+    }
+
+    public DatasetLocation? EndManualCapture()
+    {
+        DatasetLocation? completed = _manualCaptureDataset;
+        _manualCaptureDataset = null;
+        Changed?.Invoke(this, EventArgs.Empty);
+        return completed;
+    }
+
     public async Task<DatasetLocation> OpenDatasetAsync(string directory, CancellationToken cancellationToken = default)
     {
-        ActiveDataset = await _datasets.LoadAsync(directory, cancellationToken);
+        DatasetLocation opened = await _datasets.LoadAsync(directory, cancellationToken);
+        _manualCaptureDataset = null;
+        ActiveDataset = opened;
         RecentDataset = ActiveDataset;
         Changed?.Invoke(this, EventArgs.Empty);
         return ActiveDataset;
@@ -191,7 +300,9 @@ public sealed class WorkspaceController : IDisposable
         CancellationToken cancellationToken = default)
     {
         DatasetLocation active = ActiveDataset ?? throw new InvalidOperationException("No dataset is open.");
-        ActiveDataset = await _datasets.FinalizeAsync(active, name, notes, cancellationToken);
+        DatasetLocation finalized = await _datasets.FinalizeAsync(active, name, notes, cancellationToken);
+        _manualCaptureDataset = null;
+        ActiveDataset = finalized;
         RecentDataset = ActiveDataset;
         Changed?.Invoke(this, EventArgs.Empty);
         return ActiveDataset;

@@ -29,6 +29,19 @@ public partial class OcrVisualization : UserControl
 
     public double Zoom => _zoom;
 
+    public bool TextOnly { get; private set; }
+
+    public void SetTextOnly(bool value)
+    {
+        if (TextOnly == value) return;
+        TextOnly = value;
+        SourcePanel.Visibility = value ? Visibility.Collapsed : Visibility.Visible;
+        SourceColumn.Width = value ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+        GapColumn.Width = value ? new GridLength(0) : new GridLength(14);
+        TextColumn.Width = new GridLength(1, GridUnitType.Star);
+        Dispatcher.BeginInvoke(FitToViewport);
+    }
+
     public void ShowFrame(
         string imagePath,
         DatasetFrame frame,

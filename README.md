@@ -3,8 +3,8 @@
 LilacMacro is a Windows desktop tool for building reliable visual datasets before automating Roblox workflows. It keeps the first workflow deliberately structured:
 
 1. Find Roblox and verify an exact client resolution.
-2. Capture an exact number of fresh frames over a chosen duration.
-3. Name and review the dataset with per-frame verdicts, zoomable boxes, labels, notes, and side-by-side PP-OCRv6 detection + recognition trials.
+2. Capture fresh frames either on a timer or manually one frame at a time.
+3. Name and review the dataset with per-frame verdicts, zoomable boxes, labels, notes, and PP-OCRv6 detection + recognition trials.
 
 The app does not inject into Roblox or read its process memory. It uses Win32 window management and Windows Graphics Capture.
 
@@ -32,6 +32,8 @@ Datasets default to `Documents\LilacMacro Datasets`, outside the repository. Do 
 
 F6 is registered globally while LilacMacro is running. It starts a capture with the saved settings without changing the visible page; presses during an active capture are ignored. Each completed press creates a separate draft dataset.
 
+Manual mode creates an open draft without a timer. While that session is active, F5 is registered globally and appends one fresh frame per press. Finish the session from Capture before changing its resolution or dataset root.
+
 ## Optional OCR setup
 
 Region OCR runs in an isolated Python 3.12 environment under `%LOCALAPPDATA%\LilacMacro\ocr`; it does not alter the global Python environment. Set it up with:
@@ -44,7 +46,7 @@ Region OCR runs in an isolated Python 3.12 environment under `%LOCALAPPDATA%\Lil
 
 The review workspace pairs `PP-OCRv6_small_rec` with `PP-OCRv6_small_det` and `PP-OCRv6_tiny_rec` with `PP-OCRv6_tiny_det`. Detection runs only inside the manually selected region and stores each recognized line with original-frame coordinates. Select `CPU` or `GPU` beside the model; a trial records the exact device used. Model files download on first use and stay in the local Paddle model cache, never in this repository. `KEEP LOADED` caches pipelines by model and device in the current app session; turning it off releases the worker.
 
-Mouse wheel zooms the active annotation or OCR map around the pointer. Hold the middle mouse button and drag to pan. The toolbar buttons and `FIT` work on either view.
+Mouse wheel zooms the active annotation or OCR map around the pointer. Hold the middle mouse button and drag to pan. The toolbar buttons and `FIT` work on either view. `MAP ONLY` expands the clean OCR text map to the full review canvas.
 
 ## Dataset layout
 

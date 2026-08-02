@@ -22,8 +22,8 @@ Windows Graphics Capture owns fresh-frame acquisition. Frames are captured as 16
 
 The WPF app composes three workspaces:
 
-- **Capture:** sizing and sampling controls with live verification plus a global, non-repeating F6 capture trigger.
-- **Review:** image strip, frame verdict, zoomable annotation canvas, annotation fields, dataset notes, and OCR comparison for the selected region.
+- **Capture:** sizing and timed/manual sampling controls with live verification, global F5 single-frame capture, and global F6 timed capture.
+- **Review:** image strip, frame verdict, zoomable annotation canvas, annotation fields, dataset notes, and side-by-side or map-only OCR visualization.
 - **Datasets:** finalized and recoverable draft sessions discovered under the chosen root.
 
 The app persists only non-secret preferences under `%LOCALAPPDATA%\LilacMacro`. Dataset images and annotations stay under the owner-selected dataset root.
