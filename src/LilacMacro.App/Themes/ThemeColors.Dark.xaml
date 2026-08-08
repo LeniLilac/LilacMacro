@@ -1,0 +1,96 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="PaperColor">#171316</Color>
+    <Color x:Key="CardColor">#221B20</Color>
+    <Color x:Key="InkColor">#FFF5FA</Color>
+    <Color x:Key="InkSoftColor">#C8AEBB</Color>
+    <Color x:Key="MutedColor">#3B2B34</Color>
+    <Color x:Key="AccentColor">#FF70BD</Color>
+    <Color x:Key="PinkColor">#FF70BD</Color>
+    <Color x:Key="YellowColor">#FFE783</Color>
+    <Color x:Key="SuccessColor">#3BD99A</Color>
+    <Color x:Key="DangerColor">#FF7480</Color>
+    <Color x:Key="WarningColor">#D6A84B</Color>
+    <Color x:Key="PlanStateReadyColor">#1D3A31</Color>
+    <Color x:Key="PlanStateReadyTextColor">#91DAB9</Color>
+    <Color x:Key="PlanStateWaitingColor">#302C45</Color>
+    <Color x:Key="PlanStateWaitingTextColor">#C7BDEF</Color>
+    <Color x:Key="PlanStateCooldownColor">#403522</Color>
+    <Color x:Key="PlanStateCooldownTextColor">#E8C784</Color>
+    <Color x:Key="PlanStateCompleteColor">#432A3A</Color>
+    <Color x:Key="PlanStateCompleteTextColor">#E7B2CF</Color>
+    <Color x:Key="MatchStepPlacementColor">#7BB5FF</Color>
+    <Color x:Key="MatchStepReconfigureColor">#63C3D3</Color>
+    <Color x:Key="MatchStepStartColor">#45D6A2</Color>
+    <Color x:Key="MatchStepDelayColor">#F0C35A</Color>
+    <Color x:Key="MatchStepUpgradeColor">#B79AF5</Color>
+    <Color x:Key="MatchStepSellColor">#FF8390</Color>
+    <Color x:Key="OnAccentColor">#171116</Color>
+    <Color x:Key="BadgeIconColor">#171116</Color>
+    <Color x:Key="CanvasColor">#100D0F</Color>
+    <Color x:Key="OcrMapSurfaceColor">#FFFDFE</Color>
+    <Color x:Key="ChromeBorderColor">#52FFF5FA</Color>
+    <Color x:Key="PressedSurfaceColor">#57384A</Color>
+    <Color x:Key="ScrollTrackColor">#35FFF5FA</Color>
+    <Color x:Key="ScrollThumbColor">#91C8AEBB</Color>
+    <Color x:Key="ScrollThumbHoverColor">#FF70BD</Color>
+    <Color x:Key="ShadowColor">#FF090708</Color>
+    <Color x:Key="AccentShadowColor">#66FF70BD</Color>
+    <SolidColorBrush x:Key="PaperBrush" Color="{StaticResource PaperColor}" />
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}" />
+    <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}" />
+    <SolidColorBrush x:Key="InkSoftBrush" Color="{StaticResource InkSoftColor}" />
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource MutedColor}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="PinkBrush" Color="{StaticResource PinkColor}" />
+    <SolidColorBrush x:Key="YellowBrush" Color="{StaticResource YellowColor}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="PlanStateReadyBrush" Color="{StaticResource PlanStateReadyColor}" />
+    <SolidColorBrush x:Key="PlanStateReadyTextBrush" Color="{StaticResource PlanStateReadyTextColor}" />
+    <SolidColorBrush x:Key="PlanStateWaitingBrush" Color="{StaticResource PlanStateWaitingColor}" />
+    <SolidColorBrush x:Key="PlanStateWaitingTextBrush" Color="{StaticResource PlanStateWaitingTextColor}" />
+    <SolidColorBrush x:Key="PlanStateCooldownBrush" Color="{StaticResource PlanStateCooldownColor}" />
+    <SolidColorBrush x:Key="PlanStateCooldownTextBrush" Color="{StaticResource PlanStateCooldownTextColor}" />
+    <SolidColorBrush x:Key="PlanStateCompleteBrush" Color="{StaticResource PlanStateCompleteColor}" />
+    <SolidColorBrush x:Key="PlanStateCompleteTextBrush" Color="{StaticResource PlanStateCompleteTextColor}" />
+    <SolidColorBrush x:Key="MatchStepPlacementBrush" Color="{StaticResource MatchStepPlacementColor}" />
+    <SolidColorBrush x:Key="MatchStepReconfigureBrush" Color="{StaticResource MatchStepReconfigureColor}" />
+    <SolidColorBrush x:Key="MatchStepStartBrush" Color="{StaticResource MatchStepStartColor}" />
+    <SolidColorBrush x:Key="MatchStepDelayBrush" Color="{StaticResource MatchStepDelayColor}" />
+    <SolidColorBrush x:Key="MatchStepUpgradeBrush" Color="{StaticResource MatchStepUpgradeColor}" />
+    <SolidColorBrush x:Key="MatchStepSellBrush" Color="{StaticResource MatchStepSellColor}" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
+    <SolidColorBrush x:Key="BadgeIconBrush" Color="{StaticResource BadgeIconColor}" />
+    <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
+    <SolidColorBrush x:Key="OcrMapSurfaceBrush" Color="{StaticResource OcrMapSurfaceColor}" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="{StaticResource ChromeBorderColor}" />
+    <SolidColorBrush x:Key="PressedSurfaceBrush" Color="{StaticResource PressedSurfaceColor}" />
+    <SolidColorBrush x:Key="ScrollTrackBrush" Color="{StaticResource ScrollTrackColor}" />
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="{StaticResource ScrollThumbColor}" />
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="{StaticResource ScrollThumbHoverColor}" />
+    <DrawingBrush x:Key="AppBackgroundBrush" TileMode="Tile"
+                  Viewport="0,0,26,26" ViewportUnits="Absolute"
+                  Viewbox="0,0,26,26" ViewboxUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#171316" Geometry="M0,0 H26 V26 H0 Z" />
+                <DrawingGroup Opacity="0.12">
+                    <GeometryDrawing Brush="#FFF5FA">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="4,4" RadiusX="1" RadiusY="1" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+                <DrawingGroup Opacity="0.035">
+                    <GeometryDrawing Brush="#FFF5FA">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="18,0,1,15" Transform="1,0.22,-0.22,1,0,0" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+</ResourceDictionary>

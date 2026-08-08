@@ -12,7 +12,7 @@
             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="DATASETS" FontSize="19" FontWeight="Black" Margin="0,0,0,5" />
-                <TextBlock x:Name="RootText" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource InkSoftBrush}" />
+                <TextBlock x:Name="RootText" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource InkSoftBrush}" />
             </StackPanel>
             <Button Grid.Column="1" Content="REFRESH" Style="{StaticResource ButtonStyle}" VerticalAlignment="Top" Click="Refresh_OnClick" />
         </Grid>
@@ -29,14 +29,24 @@
                     <ListBox x:Name="DatasetList" BorderThickness="0" Background="Transparent" SelectionChanged="DatasetList_OnSelectionChanged">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="{StaticResource MutedBrush}" BorderBrush="{StaticResource InkBrush}" BorderThickness="2" CornerRadius="4" Padding="13">
+                                <Border Background="{DynamicResource MutedBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="4" Padding="13">
                                     <Grid>
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Black" />
-                                            <TextBlock Text="{Binding Detail}" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource InkSoftBrush}" Margin="0,5,0,0" />
+                                            <TextBlock Text="{Binding Detail}" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InkSoftBrush}" Margin="0,5,0,0" />
                                         </StackPanel>
-                                        <Border Grid.Column="1" Style="{StaticResource ChipStyle}" Background="{Binding StateBrush}" VerticalAlignment="Center">
+                                        <Border Grid.Column="1" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border" BasedOn="{StaticResource ChipStyle}">
+                                                    <Setter Property="Background" Value="{DynamicResource YellowBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding State}" Value="FINAL">
+                                                            <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
                                             <TextBlock Text="{Binding State}" FontSize="10" FontWeight="Black" />
                                         </Border>
                                     </Grid>
@@ -51,11 +61,11 @@
             </Border>
 
             <StackPanel Grid.Column="2">
-                <Border Style="{StaticResource CardStyle}" Background="{StaticResource YellowBrush}" Margin="0,0,0,16">
+                <Border Style="{StaticResource CardStyle}" Background="{DynamicResource YellowBrush}" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="SELECTED DATASET" Style="{StaticResource EyebrowStyle}" />
                         <TextBlock x:Name="SelectionName" Text="Choose a dataset" FontSize="20" FontWeight="Black" Margin="0,8,0,7" TextWrapping="Wrap" />
-                        <TextBlock x:Name="SelectionPath" Text="—" FontFamily="{StaticResource MonoFont}" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource InkSoftBrush}" />
+                        <TextBlock x:Name="SelectionPath" Text="NONE" FontFamily="{StaticResource MonoFont}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource InkSoftBrush}" />
                         <Button x:Name="OpenButton" Content="OPEN IN REVIEW" Style="{StaticResource PrimaryButtonStyle}" Margin="0,18,0,8" IsEnabled="False" Click="Open_OnClick" />
                         <Button x:Name="ExplorerButton" Content="SHOW IN EXPLORER" Style="{StaticResource ButtonStyle}" IsEnabled="False" Click="Explorer_OnClick" />
                     </StackPanel>

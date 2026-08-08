@@ -1,0 +1,148 @@
+<Window x:Class="LilacMacro.App.Views.PlacementStepEditorDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:LilacMacro.App.Controls"
+        Title="Edit Step"
+        Width="540"
+        SizeToContent="Height"
+        MaxHeight="760"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        AllowsTransparency="True"
+        Background="Transparent"
+        KeyDown="Dialog_OnKeyDown">
+    <Grid Margin="8">
+        <Border Style="{StaticResource CardStyle}" Padding="16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid MouseLeftButtonDown="Header_OnMouseLeftButtonDown">
+                    <TextBlock x:Name="DialogTitle" VerticalAlignment="Center"
+                               FontSize="16" FontWeight="Black" />
+                    <Button Width="31" Height="29" MinHeight="0" MinWidth="0"
+                            Padding="0" HorizontalAlignment="Right"
+                            Style="{StaticResource ButtonStyle}" Click="Cancel_OnClick">
+                        <controls:LucideIcon Width="13" Height="13" Data="{StaticResource Lucide.X}" />
+                    </Button>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" Margin="0,13,0,0"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <StackPanel x:Name="ActionFields" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="ACTION" />
+                            <UniformGrid Columns="4">
+                                <RadioButton x:Name="DelayActionButton" Width="Auto" MinWidth="0" Margin="0,0,8,0"
+                                             GroupName="StepAction" Tag="Delay" Content="DELAY"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}"
+                                             Checked="ActionKind_OnChecked" />
+                                <RadioButton x:Name="ReconfigureActionButton" Width="Auto" MinWidth="0" Margin="0,0,8,0"
+                                             GroupName="StepAction" Tag="Reconfigure" Content="RECONFIGURE"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}"
+                                             Checked="ActionKind_OnChecked" />
+                                <RadioButton x:Name="UpgradeActionButton" Width="Auto" MinWidth="0" Margin="0,0,8,0"
+                                             GroupName="StepAction" Tag="Upgrade" Content="UPGRADE"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}"
+                                             Checked="ActionKind_OnChecked" />
+                                <RadioButton x:Name="SellActionButton" Width="Auto" MinWidth="0" Margin="0"
+                                             GroupName="StepAction" Tag="Sell" Content="SELL"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}"
+                                             Checked="ActionKind_OnChecked" />
+                            </UniformGrid>
+                        </StackPanel>
+
+                        <StackPanel x:Name="PlaceFields">
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="UNIT SLOT" />
+                                    <ComboBox x:Name="EditUnitCombo" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="TARGETING" />
+                                    <ComboBox x:Name="EditTargetingCombo" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="AUTO UPGRADE" />
+                                    <ComboBox x:Name="EditAutoUpgradeCombo" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid x:Name="PlaceCoordinateFields" Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="X" />
+                                    <TextBox x:Name="EditXText" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Y" />
+                                    <TextBox x:Name="EditYText" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel x:Name="ReferenceFields">
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLACEMENT" />
+                            <ComboBox x:Name="EditReferenceCombo" DisplayMemberPath="Label"
+                                      SelectedValuePath="Id" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="ReconfigureFields" Margin="0,10,0,0">
+                            <CheckBox x:Name="ChangeTargetingCheck" Content="CHANGE TARGETING" />
+                            <ComboBox x:Name="ReconfigureTargetingCombo" Margin="0,7,0,0"
+                                      DisplayMemberPath="Label" SelectedValuePath="Value" />
+                            <TextBlock Margin="0,10,0,4" Style="{StaticResource FieldLabelStyle}"
+                                       Text="AUTO UPGRADE" />
+                            <ComboBox x:Name="AutoUpgradeActionCombo" DisplayMemberPath="Label"
+                                      SelectedValuePath="Value" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="DelayFields">
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="DURATION, MS" />
+                            <TextBox x:Name="DelayDurationText" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="UpgradeFields">
+                            <TextBlock Margin="0,10,0,4" Style="{StaticResource FieldLabelStyle}"
+                                       Text="UPGRADE PRESSES" />
+                            <TextBox x:Name="UpgradeCountText" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="AfterDelayFields" Margin="0,10,0,0">
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="AFTER, MS" />
+                            <TextBox x:Name="AfterDelayText" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <StackPanel Grid.Row="2" Margin="0,14,0,0"
+                            HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button MinWidth="88" Style="{StaticResource ButtonStyle}"
+                            Content="CANCEL" Click="Cancel_OnClick" />
+                    <Button MinWidth="88" Margin="9,0,0,0"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Content="APPLY" Click="Apply_OnClick" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

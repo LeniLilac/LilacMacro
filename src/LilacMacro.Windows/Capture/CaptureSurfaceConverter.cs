@@ -8,7 +8,8 @@ internal static class CaptureSurfaceConverter
         byte[] rgba16,
         int surfaceWidth,
         int surfaceHeight,
-        ScreenRegion crop)
+        ScreenRegion crop,
+        CaptureColorContext colorContext)
     {
         if (rgba16.Length != checked(surfaceWidth * surfaceHeight * 8))
         {
@@ -29,7 +30,7 @@ internal static class CaptureSurfaceConverter
                 float red = ReadFiniteHalf(rgba16, source);
                 float green = ReadFiniteHalf(rgba16, source + 2);
                 float blue = ReadFiniteHalf(rgba16, source + 4);
-                ToneMapScRgb(ref red, ref green, ref blue);
+                ConvertToSrgbGamut(ref red, ref green, ref blue, colorContext);
                 rgb[target] = LinearToSrgbByte(red);
                 rgb[target + 1] = LinearToSrgbByte(green);
                 rgb[target + 2] = LinearToSrgbByte(blue);
@@ -42,36 +43,75 @@ internal static class CaptureSurfaceConverter
     {
         ushort bits = (ushort)(source[offset] | source[offset + 1] << 8);
         float value = (float)BitConverter.UInt16BitsToHalf(bits);
-        return float.IsFinite(value) ? Math.Max(0f, value) : 0f;
+        return float.IsFinite(value) ? value : 0f;
     }
 
-    private static void ToneMapScRgb(ref float red, ref float green, ref float blue)
+    private static void ConvertToSrgbGamut(
+        ref float red,
+        ref float green,
+        ref float blue,
+        CaptureColorContext colorContext)
     {
         const float shoulderStart = 0.8f;
-        const float scRgbAt1000Nits = 12.5f;
-        const float shoulderScale = 2f;
+
+        float referenceScale = colorContext.ScRgbReferenceScale;
+        red *= referenceScale;
+        green *= referenceScale;
+        blue *= referenceScale;
 
         float luminance = 0.2126f * red + 0.7152f * green + 0.0722f * blue;
-        if (luminance > shoulderStart)
+        if (luminance <= 0f)
         {
-            float capped = Math.Min(luminance, scRgbAt1000Nits);
+            red = green = blue = 0f;
+            return;
+        }
+
+        float mappedLuminance = luminance;
+        if (colorContext.AdvancedColorActive && luminance > shoulderStart)
+        {
+            float peak = colorContext.RelativeDisplayPeak;
+            float capped = Math.Min(luminance, peak);
+            float shoulderScale = Math.Max(1f, (peak - shoulderStart) / 3f);
             float numerator = 1f - MathF.Exp(-(capped - shoulderStart) / shoulderScale);
-            float denominator = 1f - MathF.Exp(-(scRgbAt1000Nits - shoulderStart) / shoulderScale);
-            float mapped = shoulderStart + (1f - shoulderStart) * numerator / denominator;
-            float scale = mapped / luminance;
+            float denominator = 1f - MathF.Exp(-(peak - shoulderStart) / shoulderScale);
+            mappedLuminance = shoulderStart + (1f - shoulderStart) * numerator / denominator;
+            float scale = mappedLuminance / luminance;
+            red *= scale;
+            green *= scale;
+            blue *= scale;
+        }
+        else if (!colorContext.AdvancedColorActive && luminance > 1f)
+        {
+            mappedLuminance = 1f;
+            float scale = 1f / luminance;
             red *= scale;
             green *= scale;
             blue *= scale;
         }
 
-        float maximum = Math.Max(red, Math.Max(green, blue));
-        if (maximum > 1f)
+        float chromaScale = 1f;
+        chromaScale = LimitChroma(red, mappedLuminance, chromaScale);
+        chromaScale = LimitChroma(green, mappedLuminance, chromaScale);
+        chromaScale = LimitChroma(blue, mappedLuminance, chromaScale);
+        if (chromaScale < 1f)
         {
-            float scale = 1f / maximum;
-            red *= scale;
-            green *= scale;
-            blue *= scale;
+            red = mappedLuminance + (red - mappedLuminance) * chromaScale;
+            green = mappedLuminance + (green - mappedLuminance) * chromaScale;
+            blue = mappedLuminance + (blue - mappedLuminance) * chromaScale;
         }
+    }
+
+    private static float LimitChroma(float channel, float luminance, float currentScale)
+    {
+        if (channel > 1f && channel > luminance)
+        {
+            return Math.Min(currentScale, (1f - luminance) / (channel - luminance));
+        }
+        if (channel < 0f && channel < luminance)
+        {
+            return Math.Min(currentScale, luminance / (luminance - channel));
+        }
+        return currentScale;
     }
 
     private static byte LinearToSrgbByte(float value)

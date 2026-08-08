@@ -23,6 +23,8 @@ public partial class AnnotationSurface : UserControl
     private double _zoom = 1;
     private bool _fitMode = true;
     private Point? _panStart;
+    private PixelRect? _visualMatchBounds;
+    private bool _visualMatchSucceeded;
     private double _panHorizontalOffset;
     private double _panVerticalOffset;
 
@@ -46,6 +48,7 @@ public partial class AnnotationSurface : UserControl
         _imageSize = new PixelSize(bitmap.PixelWidth, bitmap.PixelHeight);
         _annotations = frame.Annotations;
         _selectedId = selectedId;
+        _visualMatchBounds = null;
         ImageSurface.Width = _imageSize.Width;
         ImageSurface.Height = _imageSize.Height;
         FrameImage.Source = bitmap;
@@ -58,12 +61,20 @@ public partial class AnnotationSurface : UserControl
         FrameImage.Source = null;
         _annotations = [];
         _selectedId = null;
+        _visualMatchBounds = null;
         Overlay.Children.Clear();
     }
 
     public void Select(Guid? id)
     {
         _selectedId = id;
+        RenderAnnotations();
+    }
+
+    public void ShowVisualMatch(PixelRect? bounds, bool succeeded)
+    {
+        _visualMatchBounds = bounds;
+        _visualMatchSucceeded = succeeded;
         RenderAnnotations();
     }
 
@@ -127,11 +138,47 @@ public partial class AnnotationSurface : UserControl
             Overlay.Children.Add(rectangle);
             AddRegionLabel(annotation, selected);
         }
+        AddVisualMatch();
+    }
+
+    private void AddVisualMatch()
+    {
+        if (_visualMatchBounds is not { } bounds) return;
+        Rectangle rectangle = new()
+        {
+            Width = bounds.Width,
+            Height = bounds.Height,
+            StrokeThickness = 4,
+            StrokeDashArray = [7, 4],
+            Fill = Brushes.Transparent,
+            IsHitTestVisible = false,
+        };
+        rectangle.SetResourceReference(Shape.StrokeProperty,
+            _visualMatchSucceeded ? "SuccessBrush" : "DangerBrush");
+        Canvas.SetLeft(rectangle, bounds.X);
+        Canvas.SetTop(rectangle, bounds.Y);
+        Overlay.Children.Add(rectangle);
+
+        TextBlock label = new()
+        {
+            Text = _visualMatchSucceeded ? "IMAGE MATCH" : "IMAGE CANDIDATE",
+            Padding = new Thickness(5, 2, 5, 2),
+            FontSize = 11,
+            FontWeight = FontWeights.Black,
+            Foreground = Brushes.Black,
+            IsHitTestVisible = false,
+        };
+        label.SetResourceReference(TextBlock.BackgroundProperty,
+            _visualMatchSucceeded ? "SuccessBrush" : "DangerBrush");
+        Canvas.SetLeft(label, bounds.X);
+        Canvas.SetTop(label, Math.Min(_imageSize.Height - 22, bounds.Bottom + 2));
+        Overlay.Children.Add(label);
     }
 
     private void AddRegionLabel(BoxAnnotation annotation, bool selected)
     {
         string label = string.IsNullOrWhiteSpace(annotation.Label) ? "UNLABELED" : annotation.Label;
+        if (annotation.IsGlobal) label = $"GLOBAL · {label}";
         TextBlock text = new()
         {
             Text = $"{label}  [{annotation.Bounds.X},{annotation.Bounds.Y},{annotation.Bounds.Width},{annotation.Bounds.Height}]",
@@ -248,7 +295,7 @@ public partial class AnnotationSurface : UserControl
         Math.Clamp(point.Y, 0, _imageSize.Height));
 
     private static string BuildToolTip(BoxAnnotation annotation) =>
-        $"x={annotation.Bounds.X}, y={annotation.Bounds.Y}, width={annotation.Bounds.Width}, height={annotation.Bounds.Height}";
+        $"{(annotation.IsGlobal ? "Global · " : string.Empty)}x={annotation.Bounds.X}, y={annotation.Bounds.Y}, width={annotation.Bounds.Width}, height={annotation.Bounds.Height}";
 
     private static BitmapImage LoadBitmap(string path)
     {

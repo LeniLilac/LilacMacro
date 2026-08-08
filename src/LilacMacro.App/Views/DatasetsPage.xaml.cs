@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Datasets;
 
@@ -27,8 +26,7 @@ public partial class DatasetsPage : UserControl, IWorkspacePage
             dataset,
             DisplayName(dataset),
             $"{dataset.Manifest.Frames.Count} frames  ·  {dataset.Manifest.ClientWidth} × {dataset.Manifest.ClientHeight}  ·  {dataset.Manifest.CreatedAtUtc.LocalDateTime:g}",
-            dataset.Manifest.IsFinalized ? "FINAL" : "DRAFT",
-            (Brush)FindResource(dataset.Manifest.IsFinalized ? "SuccessBrush" : "YellowBrush"))).ToArray();
+            dataset.Manifest.IsFinalized ? "FINAL" : "DRAFT")).ToArray();
         EmptyState.Visibility = datasets.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         DatasetList.Visibility = datasets.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         if (datasets.Count > 0) DatasetList.SelectedIndex = 0;
@@ -73,6 +71,5 @@ public partial class DatasetsPage : UserControl, IWorkspacePage
         DatasetLocation Dataset,
         string Name,
         string Detail,
-        string State,
-        Brush StateBrush);
+        string State);
 }

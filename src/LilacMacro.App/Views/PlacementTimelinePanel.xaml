@@ -1,0 +1,365 @@
+<UserControl x:Class="LilacMacro.App.Views.PlacementTimelinePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:LilacMacro.App.Controls"
+             xmlns:placements="clr-namespace:LilacMacro.Core.Placements;assembly=LilacMacro.Core"
+             PreviewMouseWheel="TimelinePanel_OnPreviewMouseWheel">
+    <UserControl.Resources>
+        <Style x:Key="PanelMiniButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="MinHeight" Value="29" />
+            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="Padding" Value="7,3" />
+            <Setter Property="FontSize" Value="10" />
+        </Style>
+        <Style x:Key="TimelineItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,0,7" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border Background="Transparent"><ContentPresenter /></Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SectionTabStyle" TargetType="Button">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Margin" Value="0,0,22,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource InkSoftBrush}" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border x:Name="Underline" Height="3" VerticalAlignment="Bottom"
+                                    Background="Transparent" CornerRadius="2" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Active">
+                                <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                                <Setter Property="FontWeight" Value="Black" />
+                                <Setter TargetName="Underline" Property="Background" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource CardStyle}" Padding="13">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="StepsTabButton" Style="{StaticResource SectionTabStyle}"
+                            Tag="Active" Content="MATCH STEPS" Click="StepsTab_OnClick" />
+                    <Button x:Name="SettingsTabButton" Style="{StaticResource SectionTabStyle}"
+                            Content="MATCH SETTINGS" Click="SettingsTab_OnClick" />
+                </StackPanel>
+                <Button x:Name="PopOutButton" Grid.Column="1"
+                        Style="{StaticResource PanelMiniButtonStyle}"
+                        Content="POPOUT" Click="PopOutButton_OnClick" />
+            </Grid>
+
+            <Grid x:Name="StepsPanel" Grid.Row="1" Margin="0,10,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Padding="11" Background="{DynamicResource MutedBrush}"
+                        BorderBrush="{DynamicResource ChromeBorderBrush}"
+                        BorderThickness="1" CornerRadius="4">
+                    <WrapPanel>
+                        <StackPanel Width="180" Margin="0,0,18,0">
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="TEAM" />
+                            <ComboBox x:Name="TeamCombo" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                      SelectionChanged="TeamCombo_OnSelectionChanged" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="UNIT SLOT" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="Unit1Button" GroupName="PlacementUnit" Tag="1" Content="1"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
+                                <RadioButton x:Name="Unit2Button" GroupName="PlacementUnit" Tag="2" Content="2"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
+                                <RadioButton x:Name="Unit3Button" GroupName="PlacementUnit" Tag="3" Content="3"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
+                                <RadioButton x:Name="Unit4Button" GroupName="PlacementUnit" Tag="4" Content="4"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
+                                <RadioButton x:Name="Unit5Button" GroupName="PlacementUnit" Tag="5" Content="5"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
+                                <RadioButton x:Name="Unit6Button" GroupName="PlacementUnit" Tag="6" Content="6"
+                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
+                            </StackPanel>
+                        </StackPanel>
+                    </WrapPanel>
+                </Border>
+
+                <Button x:Name="AddStepButton" Grid.Row="1" Margin="0,9,0,0" HorizontalAlignment="Right"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        MinHeight="30" Padding="9,4" Click="AddStepButton_OnClick">
+                    <StackPanel Orientation="Horizontal">
+                        <controls:LucideIcon Width="13" Height="13" Margin="0,0,6,0"
+                                             Data="{StaticResource Lucide.Plus}" />
+                        <TextBlock VerticalAlignment="Center" Text="ADD STEP" />
+                    </StackPanel>
+                </Button>
+
+            <ListBox x:Name="TimelineList" Grid.Row="2" Margin="0,9,0,0"
+                     AllowDrop="True" BorderThickness="0" Background="Transparent"
+                     ScrollViewer.CanContentScroll="False"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     VirtualizingPanel.IsVirtualizing="False"
+                     ItemContainerStyle="{StaticResource TimelineItemStyle}"
+                     PreviewMouseMove="TimelineList_OnPreviewMouseMove"
+                     PreviewMouseLeftButtonUp="TimelineList_OnPreviewMouseLeftButtonUp"
+                     DragOver="TimelineList_OnDragOver"
+                     DragLeave="TimelineList_OnDragLeave"
+                     Drop="TimelineList_OnDrop">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="RowCard" Padding="8"
+                                        Background="{DynamicResource MutedBrush}"
+                                        BorderBrush="{DynamicResource ChromeBorderBrush}"
+                                        BorderThickness="1" CornerRadius="3">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="5" />
+                                            <ColumnDefinition Width="26" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border x:Name="ActionAccent" Width="4" Height="32"
+                                                HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                Background="{DynamicResource MatchStepPlacementBrush}"
+                                                CornerRadius="2" />
+                                        <Border Grid.Column="1" Background="Transparent" Cursor="SizeAll"
+                                                ToolTip="Drag to reorder"
+                                                PreviewMouseLeftButtonDown="StepDragHandle_OnPreviewMouseLeftButtonDown">
+                                            <controls:LucideIcon Width="15" Height="15"
+                                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                 Foreground="{DynamicResource InkSoftBrush}"
+                                                                 Data="{StaticResource Lucide.GripVertical}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="2" Margin="2,0,8,0" VerticalAlignment="Center">
+                                            <TextBlock x:Name="StepTitle" Text="{Binding Title}"
+                                                       FontSize="11" FontWeight="Black"
+                                                       Foreground="{DynamicResource MatchStepPlacementBrush}" />
+                                            <TextBlock Margin="0,4,0,0" Text="{Binding Detail}"
+                                                       FontFamily="{StaticResource MonoFont}" FontSize="9"
+                                                       FontWeight="Bold" Foreground="{DynamicResource InkSoftBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" Margin="8,0,0,0"
+                                                    VerticalAlignment="Center" Orientation="Horizontal">
+                                            <Button Style="{StaticResource PanelMiniButtonStyle}" Tag="{Binding}"
+                                                    Content="EDIT" IsEnabled="{Binding CanEdit}" Click="EditStep_OnClick" />
+                                            <Button Margin="4,0,0,0" Style="{StaticResource PanelMiniButtonStyle}"
+                                                    Tag="{Binding}" IsEnabled="{Binding CanDelete}"
+                                                    Click="DeleteStep_OnClick">
+                                                <controls:LucideIcon Width="13" Height="13"
+                                                                     Data="{StaticResource Lucide.Trash2}" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Step.Kind}" Value="{x:Static placements:PlacementStepKind.Reconfigure}">
+                                        <Setter TargetName="ActionAccent" Property="Background" Value="{DynamicResource MatchStepReconfigureBrush}" />
+                                        <Setter TargetName="StepTitle" Property="Foreground" Value="{DynamicResource MatchStepReconfigureBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Step.Kind}" Value="{x:Static placements:PlacementStepKind.StartGame}">
+                                        <Setter TargetName="ActionAccent" Property="Background" Value="{DynamicResource MatchStepStartBrush}" />
+                                        <Setter TargetName="StepTitle" Property="Foreground" Value="{DynamicResource MatchStepStartBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Step.Kind}" Value="{x:Static placements:PlacementStepKind.Delay}">
+                                        <Setter TargetName="ActionAccent" Property="Background" Value="{DynamicResource MatchStepDelayBrush}" />
+                                        <Setter TargetName="StepTitle" Property="Foreground" Value="{DynamicResource MatchStepDelayBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Step.Kind}" Value="{x:Static placements:PlacementStepKind.Upgrade}">
+                                        <Setter TargetName="ActionAccent" Property="Background" Value="{DynamicResource MatchStepUpgradeBrush}" />
+                                        <Setter TargetName="StepTitle" Property="Foreground" Value="{DynamicResource MatchStepUpgradeBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Step.Kind}" Value="{x:Static placements:PlacementStepKind.Sell}">
+                                        <Setter TargetName="ActionAccent" Property="Background" Value="{DynamicResource MatchStepSellBrush}" />
+                                        <Setter TargetName="StepTitle" Property="Foreground" Value="{DynamicResource MatchStepSellBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                 Value="True">
+                                        <Setter TargetName="RowCard" Property="Background" Value="{DynamicResource PressedSurfaceBrush}" />
+                                        <Setter TargetName="RowCard" Property="BorderBrush" Value="{DynamicResource InkBrush}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+            </ListBox>
+            </Grid>
+
+            <Border x:Name="SettingsPanel" Grid.Row="1" Margin="0,10,0,0" Padding="12"
+                    Background="{DynamicResource MutedBrush}" BorderBrush="{DynamicResource ChromeBorderBrush}"
+                    BorderThickness="1" CornerRadius="4" Visibility="Collapsed">
+                <ScrollViewer x:Name="SettingsScrollViewer"
+                              VerticalScrollBarVisibility="Disabled"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="DEFAULT TARGETING" />
+                                <ComboBox SelectedIndex="0">
+                                    <ComboBoxItem Content="First" />
+                                    <ComboBoxItem Content="Last" />
+                                    <ComboBoxItem Content="Closest" />
+                                    <ComboBoxItem Content="Strongest" />
+                                    <ComboBoxItem Content="Boss" />
+                                    <ComboBoxItem Content="Weakest" />
+                                    <ComboBoxItem Content="Shielded" />
+                                    <ComboBoxItem Content="Fastest" />
+                                    <ComboBoxItem Content="None" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="DEFAULT AUTO UPGRADE" />
+                                <ComboBox SelectedIndex="1">
+                                    <ComboBoxItem Content="Off" />
+                                    <ComboBoxItem Content="Priority 1" />
+                                    <ComboBoxItem Content="Priority 2" />
+                                    <ComboBoxItem Content="Priority 3" />
+                                    <ComboBoxItem Content="Priority 4" />
+                                    <ComboBoxItem Content="Priority 5" />
+                                    <ComboBoxItem Content="Priority 6" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Margin="0,14,0,0">
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BETWEEN UNIT CHECKS, MS" />
+                                <TextBox Text="900" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,14,0,0">
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLACEMENT ATTEMPTS" />
+                                <TextBox Text="1" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,14,0,0">
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="IMPOSSIBILITY THRESHOLD, MIN" />
+                                <TextBox Text="0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Button x:Name="AdvancedSettingsButton" Margin="0,16,0,0"
+                                HorizontalContentAlignment="Stretch"
+                                Style="{StaticResource ButtonStyle}"
+                                Click="AdvancedSettingsButton_OnClick">
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" FontWeight="Black"
+                                           Text="ADVANCED SETTINGS" />
+                                <controls:LucideIcon x:Name="AdvancedSettingsChevron"
+                                                     Width="15" Height="15"
+                                                     HorizontalAlignment="Right"
+                                                     Data="{StaticResource Lucide.ChevronDown}" />
+                            </Grid>
+                        </Button>
+
+                        <StackPanel x:Name="AdvancedSettingsFields" Margin="0,18,0,0"
+                                    Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STEP MODE ACTIONS" />
+                            <Grid Margin="0,6,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="AFTER UNIT SELECTION, MS" />
+                                    <TextBox Text="250" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLACEMENT CLICK BURST, MS" />
+                                    <TextBox Text="50" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BEFORE SELECTING UNIT, MS" />
+                                    <TextBox Text="0" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Margin="0,14,0,0">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BEFORE SELECTED-UNIT CHECK, MS" />
+                                    <TextBox Text="0" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,14,0,0">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BETWEEN ACTION KEYS, MS" />
+                                    <TextBox Text="100" />
+                                </StackPanel>
+                            </Grid>
+
+                            <UniformGrid Margin="0,16,0,0" Columns="3">
+                                <CheckBox Margin="0,0,14,0" IsChecked="True"
+                                          Content="REQUIRE PLACEMENT PROOF" />
+                                <CheckBox Margin="0,0,14,0" IsChecked="True"
+                                          Content="REQUIRE RECONFIGURE PROOF" />
+                                <CheckBox IsChecked="True"
+                                          Content="WAIT FOR UPGRADE READINESS" />
+                            </UniformGrid>
+
+                            <TextBlock Margin="0,20,0,0" Style="{StaticResource FieldLabelStyle}"
+                                       Text="RECORDING MODE START" />
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="20" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox VerticalAlignment="Center" IsChecked="True"
+                                          Content="REQUIRE START SCREEN" />
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLAYBACK START DELAY, MS" />
+                                    <TextBox Text="0" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

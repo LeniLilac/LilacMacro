@@ -1,8 +1,11 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using LilacMacro.App.Debugging;
+using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Views;
 using LilacMacro.App.Workspace;
@@ -14,32 +17,98 @@ public partial class MainWindow : Window
 {
     private const int TimedCaptureHotkeyId = 0x4C4D;
     private const int ManualCaptureHotkeyId = 0x4C4E;
-    private readonly WorkspaceController _workspace = new();
-    private readonly OcrRunner _ocr = new();
+    private readonly DeepDebugSessionService _deepDebug;
+    private readonly WorkspaceController _workspace;
+    private readonly OcrRunner _ocr;
+    private readonly ToolShellProfile _profile;
     private readonly Dictionary<PageKind, IWorkspacePage> _pages;
-    private readonly CapturePage _capturePage;
+    private readonly CapturePage? _capturePage;
+    private readonly StoryWireTestPage? _wireTestPage;
+    private readonly DebugKeySequenceCoordinator? _debugInput;
     private GlobalHotkeyRegistration? _timedCaptureHotkey;
     private GlobalHotkeyRegistration? _manualCaptureHotkey;
     private HwndSource? _windowSource;
-    private PageKind _currentPage = PageKind.Capture;
+    private PageKind _currentPage;
     private bool _closingAfterFlush;
     private bool _timedHotkeyCaptureStarting;
     private bool _manualHotkeyCaptureStarting;
 
-    public MainWindow()
+    internal MainWindow(DeepDebugSessionService deepDebug, ToolShellKind kind)
     {
+        _deepDebug = deepDebug;
+        _workspace = new WorkspaceController(deepDebug);
+        _ocr = new OcrRunner(deepDebug);
+        _profile = ToolShellProfile.Create(kind);
+        _currentPage = _profile.StartPage;
         InitializeComponent();
-        _capturePage = new CapturePage(_workspace, NavigateAsync);
-        _pages = new Dictionary<PageKind, IWorkspacePage>
+        Title = _profile.WindowTitle;
+        ToolNameText.Text = _profile.DisplayName;
+        _pages = [];
+        if (kind == ToolShellKind.DatasetBuilder)
         {
-            [PageKind.Capture] = _capturePage,
-            [PageKind.Review] = new ReviewPage(_workspace, _ocr),
-            [PageKind.Datasets] = new DatasetsPage(_workspace, NavigateAsync),
-        };
-        _capturePage.CaptureStateChanged += CapturePage_OnCaptureStateChanged;
+            _capturePage = new CapturePage(_workspace, NavigateAsync, deepDebug);
+            _wireTestPage = null;
+            _debugInput = null;
+            _pages[PageKind.Capture] = _capturePage;
+            _pages[PageKind.Review] = new ReviewPage(_workspace, _ocr);
+            _pages[PageKind.Datasets] = new DatasetsPage(_workspace, NavigateAsync);
+            _capturePage.CaptureStateChanged += CapturePage_OnCaptureStateChanged;
+        }
+        else
+        {
+            _capturePage = null;
+            _debugInput = new DebugKeySequenceCoordinator(_workspace);
+            _wireTestPage = new StoryWireTestPage(_workspace, _ocr, deepDebug);
+            _pages[PageKind.Debug] = new DebugPage(_workspace, _ocr, _debugInput, deepDebug);
+            _pages[PageKind.WireTest] = _wireTestPage;
+            _debugInput.Changed += DebugInput_OnChanged;
+        }
+        ConfigureToolShell();
         _workspace.Changed += Workspace_OnChanged;
+        _deepDebug.OptionsChanged += DeepDebug_OnOptionsChanged;
+        _deepDebug.ArchiveSaved += DeepDebug_OnArchiveSaved;
         Loaded += MainWindow_OnLoaded;
         Closing += MainWindow_OnClosing;
+    }
+
+    private void ConfigureToolShell()
+    {
+        CaptureNav.Visibility = _profile.Includes(PageKind.Capture) ? Visibility.Visible : Visibility.Collapsed;
+        ReviewNav.Visibility = _profile.Includes(PageKind.Review) ? Visibility.Visible : Visibility.Collapsed;
+        DatasetsNav.Visibility = _profile.Includes(PageKind.Datasets) ? Visibility.Visible : Visibility.Collapsed;
+        DebugNav.Visibility = _profile.Includes(PageKind.Debug) ? Visibility.Visible : Visibility.Collapsed;
+        WireTestNav.Visibility = _profile.Includes(PageKind.WireTest) ? Visibility.Visible : Visibility.Collapsed;
+        DatasetPill.Visibility = _profile.Kind == ToolShellKind.DatasetBuilder
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        ManualCaptureKeyPill.Visibility = _capturePage is null ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private async void DeepDebugToggle_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        await _deepDebug.UpdateOptionsAsync(
+            !_deepDebug.Options.Enabled,
+            _deepDebug.Options.FrameRetentionMinutes);
+    }
+
+    private void DeepDebug_OnOptionsChanged(object? sender, EventArgs eventArgs) =>
+        Dispatcher.Invoke(UpdateDeepDebugStatus);
+
+    private void DeepDebug_OnArchiveSaved(object? sender, string path) =>
+        Dispatcher.Invoke(() =>
+        {
+            DeepDebugPill.SetResourceReference(Border.BackgroundProperty, "SuccessBrush");
+            DeepDebugPillText.Text = $"DEBUG SAVED {Path.GetFileNameWithoutExtension(path)}";
+        });
+
+    private void UpdateDeepDebugStatus()
+    {
+        DeepDebugPill.SetResourceReference(
+            Border.BackgroundProperty,
+            _deepDebug.Options.Enabled ? "AccentBrush" : "MutedBrush");
+        DeepDebugPillText.Text = _deepDebug.Options.Enabled
+            ? $"DEEP DEBUG {_deepDebug.Options.FrameRetentionMinutes}M"
+            : "DEEP DEBUG OFF";
     }
 
     private async void MainWindow_OnLoaded(object sender, RoutedEventArgs eventArgs)
@@ -47,8 +116,9 @@ public partial class MainWindow : Window
         try
         {
             await _workspace.InitializeAsync();
-            RegisterCaptureHotkeys();
-            await NavigateAsync(PageKind.Capture);
+            UpdateDeepDebugStatus();
+            RegisterToolHotkeys();
+            await NavigateAsync(_profile.StartPage);
         }
         catch (Exception error)
         {
@@ -56,7 +126,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RegisterCaptureHotkeys()
+    private void RegisterToolHotkeys()
     {
         try
         {
@@ -64,14 +134,17 @@ public partial class MainWindow : Window
             _windowSource = HwndSource.FromHwnd(handle)
                 ?? throw new InvalidOperationException("Could not attach the capture key to LilacMacro.");
             _windowSource.AddHook(WindowMessageHook);
-            RegisterManualCaptureHotkey(handle);
+            if (_capturePage is not null) RegisterManualCaptureHotkey(handle);
             RegisterTimedCaptureHotkey(handle);
         }
         catch (Exception)
         {
-            ManualCaptureKeyPill.Background = (Brush)FindResource("DangerBrush");
-            ManualCaptureKeyPillText.Text = "F5 UNAVAILABLE";
-            CaptureKeyPill.Background = (Brush)FindResource("DangerBrush");
+            if (_capturePage is not null)
+            {
+                ManualCaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "DangerBrush");
+                ManualCaptureKeyPillText.Text = "F5 UNAVAILABLE";
+            }
+            CaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "DangerBrush");
             CaptureKeyPillText.Text = "F6 UNAVAILABLE";
         }
     }
@@ -88,7 +161,7 @@ public partial class MainWindow : Window
         }
         catch (Exception)
         {
-            ManualCaptureKeyPill.Background = (Brush)FindResource("DangerBrush");
+            ManualCaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "DangerBrush");
             ManualCaptureKeyPillText.Text = "F5 UNAVAILABLE";
         }
     }
@@ -105,17 +178,19 @@ public partial class MainWindow : Window
         }
         catch (Exception)
         {
-            CaptureKeyPill.Background = (Brush)FindResource("DangerBrush");
+            CaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "DangerBrush");
             CaptureKeyPillText.Text = "F6 UNAVAILABLE";
         }
     }
 
     private nint WindowMessageHook(nint window, int message, nint parameter, nint data, ref bool handled)
     {
-        if (_manualCaptureHotkey?.Matches(message, parameter) == true)
+        if (_capturePage is not null && _manualCaptureHotkey?.Matches(message, parameter) == true)
         {
             handled = true;
-            if (_capturePage.CanCaptureManualFrame && !_manualHotkeyCaptureStarting)
+            if (_capturePage.CanCaptureManualFrame &&
+                !_manualHotkeyCaptureStarting &&
+                _wireTestPage?.IsRunning != true)
             {
                 _ = RunManualFrameHotkeyAsync();
             }
@@ -124,8 +199,15 @@ public partial class MainWindow : Window
         if (_timedCaptureHotkey?.Matches(message, parameter) == true)
         {
             handled = true;
-            if (!_capturePage.IsCapturing &&
+            if (_debugInput?.HandleF6() == true)
+            {
+                UpdateTimedCaptureKeyStatus();
+                return 0;
+            }
+            if (_capturePage is not null &&
+                !_capturePage.IsCapturing &&
                 !_capturePage.IsManualSessionActive &&
+                _wireTestPage?.IsRunning != true &&
                 !_timedHotkeyCaptureStarting)
             {
                 _ = RunTimedCaptureHotkeyAsync();
@@ -136,11 +218,13 @@ public partial class MainWindow : Window
 
     private async Task RunTimedCaptureHotkeyAsync()
     {
+        CapturePage capturePage = _capturePage
+            ?? throw new InvalidOperationException("Timed capture is not available in Runtime Lab.");
         _timedHotkeyCaptureStarting = true;
         try
         {
             await FlushReviewAsync();
-            await _capturePage.CaptureFromHotkeyAsync();
+            await capturePage.CaptureFromHotkeyAsync();
         }
         finally
         {
@@ -151,11 +235,13 @@ public partial class MainWindow : Window
 
     private async Task RunManualFrameHotkeyAsync()
     {
+        CapturePage capturePage = _capturePage
+            ?? throw new InvalidOperationException("Manual capture is not available in Runtime Lab.");
         _manualHotkeyCaptureStarting = true;
         try
         {
             await FlushReviewAsync();
-            bool captured = await _capturePage.CaptureManualFrameFromHotkeyAsync();
+            bool captured = await capturePage.CaptureManualFrameFromHotkeyAsync();
             if (captured && _currentPage == PageKind.Review && _pages[PageKind.Review] is ReviewPage review)
             {
                 await review.RefreshAsync();
@@ -179,10 +265,40 @@ public partial class MainWindow : Window
         UpdateManualCaptureKeyStatus();
     }
 
+    private void DebugInput_OnChanged(object? sender, EventArgs eventArgs)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            _ = Dispatcher.BeginInvoke(UpdateTimedCaptureKeyStatus);
+            return;
+        }
+        UpdateTimedCaptureKeyStatus();
+    }
+
     private void UpdateTimedCaptureKeyStatus()
     {
         if (_timedCaptureHotkey is null) return;
-        CaptureKeyPill.Background = (Brush)FindResource(_capturePage.TimedCaptureState switch
+        if (_debugInput?.OwnsF6 == true)
+        {
+            CaptureKeyPill.SetResourceReference(
+                Border.BackgroundProperty,
+                _debugInput.State == DebugKeySequenceState.Running ? "AccentBrush" : "YellowBrush");
+            CaptureKeyPillText.Text = _debugInput.State switch
+            {
+                DebugKeySequenceState.Arming => "F6 FOCUSING",
+                DebugKeySequenceState.Armed => "F6 ARMED",
+                DebugKeySequenceState.Running => "F6 KEYS",
+                _ => "F6 STOPPING",
+            };
+            return;
+        }
+        if (_capturePage is null)
+        {
+            CaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "MutedBrush");
+            CaptureKeyPillText.Text = "F6 READY";
+            return;
+        }
+        CaptureKeyPill.SetResourceReference(Border.BackgroundProperty, _capturePage.TimedCaptureState switch
         {
             CaptureRunState.Capturing => "AccentBrush",
             CaptureRunState.Complete => "SuccessBrush",
@@ -202,20 +318,21 @@ public partial class MainWindow : Window
 
     private void UpdateManualCaptureKeyStatus()
     {
-        if (_manualCaptureHotkey is null) return;
+        if (_manualCaptureHotkey is null || _capturePage is null) return;
         if (_capturePage.ManualCaptureState == CaptureRunState.Capturing)
         {
-            ManualCaptureKeyPill.Background = (Brush)FindResource("AccentBrush");
+            ManualCaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "AccentBrush");
             ManualCaptureKeyPillText.Text = "F5 CAPTURING";
             return;
         }
         if (!_capturePage.IsManualSessionActive)
         {
-            ManualCaptureKeyPill.Background = (Brush)FindResource("MutedBrush");
+            ManualCaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "MutedBrush");
             ManualCaptureKeyPillText.Text = "F5 IDLE";
             return;
         }
-        ManualCaptureKeyPill.Background = (Brush)FindResource(
+        ManualCaptureKeyPill.SetResourceReference(
+            Border.BackgroundProperty,
             _capturePage.ManualCaptureState == CaptureRunState.Failed ? "DangerBrush" : "SuccessBrush");
         ManualCaptureKeyPillText.Text = _capturePage.ManualCaptureState == CaptureRunState.Failed
             ? "F5 FAILED"
@@ -224,15 +341,19 @@ public partial class MainWindow : Window
 
     private async Task NavigateAsync(PageKind target)
     {
+        if (!_pages.TryGetValue(target, out IWorkspacePage? page))
+        {
+            throw new InvalidOperationException($"{target} is not available in {_profile.DisplayName}.");
+        }
         if (_currentPage == PageKind.Review && _pages[PageKind.Review] is ReviewPage review)
         {
             await review.FlushPendingAsync();
         }
 
         _currentPage = target;
-        PageHost.Content = _pages[target];
+        PageHost.Content = page;
         SetActiveNavigation(target);
-        await _pages[target].RefreshAsync();
+        await page.RefreshAsync();
     }
 
     private void Workspace_OnChanged(object? sender, EventArgs eventArgs)
@@ -249,17 +370,17 @@ public partial class MainWindow : Window
     {
         if (_workspace.RobloxWindow is null)
         {
-            RobloxPill.Background = (Brush)FindResource("MutedBrush");
+            RobloxPill.SetResourceReference(Border.BackgroundProperty, "MutedBrush");
             RobloxPillText.Text = "ROBLOX: OFFLINE";
         }
         else if (_workspace.WindowIsReady)
         {
-            RobloxPill.Background = (Brush)FindResource("SuccessBrush");
+            RobloxPill.SetResourceReference(Border.BackgroundProperty, "SuccessBrush");
             RobloxPillText.Text = $"ROBLOX: {_workspace.TargetSize}";
         }
         else
         {
-            RobloxPill.Background = (Brush)FindResource("YellowBrush");
+            RobloxPill.SetResourceReference(Border.BackgroundProperty, "YellowBrush");
             RobloxPillText.Text = $"ROBLOX: {_workspace.ObservedClientSize}";
         }
 
@@ -282,6 +403,8 @@ public partial class MainWindow : Window
         CaptureNav.Style = (Style)FindResource(active == PageKind.Capture ? "NavButtonActiveStyle" : "NavButtonStyle");
         ReviewNav.Style = (Style)FindResource(active == PageKind.Review ? "NavButtonActiveStyle" : "NavButtonStyle");
         DatasetsNav.Style = (Style)FindResource(active == PageKind.Datasets ? "NavButtonActiveStyle" : "NavButtonStyle");
+        DebugNav.Style = (Style)FindResource(active == PageKind.Debug ? "NavButtonActiveStyle" : "NavButtonStyle");
+        WireTestNav.Style = (Style)FindResource(active == PageKind.WireTest ? "NavButtonActiveStyle" : "NavButtonStyle");
     }
 
     private async void MainWindow_OnClosing(object? sender, CancelEventArgs eventArgs)
@@ -290,7 +413,11 @@ public partial class MainWindow : Window
         eventArgs.Cancel = true;
         try
         {
-            if (_pages[PageKind.Review] is ReviewPage review) await review.FlushPendingAsync();
+            if (_pages.TryGetValue(PageKind.Review, out IWorkspacePage? page) && page is ReviewPage review)
+                await review.FlushPendingAsync();
+            if (_capturePage is not null) await _capturePage.CompleteForCloseAsync();
+            if (_wireTestPage is not null) await _wireTestPage.StopAsync();
+            if (_debugInput is not null) await _debugInput.StopAsync();
         }
         finally
         {
@@ -300,6 +427,8 @@ public partial class MainWindow : Window
             _timedCaptureHotkey?.Dispose();
             _ocr.Dispose();
             _workspace.Dispose();
+            _deepDebug.OptionsChanged -= DeepDebug_OnOptionsChanged;
+            _deepDebug.ArchiveSaved -= DeepDebug_OnArchiveSaved;
             _ = Dispatcher.BeginInvoke(Close);
         }
     }
@@ -320,6 +449,10 @@ public partial class MainWindow : Window
     private async void ReviewNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.Review);
 
     private async void DatasetsNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.Datasets);
+
+    private async void DebugNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.Debug);
+
+    private async void WireTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.WireTest);
 
     private void Minimize_OnClick(object sender, RoutedEventArgs eventArgs) => WindowState = WindowState.Minimized;
 

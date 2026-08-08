@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using LilacMacro.Core.Geometry;
+using LilacMacro.App.Diagnostics;
 
 namespace LilacMacro.App.Infrastructure;
 
@@ -34,6 +35,9 @@ public sealed class OcrRunner : IDisposable
     private string? _persistentChannel;
     private bool _keepLoaded;
     private bool _disposed;
+    private readonly DeepDebugSessionService _deepDebug;
+
+    public OcrRunner(DeepDebugSessionService deepDebug) => _deepDebug = deepDebug;
 
     public bool IsInstalled => File.Exists(_pythonPath) && ReadRuntimeDevice() is "cpu" or "gpu";
 
@@ -105,6 +109,13 @@ public sealed class OcrRunner : IDisposable
         if (!SupportedDevices.Contains(device)) throw new ArgumentOutOfRangeException(nameof(device));
         if (!IsDeviceReady(device)) throw new InvalidOperationException($"OCR {device} is not set up yet.");
 
+        DeepDebugScope? scope = _deepDebug.IsActive
+            ? null
+            : await _deepDebug.OpenSessionAsync(
+                "ocr-test",
+                new DeepDebugOperationContext(
+                    "dataset-builder",
+                    new { imagePath, crop, modelName, device, KeepLoaded }));
         string temporaryRoot = Path.Combine(Path.GetTempPath(), "LilacMacro", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporaryRoot);
         string cropPath = Path.Combine(temporaryRoot, "crop.png");
@@ -112,10 +123,45 @@ public sealed class OcrRunner : IDisposable
         try
         {
             await Application.Current.Dispatcher.InvokeAsync(() => WriteCrop(imagePath, crop, cropPath));
+            _deepDebug.RecordPng(await File.ReadAllBytesAsync(cropPath, cancellationToken), "ocr-crop", new
+            {
+                Source = imagePath,
+                Crop = crop,
+                Model = modelName,
+                Device = device,
+                KeepLoaded,
+            });
             OcrWorkerResult result = KeepLoaded
                 ? await RunPersistentAsync(cropPath, modelName, device, cancellationToken)
                 : await RunOneShotAsync(cropPath, outputPath, modelName, device, cancellationToken);
-            return OffsetRegions(result, crop);
+            OcrWorkerResult offset = OffsetRegions(result, crop);
+            _deepDebug.RecordEvent("ocr", "inference_completed", new
+            {
+                offset.ModelName,
+                offset.DetectorModelName,
+                offset.Device,
+                offset.ModelLoadMilliseconds,
+                offset.InferenceMilliseconds,
+                offset.ModelCached,
+                offset.PaddleOcrVersion,
+                Crop = crop,
+                offset.Regions,
+                offset.Text,
+                offset.Confidence,
+            });
+            if (scope is not null) await scope.CompleteAsync("success");
+            return offset;
+        }
+        catch (OperationCanceledException error)
+        {
+            if (scope is not null) await scope.CompleteAsync("canceled", error);
+            throw;
+        }
+        catch (Exception error)
+        {
+            _deepDebug.RecordEvent("ocr", "inference_failed", new { Error = error.ToString() });
+            if (scope is not null) await scope.CompleteAsync("error", error);
+            throw;
         }
         finally
         {

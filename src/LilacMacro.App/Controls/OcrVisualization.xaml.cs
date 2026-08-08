@@ -31,6 +31,10 @@ public partial class OcrVisualization : UserControl
 
     public bool TextOnly { get; private set; }
 
+    public bool HideUnchecked { get; private set; }
+
+    public void SetHideUnchecked(bool value) => HideUnchecked = value;
+
     public void SetTextOnly(bool value)
     {
         if (TextOnly == value) return;
@@ -67,6 +71,7 @@ public partial class OcrVisualization : UserControl
             {
                 foreach (OcrTextRegion region in trial.Regions)
                 {
+                    if (HideUnchecked && !HasRole(region)) continue;
                     AddDetectedSourceRegion(region, color);
                     AddDetectedTextRegion(region, color);
                 }
@@ -115,12 +120,13 @@ public partial class OcrVisualization : UserControl
             Width = bounds.Width,
             Height = bounds.Height,
             Stroke = color,
-            StrokeThickness = 3,
+            StrokeThickness = HasRole(region) ? 5 : 3,
+            StrokeDashArray = HasRole(region) ? [6, 3] : null,
             Fill = Brushes.Transparent,
         };
         Position(box, bounds.X, bounds.Y, SourceOverlay);
         TextBlock label = MakeLabel(
-            $"{region.Text}  [{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}]",
+            $"{region.Text}{RoleSuffix(region)}  [{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}]",
             color,
             10);
         Position(label, bounds.X, Math.Max(0, bounds.Y - 19), SourceOverlay);
@@ -134,12 +140,12 @@ public partial class OcrVisualization : UserControl
             Width = bounds.Width,
             Height = bounds.Height,
             BorderBrush = color,
-            BorderThickness = new Thickness(2),
+            BorderThickness = new Thickness(HasRole(region) ? 4 : 2),
             Background = Brushes.White,
             Padding = new Thickness(3, 0, 3, 0),
             Child = new TextBlock
             {
-                Text = region.Text,
+                Text = region.Text + RoleSuffix(region),
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 FontSize = Math.Clamp(bounds.Height * 0.58, 9, 28),
                 FontWeight = FontWeights.SemiBold,
@@ -201,6 +207,19 @@ public partial class OcrVisualization : UserControl
         "PP-OCRv6_tiny_rec" => TinyBrush,
         _ => EmptyBrush,
     };
+
+    private static bool HasRole(OcrTextRegion region) => region.IsOcrEvidence || region.IsVisualAnchor;
+
+    private static string RoleSuffix(OcrTextRegion region) =>
+        (region.IsOcrEvidence, region.IsVisualAnchor, region.MatchMode == OcrMatchMode.FuzzyPhrase) switch
+        {
+            (true, true, true) => "  [OCR:FUZZY+IMAGE]",
+            (true, true, false) => "  [OCR+IMAGE]",
+            (true, false, true) => "  [OCR:FUZZY]",
+            (true, false, false) => "  [OCR]",
+            (false, true, _) => "  [IMAGE]",
+            _ => string.Empty,
+        };
 
     private void SetZoom(double value, Point? anchor = null)
     {

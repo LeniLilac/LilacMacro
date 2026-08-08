@@ -91,11 +91,11 @@
                     </Border>
                 </StackPanel>
 
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" VerticalAlignment="Top" Background="{StaticResource YellowBrush}">
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" VerticalAlignment="Top" Background="{DynamicResource YellowBrush}">
                     <StackPanel>
                         <TextBlock Text="STATUS" Style="{StaticResource EyebrowStyle}" />
                         <TextBlock x:Name="RunHeadline" Text="SIZE REQUIRED" FontSize="22" FontWeight="Black" Margin="0,9,0,5" TextWrapping="Wrap" />
-                        <TextBlock x:Name="RunDetail" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource InkSoftBrush}" TextWrapping="Wrap" />
+                        <TextBlock x:Name="RunDetail" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap" />
                         <ProgressBar x:Name="CaptureProgressBar" Minimum="0" Maximum="1" Value="0" Margin="0,20,0,7" />
                         <TextBlock x:Name="ProgressText" Text="0 / 0" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Bold" />
                         <Button x:Name="StartButton" Content="START TIMED CAPTURE" Style="{StaticResource PrimaryButtonStyle}" Margin="0,22,0,9" Click="Start_OnClick" />

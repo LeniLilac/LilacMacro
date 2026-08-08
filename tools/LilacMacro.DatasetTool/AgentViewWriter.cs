@@ -138,7 +138,8 @@ internal sealed class AgentViewWriter
                 box.Height * scale);
             drawing.DrawRectangle(null, new Pen(new SolidColorBrush(Color.FromRgb(255, 79, 172)), 2), rectangle);
             if (string.IsNullOrWhiteSpace(annotation.Label)) continue;
-            FormattedText text = MakeText(annotation.Label, 10, Brushes.Black, FontWeights.Bold);
+            string displayLabel = annotation.IsGlobal ? $"GLOBAL · {annotation.Label}" : annotation.Label;
+            FormattedText text = MakeText(displayLabel, 10, Brushes.Black, FontWeights.Bold);
             Rect label = new(rectangle.X, Math.Max(imageBounds.Y, rectangle.Y - 16), text.Width + 6, 16);
             drawing.DrawRectangle(new SolidColorBrush(Color.FromRgb(255, 225, 90)), null, label);
             drawing.DrawText(text, new Point(label.X + 3, label.Y + 1));
@@ -304,9 +305,11 @@ internal sealed class AgentViewWriter
                 annotations = frame.Annotations.Select(annotation => new
                 {
                     annotation.Id,
+                    annotation.GlobalGroupId,
                     annotation.Bounds,
                     annotation.Label,
                     annotation.Notes,
+                    annotation.MinimumPoolMatches,
                     crop_path = cropPaths[annotation.Id],
                     ocr_trials = annotation.OcrTrials.Select(trial => new
                     {
@@ -327,6 +330,13 @@ internal sealed class AgentViewWriter
                             region.Text,
                             region.DetectionConfidence,
                             region.RecognitionConfidence,
+                            region.IsOcrEvidence,
+                            region.IsVisualAnchor,
+                            match_mode = JsonNamingPolicy.SnakeCaseLower.ConvertName(region.MatchMode.ToString()),
+                            evidence_role = JsonNamingPolicy.SnakeCaseLower.ConvertName(region.EvidenceRole.ToString()),
+                            spatial_selector = JsonNamingPolicy.SnakeCaseLower.ConvertName(region.SpatialSelector.ToString()),
+                            region.SpatialSelectorOverridden,
+                            region.SpatialAnchorText,
                         }),
                     }),
                 }),
@@ -355,6 +365,12 @@ internal sealed class AgentViewWriter
             coordinate_space = dataset.Manifest.CoordinateSpace,
             frame_count = dataset.Manifest.Frames.Count,
             annotation_count = cropPaths.Count,
+            global_annotation_group_count = dataset.Manifest.Frames
+                .SelectMany(frame => frame.Annotations)
+                .Where(annotation => annotation.GlobalGroupId.HasValue)
+                .Select(annotation => annotation.GlobalGroupId)
+                .Distinct()
+                .Count(),
             contact_sheets = sheets,
             ocr_maps = ocrMaps,
             frames_jsonl = "frames.jsonl",
@@ -387,6 +403,7 @@ internal sealed class AgentViewWriter
         markdown.AppendLine($"- Capture: `{manifest.ClientWidth} × {manifest.ClientHeight}` client pixels");
         markdown.AppendLine($"- Frames: `{manifest.Frames.Count}`");
         markdown.AppendLine($"- Regions: `{cropPaths.Count}`");
+        markdown.AppendLine($"- Global region groups: `{manifest.Frames.SelectMany(frame => frame.Annotations).Where(annotation => annotation.GlobalGroupId.HasValue).Select(annotation => annotation.GlobalGroupId).Distinct().Count()}`");
         markdown.AppendLine($"- Coordinate space: `{manifest.CoordinateSpace}`");
         markdown.AppendLine();
         if (!string.IsNullOrWhiteSpace(manifest.Notes)) markdown.AppendLine($"Dataset note: {manifest.Notes}\n");

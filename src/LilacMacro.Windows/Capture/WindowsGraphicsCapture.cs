@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Imaging;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
@@ -58,6 +59,43 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
                         _active = CaptureSession.Create(window, client, windowBounds, extendedFrameBounds);
                     }
                     return _active.Capture();
+                }
+                catch (TimeoutException) when (attempt == 0)
+                {
+                    _active?.Dispose();
+                    _active = null;
+                }
+                catch (CaptureSurfaceChangedException)
+                {
+                    _active?.Dispose();
+                    _active = null;
+                    throw;
+                }
+            }
+            throw new TimeoutException("Windows did not provide a fresh Roblox frame after rebuilding the capture session.");
+        }
+    }
+
+    public IReadOnlyList<RgbImage> CaptureClientRegions(
+        nint window,
+        ClientBounds client,
+        WindowBounds windowBounds,
+        WindowBounds extendedFrameBounds,
+        IReadOnlyList<PixelRect> regions)
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                try
+                {
+                    if (_active is null || !_active.Matches(window, client, windowBounds, extendedFrameBounds))
+                    {
+                        _active?.Dispose();
+                        _active = CaptureSession.Create(window, client, windowBounds, extendedFrameBounds);
+                    }
+                    return _active.CaptureRegions(regions);
                 }
                 catch (TimeoutException) when (attempt == 0)
                 {

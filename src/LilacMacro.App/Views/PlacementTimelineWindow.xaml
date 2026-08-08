@@ -1,0 +1,63 @@
+<Window x:Class="LilacMacro.App.Views.PlacementTimelineWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:LilacMacro.App.Controls"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="LilacMacro / Placement"
+        Width="1080" Height="640" MinWidth="760" MinHeight="420"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        WindowStyle="None" Background="{DynamicResource AppBackgroundBrush}">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" CornerRadius="0" GlassFrameThickness="0"
+                            ResizeBorderThickness="6" />
+    </shell:WindowChrome.WindowChrome>
+    <Window.Resources>
+        <Style x:Key="PopoutWindowButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="42" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource InkBrush}"
+                BorderThickness="0,0,0,3" MouseLeftButtonDown="Header_OnMouseLeftButtonDown">
+            <Grid Margin="12,0,6,0">
+                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                    <Button Margin="0,0,6,0" Style="{StaticResource PopoutWindowButtonStyle}"
+                            Click="Minimize_OnClick">
+                        <controls:LucideIcon Width="15" Height="15" Data="{StaticResource Lucide.Minus}" />
+                    </Button>
+                    <Button Margin="0,0,6,0" Style="{StaticResource PopoutWindowButtonStyle}"
+                            Click="Maximize_OnClick">
+                        <controls:LucideIcon Width="14" Height="14">
+                            <controls:LucideIcon.Style>
+                                <Style TargetType="controls:LucideIcon">
+                                    <Setter Property="Data" Value="{StaticResource Lucide.Square}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     Value="Maximized">
+                                            <Setter Property="Data" Value="{StaticResource Lucide.Copy}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </controls:LucideIcon.Style>
+                        </controls:LucideIcon>
+                    </Button>
+                    <Button Background="{DynamicResource DangerBrush}"
+                            Style="{StaticResource PopoutWindowButtonStyle}" Click="Close_OnClick">
+                        <controls:LucideIcon Width="15" Height="15" Data="{StaticResource Lucide.X}" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ContentControl x:Name="TimelineHost" Grid.Row="1" Margin="14" />
+    </Grid>
+</Window>

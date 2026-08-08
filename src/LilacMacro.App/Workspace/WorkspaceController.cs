@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using LilacMacro.App.Infrastructure;
+using LilacMacro.App.Diagnostics;
+using LilacMacro.Core.Automation;
 using LilacMacro.Core.Capture;
 using LilacMacro.Core.Datasets;
 using LilacMacro.Core.Geometry;
+using LilacMacro.Core.Imaging;
 using LilacMacro.Windows;
 using LilacMacro.Windows.Capture;
 
@@ -13,14 +16,29 @@ public sealed class WorkspaceController : IDisposable
     private readonly AppSettingsStore _settingsStore = new();
     private readonly DatasetStore _datasets = new();
     private readonly RobloxWindowService _windows = new();
+    private readonly WorkspaceInputCoordinator _input;
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly RobloxCaptureService _capture;
+    private readonly DeepDebugSessionService _deepDebug;
     private AppSettings _settings = new();
     private DatasetLocation? _manualCaptureDataset;
 
-    public WorkspaceController()
+    public WorkspaceController(DeepDebugSessionService deepDebug)
     {
+        _deepDebug = deepDebug;
         _capture = new RobloxCaptureService(_windows);
+        _input = new WorkspaceInputCoordinator(
+            _windows,
+            new RobloxInputService(_windows),
+            _operationGate,
+            _deepDebug,
+            () => RobloxWindow,
+            (window, size) =>
+            {
+                RobloxWindow = window;
+                ObservedClientSize = size;
+                Changed?.Invoke(this, EventArgs.Empty);
+            });
     }
 
     public event EventHandler? Changed;
@@ -49,10 +67,12 @@ public sealed class WorkspaceController : IDisposable
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
+        _deepDebug.RecordEvent("workspace", "initialize_started");
         _settings = await _settingsStore.LoadAsync(cancellationToken);
         await RefreshWindowAsync(cancellationToken);
         IReadOnlyList<DatasetLocation> datasets = await _datasets.DiscoverAsync(DatasetRoot, cancellationToken);
         RecentDataset = datasets.FirstOrDefault();
+        _deepDebug.RecordEvent("workspace", "initialize_completed", new { TargetSize, DatasetRoot, RecentDataset = RecentDataset?.DirectoryPath });
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -61,20 +81,210 @@ public sealed class WorkspaceController : IDisposable
         cancellationToken.ThrowIfCancellationRequested();
         RobloxWindow = _windows.FindBest();
         ObservedClientSize = RobloxWindow is { } window ? _windows.GetClientBounds(window).Size : null;
+        _deepDebug.RecordEvent("window", "refreshed", new { Found = RobloxWindow is not null, RobloxWindow?.Title, RobloxWindow?.ProcessId, ObservedClientSize });
         Changed?.Invoke(this, EventArgs.Empty);
         await Task.CompletedTask;
     }
 
     public async Task<ResizeResult> ApplyTargetSizeAsync(CancellationToken cancellationToken = default)
+        => await ApplyClientSizeAsync(TargetSize, cancellationToken);
+
+    public async Task<ResizeResult> ApplyClientSizeAsync(
+        PixelSize target,
+        CancellationToken cancellationToken = default)
     {
-        RobloxWindow window = RobloxWindow ?? _windows.FindBest()
-            ?? throw new InvalidOperationException("Start Roblox in windowed mode, then try again.");
-        RobloxWindow = window;
-        ResizeResult result = await _windows.ResizeClientAsync(window, TargetSize, cancellationToken);
-        ObservedClientSize = _windows.GetClientBounds(window).Size;
-        Changed?.Invoke(this, EventArgs.Empty);
-        return result;
+        if (!await _operationGate.WaitAsync(0, cancellationToken))
+        {
+            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        }
+        try
+        {
+            RobloxWindow window = RobloxWindow ?? _windows.FindBest()
+                ?? throw new InvalidOperationException("Start Roblox in windowed mode, then try again.");
+            RobloxWindow = window;
+            ResizeResult result = await _windows.ResizeClientAsync(window, target, cancellationToken);
+            ObservedClientSize = _windows.GetClientBounds(window).Size;
+            _deepDebug.RecordEvent("window", "client_resized", new
+            {
+                Requested = target,
+                ObservedClientSize,
+                Result = result,
+            });
+            Changed?.Invoke(this, EventArgs.Empty);
+            return result;
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
     }
+
+    public async Task<CapturedPng> CaptureLiveFrameAsync(
+        PixelSize requiredSize,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _operationGate.WaitAsync(0, cancellationToken))
+        {
+            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        }
+        try
+        {
+            RobloxWindow window = RobloxWindow ?? _windows.FindBest()
+                ?? throw new InvalidOperationException("Start Roblox in windowed mode before running Debug OCR.");
+            RobloxWindow = window;
+            if (_windows.GetClientBounds(window).Size != requiredSize)
+            {
+                await _windows.ResizeClientAsync(window, requiredSize, cancellationToken);
+            }
+
+            CapturedPng image = await Task.Run(() => _capture.Capture(window), cancellationToken);
+            ObservedClientSize = _windows.GetClientBounds(window).Size;
+            if (image.Size != requiredSize || ObservedClientSize != requiredSize)
+            {
+                throw new InvalidOperationException(
+                    $"Debug capture requires {requiredSize}; captured {image.Size} and observed {ObservedClientSize}.");
+            }
+            _deepDebug.RecordPng(image.Bytes, "live-client", new
+            {
+                image.Size,
+                RequiredSize = requiredSize,
+                ObservedClientSize,
+            });
+            Changed?.Invoke(this, EventArgs.Empty);
+            return image;
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
+    }
+
+    public async Task<IReadOnlyList<CapturedGrayRegion>> CaptureDetectorRegionsAsync(
+        PixelSize requiredSize,
+        IReadOnlyList<PixelRect> regions,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(regions);
+        if (regions.Count == 0) return [];
+        if (!await _operationGate.WaitAsync(0, cancellationToken))
+        {
+            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        }
+        try
+        {
+            RobloxWindow window = RobloxWindow ?? _windows.FindBest()
+                ?? throw new InvalidOperationException("Start Roblox in windowed mode before testing image matching.");
+            RobloxWindow = window;
+            if (_windows.GetClientBounds(window).Size != requiredSize)
+            {
+                await _windows.ResizeClientAsync(window, requiredSize, cancellationToken);
+            }
+            IReadOnlyList<CapturedGrayRegion> captures = await Task.Run(
+                () => _capture.CaptureDetectorRegions(window, regions),
+                cancellationToken);
+            ObservedClientSize = _windows.GetClientBounds(window).Size;
+            if (ObservedClientSize != requiredSize)
+            {
+                throw new InvalidOperationException(
+                    $"Image comparison requires {requiredSize}; observed {ObservedClientSize}.");
+            }
+            for (int index = 0; index < captures.Count; index++)
+            {
+                CapturedGrayRegion capture = captures[index];
+                _deepDebug.RecordGrayImage(capture.Image, $"detector-region-{index + 1}", new
+                {
+                    capture.Region,
+                    RequiredSize = requiredSize,
+                });
+            }
+            Changed?.Invoke(this, EventArgs.Empty);
+            return captures;
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
+    }
+
+    public async Task<IReadOnlyList<CapturedRgbRegion>> CaptureRgbRegionsAsync(
+        PixelSize requiredSize,
+        IReadOnlyList<PixelRect> regions,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(regions);
+        if (regions.Count == 0) return [];
+        if (!await _operationGate.WaitAsync(0, cancellationToken))
+            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        try
+        {
+            RobloxWindow window = RobloxWindow ?? _windows.FindBest()
+                ?? throw new InvalidOperationException("Start Roblox in windowed mode before capturing unit controls.");
+            RobloxWindow = window;
+            if (_windows.GetClientBounds(window).Size != requiredSize)
+                await _windows.ResizeClientAsync(window, requiredSize, cancellationToken);
+            IReadOnlyList<CapturedRgbRegion> captures = await Task.Run(
+                () => _capture.CaptureRgbRegions(window, regions), cancellationToken);
+            ObservedClientSize = _windows.GetClientBounds(window).Size;
+            if (ObservedClientSize != requiredSize)
+                throw new InvalidOperationException($"Unit control capture requires {requiredSize}; observed {ObservedClientSize}.");
+            foreach (CapturedRgbRegion capture in captures)
+                _deepDebug.RecordPng(PngEncoder.Encode(capture.Image), "unit-control-region", new { capture.Region });
+            Changed?.Invoke(this, EventArgs.Empty);
+            return captures;
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
+    }
+
+    public Task FocusRobloxAsync(
+        PixelSize requiredSize,
+        CancellationToken cancellationToken = default) =>
+        _input.FocusAsync(requiredSize, cancellationToken);
+
+    public Task ClickRobloxAsync(
+        PixelSize requiredSize,
+        PixelPoint point,
+        CancellationToken cancellationToken = default) =>
+        _input.ClickAsync(requiredSize, point, cancellationToken);
+
+    public Task ScrollRobloxAsync(
+        PixelSize requiredSize,
+        PixelPoint point,
+        int wheelDelta,
+        TimeSpan duration,
+        CancellationToken cancellationToken = default) =>
+        _input.ScrollAsync(requiredSize, point, wheelDelta, duration, cancellationToken);
+
+    public Task DragRobloxAsync(
+        PixelSize requiredSize,
+        PixelPoint start,
+        PixelPoint end,
+        TimeSpan duration,
+        CancellationToken cancellationToken = default) =>
+        _input.DragAsync(requiredSize, start, end, duration, cancellationToken);
+
+    public Task RunKeySequenceAsync(
+        PixelSize requiredSize,
+        AutomationKeySequence sequence,
+        CancellationToken cancellationToken = default) =>
+        _input.RunKeysAsync(requiredSize, sequence, cancellationToken);
+
+    public Task RunQuickPlacementBatchAsync(
+        PixelSize requiredSize,
+        int quickPlacementVirtualKey,
+        int cancelPlacementVirtualKey,
+        IReadOnlyList<QuickPlacementPoint> placements,
+        CancellationToken cancellationToken = default) =>
+        _input.RunQuickPlacementAsync(
+            requiredSize, quickPlacementVirtualKey, cancelPlacementVirtualKey, placements, cancellationToken);
+
+    public Task AlignCameraAsync(
+        PixelSize requiredSize,
+        int shiftLockVirtualKey = KeyboardKey.LeftShift,
+        CancellationToken cancellationToken = default) =>
+        _input.AlignCameraAsync(requiredSize, shiftLockVirtualKey, cancellationToken);
 
     public async Task UpdateSettingsAsync(
         int targetWidth,
@@ -168,6 +378,13 @@ public sealed class WorkspaceController : IDisposable
 
                 progress?.Report(new CaptureProgress(index, schedule.Count, $"Capturing frame {index + 1} of {schedule.Count}"));
                 CapturedPng image = await Task.Run(() => _capture.Capture(window), cancellationToken);
+                _deepDebug.RecordPng(image.Bytes, "dataset-frame", new
+                {
+                    Index = index + 1,
+                    Total = schedule.Count,
+                    Dataset = location.DirectoryPath,
+                    image.Size,
+                });
                 await _datasets.AddFrameAsync(
                     location,
                     image.Bytes,
@@ -254,6 +471,11 @@ public sealed class WorkspaceController : IDisposable
             }
 
             CapturedPng image = await Task.Run(() => _capture.Capture(window), cancellationToken);
+            _deepDebug.RecordPng(image.Bytes, "manual-dataset-frame", new
+            {
+                Dataset = location.DirectoryPath,
+                image.Size,
+            });
             DatasetFrame frame = await _datasets.AddFrameAsync(
                 location,
                 image.Bytes,

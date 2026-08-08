@@ -1,0 +1,31 @@
+<UserControl x:Class="LilacMacro.App.Views.ReviewVisualMatchPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <TextBlock Text="IMAGE MATCH TEST" Style="{StaticResource EyebrowStyle}" />
+        <ComboBox x:Name="AnchorCombo" DisplayMemberPath="Text" Margin="0,7,0,0" SelectionChanged="Anchor_OnChanged" />
+        <Button x:Name="RunButton" Content="BUILD + MATCH" Style="{StaticResource PrimaryButtonStyle}" Margin="0,9,0,0" Click="Run_OnClick" />
+        <TextBlock x:Name="StatusText" Text="NO RESULT" FontFamily="{StaticResource MonoFont}" FontSize="11" FontWeight="Black" TextWrapping="Wrap" Margin="0,9,0,0" />
+        <StackPanel x:Name="ResultPanel" Visibility="Collapsed">
+            <TextBlock x:Name="ScoresText" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" Margin="0,5,0,0" />
+            <TextBlock x:Name="ProfileText" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" Margin="0,3,0,0" />
+            <TextBlock x:Name="TimingsText" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" Margin="0,3,0,0" />
+            <TextBlock x:Name="CoordinatesText" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" Margin="0,3,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition /><ColumnDefinition /></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,4,0">
+                    <Border Height="74" Background="{DynamicResource CanvasBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="1"><Image x:Name="MedianImage" Stretch="Uniform" /></Border>
+                    <TextBlock Text="MEDIAN" Style="{StaticResource EyebrowStyle}" FontSize="9" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="2,0">
+                    <Border Height="74" Background="{DynamicResource CanvasBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="1"><Image x:Name="ReliabilityImage" Stretch="Uniform" /></Border>
+                    <TextBlock Text="RELIABLE" Style="{StaticResource EyebrowStyle}" FontSize="9" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="4,0,0,0">
+                    <Border Height="74" Background="{DynamicResource CanvasBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="1"><Image x:Name="MatchedImage" Stretch="Uniform" /></Border>
+                    <TextBlock Text="MATCH" Style="{StaticResource EyebrowStyle}" FontSize="9" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

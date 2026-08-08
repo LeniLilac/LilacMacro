@@ -10,6 +10,12 @@ public readonly record struct PixelRect(int X, int Y, int Width, int Height)
     [JsonIgnore]
     public int Bottom => checked(Y + Height);
 
+    [JsonIgnore]
+    public PixelPoint Center => new(checked(X + Width / 2), checked(Y + Height / 2));
+
+    [JsonIgnore]
+    public PixelPoint TopCenter => new(checked(X + Width / 2), Y);
+
     public bool IsInside(PixelSize image) =>
         X >= 0 &&
         Y >= 0 &&
@@ -25,6 +31,15 @@ public readonly record struct PixelRect(int X, int Y, int Width, int Height)
         rectangle.Height > 0 &&
         rectangle.Right <= Right &&
         rectangle.Bottom <= Bottom;
+
+    public static PixelRect Union(PixelRect first, PixelRect second)
+    {
+        int left = Math.Min(first.X, second.X);
+        int top = Math.Min(first.Y, second.Y);
+        int right = Math.Max(first.Right, second.Right);
+        int bottom = Math.Max(first.Bottom, second.Bottom);
+        return new PixelRect(left, top, checked(right - left), checked(bottom - top));
+    }
 
     public static PixelRect? FromDrag(
         double startX,

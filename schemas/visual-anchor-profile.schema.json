@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/visual-anchor-profile.schema.json",
+  "title": "LilacMacro adaptive visual anchor profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "schema_version",
+    "definition",
+    "revision_id",
+    "built_at_utc",
+    "strategy",
+    "reference_client_width",
+    "reference_client_height",
+    "sample_count",
+    "reference_bounds_width",
+    "reference_bounds_height",
+    "canonical_width",
+    "canonical_height",
+    "metrics",
+    "assets",
+    "sha256"
+  ],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri" },
+    "format": { "const": "lilacmacro.visual-anchor-profile" },
+    "schema_version": { "const": 1 },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text_aliases", "click_point"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$" },
+        "text_aliases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "click_point": {
+          "enum": ["text_bounds_center", "text_bounds_top_center"]
+        }
+      }
+    },
+    "revision_id": { "type": "string", "format": "uuid" },
+    "built_at_utc": { "type": "string", "format": "date-time" },
+    "strategy": {
+      "enum": ["stable_appearance", "animated_appearance", "multi_phase", "ocr_only"]
+    },
+    "reference_client_width": { "type": "integer", "minimum": 1 },
+    "reference_client_height": { "type": "integer", "minimum": 1 },
+    "sample_count": { "type": "integer", "minimum": 1 },
+    "reference_bounds_width": { "type": "integer", "minimum": 1 },
+    "reference_bounds_height": { "type": "integer", "minimum": 1 },
+    "canonical_width": { "type": "integer", "minimum": 1 },
+    "canonical_height": { "type": "integer", "minimum": 1 },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mean_temporal_standard_deviation",
+        "stable_pixel_ratio",
+        "dynamic_pixel_ratio",
+        "edge_energy",
+        "phase_count"
+      ],
+      "properties": {
+        "mean_temporal_standard_deviation": { "type": "number", "minimum": 0 },
+        "stable_pixel_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "dynamic_pixel_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "edge_energy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "phase_count": { "type": "integer", "minimum": 1, "maximum": 8 }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "minProperties": 4,
+      "additionalProperties": { "type": "string", "pattern": "^[A-Za-z0-9_]+\\.pgm$" }
+    },
+    "sha256": {
+      "type": "object",
+      "minProperties": 4,
+      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    }
+  }
+}

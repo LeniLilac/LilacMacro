@@ -1,0 +1,68 @@
+<UserControl x:Class="LilacMacro.App.Views.ReviewAnnotationIntentPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <StackPanel x:Name="CandidatesPanel" Visibility="Collapsed">
+            <Grid Margin="0,14,0,6">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <TextBlock Text="RELEVANT OCR RESULTS" Style="{StaticResource EyebrowStyle}" VerticalAlignment="Center" />
+                <CheckBox x:Name="HideUncheckedToggle" Grid.Column="1" Content="HIDE UNCHECKED"
+                          FontSize="9" Click="HideUnchecked_OnClick" />
+            </Grid>
+            <Border Background="{DynamicResource MutedBrush}"
+                    BorderBrush="{DynamicResource ChromeBorderBrush}"
+                    BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,7">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <TextBlock x:Name="RuleSummaryText" FontFamily="{StaticResource MonoFont}" FontSize="9"
+                               FontWeight="Bold" VerticalAlignment="Center" TextWrapping="Wrap" />
+                    <ComboBox x:Name="PoolMinimumCombo" Grid.Column="1" Width="52" Margin="8,0,0,0"
+                              SelectionChanged="PoolMinimum_OnChanged" />
+                </Grid>
+            </Border>
+            <ItemsControl x:Name="CandidatesList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{DynamicResource MutedBrush}"
+                                BorderBrush="{DynamicResource ChromeBorderBrush}"
+                                BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Text}" FontWeight="Bold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Coordinates}" FontFamily="{StaticResource MonoFont}" FontSize="8" Foreground="{DynamicResource InkSoftBrush}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,7,0,0">
+                                    <CheckBox Content="OCR" IsChecked="{Binding IsOcrEvidence, Mode=OneWay}" Tag="ocr" DataContext="{Binding}" Click="CandidateRole_OnClick" Margin="0,0,8,0" Style="{StaticResource MultiBoxSelectorStyle}" />
+                                    <CheckBox Content="IMAGE" IsChecked="{Binding IsVisualAnchor, Mode=OneWay}" Tag="image" DataContext="{Binding}" Click="CandidateRole_OnClick" Margin="0,0,8,0" Style="{StaticResource MultiBoxSelectorStyle}" />
+                                    <CheckBox Content="FUZZY" IsChecked="{Binding IsFuzzy, Mode=OneWay}"
+                                              IsEnabled="{Binding CanUseFuzzy}" Tag="fuzzy" DataContext="{Binding}"
+                                              Click="CandidateRole_OnClick" Style="{StaticResource MultiBoxSelectorStyle}" />
+                                </StackPanel>
+                                <Grid Grid.Row="2" Margin="0,7,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="92" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox ItemsSource="{Binding EvidenceOptions}" SelectedItem="{Binding SelectedEvidence, Mode=OneWay}"
+                                              SelectionChanged="EvidenceRole_OnChanged" FontSize="9" />
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding SpatialOptions}" SelectedItem="{Binding SelectedSpatial, Mode=OneWay}"
+                                              SelectionChanged="SpatialRule_OnChanged" FontSize="9" />
+                                </Grid>
+                                <ComboBox Grid.Row="3" Margin="0,7,0,0" Visibility="{Binding AnchorVisibility}"
+                                          ItemsSource="{Binding AnchorOptions}" SelectedItem="{Binding SelectedAnchor, Mode=OneWay}"
+                                          SelectionChanged="SpatialAnchor_OnChanged" FontSize="9" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

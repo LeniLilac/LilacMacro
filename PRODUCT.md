@@ -1,5 +1,7 @@
 # Product
 
+**Status: Current product intent.** Capability status is tracked in [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md); planned runtime design lives in [docs/MACRO-ARCHITECTURE.md](docs/MACRO-ARCHITECTURE.md).
+
 ## Register
 
 product
@@ -10,7 +12,7 @@ LilacMacro is a private, single-user Windows tool for its owner. It supports the
 
 ## Product Purpose
 
-LilacMacro creates trustworthy image-detection inputs before macro playback is built. Success means the Roblox client is verified at an explicitly chosen pixel size, fresh frames are captured either on a timer or one-by-one, and each dataset can be named and reviewed with pixel-accurate boxes, labels, frame verdicts, notes, and repeatable PP-OCRv6 detection + recognition trials on selected regions.
+LilacMacro creates trustworthy image-detection inputs, placement plans, and explicit OCR state evidence before unattended macro playback is built. Dataset Builder owns capture and dataset authoring. Runtime Lab owns owner-triggered Debug rules, OCR/image comparison, and flow tests that expose matched text and coordinates before sending input. The planned product adds a Lobby-rooted priority scheduler and modular mode runners without weakening those evidence boundaries.
 
 ## Brand Personality
 
@@ -22,7 +24,7 @@ Do not resemble a generic dark neon gamer dashboard, translucent glass UI, bland
 
 ## Design Principles
 
-- Open directly on capture; keep navigation limited to Capture, Review + OCR, and Datasets.
+- Open on Macro and use the fixed top tabs Macro, Plan, Setup, and Settings. Dataset Builder and Runtime Lab remain separate owner tools rather than primary macro-shell navigation.
 - Use terse tool labels and live values. Do not add onboarding prose, marketing headlines, safety blurbs, or instructional guide panels.
 - Verify every external state before presenting it as complete.
 - Keep evidence inspectable through exact dimensions, timestamps, hashes, and explicit frame verdicts.
@@ -30,8 +32,11 @@ Do not resemble a generic dark neon gamer dashboard, translucent glass UI, bland
 - Compare OCR models on the same saved crop; confidence is evidence, never authorization by itself.
 - Keep image navigation direct: wheel to zoom around the pointer and middle-drag to pan in annotation and OCR-map views.
 - Let the OCR map expand to the full canvas when source imagery is unnecessary.
-- Keep F5 dedicated to an active manual session and F6 dedicated to independent timed drafts.
+- Let each Story act inherit a shared placement timeline until the owner creates an explicit override.
+- Keep F5 dedicated to an active manual session. F6 starts independent timed drafts unless an explicitly armed Debug key chain owns F6 for start/cancel.
 - Store personal captures outside the repository and save review changes atomically.
+
+Detailed field rules belong in [docs/GAME-BEHAVIOR.md](docs/GAME-BEHAVIOR.md), placement behavior in [docs/PLACEMENT-AUTHORING.md](docs/PLACEMENT-AUTHORING.md), and local-data handling in [PRIVACY.md](PRIVACY.md).
 
 ## Accessibility & Inclusion
 

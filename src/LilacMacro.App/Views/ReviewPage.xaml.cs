@@ -21,6 +21,7 @@ public partial class ReviewPage : UserControl, IWorkspacePage
     private bool _binding;
     private bool _pendingSave;
     private bool _ocrBusy;
+    private bool _intentRefreshQueued;
 
     public ReviewPage(WorkspaceController workspace, OcrRunner ocr)
     {
@@ -100,6 +101,7 @@ public partial class ReviewPage : UserControl, IWorkspacePage
 
     private void SetActiveFrame(DatasetFrame? frame)
     {
+        Guid? selectedGlobalGroup = CurrentAnnotation?.GlobalGroupId;
         _activeFrame = frame;
         if (frame is null)
         {
@@ -110,7 +112,12 @@ public partial class ReviewPage : UserControl, IWorkspacePage
             return;
         }
 
-        if (_selectedAnnotationId is not { } id || frame.Annotations.All(annotation => annotation.Id != id))
+        if (selectedGlobalGroup is { } groupId &&
+            AnnotationScopePolicy.FindMember(frame, groupId) is { } globalMember)
+        {
+            _selectedAnnotationId = globalMember.Id;
+        }
+        else if (_selectedAnnotationId is not { } id || frame.Annotations.All(annotation => annotation.Id != id))
         {
             _selectedAnnotationId = frame.Annotations.FirstOrDefault()?.Id;
         }
@@ -138,6 +145,8 @@ public partial class ReviewPage : UserControl, IWorkspacePage
         BoxAnnotation? annotation = CurrentAnnotation;
         NoRegionText.Visibility = annotation is null ? Visibility.Visible : Visibility.Collapsed;
         RegionPanel.Visibility = annotation is null ? Visibility.Collapsed : Visibility.Visible;
+        GlobalRegionToggle.IsEnabled = annotation is not null;
+        GlobalRegionToggle.IsChecked = annotation?.IsGlobal == true;
         if (annotation is not null)
         {
             PixelRect box = annotation.Bounds;
@@ -145,6 +154,7 @@ public partial class ReviewPage : UserControl, IWorkspacePage
             EdgesText.Text = $"right={box.Right}  bottom={box.Bottom}  (exclusive)";
             RegionLabelText.Text = annotation.Label;
             RegionNotesText.Text = annotation.Notes;
+            DeleteRegionButton.Content = annotation.IsGlobal ? "DELETE GLOBAL REGION" : "DELETE REGION";
         }
         _binding = false;
         RenderOcrResults();
@@ -161,6 +171,13 @@ public partial class ReviewPage : UserControl, IWorkspacePage
             ? "NO RESULTS"
             : $"{latest.Length} RUN{(latest.Length == 1 ? string.Empty : "S")}";
         UseOcrTextButton.IsEnabled = latest.Length > 0 && !_ocrBusy;
+        OcrTrial? selectedTrial = ReviewOcrSupport.Latest(annotation, SelectedOcrModel, SelectedOcrDevice);
+        if (AnnotationIntentPanel.SetContext(annotation, selectedTrial, EvidenceUniverse(annotation)))
+        {
+            SynchronizeGlobalAnnotation(annotation);
+            MarkDirty();
+        }
+        VisualMatchPanel.SetContext(_workspace.ActiveDataset, _activeFrame, selectedTrial);
     }
 
     private void UpdateOcrControls()
@@ -245,6 +262,7 @@ public partial class ReviewPage : UserControl, IWorkspacePage
         if (_binding || CurrentAnnotation is not { } annotation) return;
         annotation.Label = RegionLabelText.Text;
         annotation.Notes = RegionNotesText.Text;
+        SynchronizeGlobalAnnotation(annotation);
         AnnotationCanvas.Select(annotation.Id);
         MarkDirty();
     }
@@ -252,7 +270,8 @@ public partial class ReviewPage : UserControl, IWorkspacePage
     private void DeleteRegion_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         if (_activeFrame is null || CurrentAnnotation is not { } annotation) return;
-        _activeFrame.Annotations.Remove(annotation);
+        if (_workspace.ActiveDataset is { } dataset) AnnotationScopePolicy.Delete(dataset.Manifest, annotation);
+        else _activeFrame.Annotations.Remove(annotation);
         _selectedAnnotationId = _activeFrame.Annotations.FirstOrDefault()?.Id;
         FrameList.Items.Refresh();
         MarkDirty();
@@ -342,13 +361,42 @@ public partial class ReviewPage : UserControl, IWorkspacePage
         if (trial is not null) RegionLabelText.Text = trial.Text;
     }
 
+    private void AnnotationIntent_OnChanged(object? sender, EventArgs eventArgs)
+    {
+        SynchronizeGlobalAnnotation(CurrentAnnotation);
+        FrameList.Items.Refresh();
+        MarkDirty();
+        RenderSurfaces();
+        QueueIntentRefresh();
+    }
+
+    private void QueueIntentRefresh()
+    {
+        if (_intentRefreshQueued) return;
+        _intentRefreshQueued = true;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _intentRefreshQueued = false;
+            RenderOcrResults();
+        }, DispatcherPriority.ContextIdle);
+    }
+
+    private void OcrResultFilter_OnChanged(object? sender, EventArgs eventArgs)
+    {
+        OcrMap.SetHideUnchecked(AnnotationIntentPanel.HideUnchecked);
+        RenderSurfaces();
+    }
+
+    private void VisualMatch_OnCompleted(object? sender, ReviewVisualMatchOverlay overlay) =>
+        AnnotationCanvas.ShowVisualMatch(overlay.Bounds, overlay.Succeeded);
+
     private void AnnotateView_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         AnnotationCanvas.Visibility = Visibility.Visible;
         OcrMap.Visibility = Visibility.Collapsed;
         MapOnlyToggle.Visibility = Visibility.Collapsed;
-        AnnotateViewButton.Background = (Brush)FindResource("AccentBrush");
-        OcrMapViewButton.Background = (Brush)FindResource("CardBrush");
+        AnnotateViewButton.SetResourceReference(Control.BackgroundProperty, "AccentBrush");
+        OcrMapViewButton.SetResourceReference(Control.BackgroundProperty, "CardBrush");
         ZoomControls.IsEnabled = true;
         ZoomText.Text = $"{AnnotationCanvas.Zoom:P0}";
     }
@@ -361,8 +409,8 @@ public partial class ReviewPage : UserControl, IWorkspacePage
         AnnotationCanvas.Visibility = Visibility.Collapsed;
         OcrMap.Visibility = Visibility.Visible;
         MapOnlyToggle.Visibility = Visibility.Visible;
-        AnnotateViewButton.Background = (Brush)FindResource("CardBrush");
-        OcrMapViewButton.Background = (Brush)FindResource("AccentBrush");
+        AnnotateViewButton.SetResourceReference(Control.BackgroundProperty, "CardBrush");
+        OcrMapViewButton.SetResourceReference(Control.BackgroundProperty, "AccentBrush");
         ZoomControls.IsEnabled = true;
         ZoomText.Text = $"{OcrMap.Zoom:P0}";
     }

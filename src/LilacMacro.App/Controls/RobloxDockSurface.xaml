@@ -1,0 +1,31 @@
+<UserControl x:Class="LilacMacro.App.Controls.RobloxDockSurface"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="Surface_OnLoaded"
+             Unloaded="Surface_OnUnloaded">
+    <Border x:Name="DockTarget"
+            Width="1366"
+            Height="700"
+            HorizontalAlignment="Left"
+            Background="{DynamicResource PaperBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="3"
+            ClipToBounds="True">
+        <StackPanel x:Name="PlaceholderPanel"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <TextBlock x:Name="PlaceholderTitle"
+                       HorizontalAlignment="Center"
+                       FontSize="13"
+                       FontWeight="Black"
+                       Text="ROBLOX NOT DOCKED" />
+            <TextBlock Margin="0,4,0,0"
+                       HorizontalAlignment="Center"
+                       FontFamily="{StaticResource MonoFont}"
+                       FontSize="10"
+                       Foreground="{DynamicResource InkSoftBrush}"
+                       Text="1366 x 700" />
+        </StackPanel>
+    </Border>
+</UserControl>

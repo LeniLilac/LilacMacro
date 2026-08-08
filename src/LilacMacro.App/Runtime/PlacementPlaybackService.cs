@@ -1,0 +1,292 @@
+using LilacMacro.App.Debugging;
+using LilacMacro.App.Infrastructure;
+using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
+using LilacMacro.Core.Geometry;
+using LilacMacro.Core.Placements;
+
+namespace LilacMacro.App.Runtime;
+
+internal sealed class PlacementPlaybackService(
+    WorkspaceController workspace,
+    OcrRunner ocr)
+{
+    private const int PlacementAttempts = 3;
+    private const int KeyHoldMilliseconds = 60;
+    private readonly DebugOcrController _debug = new(workspace, ocr);
+    private readonly UnitPanelEvidenceService _panel = new(workspace, ocr);
+    private readonly MatchTerminalService _terminal = new(workspace, ocr);
+
+    public async Task<PlacementRuntimeResult> RunAsync(
+        PlacementSetupDocument document,
+        PlacementRouteSetup route,
+        PlacementRuntimeKeys keys,
+        string device,
+        bool repeatStage,
+        TimeSpan terminalTimeout,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(route);
+        PlacementSetupRules.Validate(document);
+        PlacementPlaybackPlan plan = PlacementPlaybackPlan.Create(route);
+        Dictionary<Guid, PlacementExecutionState> placements = [];
+        UnitPanelLayout? layout = null;
+        int executed = 0;
+
+        executed += await RunStepsAsync(
+            plan.BeforeStart, document, keys, device, placements,
+            () => layout, value => layout = value, status, cancellationToken);
+
+        DebugRunReport start = await _debug.StartGameAsync(device, cancellationToken);
+        if (!start.Succeeded) throw new InvalidOperationException(start.Status);
+        status?.Invoke("START GAME VERIFIED + CLICKED");
+        executed++;
+        await Task.Delay(1000, cancellationToken);
+
+        executed += await RunStepsAsync(
+            plan.AfterStart, document, keys, device, placements,
+            () => layout, value => layout = value, status, cancellationToken);
+
+        MatchTerminalOutcome outcome = await _terminal.WaitAsync(
+            device, terminalTimeout, status, cancellationToken);
+        if (repeatStage)
+        {
+            await _terminal.RepeatAsync(outcome, device, cancellationToken);
+            status?.Invoke("REPEAT STAGE VERIFIED + CLICKED");
+        }
+        return new PlacementRuntimeResult(outcome, repeatStage, executed);
+    }
+
+    private async Task<int> RunStepsAsync(
+        IReadOnlyList<PlacementStep> steps,
+        PlacementSetupDocument document,
+        PlacementRuntimeKeys keys,
+        string device,
+        Dictionary<Guid, PlacementExecutionState> placements,
+        Func<UnitPanelLayout?> getLayout,
+        Action<UnitPanelLayout> setLayout,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        int executed = 0;
+        foreach (PlacementPlaybackGroup group in PlacementPlaybackPlan.Group(steps))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (group.Kind == PlacementStepKind.Place)
+            {
+                await RunPlacementGroupAsync(
+                    group.Steps, document, keys, device, placements,
+                    getLayout, setLayout, status, cancellationToken);
+                executed += group.Steps.Count;
+                continue;
+            }
+            PlacementStep step = group.Steps[0];
+            await RunActionAsync(step, keys, device, placements, getLayout, status, cancellationToken);
+            executed++;
+        }
+        return executed;
+    }
+
+    private async Task RunPlacementGroupAsync(
+        IReadOnlyList<PlacementStep> steps,
+        PlacementSetupDocument document,
+        PlacementRuntimeKeys keys,
+        string device,
+        Dictionary<Guid, PlacementExecutionState> placements,
+        Func<UnitPanelLayout?> getLayout,
+        Action<UnitPanelLayout> setLayout,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        QuickPlacementPoint[] batch = steps.Select(step => ToQuickPoint(step, document)).ToArray();
+        await workspace.RunQuickPlacementBatchAsync(
+            DebugWorkflowCatalog.ClientSize, keys.QuickPlacement, keys.CancelPlacement, batch, cancellationToken);
+        status?.Invoke($"QUICK PLACEMENT BATCH {batch.Length}");
+
+        foreach (PlacementStep step in steps)
+        {
+            QuickPlacementPoint point = ToQuickPoint(step, document);
+            UnitPanelLayout? layout = getLayout();
+            bool selected = false;
+            for (int attempt = 1; attempt <= PlacementAttempts && !selected; attempt++)
+            {
+                if (attempt > 1)
+                {
+                    status?.Invoke($"RETRY PLACEMENT {attempt}/{PlacementAttempts} UNIT {step.UnitSlot}");
+                    await workspace.RunQuickPlacementBatchAsync(
+                        DebugWorkflowCatalog.ClientSize, keys.QuickPlacement, keys.CancelPlacement, [point], cancellationToken);
+                }
+                await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, point.Point, cancellationToken);
+                if (layout is null)
+                {
+                    try
+                    {
+                        layout = await _panel.CalibrateAsync(device, status, cancellationToken);
+                        setLayout(layout);
+                        selected = true;
+                    }
+                    catch (InvalidOperationException error) when (attempt < PlacementAttempts)
+                    {
+                        status?.Invoke(error.Message);
+                    }
+                }
+                else
+                {
+                    selected = await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken);
+                }
+            }
+            if (!selected || layout is null)
+                throw new InvalidOperationException($"Unit {step.UnitSlot} at {point.Point} did not produce physical selection proof.");
+
+            PlacementExecutionState state = new(step, point.Point);
+            placements.Add(step.Id, state);
+            await ApplyConfigurationAsync(state, step.TargetingPriority, step.AutoUpgradePriority, keys, cancellationToken);
+            await DelayAfterAsync(step, cancellationToken);
+        }
+    }
+
+    private async Task RunActionAsync(
+        PlacementStep step,
+        PlacementRuntimeKeys keys,
+        string device,
+        Dictionary<Guid, PlacementExecutionState> placements,
+        Func<UnitPanelLayout?> getLayout,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        if (step.Kind == PlacementStepKind.Delay)
+        {
+            await Task.Delay(step.DelayDurationMilliseconds, cancellationToken);
+            await DelayAfterAsync(step, cancellationToken);
+            return;
+        }
+        UnitPanelLayout layout = getLayout() ?? throw new InvalidOperationException("Unit panel layout was not calibrated.");
+        PlacementExecutionState target = ResolveTarget(step, placements);
+        await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, target.LivePoint, cancellationToken);
+        if (!await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken))
+            throw new InvalidOperationException($"{step.Kind} target did not produce physical selection proof.");
+
+        switch (step.Kind)
+        {
+            case PlacementStepKind.Reconfigure:
+                await ApplyReconfigureAsync(target, step, keys, cancellationToken);
+                break;
+            case PlacementStepKind.Upgrade:
+                await ApplyUpgradesAsync(layout, step.UpgradeCount, keys, status, cancellationToken);
+                break;
+            case PlacementStepKind.Sell:
+                await TapAsync(keys.Sell, keys.ReservedVirtualKey, 1, cancellationToken);
+                if (!await _panel.WaitForPanelHiddenAsync(layout, cancellationToken))
+                    throw new InvalidOperationException("Sell did not close the selected-unit panel.");
+                placements.Remove(target.Placement.Id);
+                break;
+            default:
+                throw new InvalidDataException($"Unsupported playback step {step.Kind}.");
+        }
+        await DelayAfterAsync(step, cancellationToken);
+    }
+
+    private async Task ApplyUpgradesAsync(
+        UnitPanelLayout layout,
+        int count,
+        PlacementRuntimeKeys keys,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        for (int press = 0; press < count; press++)
+        {
+            UnitUpgradeState state = await _panel.WaitForUpgradeAsync(layout, status, cancellationToken);
+            if (state == UnitUpgradeState.Maxed)
+            {
+                status?.Invoke($"UNIT MAXED; SKIPPED {count - press} UPGRADE PRESS(ES)");
+                return;
+            }
+            await TapAsync(keys.Upgrade, keys.ReservedVirtualKey, 1, cancellationToken);
+            if (press + 1 < count) await Task.Delay(150, cancellationToken);
+        }
+    }
+
+    private async Task ApplyReconfigureAsync(
+        PlacementExecutionState state,
+        PlacementStep step,
+        PlacementRuntimeKeys keys,
+        CancellationToken cancellationToken)
+    {
+        PlacementTargetingPriority targeting = step.ChangeTargetingPriority ? step.TargetingPriority : state.Targeting;
+        PlacementAutoUpgradePriority auto = ToPriority(step.AutoUpgradeAction, state.AutoUpgrade);
+        await ApplyConfigurationAsync(state, targeting, auto, keys, cancellationToken);
+    }
+
+    private async Task ApplyConfigurationAsync(
+        PlacementExecutionState state,
+        PlacementTargetingPriority targeting,
+        PlacementAutoUpgradePriority auto,
+        PlacementRuntimeKeys keys,
+        CancellationToken cancellationToken)
+    {
+        int targetingCount = Enum.GetValues<PlacementTargetingPriority>().Length;
+        int targetTaps = ((int)targeting - (int)state.Targeting + targetingCount) % targetingCount;
+        int autoCount = Enum.GetValues<PlacementAutoUpgradePriority>().Length;
+        int autoTaps = ((int)auto - (int)state.AutoUpgrade + autoCount) % autoCount;
+        await TapAsync(keys.ChangeTargeting, keys.ReservedVirtualKey, targetTaps, cancellationToken);
+        await TapAsync(keys.ChangeAutoUpgrade, keys.ReservedVirtualKey, autoTaps, cancellationToken);
+        state.Targeting = targeting;
+        state.AutoUpgrade = auto;
+    }
+
+    private async Task TapAsync(
+        int virtualKey,
+        int reservedVirtualKey,
+        int count,
+        CancellationToken cancellationToken)
+    {
+        while (count > 0)
+        {
+            int chunk = Math.Min(count, 32);
+            AutomationKeyPress[] presses = Enumerable.Range(0, chunk)
+                .Select(_ => AutomationKeyPress.Create(
+                    virtualKey,
+                    KeyHoldMilliseconds,
+                    reservedVirtualKey))
+                .ToArray();
+            await workspace.RunKeySequenceAsync(
+                DebugWorkflowCatalog.ClientSize, AutomationKeySequence.Create(presses), cancellationToken);
+            count -= chunk;
+        }
+    }
+
+    private static PlacementExecutionState ResolveTarget(
+        PlacementStep step,
+        IReadOnlyDictionary<Guid, PlacementExecutionState> placements) =>
+        step.TargetPlacementId is Guid id && placements.TryGetValue(id, out PlacementExecutionState? target)
+            ? target
+            : throw new InvalidOperationException("Unit action target is not an active earlier placement.");
+
+    private static PlacementAutoUpgradePriority ToPriority(
+        PlacementAutoUpgradeAction action,
+        PlacementAutoUpgradePriority current) => action switch
+        {
+            PlacementAutoUpgradeAction.NoChange => current,
+            PlacementAutoUpgradeAction.Disable => PlacementAutoUpgradePriority.Off,
+            PlacementAutoUpgradeAction.Priority1 => PlacementAutoUpgradePriority.Priority1,
+            PlacementAutoUpgradeAction.Priority2 => PlacementAutoUpgradePriority.Priority2,
+            PlacementAutoUpgradeAction.Priority3 => PlacementAutoUpgradePriority.Priority3,
+            PlacementAutoUpgradeAction.Priority4 => PlacementAutoUpgradePriority.Priority4,
+            PlacementAutoUpgradeAction.Priority5 => PlacementAutoUpgradePriority.Priority5,
+            PlacementAutoUpgradeAction.Priority6 => PlacementAutoUpgradePriority.Priority6,
+            _ => throw new ArgumentOutOfRangeException(nameof(action)),
+        };
+
+    private static QuickPlacementPoint ToQuickPoint(PlacementStep step, PlacementSetupDocument document) => new(
+        step.UnitSlot,
+        new PixelPoint(
+            Math.Clamp((int)Math.Round(step.X * DebugWorkflowCatalog.ClientSize.Width / (double)document.ImageWidth), 0,
+                DebugWorkflowCatalog.ClientSize.Width - 1),
+            Math.Clamp((int)Math.Round(step.Y * DebugWorkflowCatalog.ClientSize.Height / (double)document.ImageHeight), 0,
+                DebugWorkflowCatalog.ClientSize.Height - 1)));
+
+    private static Task DelayAfterAsync(PlacementStep step, CancellationToken cancellationToken) =>
+        step.DelayAfterMilliseconds == 0 ? Task.CompletedTask : Task.Delay(step.DelayAfterMilliseconds, cancellationToken);
+}

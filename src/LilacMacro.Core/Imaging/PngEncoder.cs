@@ -25,6 +25,7 @@ public static class PngEncoder
         header[11] = 0;
         header[12] = 0;
         WriteChunk(output, "IHDR", header);
+        WriteChunk(output, "sRGB", [0]);
 
         using MemoryStream compressed = new();
         using (ZLibStream zlib = new(compressed, CompressionLevel.Fastest, leaveOpen: true))

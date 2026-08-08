@@ -21,7 +21,7 @@
                 <ColumnDefinition x:Name="GapColumn" Width="14" />
                 <ColumnDefinition x:Name="TextColumn" Width="*" />
             </Grid.ColumnDefinitions>
-            <Border x:Name="SourcePanel" Grid.Column="0" Background="#1C202A" BorderBrush="{StaticResource InkBrush}" BorderThickness="2">
+            <Border x:Name="SourcePanel" Grid.Column="0" Background="{DynamicResource CanvasBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2">
                 <Viewbox Stretch="Uniform">
                     <Grid x:Name="SourceSurface" Width="1280" Height="720">
                         <Image x:Name="SourceImage" Stretch="Fill" SnapsToDevicePixels="True" />
@@ -30,9 +30,11 @@
                 </Viewbox>
             </Border>
 
-            <Border Grid.Column="2" Background="White" BorderBrush="{StaticResource InkBrush}" BorderThickness="2">
+            <Border Grid.Column="2" Background="{DynamicResource OcrMapSurfaceBrush}"
+                    BorderBrush="{DynamicResource InkBrush}" BorderThickness="2">
                 <Viewbox Stretch="Uniform">
-                    <Grid x:Name="TextSurface" Width="1280" Height="720" Background="White">
+                    <Grid x:Name="TextSurface" Width="1280" Height="720"
+                          Background="{DynamicResource OcrMapSurfaceBrush}">
                         <Canvas x:Name="TextOverlay" IsHitTestVisible="False" />
                     </Grid>
                 </Viewbox>

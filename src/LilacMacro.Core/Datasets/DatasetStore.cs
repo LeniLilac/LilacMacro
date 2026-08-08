@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using LilacMacro.Core.Capture;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.Core.Datasets;
 
@@ -127,6 +128,7 @@ public sealed class DatasetStore
             Width = width,
             Height = height,
         };
+        AnnotationScopePolicy.AddMembersToNewFrame(location.Manifest, frame);
         location.Manifest.Frames.Add(frame);
         await SaveAsync(location, cancellationToken).ConfigureAwait(false);
         return frame;
@@ -279,6 +281,8 @@ public sealed class DatasetStore
         {
             throw new InvalidDataException("Dataset contains a frame or annotation outside its declared client geometry.");
         }
+        ValidateGlobalAnnotations(manifest);
+        ValidateEvidenceRules(manifest);
     }
 
     private static bool IsInvalid(BoxAnnotation annotation, DatasetFrame frame)
@@ -302,6 +306,67 @@ public sealed class DatasetStore
         return trial.Regions.Any(region =>
             !annotation.Bounds.Contains(region.Bounds) ||
             region.DetectionConfidence is < 0 or > 1 ||
-            region.RecognitionConfidence is < 0 or > 1);
+            region.RecognitionConfidence is < 0 or > 1 ||
+            region.MatchMode is not (OcrMatchMode.Exact or OcrMatchMode.FuzzyPhrase) ||
+            region.EvidenceRole is not (OcrEvidenceRole.None or OcrEvidenceRole.Required or OcrEvidenceRole.Pool) ||
+            region.SpatialSelector is not (
+                OcrSpatialSelector.Any or
+                OcrSpatialSelector.Leftmost or
+                OcrSpatialSelector.Rightmost or
+                OcrSpatialSelector.Topmost or
+                OcrSpatialSelector.Bottommost or
+                OcrSpatialSelector.SameRow or
+                OcrSpatialSelector.NearestAnchor) ||
+            (region.SpatialSelector is OcrSpatialSelector.SameRow or OcrSpatialSelector.NearestAnchor) &&
+            string.IsNullOrWhiteSpace(region.SpatialAnchorText));
     }
+
+    private static void ValidateGlobalAnnotations(DatasetManifest manifest)
+    {
+        foreach (IGrouping<Guid, BoxAnnotation> group in manifest.Frames
+                     .SelectMany(frame => frame.Annotations)
+                     .Where(annotation => annotation.GlobalGroupId.HasValue)
+                     .GroupBy(annotation => annotation.GlobalGroupId!.Value))
+        {
+            BoxAnnotation first = group.First();
+            bool exactlyOnePerFrame = manifest.Frames.All(frame =>
+                frame.Annotations.Count(annotation => annotation.GlobalGroupId == group.Key) == 1);
+            bool sharedFieldsMatch = group.All(annotation =>
+                annotation.Bounds == first.Bounds &&
+                string.Equals(annotation.Label, first.Label, StringComparison.Ordinal) &&
+                string.Equals(annotation.Notes, first.Notes, StringComparison.Ordinal) &&
+                annotation.MinimumPoolMatches == first.MinimumPoolMatches);
+            if (!exactlyOnePerFrame || group.Count() != manifest.Frames.Count || !sharedFieldsMatch)
+            {
+                throw new InvalidDataException("Global annotations must have one matching member on every frame.");
+            }
+        }
+    }
+
+    private static void ValidateEvidenceRules(DatasetManifest manifest)
+    {
+        foreach (BoxAnnotation annotation in manifest.Frames
+                     .SelectMany(frame => frame.Annotations)
+                     .Where(annotation => annotation.GlobalGroupId is null))
+        {
+            if (!OcrEvidenceRulePolicy.IsValid(annotation.MinimumPoolMatches, Regions(annotation)))
+            {
+                throw new InvalidDataException("Dataset contains an invalid OCR evidence rule.");
+            }
+        }
+
+        foreach (IGrouping<Guid, BoxAnnotation> group in manifest.Frames
+                     .SelectMany(frame => frame.Annotations)
+                     .Where(annotation => annotation.GlobalGroupId.HasValue)
+                     .GroupBy(annotation => annotation.GlobalGroupId!.Value))
+        {
+            if (!OcrEvidenceRulePolicy.IsValid(group.First().MinimumPoolMatches, group.SelectMany(Regions)))
+            {
+                throw new InvalidDataException("Dataset contains an invalid global OCR evidence rule.");
+            }
+        }
+    }
+
+    private static IEnumerable<OcrTextRegion> Regions(BoxAnnotation annotation) => annotation.OcrTrials
+        .SelectMany(trial => trial.Regions);
 }

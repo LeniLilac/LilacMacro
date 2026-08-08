@@ -1,0 +1,351 @@
+<UserControl x:Class="LilacMacro.App.Views.DebugPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:LilacMacro.App.Views">
+    <Grid Margin="28,22,28,28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="DEBUG" FontSize="19" FontWeight="Black" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <ComboBox x:Name="EvidenceModeBox"
+                          Width="205"
+                          SelectedIndex="0"
+                          Margin="0,0,8,0"
+                          SelectionChanged="EvidenceMode_OnSelectionChanged">
+                    <ComboBoxItem Content="OCR" />
+                    <ComboBoxItem Content="IMAGE + OCR FALLBACK" />
+                </ComboBox>
+                <Button x:Name="PrepareButton"
+                        Content="APPLY 1366 x 700"
+                        Style="{StaticResource ButtonStyle}"
+                        Margin="0,0,8,0"
+                        Click="Prepare_OnClick" />
+                <Button x:Name="DeviceToggle"
+                        Content="CPU"
+                        Width="76"
+                        Style="{StaticResource ButtonStyle}"
+                        Margin="0,0,12,0"
+                        Click="DeviceToggle_OnClick" />
+                <CheckBox x:Name="KeepLoadedToggle"
+                          Content="KEEP LOADED"
+                          FontSize="10"
+                          FontWeight="Bold"
+                          VerticalAlignment="Center"
+                          Margin="0,0,12,0"
+                          Checked="KeepLoaded_OnChanged"
+                          Unchecked="KeepLoaded_OnChanged" />
+                <Button x:Name="SetupButton"
+                        Content="SET UP OCR"
+                        Style="{StaticResource ButtonStyle}"
+                        Click="Setup_OnClick" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="470" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="15">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="CAMERA" Style="{StaticResource SectionTitleStyle}" />
+                        <Button x:Name="CameraAlignButton"
+                                Content="ALIGN"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="0,2,0,0"
+                                Click="CameraAlign_OnClick" />
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <views:DebugKeyChainControl x:Name="KeyChainControl" />
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <StackPanel x:Name="ActionPanel">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="LOBBY" Style="{StaticResource SectionTitleStyle}" />
+                            <Border Grid.Column="1" Style="{StaticResource ChipStyle}" Background="{DynamicResource PinkBrush}" VerticalAlignment="Top">
+                                <TextBlock Text="ROOT" FontSize="10" FontWeight="Black" />
+                            </Border>
+                        </Grid>
+                        <Button Content="CHECK LOBBY" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckLobby_OnClick" />
+                        <UniformGrid Columns="3">
+                            <Button Content="OPEN PLAY" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,4,0" Click="OpenPlay_OnClick" />
+                            <Button Content="OPEN EVENTS" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="OpenEvents_OnClick" />
+                            <Button Content="OPEN AREAS" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="OpenAreas_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="EVENT SELECT" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK EVENTS" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckEvents_OnClick" />
+                        <Button Content="VILLAIN INVASION" Style="{StaticResource ButtonStyle}" Click="VillainInvasion_OnClick" />
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="AREAS UI" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK AREAS" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckAreas_OnClick" />
+                        <UniformGrid Columns="3">
+                            <Button Content="UPGRADE" Style="{StaticResource ButtonStyle}" Margin="0,0,4,4" Click="UpgradeArea_OnClick" />
+                            <Button Content="GAMEMODE" Style="{StaticResource ButtonStyle}" Margin="4,0,4,4" Click="GamemodeArea_OnClick" />
+                            <Button Content="LOBBY" Style="{StaticResource ButtonStyle}" Margin="4,0,0,4" Click="LobbyArea_OnClick" />
+                            <Button Content="SHOP" Style="{StaticResource ButtonStyle}" Margin="0,4,4,0" Click="ShopArea_OnClick" />
+                            <Button Content="EXPEDITION" Style="{StaticResource ButtonStyle}" Margin="4,4,4,0" Click="ExpeditionArea_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="PLAY UI" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK PLAY UI" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckPlayUi_OnClick" />
+                        <UniformGrid Columns="2" Rows="2">
+                            <Button Content="STORY" Style="{StaticResource ButtonStyle}" Margin="0,0,4,4" Click="Story_OnClick" />
+                            <Button Content="RAID" Style="{StaticResource ButtonStyle}" Margin="4,0,0,4" Click="Raid_OnClick" />
+                            <Button Content="CHALLENGE" Style="{StaticResource ButtonStyle}" Margin="0,4,4,0" Click="Challenge_OnClick" />
+                            <Button Content="EXPEDITION" Style="{StaticResource ButtonStyle}" Margin="4,4,0,0" Click="Expedition_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="UNIT INVENTORY" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="CHECK INVENTORY" Style="{StaticResource ButtonStyle}" Click="CheckUnitInventory_OnClick" />
+                            <Button Grid.Column="2" Content="TEAMS" Style="{StaticResource PrimaryButtonStyle}" Click="OpenTeams_OnClick" />
+                        </Grid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="TEAM SWAP" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK TEAMS" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckTeamSwap_OnClick" />
+                        <UniformGrid Columns="4" Rows="2">
+                            <Button Content="T1" Style="{StaticResource ButtonStyle}" Margin="0,0,4,4" Click="Team1_OnClick" />
+                            <Button Content="T2" Style="{StaticResource ButtonStyle}" Margin="4,0,4,4" Click="Team2_OnClick" />
+                            <Button Content="T3" Style="{StaticResource ButtonStyle}" Margin="4,0,4,4" Click="Team3_OnClick" />
+                            <Button Content="T4" Style="{StaticResource ButtonStyle}" Margin="4,0,0,4" Click="Team4_OnClick" />
+                            <Button Content="T5" Style="{StaticResource ButtonStyle}" Margin="0,4,4,0" Click="Team5_OnClick" />
+                            <Button Content="T6" Style="{StaticResource ButtonStyle}" Margin="4,4,4,0" Click="Team6_OnClick" />
+                            <Button Content="T7" Style="{StaticResource ButtonStyle}" Margin="4,4,4,0" Click="Team7_OnClick" />
+                            <Button Content="T8" Style="{StaticResource ButtonStyle}" Margin="4,4,0,0" Click="Team8_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="CHALLENGE TYPE" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK CHALLENGE" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckChallengeTypes_OnClick" />
+                        <UniformGrid Columns="3">
+                            <Button Content="TRAIT" Style="{StaticResource ButtonStyle}" Margin="0,0,4,0" Click="TraitChallenge_OnClick" />
+                            <Button Content="STAT" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="StatChallenge_OnClick" />
+                            <Button Content="SPRITE" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="SpriteChallenge_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="STORY MAP" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK MAPS" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckMaps_OnClick" />
+                        <UniformGrid Columns="2">
+                            <Button Content="SCHOOL GROUNDS" Style="{StaticResource ButtonStyle}" Margin="0,0,4,4" Click="School_OnClick" />
+                            <Button Content="FLOWER FOREST" Style="{StaticResource ButtonStyle}" Margin="4,0,0,4" Click="Flower_OnClick" />
+                            <Button Content="ROSE KINGDOM" Style="{StaticResource ButtonStyle}" Margin="0,4,4,4" Click="Rose_OnClick" />
+                            <Button Content="FAIRY KING FOREST" Style="{StaticResource ButtonStyle}" Margin="4,4,0,4" Click="FairyKing_OnClick" />
+                            <Button Content="KING'S TOMB" Style="{StaticResource ButtonStyle}" Margin="0,4,4,0" Click="KingsTomb_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="RAID MAP" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="CHECK RAID MAP" Style="{StaticResource ButtonStyle}" Click="CheckRaidMaps_OnClick" />
+                            <Button Grid.Column="2" Content="SPIRIT CITY" Style="{StaticResource PrimaryButtonStyle}" Click="SpiritCity_OnClick" />
+                        </Grid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="EXPEDITION MAP" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK EXP MAP" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckExpeditionMaps_OnClick" />
+                        <UniformGrid Columns="3" Margin="0,0,0,9">
+                            <Button x:Name="ExpeditionDifficulty1Button" Content="D1" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,4,0" Click="ExpeditionDifficulty1_OnClick" />
+                            <Button x:Name="ExpeditionDifficulty2Button" Content="D2" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="ExpeditionDifficulty2_OnClick" />
+                            <Button x:Name="ExpeditionDifficulty3Button" Content="D3" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="ExpeditionDifficulty3_OnClick" />
+                        </UniformGrid>
+                        <UniformGrid Columns="3">
+                            <Button Content="SCHOOL" Style="{StaticResource ButtonStyle}" Margin="0,0,4,0" Click="ExpeditionSchool_OnClick" />
+                            <Button Content="FLOWER" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="ExpeditionFlower_OnClick" />
+                            <Button Content="ROSE" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="ExpeditionRose_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="RAID ACT" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK RAID ACTS" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckRaidActs_OnClick" />
+                        <UniformGrid Columns="3">
+                            <Button Content="ACT 1" Style="{StaticResource ButtonStyle}" Margin="0,0,4,0" Click="RaidAct1_OnClick" />
+                            <Button Content="ACT 2" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="RaidAct2_OnClick" />
+                            <Button Content="ACT 3" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="RaidAct3_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="STORY ACT" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="CHECK ACTS" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckActs_OnClick" />
+                        <UniformGrid Columns="2" Margin="0,0,0,9">
+                            <Button x:Name="NormalDifficultyButton" Content="NORMAL" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,4,0" Click="NormalDifficulty_OnClick" />
+                            <Button x:Name="HardDifficultyButton" Content="HARD" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="HardDifficulty_OnClick" />
+                        </UniformGrid>
+                        <UniformGrid Columns="4">
+                            <Button Content="ACT 1" Style="{StaticResource ButtonStyle}" Margin="0,0,4,4" Click="Act1_OnClick" />
+                            <Button Content="ACT 2" Style="{StaticResource ButtonStyle}" Margin="4,0,4,4" Click="Act2_OnClick" />
+                            <Button Content="ACT 3" Style="{StaticResource ButtonStyle}" Margin="4,0,4,4" Click="Act3_OnClick" />
+                            <Button Content="ACT 4" Style="{StaticResource ButtonStyle}" Margin="4,0,0,4" Click="Act4_OnClick" />
+                            <Button Content="ACT 5" Style="{StaticResource ButtonStyle}" Margin="0,4,4,0" Click="Act5_OnClick" />
+                            <Button Content="INFINITE" Style="{StaticResource ButtonStyle}" Margin="4,4,4,0" Click="Infinite_OnClick" />
+                            <Button Content="MASTERY" Style="{StaticResource ButtonStyle}" Margin="4,4,4,0" Click="Mastery_OnClick" />
+                        </UniformGrid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="MATCH PREVIEW" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="CHECK PREVIEW" Style="{StaticResource ButtonStyle}" Click="CheckMatchPreview_OnClick" />
+                            <Button Grid.Column="2" Content="START" Style="{StaticResource PrimaryButtonStyle}" Click="StartMatch_OnClick" />
+                        </Grid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="MATCH PRESTART" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="CHECK PRESTART" Style="{StaticResource ButtonStyle}" Click="CheckMatchPrestart_OnClick" />
+                            <Button Grid.Column="2" Content="START GAME" Style="{StaticResource PrimaryButtonStyle}" Click="StartGame_OnClick" />
+                        </Grid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="DEFEAT" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="CHECK DEFEAT" Style="{StaticResource ButtonStyle}" Click="CheckDefeat_OnClick" />
+                            <Button Grid.Column="2" Content="REPEAT STAGE" Style="{StaticResource PrimaryButtonStyle}" Click="RepeatStage_OnClick" />
+                        </Grid>
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
+                        <TextBlock Text="VICTORY" Style="{StaticResource SectionTitleStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="CHECK VICTORY" Style="{StaticResource ButtonStyle}" Click="CheckVictory_OnClick" />
+                            <Button Grid.Column="2" Content="REPEAT STAGE" Style="{StaticResource PrimaryButtonStyle}" Click="RepeatVictoryStage_OnClick" />
+                        </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="0">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="120" />
+                    </Grid.RowDefinitions>
+
+                    <Border x:Name="StatusBand"
+                            Background="{DynamicResource MutedBrush}"
+                            BorderBrush="{DynamicResource InkBrush}"
+                            BorderThickness="2"
+                            CornerRadius="3"
+                            Padding="12,9">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="StatusText" Text="NO RUN" FontSize="17" FontWeight="Black" />
+                            <TextBlock x:Name="MatchCountText" Grid.Column="1" Text="0/0" FontFamily="{StaticResource MonoFont}" FontSize="13" FontWeight="Black" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <TextBlock x:Name="OcrMetaText"
+                               Grid.Row="1"
+                               Text="PP-OCRv6 SMALL | CPU"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource InkSoftBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,8,0,0" />
+
+                    <Grid Grid.Row="3" Margin="0,0,0,7">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.2*" />
+                            <ColumnDefinition Width="1.2*" />
+                            <ColumnDefinition Width="1.1*" />
+                            <ColumnDefinition Width="165" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="ELEMENT" Style="{StaticResource EyebrowStyle}" />
+                        <TextBlock Grid.Column="1" Text="METHOD" Style="{StaticResource EyebrowStyle}" />
+                        <TextBlock Grid.Column="2" Text="RESULT" Style="{StaticResource EyebrowStyle}" />
+                        <TextBlock Grid.Column="3" Text="BOUNDS / SCORE" Style="{StaticResource EyebrowStyle}" />
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="EvidenceList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{DynamicResource MutedBrush}" BorderThickness="0,0,0,1" Padding="0,7">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1.2*" />
+                                                <ColumnDefinition Width="1.2*" />
+                                                <ColumnDefinition Width="1.1*" />
+                                                <ColumnDefinition Width="165" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Text}" FontSize="12" FontWeight="Bold" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Normalized}" FontFamily="{StaticResource MonoFont}" FontSize="10" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Match}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+                                            <StackPanel Grid.Column="3">
+                                                <TextBlock Text="{Binding Bounds}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
+                                                <TextBlock Text="{Binding Confidence}" FontFamily="{StaticResource MonoFont}" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="6" Background="{DynamicResource MutedBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="3" Padding="10">
+                        <ListBox x:Name="EventLog" BorderThickness="0" Background="Transparent" FontFamily="{StaticResource MonoFont}" FontSize="10" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

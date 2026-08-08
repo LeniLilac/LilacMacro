@@ -122,7 +122,17 @@
         "bounds": { "$ref": "#/$defs/pixel_rect" },
         "text": { "type": "string" },
         "detection_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-        "recognition_confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        "recognition_confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "is_ocr_evidence": { "type": "boolean", "default": false },
+        "is_visual_anchor": { "type": "boolean", "default": false },
+        "match_mode": { "enum": ["exact", "fuzzy_phrase"], "default": "exact" },
+        "evidence_role": { "enum": ["none", "required", "pool"], "default": "none" },
+        "spatial_selector": {
+          "enum": ["any", "leftmost", "rightmost", "topmost", "bottommost", "same_row", "nearest_anchor"],
+          "default": "any"
+        },
+        "spatial_selector_overridden": { "type": "boolean", "default": false },
+        "spatial_anchor_text": { "type": "string", "minLength": 1, "maxLength": 1024 }
       }
     },
     "annotation": {
@@ -131,9 +141,11 @@
       "required": ["id", "bounds", "label", "notes", "ocr_trials"],
       "properties": {
         "id": { "type": "string", "format": "uuid" },
+        "global_group_id": { "type": "string", "format": "uuid" },
         "bounds": { "$ref": "#/$defs/pixel_rect" },
         "label": { "type": "string" },
         "notes": { "type": "string" },
+        "minimum_pool_matches": { "type": "integer", "minimum": 0 },
         "ocr_trials": {
           "type": "array",
           "items": { "$ref": "#/$defs/ocr_trial" }

@@ -1,40 +1,57 @@
 # AGENTS.md
 
-This file applies to the entire repository.
+This file applies to the entire repository. Scoped `AGENTS.md` files add rules for their subtrees.
 
-## Mission and boundaries
+## Mission and hard boundaries
 
-LilacMacro is a Windows-only .NET/WPF utility for preparing reliable Roblox screen-automation datasets.
+LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox screen automation.
 
-- Do not inject into Roblox, inspect its memory, hook it, or bypass anti-cheat systems.
-- Use ordinary Windows window management and Windows Graphics Capture only.
-- Keep the project noncommercial and preserve license notices.
-- Never commit user captures, datasets, logs, credentials, local settings, or generated build output.
+- Do not inject into Roblox, inspect or modify its memory, hook it, or bypass anti-cheat systems.
+- Use ordinary Windows window management, Windows Graphics Capture, and Windows input only.
+- Keep the project noncommercial and preserve its license and notices.
+- Never commit credentials, private-server links, webhook URLs, captures, datasets, logs, local models, settings, or generated output.
+- Do not drive LilacMacro or Roblox through computer-control tooling for UI or behavior tests. The owner performs live visual and Roblox validation.
+
+## Read before changing
+
+- Every change: [CONTRIBUTING.md](CONTRIBUTING.md), [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md), and [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md).
+- Architecture or ownership: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- Game navigation or OCR state behavior: [docs/GAME-BEHAVIOR.md](docs/GAME-BEHAVIOR.md).
+- OCR or future detection: [docs/OCR-AND-VISION.md](docs/OCR-AND-VISION.md).
+- Placement work: [docs/PLACEMENT-AUTHORING.md](docs/PLACEMENT-AUTHORING.md).
+- Planned scheduler/runtime: [docs/MACRO-ARCHITECTURE.md](docs/MACRO-ARCHITECTURE.md).
+- Dataset work: [docs/DATASET-FORMAT.md](docs/DATASET-FORMAT.md) and [docs/AGENT-DATASET-WORKFLOW.md](docs/AGENT-DATASET-WORKFLOW.md).
+- Privacy, secrets, or local data: [PRIVACY.md](PRIVACY.md).
+- Deep-debug capture or diagnosis: [docs/DEEP-DEBUG.md](docs/DEEP-DEBUG.md).
+- Test scope and commands: [docs/TESTING.md](docs/TESTING.md).
 
 ## Runtime invariants
 
-- All requested resolutions are Roblox client-area pixels, not outer-window or desktop pixels.
-- Verify the live client size after every resize; a requested coordinate never substitutes for observation.
-- Capture only fresh frames from the verified Roblox window and record the actual size with every frame.
-- Annotation rectangles use original-image pixel coordinates, clamp to image bounds, and ignore tiny drags.
-- Save dataset manifests atomically. Captures remain drafts until the owner gives the dataset a name and finalizes it.
-- Do not overwrite an existing dataset directory.
+- Coordinates and requested resolutions are Roblox client-area pixels, never desktop or outer-window pixels.
+- Reobserve the live Roblox client after resize, delay, focus change, or external transition before input.
+- Only fresh captures and verified state evidence may authorize Debug input; static coordinates never do.
+- Annotation and OCR rectangles use original-image, half-open coordinates and remain inside their owning image or region.
+- Save manifests, settings, and placement documents atomically; never overwrite an existing finalized dataset directory.
+- Keep input cancellation-aware and release every held key or mouse button on all exit paths.
 
-## Architecture
+## Architecture and status language
 
-Preserve `Core <- Windows <- App`.
-
-- Core owns models, validation, schedules, naming, and persistence contracts without WPF or Win32.
-- Windows owns Roblox discovery, client sizing, display geometry, and window capture.
-- App owns WPF composition and user interaction.
-- `scripts/Test-RepositoryPolicy.ps1` enforces 500 lines for production C#/XAML/Python and repository scripts, 800 for tests, and 120 for this file. Debt exceptions are exact ceilings that must fall whenever the file shrinks.
+- Preserve dependency direction: `Core <- Windows <- App`; tests and tools may consume Core.
+- Core is platform-independent, Windows owns Win32/capture/input, and App owns WPF/lifecycle.
+- Label repository claims as **Implemented**, **Prototype**, **Planned**, or **Unresolved**. Design intent must never be presented as working runtime behavior.
+- Dataset Builder owns Capture/Review/Datasets; Runtime Lab owns Debug/Wire Test. Both are retained owner tools, not dead code.
+- Respect repository limits: production and scripts 500 lines, tests 800 lines, every `AGENTS.md` 120 lines. Split by cohesive ownership instead of evading limits.
 
 ## Required change loop
 
-1. Inspect `git status` and preserve unrelated work.
-2. Make the smallest cohesive change.
-3. Add focused regression coverage.
+1. Inspect `git status`; preserve unrelated owner work.
+2. Make the smallest cohesive change and add focused regression coverage.
+3. Run `./scripts/Test-Documentation.ps1` for documentation changes.
 4. Run `./scripts/Test-RepositoryPolicy.ps1`.
-5. Run `dotnet build LilacMacro.slnx -c Release` and `dotnet test LilacMacro.slnx -c Release --no-build`.
-6. Run `dotnet format LilacMacro.slnx --verify-no-changes` and `git diff --check`.
-7. Review the complete diff and update documentation when behavior changes.
+5. Run locked restore, warning-free Release build, and all tests as described in [docs/TESTING.md](docs/TESTING.md).
+6. Run formatting verification and `git diff --check`.
+7. Review the complete intended diff and update status/behavior documentation with the code.
+
+## Definition of done
+
+A change is complete only when behavior and status claims match the code, relevant automated checks pass, owner-only live testing is clearly handed off, and the worktree contains no accidental files.

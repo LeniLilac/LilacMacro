@@ -25,9 +25,11 @@ public sealed class DatasetStoreTests
             DatasetFrame frame = await store.AddFrameAsync(draft, png, 320, 240, DateTimeOffset.UtcNow);
             BoxAnnotation region = new()
             {
+                GlobalGroupId = Guid.NewGuid(),
                 Bounds = new PixelRect(12, 18, 100, 24),
                 Label = "wave label",
                 Notes = "player-authored note",
+                MinimumPoolMatches = 1,
             };
             region.OcrTrials.Add(new OcrTrial
             {
@@ -49,6 +51,11 @@ public sealed class DatasetStoreTests
                         Text = "Wave 12",
                         DetectionConfidence = 0.91,
                         RecognitionConfidence = 0.94,
+                        IsOcrEvidence = true,
+                        IsVisualAnchor = true,
+                        MatchMode = OcrMatchMode.FuzzyPhrase,
+                        EvidenceRole = OcrEvidenceRole.Pool,
+                        SpatialSelector = OcrSpatialSelector.Leftmost,
                     },
                 ],
             });
@@ -68,7 +75,16 @@ public sealed class DatasetStoreTests
             Assert.Equal("PP-OCRv6_small_det", loadedTrial.DetectorModelName);
             Assert.Equal("gpu:0", loadedTrial.Device);
             Assert.True(loadedTrial.ModelWasCached);
-            Assert.Equal(new PixelRect(18, 20, 72, 18), Assert.Single(loadedTrial.Regions).Bounds);
+            OcrTextRegion loadedText = Assert.Single(loadedTrial.Regions);
+            BoxAnnotation loadedAnnotation = Assert.Single(loaded.Manifest.Frames).Annotations.Single();
+            Assert.NotNull(loadedAnnotation.GlobalGroupId);
+            Assert.Equal(1, loadedAnnotation.MinimumPoolMatches);
+            Assert.True(loadedText.IsOcrEvidence);
+            Assert.True(loadedText.IsVisualAnchor);
+            Assert.Equal(OcrMatchMode.FuzzyPhrase, loadedText.MatchMode);
+            Assert.Equal(OcrEvidenceRole.Pool, loadedText.EvidenceRole);
+            Assert.Equal(OcrSpatialSelector.Leftmost, loadedText.SpatialSelector);
+            Assert.Equal(new PixelRect(18, 20, 72, 18), loadedText.Bounds);
             Assert.DoesNotContain("\"right\"", manifestJson, StringComparison.Ordinal);
             Assert.DoesNotContain("\"bottom\"", manifestJson, StringComparison.Ordinal);
             Assert.Contains("\"capture_mode\": \"timed\"", manifestJson, StringComparison.Ordinal);

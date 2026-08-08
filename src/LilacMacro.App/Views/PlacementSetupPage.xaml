@@ -1,0 +1,139 @@
+<UserControl x:Class="LilacMacro.App.Views.PlacementSetupPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:LilacMacro.App.Views">
+    <UserControl.Resources>
+        <Style x:Key="CategoryButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Margin" Value="0,0,9,0" />
+            <Setter Property="Padding" Value="15,5" />
+        </Style>
+
+        <Style x:Key="CategoryButtonActiveStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource CategoryButtonStyle}">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource CardBrush}" />
+        </Style>
+
+        <Style x:Key="MapTileButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="326" />
+            <Setter Property="Height" Value="226" />
+            <Setter Property="Margin" Value="0,0,18,18" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource InkBrush}" />
+            <Setter Property="BorderThickness" Value="3" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="Shadow" Margin="6,6,0,0"
+                                    Background="{DynamicResource InkBrush}" CornerRadius="5" />
+                            <Border x:Name="Face" Margin="0,0,6,6"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="5" ClipToBounds="True">
+                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Margin" Value="0,0,8,8" />
+                                <Setter TargetName="Shadow" Property="Margin" Value="8,8,0,0" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Face" Property="Margin" Value="4,4,2,2" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="28,22,28,28">
+        <Grid x:Name="GalleryPanel">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <TextBlock Text="SETUP" FontSize="19" FontWeight="Black" />
+                <Button x:Name="RefreshButton" HorizontalAlignment="Right" Height="36"
+                        Padding="14,5" Style="{StaticResource ButtonStyle}"
+                        Content="REFRESH" Click="RefreshButton_OnClick" />
+            </Grid>
+
+            <StackPanel Grid.Row="1" Margin="0,20,0,18" Orientation="Horizontal">
+                <Button x:Name="StoryButton" Content="STORY" Click="StoryButton_OnClick" />
+                <Button x:Name="RaidButton" Content="RAID" Click="RaidButton_OnClick" />
+                <Button x:Name="ExpeditionButton" Content="EXPEDITION" Click="ExpeditionButton_OnClick" />
+                <Button x:Name="EventsButton" Content="EVENTS" Click="EventsButton_OnClick" />
+            </StackPanel>
+
+            <ScrollViewer x:Name="GalleryScroll" Grid.Row="2"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <ItemsControl x:Name="MapGallery">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource MapTileButtonStyle}" Tag="{Binding}"
+                                        Click="MapTile_OnClick">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="48" />
+                                        </Grid.RowDefinitions>
+                                        <Border Background="{DynamicResource CanvasBrush}" ClipToBounds="True">
+                                            <Image Source="{Binding ThumbnailUri}" Stretch="UniformToFill" />
+                                        </Border>
+                                        <Grid Grid.Row="1" Background="{DynamicResource CardBrush}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="12,6" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayName}" FontSize="14"
+                                                           FontWeight="Black" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding ModeLabel}" FontSize="9"
+                                                           FontWeight="Bold" Foreground="{DynamicResource InkSoftBrush}" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Margin="8,0,12,0"
+                                                       VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       Foreground="{DynamicResource InkSoftBrush}" Text="{Binding ViewCount}" />
+                                        </Grid>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock x:Name="GalleryStateText" Margin="0,48,0,0"
+                               HorizontalAlignment="Center" VerticalAlignment="Top"
+                               FontSize="13" FontWeight="Black"
+                               Foreground="{DynamicResource InkSoftBrush}" Text="LOADING MAPS" />
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <views:PlacementEditorView x:Name="PlacementEditor"
+                                   Visibility="Collapsed"
+                                   BackRequested="PlacementEditor_OnBackRequested" />
+    </Grid>
+</UserControl>

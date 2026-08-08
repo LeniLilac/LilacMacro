@@ -17,6 +17,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\LilacMacro.App\LilacMacro.App.csproj" />
     <ProjectReference Include="..\..\src\LilacMacro.Core\LilacMacro.Core.csproj" />
     <ProjectReference Include="..\..\src\LilacMacro.Windows\LilacMacro.Windows.csproj" />
   </ItemGroup>

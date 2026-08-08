@@ -19,4 +19,23 @@ public sealed class GeometryTests
 
         Assert.Null(result);
     }
+
+    [Fact]
+    public void Anchors_UseClientPixelCenters()
+    {
+        PixelRect bounds = new(20, 30, 41, 19);
+
+        Assert.Equal(new PixelPoint(40, 39), bounds.Center);
+        Assert.Equal(new PixelPoint(40, 30), bounds.TopCenter);
+    }
+
+    [Fact]
+    public void Union_ContainsBothRectangles()
+    {
+        PixelRect union = PixelRect.Union(
+            new PixelRect(163, 37, 433, 591),
+            new PixelRect(289, 70, 526, 507));
+
+        Assert.Equal(new PixelRect(163, 37, 652, 591), union);
+    }
 }

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 using LilacMacro.App.Workspace;
+using LilacMacro.App.Diagnostics;
 using LilacMacro.Core.Datasets;
 
 namespace LilacMacro.App.Views;
@@ -13,11 +14,17 @@ public partial class CapturePage : UserControl, IWorkspacePage
     private readonly Func<PageKind, Task> _navigate;
     private CancellationTokenSource? _captureCancellation;
     private bool _binding;
+    private readonly DeepDebugSessionService _deepDebug;
+    private DeepDebugScope? _manualDebugScope;
 
-    public CapturePage(WorkspaceController workspace, Func<PageKind, Task> navigate)
+    public CapturePage(
+        WorkspaceController workspace,
+        Func<PageKind, Task> navigate,
+        DeepDebugSessionService deepDebug)
     {
         _workspace = workspace;
         _navigate = navigate;
+        _deepDebug = deepDebug;
         InitializeComponent();
     }
 
@@ -52,6 +59,13 @@ public partial class CapturePage : UserControl, IWorkspacePage
     public Task<bool> CaptureFromHotkeyAsync() => RunTimedCaptureAsync(navigateAfter: false, showErrors: false);
 
     public Task<bool> CaptureManualFrameFromHotkeyAsync() => CaptureManualFrameAsync(showErrors: false);
+
+    public async Task CompleteForCloseAsync()
+    {
+        _captureCancellation?.Cancel();
+        if (_manualDebugScope is not null) await _manualDebugScope.CompleteAsync("closed");
+        _manualDebugScope = null;
+    }
 
     private async Task SaveSettingsAsync()
     {
@@ -142,7 +156,17 @@ public partial class CapturePage : UserControl, IWorkspacePage
             await SaveSettingsAsync();
             _captureCancellation = new CancellationTokenSource();
             Progress<CaptureProgress> progress = new(UpdateProgress);
-            DatasetLocation dataset = await _workspace.CaptureDatasetAsync(progress, _captureCancellation.Token);
+            DatasetLocation dataset = await _deepDebug.RunOperationAsync(
+                "timed-dataset-capture",
+                new DeepDebugOperationContext("dataset-builder", new
+                {
+                    _workspace.TargetSize,
+                    _workspace.FrameCount,
+                    _workspace.DurationSeconds,
+                    _workspace.DatasetRoot,
+                }),
+                token => _workspace.CaptureDatasetAsync(progress, token),
+                _captureCancellation.Token);
             TimedCaptureState = CaptureRunState.Complete;
             RunHeadline.Text = "CAPTURE COMPLETE";
             RunDetail.Text = dataset.DirectoryPath;
@@ -177,6 +201,13 @@ public partial class CapturePage : UserControl, IWorkspacePage
         {
             await SaveSettingsAsync();
             _captureCancellation = new CancellationTokenSource();
+            _manualDebugScope = await _deepDebug.OpenSessionAsync(
+                "manual-dataset-capture",
+                new DeepDebugOperationContext("dataset-builder", new
+                {
+                    _workspace.TargetSize,
+                    _workspace.DatasetRoot,
+                }));
             DatasetLocation dataset = await _workspace.StartManualCaptureAsync(_captureCancellation.Token);
             ManualCaptureState = CaptureRunState.Complete;
             RunHeadline.Text = "MANUAL READY";
@@ -186,12 +217,16 @@ public partial class CapturePage : UserControl, IWorkspacePage
         }
         catch (OperationCanceledException)
         {
+            if (_manualDebugScope is not null) await _manualDebugScope.CompleteAsync("canceled");
+            _manualDebugScope = null;
             ManualCaptureState = CaptureRunState.Cancelled;
             RunHeadline.Text = "MANUAL CANCELLED";
             return false;
         }
         catch (Exception error)
         {
+            if (_manualDebugScope is not null) await _manualDebugScope.CompleteAsync("error", error);
+            _manualDebugScope = null;
             ManualCaptureState = CaptureRunState.Failed;
             ShowCaptureError(error, showErrors);
             return false;
@@ -242,6 +277,8 @@ public partial class CapturePage : UserControl, IWorkspacePage
     {
         DatasetLocation? dataset = _workspace.EndManualCapture();
         if (dataset is null) return;
+        if (_manualDebugScope is not null) await _manualDebugScope.CompleteAsync("success");
+        _manualDebugScope = null;
         ManualCaptureState = CaptureRunState.Complete;
         RunHeadline.Text = "MANUAL COMPLETE";
         RunDetail.Text = dataset.DirectoryPath;

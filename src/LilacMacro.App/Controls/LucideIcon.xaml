@@ -1,0 +1,22 @@
+<UserControl x:Class="LilacMacro.App.Controls.LucideIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:LilacMacro.App.Controls"
+             Width="16"
+             Height="16"
+             Focusable="False"
+             IsHitTestVisible="False"
+             SnapsToDevicePixels="True">
+    <Viewbox Stretch="Uniform">
+        <Path Width="24"
+              Height="24"
+              Data="{Binding Data, RelativeSource={RelativeSource AncestorType={x:Type local:LucideIcon}}}"
+              Fill="{x:Null}"
+              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type local:LucideIcon}}}"
+              StrokeStartLineCap="Round"
+              StrokeEndLineCap="Round"
+              StrokeLineJoin="Round"
+              StrokeThickness="2"
+              Stretch="None" />
+    </Viewbox>
+</UserControl>

@@ -1,0 +1,81 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Geometry is transcribed from the official Lucide 24px SVG sources. -->
+    <PathGeometry x:Key="Lucide.Play"
+                  Figures="M5,5 A2,2 0 0 1 8.008,3.272 L20.005,10.27 A2,2 0 0 1 20.008,13.728 L8.008,20.728 A2,2 0 0 1 5,19 Z" />
+
+    <GeometryGroup x:Key="Lucide.ListChecks">
+        <PathGeometry Figures="M13,5 H21 M13,12 H21 M13,19 H21 M3,17 L5,19 L9,15 M3,7 L5,9 L9,5" />
+    </GeometryGroup>
+
+    <GeometryGroup x:Key="Lucide.ListOrdered">
+        <PathGeometry Figures="M10,6 H21 M10,12 H21 M10,18 H21 M4,6 H5 V10 M4,10 H6 M6,18 H4 C4,17 6,16 6,15 C6,14 4,14 4,14" />
+    </GeometryGroup>
+
+    <GeometryGroup x:Key="Lucide.ChartNoAxesCombined">
+        <PathGeometry Figures="M4,3 V21 H22 M4,16 L9,11 L13,15 L18,8 L22,12 M9,18 V21 M13,18 V21 M18,16 V21" />
+    </GeometryGroup>
+
+    <GeometryGroup x:Key="Lucide.Timer">
+        <EllipseGeometry Center="12,14" RadiusX="8" RadiusY="8" />
+        <PathGeometry Figures="M10,2 H14 M12,14 L15,11" />
+    </GeometryGroup>
+
+    <GeometryGroup x:Key="Lucide.Crosshair">
+        <EllipseGeometry Center="12,12" RadiusX="10" RadiusY="10" />
+        <LineGeometry StartPoint="22,12" EndPoint="18,12" />
+        <LineGeometry StartPoint="6,12" EndPoint="2,12" />
+        <LineGeometry StartPoint="12,6" EndPoint="12,2" />
+        <LineGeometry StartPoint="12,22" EndPoint="12,18" />
+    </GeometryGroup>
+
+    <GeometryGroup x:Key="Lucide.Settings2">
+        <PathGeometry Figures="M14,17 H5 M19,7 H10" />
+        <EllipseGeometry Center="17,17" RadiusX="3" RadiusY="3" />
+        <EllipseGeometry Center="7,7" RadiusX="3" RadiusY="3" />
+    </GeometryGroup>
+
+    <PathGeometry x:Key="Lucide.Minus" Figures="M5,12 H19" />
+    <PathGeometry x:Key="Lucide.Plus" Figures="M5,12 H19 M12,5 V19" />
+    <GeometryGroup x:Key="Lucide.GripVertical">
+        <EllipseGeometry Center="9,6" RadiusX="1" RadiusY="1" />
+        <EllipseGeometry Center="15,6" RadiusX="1" RadiusY="1" />
+        <EllipseGeometry Center="9,12" RadiusX="1" RadiusY="1" />
+        <EllipseGeometry Center="15,12" RadiusX="1" RadiusY="1" />
+        <EllipseGeometry Center="9,18" RadiusX="1" RadiusY="1" />
+        <EllipseGeometry Center="15,18" RadiusX="1" RadiusY="1" />
+    </GeometryGroup>
+    <RectangleGeometry x:Key="Lucide.Square" Rect="3,3,18,18" RadiusX="2" RadiusY="2" />
+
+    <GeometryGroup x:Key="Lucide.Copy">
+        <RectangleGeometry Rect="8,8,14,14" RadiusX="2" RadiusY="2" />
+        <PathGeometry Figures="M4,16 C2.9,16 2,15.1 2,14 V4 C2,2.9 2.9,2 4,2 H14 C15.1,2 16,2.9 16,4" />
+    </GeometryGroup>
+
+    <PathGeometry x:Key="Lucide.X" Figures="M18,6 L6,18 M6,6 L18,18" />
+    <PathGeometry x:Key="Lucide.Check" Figures="M20,6 L9,17 L4,12" />
+    <GeometryGroup x:Key="Lucide.TriangleAlert">
+        <PathGeometry Figures="M21.73,18 L13.73,4 A2,2 0 0 0 10.27,4 L2.27,18 A2,2 0 0 0 4,21 H20 A2,2 0 0 0 21.73,18" />
+        <PathGeometry Figures="M12,9 V13 M12,17 L12.01,17" />
+    </GeometryGroup>
+    <GeometryGroup x:Key="Lucide.Bug">
+        <PathGeometry Figures="M8,2 L9.5,4 M16,2 L14.5,4 M3,13 H7 M17,13 H21 M5,19 L8,16 M19,19 L16,16" />
+        <PathGeometry Figures="M8,6 A4,4 0 0 1 16,6 V14 A4,4 0 0 1 8,14 Z" />
+    </GeometryGroup>
+    <GeometryGroup x:Key="Lucide.FolderOpen">
+        <PathGeometry Figures="M6,14 L8,12 H21 A1,1 0 0 1 21.94,13.35 L19,21 H4 A2,2 0 0 1 2,19 V5 A2,2 0 0 1 4,3 H9 L11,6 H18 A2,2 0 0 1 20,8 V10" />
+    </GeometryGroup>
+    <PathGeometry x:Key="Lucide.ChevronUp" Figures="M18,15 L12,9 L6,15" />
+    <PathGeometry x:Key="Lucide.ChevronDown" Figures="M6,9 L12,15 L18,9" />
+
+    <PathGeometry x:Key="Lucide.Trash2"
+                  Figures="M10,11 V17 M14,11 V17 M19,6 V20 A2,2 0 0 1 17,22 H7 A2,2 0 0 1 5,20 V6 M3,6 H21 M8,6 V4 A2,2 0 0 1 10,2 H14 A2,2 0 0 1 16,4 V6" />
+
+    <GeometryGroup x:Key="Lucide.Sun">
+        <EllipseGeometry Center="12,12" RadiusX="4" RadiusY="4" />
+        <PathGeometry Figures="M12,2 V4 M12,20 V22 M4.93,4.93 L6.34,6.34 M17.66,17.66 L19.07,19.07 M2,12 H4 M20,12 H22 M6.34,17.66 L4.93,19.07 M19.07,4.93 L17.66,6.34" />
+    </GeometryGroup>
+
+    <PathGeometry x:Key="Lucide.Moon"
+                  Figures="M20.985,12.486 A9,9 0 1 1 11.512,3.014 C11.917,2.992 12.129,3.474 11.914,3.817 A6,6 0 0 0 20.182,12.085 C20.526,11.87 21.007,12.081 20.985,12.486" />
+</ResourceDictionary>

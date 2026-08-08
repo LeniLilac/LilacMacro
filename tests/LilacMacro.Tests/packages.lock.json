@@ -136,6 +136,13 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "LilacMacro": {
+        "type": "Project",
+        "dependencies": {
+          "LilacMacro.Core": "[1.0.0, )",
+          "LilacMacro.Windows": "[1.0.0, )"
+        }
+      },
       "lilacmacro.core": {
         "type": "Project"
       },

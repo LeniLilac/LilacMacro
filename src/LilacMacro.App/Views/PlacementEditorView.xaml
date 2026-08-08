@@ -1,0 +1,166 @@
+<UserControl x:Class="LilacMacro.App.Views.PlacementEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework">
+    <UserControl.Resources>
+        <Style x:Key="CompactButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="9,4" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Height="38" Padding="13,5" Style="{StaticResource ButtonStyle}"
+                    Content="BACK TO MAPS" Click="BackToMaps_OnClick" />
+            <TextBlock x:Name="BreadcrumbText" Grid.Column="1" Margin="16,0"
+                       VerticalAlignment="Center" FontSize="18" FontWeight="Black"
+                       TextTrimming="CharacterEllipsis" />
+            <ComboBox x:Name="RouteSelector" Grid.Column="2" Width="190"
+                      Margin="0,0,8,0" DisplayMemberPath="Display"
+                      SelectionChanged="RouteSelector_OnSelectionChanged" />
+            <Button x:Name="ResetButton" Grid.Column="4" Width="76"
+                    Style="{StaticResource CompactButtonStyle}"
+                    Background="{DynamicResource DangerBrush}"
+                    Content="RESET" Click="Reset_OnClick" />
+            <ComboBox x:Name="ViewSelector" Grid.Column="3" Width="150" Margin="0,0,8,0"
+                      DisplayMemberPath="Label" SelectionChanged="ViewSelector_OnSelectionChanged" />
+        </Grid>
+
+        <ScrollViewer x:Name="WorkspaceScrollViewer"
+                      Grid.Row="1"
+                      Margin="0,18,0,0"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalContentAlignment="Stretch">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+            <Border Height="760" Padding="8" Background="{DynamicResource MutedBrush}"
+                    BorderBrush="{DynamicResource InkBrush}" BorderThickness="3" CornerRadius="5">
+                <ScrollViewer x:Name="MapViewport"
+                              Background="{DynamicResource CardBrush}"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalContentAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              PanningMode="Both"
+                              SizeChanged="MapViewport_OnSizeChanged"
+                              PreviewMouseWheel="MapViewport_OnPreviewMouseWheel"
+                              PreviewMouseDown="MapViewport_OnMouseMiddleButtonDown"
+                              MouseMove="MapViewport_OnMouseMove"
+                              PreviewMouseUp="MapViewport_OnMouseMiddleButtonUp"
+                              LostMouseCapture="MapViewport_OnLostMouseCapture">
+                    <Grid x:Name="MapSurface" Width="1366" Height="700"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Background="{DynamicResource CardBrush}"
+                          MouseLeftButtonDown="MapSurface_OnMouseLeftButtonDown">
+                        <Grid.LayoutTransform>
+                            <ScaleTransform x:Name="MapScale" ScaleX="1" ScaleY="1" />
+                        </Grid.LayoutTransform>
+                        <Image x:Name="MapImage" Stretch="Fill" />
+                        <ItemsControl x:Name="PlacementMarkers" Width="1366" Height="700"
+                                      HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><Canvas /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding MarkerLayout.CanvasLeft}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding MarkerLayout.CanvasTop}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Canvas Width="{Binding MarkerLayout.CanvasWidth}"
+                                            Height="{Binding MarkerLayout.CanvasHeight}">
+                                        <Line X1="{Binding MarkerLayout.AnchorX}"
+                                              X2="{Binding MarkerLayout.ConnectorBendX}"
+                                              Y1="{Binding MarkerLayout.AnchorY}"
+                                              Y2="{Binding MarkerLayout.ConnectorBendY}"
+                                              IsHitTestVisible="False"
+                                              Stroke="{DynamicResource PinkBrush}"
+                                              StrokeThickness="3" />
+                                        <Line X1="{Binding MarkerLayout.ConnectorBendX}"
+                                              X2="{Binding MarkerLayout.ConnectorEndX}"
+                                              Y1="{Binding MarkerLayout.ConnectorBendY}"
+                                              Y2="{Binding MarkerLayout.ConnectorEndY}"
+                                              IsHitTestVisible="False"
+                                              Stroke="{DynamicResource PinkBrush}"
+                                              StrokeThickness="3" />
+                                        <primitives:Thumb Canvas.Left="{Binding MarkerLayout.PointLeft}"
+                                                          Canvas.Top="{Binding MarkerLayout.PointTop}"
+                                                          Width="14" Height="14"
+                                                          Cursor="SizeAll"
+                                                          ToolTip="{Binding MarkerLabel}"
+                                                          DragStarted="PlacementMarker_OnDragStarted"
+                                                          DragDelta="PlacementMarker_OnDragDelta"
+                                                          DragCompleted="PlacementMarker_OnDragCompleted">
+                                            <primitives:Thumb.Template>
+                                                <ControlTemplate TargetType="primitives:Thumb">
+                                                    <Ellipse x:Name="PlacementDot"
+                                                             Fill="{DynamicResource CardBrush}"
+                                                             Stroke="{DynamicResource PinkBrush}"
+                                                             StrokeThickness="4" />
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="PlacementDot" Property="Fill"
+                                                                    Value="{DynamicResource PinkBrush}" />
+                                                            <Setter TargetName="PlacementDot" Property="Stroke"
+                                                                    Value="{DynamicResource InkBrush}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsDragging" Value="True">
+                                                            <Setter TargetName="PlacementDot" Property="Fill"
+                                                                    Value="{DynamicResource YellowBrush}" />
+                                                            <Setter TargetName="PlacementDot" Property="Stroke"
+                                                                    Value="{DynamicResource InkBrush}" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </primitives:Thumb.Template>
+                                        </primitives:Thumb>
+                                        <Border Canvas.Left="{Binding MarkerLayout.LabelLeft}"
+                                                Canvas.Top="{Binding MarkerLayout.LabelTop}"
+                                                Width="{Binding MarkerLayout.LabelWidth}"
+                                                Height="{Binding MarkerLayout.LabelHeight}"
+                                                Padding="8,0"
+                                                Background="{DynamicResource CardBrush}"
+                                                BorderBrush="{DynamicResource PinkBrush}"
+                                                BorderThickness="2"
+                                                CornerRadius="3"
+                                                IsHitTestVisible="False">
+                                            <TextBlock HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontWeight="Black"
+                                                       Foreground="{DynamicResource InkBrush}"
+                                                       Text="{Binding MarkerLabel}" />
+                                        </Border>
+                                    </Canvas>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </ScrollViewer>
+            </Border>
+
+            <ContentControl x:Name="TimelineHost" Grid.Row="2" />
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

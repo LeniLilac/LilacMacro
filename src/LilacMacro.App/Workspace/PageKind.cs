@@ -5,4 +5,6 @@ public enum PageKind
     Capture,
     Review,
     Datasets,
+    Debug,
+    WireTest,
 }

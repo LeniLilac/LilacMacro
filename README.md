@@ -1,55 +1,47 @@
 # LilacMacro
 
-LilacMacro is a Windows desktop tool for building reliable visual datasets before automating Roblox workflows. It keeps the first workflow deliberately structured:
-
-1. Find Roblox and verify an exact client resolution.
-2. Capture fresh frames either on a timer or manually one frame at a time.
-3. Name and review the dataset with per-frame verdicts, zoomable boxes, labels, notes, and PP-OCRv6 detection + recognition trials.
-
-The app does not inject into Roblox or read its process memory. It uses Win32 window management and Windows Graphics Capture.
+LilacMacro is a private, Windows-only .NET/WPF tool for building and validating reliable Roblox screen automation. The current prototype provides a macro shell, placement authoring, a focused Dataset Builder, and a separate Runtime Lab for explicit OCR/vision transitions and flow tests. Unattended macro playback is planned.
 
 ## Requirements
 
 - Windows 10 version 1903 or later, or Windows 11
-- .NET 10 SDK
-- Roblox running in windowed mode
+- .NET SDK version pinned by [`global.json`](global.json)
+- Roblox running in windowed mode for capture or Runtime Lab work
+- Optional: Python 3.12 for local PaddleOCR
 
-## Build
+## Quick start
 
 ```powershell
-dotnet restore LilacMacro.slnx
+dotnet restore LilacMacro.slnx --locked-mode
 dotnet build LilacMacro.slnx -c Release --no-restore
 dotnet test LilacMacro.slnx -c Release --no-build
-```
-
-Run the app with:
-
-```powershell
 dotnet run --project src/LilacMacro.App/LilacMacro.App.csproj
 ```
 
-Datasets default to `Documents\LilacMacro Datasets`, outside the repository. Do not commit personal or third-party captures.
-
-F6 is registered globally while LilacMacro is running. It starts a capture with the saved settings without changing the visible page; presses during an active capture are ignored. Each completed press creates a separate draft dataset.
-
-Manual mode creates an open draft without a timer. While that session is active, F5 is registered globally and appends one fresh frame per press. Finish the session from Capture before changing its resolution or dataset root.
-
-## Optional OCR setup
-
-Region OCR runs in an isolated Python 3.12 environment under `%LOCALAPPDATA%\LilacMacro\ocr`; it does not alter the global Python environment. Set it up with:
+Optional OCR setup:
 
 ```powershell
-.\scripts\Setup-Ocr.ps1 -Device cpu
-# or, for a supported NVIDIA GPU:
-.\scripts\Setup-Ocr.ps1 -Device gpu
+./scripts/Setup-Ocr.ps1 -Device cpu
+# Or, on a supported NVIDIA/CUDA system:
+./scripts/Setup-Ocr.ps1 -Device gpu
 ```
 
-The review workspace pairs `PP-OCRv6_small_rec` with `PP-OCRv6_small_det` and `PP-OCRv6_tiny_rec` with `PP-OCRv6_tiny_det`. Detection runs only inside the manually selected region and stores each recognized line with original-frame coordinates. Select `CPU` or `GPU` beside the model; a trial records the exact device used. Model files download on first use and stay in the local Paddle model cache, never in this repository. `KEEP LOADED` caches pipelines by model and device in the current app session; turning it off releases the worker.
+## Current status
 
-Mouse wheel zooms the active annotation or OCR map around the pointer. Hold the middle mouse button and drag to pan. The toolbar buttons and `FIT` work on either view. `MAP ONLY` expands the clean OCR text map to the full review canvas.
+- **Implemented:** dataset storage and validation, timed/manual capture, annotations, OCR trials, bounded agent dataset views, Roblox sizing/capture/input services, deterministic OCR policies, and the generic adaptive visual-anchor builder/matcher/profile foundation.
+- **Prototype:** the four-tab macro shell, Setup placement authoring, light/dark themes, and owner-triggered OCR Debug transitions.
+- **Prototype:** Runtime Lab and main Macro can run Story, Raid, and reset-aware Challenge rotation through authored placement playback, terminal verification, private-server Lobby reset, and priority reevaluation.
+- **Planned:** persistent plans and protected secrets, Expedition and limited Event runners, webhooks, and dataset/runtime integration for personalized image detection.
+- **Unresolved:** Macro and Plan page design, complete Settings design, packaging, and release workflow.
 
-## Dataset layout
+See the authoritative matrix in [Project status](docs/PROJECT-STATUS.md). Dataset Builder owns Capture, Review + OCR, and Datasets. Runtime Lab owns Debug and Wire Test. Both are supported internal applications built from the shared App/Core/Windows implementation.
 
-Each dataset directory contains `dataset.json` and an `images` directory. Capture sessions begin in a `.draft-*` directory and are finalized only after review gives them a name. See [docs/DATASET-FORMAT.md](docs/DATASET-FORMAT.md).
+## Safety boundary
 
-Datasets are self-describing against [schemas/dataset.schema.json](schemas/dataset.schema.json). Agents should use the validated contact-sheet and JSONL workflow in [docs/AGENT-DATASET-WORKFLOW.md](docs/AGENT-DATASET-WORKFLOW.md), rather than opening an unbounded image directory frame by frame.
+LilacMacro uses ordinary Windows window management, Windows Graphics Capture, and Windows input. It must not inject into Roblox, read or modify Roblox process memory, hook the game, or bypass anti-cheat systems. Captures and local configuration stay outside the repository.
+
+## Documentation
+
+Start with the [documentation index](docs/README.md). Contributors and coding agents must also read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
+
+The project is noncommercial; see [LICENSE.md](LICENSE.md), [NOTICE.md](NOTICE.md), and [PRIVACY.md](PRIVACY.md).
