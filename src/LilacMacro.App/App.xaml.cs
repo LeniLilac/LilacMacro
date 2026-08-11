@@ -1,15 +1,20 @@
 using System.Windows;
 using System.Windows.Threading;
+using System.Net.Http;
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.DeepDebugViewer;
 using LilacMacro.App.Lifecycle;
 using LilacMacro.App.Infrastructure;
+using LilacMacro.App.Updates;
+using LilacMacro.Core.Updates;
+using LilacMacro.Windows.LocalSession;
 
 namespace LilacMacro.App;
 
 public partial class App : Application
 {
     private readonly DeepDebugSessionService _deepDebug = new();
+    private UpdateShutdownMonitor? _updateShutdown;
 
     public App()
     {
@@ -33,12 +38,41 @@ public partial class App : Application
         };
         MainWindow = startupWindow;
         startupWindow.Show();
+        if (MacroInstanceContext.Current.IsManagedRunner)
+            _ = PrepareManagedRunnerAsync();
+        LilacSemanticVersion currentVersion = LilacSemanticVersion.FromAssemblyVersion(
+            typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0));
+        _updateShutdown = new UpdateShutdownMonitor(
+            Dispatcher,
+            currentVersion,
+            () => MainWindow?.Close());
+        _updateShutdown.Start();
         if (startupWindow is DeepDebugViewerWindow viewer)
         {
             string? archivePath = eventArgs.Args.FirstOrDefault(argument =>
                 argument.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
             if (archivePath is not null) viewer.OpenArchiveFromCommandLine(archivePath);
         }
+    }
+
+    private static async Task PrepareManagedRunnerAsync()
+    {
+        try
+        {
+            RunnerDesktopPersonalization.ApplyCurrentSession();
+            await new RunnerFirstLaunchBootstrap().RunAsync();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException
+            or InvalidOperationException or HttpRequestException or System.ComponentModel.Win32Exception or TaskCanceledException)
+        {
+            Notifications.AppToastService.ShowError("RUNNER SETUP INCOMPLETE", exception.Message);
+        }
+    }
+
+    protected override void OnExit(ExitEventArgs eventArgs)
+    {
+        _updateShutdown?.Dispose();
+        base.OnExit(eventArgs);
     }
 
     private static async void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs eventArgs)

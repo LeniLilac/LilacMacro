@@ -68,8 +68,8 @@ Each shell names itself in the title bar and constructs only its owned surface. 
 
 Purpose: dashboard and future macro execution.
 
-- Use a large Roblox run surface with a right-side inspector and run log below. Preserve the Roblox client's exact physical size; the inspector expands into remaining horizontal space and the run log expands into remaining vertical space so larger work areas do not expose dead canvas.
-- The Roblox surface has one compact left-aligned Dock/Undock action. Dock does not maximize the shell; the shell opens in a normal window fitted to the monitor work area and presents the client at exactly `1366 x 700` physical pixels. Switching tabs, hiding the shell behind another application, undocking, or closing restores the standalone Roblox window.
+- Full layout uses a large Roblox run surface with a right-side inspector and run log below. Preserve the Roblox client's exact physical size; the inspector expands into remaining horizontal space and the run log expands into remaining vertical space so larger work areas do not expose dead canvas.
+- Full layout opens at `1920 x 1080` and exposes one compact left-aligned Dock/Undock action. Dock does not maximize the shell and presents the client at exactly `1366 x 700` physical pixels. Compact layout opens at `1366 x 768`, removes the dock surface and action entirely, and always minimizes the macro while a run owns the desktop. Switching tabs, hiding the full shell behind another application, undocking, or closing restores the standalone Roblox window.
 - Keep plan selection and Start/Stop at the top of the page.
 - The inspector exposes the current task, next eligible task, priority decision, Lobby-reset evidence, private-server readiness, terminal path, runtime, victories, and defeats.
 - Until the runtime exists, Start/Stop changes preview state only. It must not imply that Roblox input, capture, scheduler, or persistence is active.
@@ -181,19 +181,19 @@ The canonical route, timeline, coordinate, autosave, and playback-boundary contr
 Purpose: keybinds, webhooks, Roblox private server links, and other application settings.
 
 - Keep the theme control as the first field inside General / Appearance.
-- Use one Minimize behavior dropdown for Keep visible, Minimize while running, and Minimize on start. Do not duplicate its states with a separate switch.
+- Use one Minimize behavior dropdown for Keep visible, Minimize while running, and Minimize on start. Compact layout forces Minimize while running and makes that constraint visible instead of presenting an ineffective choice.
 - Treat the standard Roblox 100% UI scale as a startup invariant. Do not expose a UI-scale selector or an option to skip scale preparation.
 - Treat the documented Roblox UI/input settings allowlist as a plan-start and private-server-reset invariant. Do not expose per-field overrides; normalization occurs only after the owning Windows session closes Roblox.
 - Use one persistent internal category bar: General, Roblox, Discord, Keybinds, and Diagnostics.
 - General owns appearance, updates, and local-data controls. Game-setting normalization and fresh Lobby verification are mandatory runtime invariants, not settings.
 - General shows the running Macro version as a terse read-only value at the top of Updates and data so installed and local artifacts can be identified without opening build metadata.
 - Roblox owns the private-server link and optional local-session target. Do not expose retry counts, rejoin switches, or a way to disable fresh Lobby evidence.
-- Private-server and webhook values use masked fields and current-user DPAPI persistence. Private-server Test Link and runtime resets convert validated Roblox web/share links to the registered `roblox://` protocol so the browser is never the launch intermediary.
+- The private-server link remains visible while editing because it is account-routing configuration, but it stays DPAPI-protected at rest and redacted from diagnostics. Webhooks remain masked. Private-server Test Link and runtime resets convert validated Roblox web/share links to the registered `roblox://` protocol so the browser is never the launch intermediary.
 - Local instances presents This desktop plus compact Runner rows with session state, shared/separate configuration, endpoint, `OPEN`, and `REMOVE`. Machine actions remain one terse row: setup, repair, add shared, add separate, and remove all.
 - Discord owns webhook and failure-notification fields.
 - Keybinds uses a compact name, scope, and binding list.
 - Diagnostics owns failure evidence, deep debug, and experimental recording controls.
-- Controls are session-only prototypes unless their current implementation explicitly says otherwise. Theme switching is live; press-then-key bindings, private-server/webhook secrets, Discord failure options, Plan state, and local-instance profiles persist atomically across versioned artifacts. Every macro UI runs on its own desktop; there is no run-target selector. Current Story/Raid Play and Unit inventory bindings may be unset to use verified OCR button navigation. Areas exposes the same optional binding contract for its future runner. Webhook delivery, update, and recording effects are not connected; private-server protocol launch and deep-debug diagnostics are connected.
+- Controls are session-only prototypes unless their current implementation explicitly says otherwise. Theme switching is live; display/update preferences, press-then-key bindings, private-server/webhook values, Discord failure options, Plan state, and local-instance profiles persist atomically across versioned artifacts. Every macro UI runs on its own desktop; there is no run-target selector. Current Story/Raid Play and Unit inventory bindings may be unset to use verified OCR button navigation. Areas exposes the same optional binding contract for its future runner. Webhook delivery and recording effects are not connected; private-server protocol launch, coordinated updates, and deep-debug diagnostics are connected.
 
 ## Visual language
 

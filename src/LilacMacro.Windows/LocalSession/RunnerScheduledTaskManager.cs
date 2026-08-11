@@ -73,6 +73,13 @@ public sealed class RunnerScheduledTaskManager
         catch (Exception error) when (IsMissingTaskFailure(error)) { return false; }
     }
 
+    public void Run(string profileId)
+    {
+        dynamic service = OpenService();
+        dynamic task = service.GetFolder("\\").GetTask(TaskNameFor(profileId));
+        _ = task.Run(null);
+    }
+
     internal static string TaskNameFor(string profileId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(profileId);

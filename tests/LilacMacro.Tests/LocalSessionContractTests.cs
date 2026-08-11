@@ -38,6 +38,7 @@ public sealed class LocalSessionContractTests
     [InlineData("add-shared")]
     [InlineData("add-isolated")]
     [InlineData("remove-profile")]
+    [InlineData("relaunch-update")]
     public void Setup_helper_accepts_only_owned_verbs(string verb)
     {
         Assert.True(LocalSessionSetupVerbPolicy.IsAllowed(verb));
@@ -60,6 +61,8 @@ public sealed class LocalSessionContractTests
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["remove-profile"]));
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["remove-profile", "../owner"]));
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["add-shared", "runner-2"]));
+        Assert.True(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-update", @"C:\Users\owner\AppData\Local\LilacMacro\updates\id\update-state.txt"]));
+        Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-update", "bad\npath"]));
     }
 
     [Fact]

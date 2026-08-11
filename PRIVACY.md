@@ -2,7 +2,7 @@
 
 **Status: Current storage behavior plus clearly marked planned protections.**
 
-LilacMacro is a private, local Windows tool. It has no application telemetry or analytics implementation. Network access occurs only when the owner explicitly installs OCR dependencies or when Paddle downloads model files on first use.
+LilacMacro is a private, local Windows tool. It has no application telemetry or analytics implementation. Network access occurs for explicit OCR setup/model downloads, metadata-only update checks against the official GitHub release, owner-approved update downloads, and a runner's first-use Roblox login/installer bootstrap.
 
 ## Current local data
 
@@ -22,6 +22,8 @@ LilacMacro is a private, local Windows tool. It has no application telemetry or 
 | Optional local-runner journal | `%ProgramData%\LilacMacro\Session` | Prototype, machine-owned resource inventory, original system values, hashes, policy version, and owner/runner SIDs. Contains no password. |
 | Local instance profiles and configuration | `%ProgramData%\LilacMacro\Profiles` and `Configurations` | Profile policy/receipt per runner plus shared or isolated macro configuration. Shared configuration survives instance removal; isolated configuration is removed with its runner. Roblox login data is never copied. |
 | Optional runner credential | Windows Credential Manager | Prototype, random runner-account credential persisted for the loopback RDP endpoint. Never stored in JSON or passed on a command line. |
+| Update metadata and installer cache | `%LOCALAPPDATA%\LilacMacro\updates` | Public release JSON plus an owner-approved installer/checksum download. The installer is checked against GitHub metadata, the release checksum manifest, and Authenticode before launch. |
+| Runner first-launch marker | `%LOCALAPPDATA%\LilacMacro\runner-first-launch-v1.complete` inside each runner profile | Records only that the official Roblox login/install bootstrap completed; no Roblox credential or browser data is copied between Windows accounts. |
 
 ## Data handling rules
 
@@ -37,10 +39,12 @@ LilacMacro is a private, local Windows tool. It has no application telemetry or 
 
 ## Secret storage
 
-**Prototype:** Settings accepts masked Roblox private-server and Discord webhook values and stores only current-user DPAPI ciphertext. Private-server navigation parses the secret in memory, launches a reduced `roblox://` target through the registered protocol, and never writes the plaintext link to command output, settings JSON, or diagnostics. Webhook delivery is not implemented. If DPAPI decryption fails, the unusable value is discarded in memory rather than exposed or treated as configured; explicit recovery UX remains Planned.
+**Prototype:** Settings displays the Roblox private-server link as editable account-routing configuration and masks the Discord webhook. Both values store only DPAPI ciphertext. Private-server navigation parses the value in memory, launches a reduced `roblox://` target through the registered protocol, and never writes the plaintext link to command output, settings JSON, or diagnostics. Webhook delivery is not implemented. If DPAPI decryption fails, the unusable value is discarded in memory rather than exposed or treated as configured; explicit recovery UX remains Planned.
 
 ## External software
 
 OCR setup installs pinned PaddlePaddle and PaddleOCR packages into the local LilacMacro environment. Those packages and their model downloads are governed by their own licenses and services. See [NOTICE.md](NOTICE.md) and the files under [`licenses`](licenses/) for bundled attributions.
 
 The prototype installer also bundles pinned TermWrap v0.6 binaries and notices. It never downloads or replaces native session components at runtime. Managed instances use only loopback RDP and disable clipboard, drive, printer, smart-card, microphone, and device redirection. See [Local instance manager](docs/LOCAL-SESSION.md).
+
+On a managed runner's first full-UI launch, LilacMacro opens the official Roblox Login page. If Roblox is absent, it follows only the official `roblox.com` download endpoint to a bounded `rbxcdn.com` installer URL, requires a trusted Authenticode signature, and starts the visible installer. LilacMacro never enters, stores, or transfers Roblox credentials.

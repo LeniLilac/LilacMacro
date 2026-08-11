@@ -11,6 +11,7 @@ public static class LocalSessionSetupVerbPolicy
         "add-shared",
         "add-isolated",
         "remove-profile",
+        "relaunch-update",
     };
 
     public static bool IsAllowed(string? verb) => verb is not null && Allowed.Contains(verb);
@@ -22,9 +23,12 @@ public static class LocalSessionSetupVerbPolicy
     public static bool AreArgumentsAllowed(IReadOnlyList<string> arguments)
     {
         if (arguments.Count == 1) return IsAllowed(arguments[0]) && arguments[0] != "remove-profile";
-        return arguments.Count == 2
-            && arguments[0] == "remove-profile"
-            && arguments[1].Length is > 0 and <= 32
-            && arguments[1].All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
+        if (arguments.Count != 2) return false;
+        if (arguments[0] == "remove-profile")
+            return arguments[1].Length is > 0 and <= 32
+                && arguments[1].All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
+        return arguments[0] == "relaunch-update"
+            && arguments[1].Length is > 0 and <= 1024
+            && !arguments[1].Any(character => character is '\r' or '\n');
     }
 }

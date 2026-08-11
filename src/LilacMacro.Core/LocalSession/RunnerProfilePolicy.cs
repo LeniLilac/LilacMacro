@@ -31,7 +31,7 @@ public sealed record RunnerProfileFailure
 
 public sealed record RunnerProfilePolicy
 {
-    public const string CurrentVersion = "1.4.0";
+    public const string CurrentVersion = "1.5.0";
 
     public string Version { get; init; } = CurrentVersion;
     public IReadOnlyList<RunnerPackageRule> PackageRules { get; init; } = DefaultPackageRules;
@@ -67,6 +67,11 @@ public sealed record RunnerProfilePolicy
         Dword(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SubscribedContent-353696Enabled", 0),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowSyncProviderNotifications", 0),
+        Dword(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "HideIcons", 1),
+        String(@"Control Panel\Desktop", "Wallpaper", string.Empty),
+        String(@"Control Panel\Desktop", "WallpaperStyle", "0"),
+        String(@"Control Panel\Desktop", "TileWallpaper", "0"),
+        String(@"Control Panel\Colors", "Background", "0 0 0"),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement", "ScoobeSystemSettingEnabled", 0),
         Delete(@"Software\Microsoft\Windows\CurrentVersion\Run", "OneDrive"),
@@ -76,6 +81,9 @@ public sealed record RunnerProfilePolicy
 
     private static RunnerRegistryRule Dword(string key, string name, int value) =>
         new(key, name, "DWord", value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+    private static RunnerRegistryRule String(string key, string name, string value) =>
+        new(key, name, "String", value);
 
     private static RunnerRegistryRule Delete(string key, string name) =>
         new(key, name, "String", string.Empty, DeleteWhenPresent: true);

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -8,6 +9,9 @@ using LilacMacro.App.Theming;
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Notifications;
+using LilacMacro.App.Updates;
+using LilacMacro.App.Infrastructure;
+using LilacMacro.Core.Updates;
 using LilacMacro.Windows;
 
 namespace LilacMacro.App.Views;
@@ -18,28 +22,34 @@ public partial class SettingsPage : UserControl
     private readonly DeepDebugSessionService _deepDebug;
     private readonly MacroOwnerState _ownerState;
     private readonly Action<bool> _keyCaptureStateChanged;
+    private readonly ApplicationUpdateService _updates;
     private MacroKeyBinding? _capturingBinding;
+    private bool _updatingDisplayControls;
 
     internal SettingsPage(
         DeepDebugSessionService deepDebug,
         MacroOwnerState ownerState,
         LocalInstanceManagerController instanceManager,
+        ApplicationUpdateService updates,
         Action<bool> keyCaptureStateChanged)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
+        _updates = updates;
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
         MacroVersionText.Text = BuildVersion();
-        MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on start" };
-        UpdateChannelCombo.ItemsSource = new[] { "Stable", "Prerelease" };
+        LayoutProfileCombo.ItemsSource = new[] { "1920 x 1080 - full dock", "1366 x 768 - compact" };
+        MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on app start" };
         CaptureIntervalCombo.ItemsSource = new[] { "0.5 sec", "1.0 sec", "2.0 sec" };
-        MinimizeBehaviorCombo.SelectedIndex = 1;
-        UpdateChannelCombo.SelectedIndex = 0;
+        LayoutProfileCombo.SelectedIndex = ownerState.LayoutProfile == MacroLayoutProfile.Compact1366x768 ? 1 : 0;
+        MinimizeBehaviorCombo.SelectedIndex = (int)ownerState.EffectiveMinimizeBehavior;
+        CheckUpdatesOnStartupCheck.IsChecked = ownerState.CheckForUpdatesOnStartup;
+        IncludePrereleaseCheck.IsChecked = ownerState.IncludePrereleaseUpdates;
         CaptureIntervalCombo.SelectedIndex = 1;
         LocalInstancesPanel.Initialize(instanceManager, ownerState);
         KeyBindingsItems.ItemsSource = ownerState.KeyBindings.Items;
-        PrivateServerPassword.Password = ownerState.PrivateServerLink;
+        PrivateServerText.Text = ownerState.PrivateServerLink;
         WebhookPassword.Password = ownerState.DiscordWebhook;
         DiscordUserIdText.Text = ownerState.DiscordUserId;
         NotifyTerminalFailureCheck.IsChecked = ownerState.NotifyOnTerminalFailure;
@@ -50,6 +60,8 @@ public partial class SettingsPage : UserControl
         PrivateServerStatusText.Text = ownerState.PrivateServerLink.Length == 0 ? "Not configured" : "Stored securely";
         WebhookStatusText.Text = ownerState.DiscordWebhook.Length == 0 ? "Not configured" : "Stored securely";
         _initialized = true;
+        RefreshDisplayControls();
+        RefreshUpdateOwnership();
         _deepDebug.ArchiveSaved += DeepDebug_OnArchiveSaved;
         RefreshThemeButton();
     }
@@ -94,13 +106,120 @@ public partial class SettingsPage : UserControl
         if (_initialized) GeneralStatusText.Text = "Profile changed in this session";
     }
 
-    private void CheckUpdates_OnClick(object sender, RoutedEventArgs eventArgs) => GeneralStatusText.Text = "Update check is not connected";
+    internal async Task CheckOnStartupAsync()
+    {
+        if (!_ownerState.CheckForUpdatesOnStartup || MacroInstanceContext.Current.IsManagedRunner) return;
+        await CheckUpdatesAsync(showErrors: false);
+    }
+
+    private async void CheckUpdates_OnClick(object sender, RoutedEventArgs eventArgs) =>
+        await CheckUpdatesAsync(showErrors: true);
+
+    private async Task CheckUpdatesAsync(bool showErrors)
+    {
+        CheckUpdatesButton.IsEnabled = false;
+        InstallUpdateButton.Visibility = Visibility.Collapsed;
+        GeneralStatusText.Text = "Checking official GitHub Releases...";
+        try
+        {
+            VerifiedUpdateRelease? release = await _updates.CheckAsync(_ownerState.IncludePrereleaseUpdates);
+            if (release is null)
+            {
+                GeneralStatusText.Text = $"Version {_updates.CurrentVersion} is current";
+                return;
+            }
+            GeneralStatusText.Text = _updates.CanInstall
+                ? $"Version {release.Version} is available"
+                : $"Version {release.Version} is available; install from the Program Files build";
+            InstallUpdateButton.Content = $"INSTALL {release.Version}";
+            InstallUpdateButton.Visibility = _updates.CanInstall ? Visibility.Visible : Visibility.Collapsed;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or InvalidDataException or TaskCanceledException)
+        {
+            GeneralStatusText.Text = showErrors
+                ? $"Update check failed: {exception.Message}"
+                : "Automatic update check unavailable";
+        }
+        finally
+        {
+            CheckUpdatesButton.IsEnabled = !MacroInstanceContext.Current.IsManagedRunner;
+        }
+    }
+
+    private async void InstallUpdate_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        CheckUpdatesButton.IsEnabled = false;
+        InstallUpdateButton.IsEnabled = false;
+        GeneralStatusText.Text = "Downloading and verifying the signed installer...";
+        try
+        {
+            await _ownerState.FlushAsync();
+            await _updates.LaunchAvailableUpdateAsync();
+            GeneralStatusText.Text = "Installer started; LilacMacro will close when installation begins";
+        }
+        catch (OperationCanceledException exception)
+        {
+            GeneralStatusText.Text = exception.Message;
+            CheckUpdatesButton.IsEnabled = true;
+            InstallUpdateButton.IsEnabled = true;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or HttpRequestException or InvalidDataException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            GeneralStatusText.Text = $"Update failed: {exception.Message}";
+            CheckUpdatesButton.IsEnabled = true;
+            InstallUpdateButton.IsEnabled = true;
+        }
+    }
+
+    private void UpdateOptions_OnChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        if (!_initialized) return;
+        _ownerState.SetUpdateOptions(
+            CheckUpdatesOnStartupCheck.IsChecked == true,
+            IncludePrereleaseCheck.IsChecked == true);
+        GeneralStatusText.Text = "Update options saved";
+    }
+
+    private void DisplayOptions_OnChanged(object sender, SelectionChangedEventArgs eventArgs)
+    {
+        if (!_initialized || _updatingDisplayControls) return;
+        MacroLayoutProfile layout = LayoutProfileCombo.SelectedIndex == 1
+            ? MacroLayoutProfile.Compact1366x768
+            : MacroLayoutProfile.Full1920x1080;
+        MacroMinimizeBehavior minimize = (MacroMinimizeBehavior)Math.Clamp(MinimizeBehaviorCombo.SelectedIndex, 0, 2);
+        if (layout == MacroLayoutProfile.Compact1366x768) minimize = MacroMinimizeBehavior.WhileRunning;
+        _ownerState.SetDisplayOptions(layout, minimize);
+        RefreshDisplayControls();
+        GeneralStatusText.Text = "Display options saved";
+    }
+
+    private void RefreshDisplayControls()
+    {
+        _updatingDisplayControls = true;
+        try
+        {
+            bool compact = LayoutProfileCombo.SelectedIndex == 1;
+            if (compact) MinimizeBehaviorCombo.SelectedIndex = (int)MacroMinimizeBehavior.WhileRunning;
+            MinimizeBehaviorCombo.IsEnabled = !compact;
+            CompactLayoutNote.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
+        }
+        finally { _updatingDisplayControls = false; }
+    }
+
+    private void RefreshUpdateOwnership()
+    {
+        bool owner = !MacroInstanceContext.Current.IsManagedRunner;
+        CheckUpdatesOnStartupCheck.IsEnabled = owner;
+        IncludePrereleaseCheck.IsEnabled = owner;
+        CheckUpdatesButton.IsEnabled = owner;
+        if (!owner) GeneralStatusText.Text = "Updates are coordinated from This desktop";
+    }
     private void LocalPath_OnClick(object sender, RoutedEventArgs eventArgs) => GeneralStatusText.Text = "Folder opening is not connected";
     private async void TestPrivateServer_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         try
         {
-            RobloxPrivateServerLaunchTarget target = RobloxPrivateServerLaunchTarget.Parse(PrivateServerPassword.Password);
+            RobloxPrivateServerLaunchTarget target = RobloxPrivateServerLaunchTarget.Parse(PrivateServerText.Text);
             await new RobloxProtocolLauncher().LaunchAsync(target.LaunchUri, CancellationToken.None);
             PrivateServerStatusText.Text = "Roblox launch requested";
         }
@@ -112,12 +231,12 @@ public partial class SettingsPage : UserControl
 
     private static string BuildVersion() => typeof(SettingsPage).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
-    private void PrivateServerPassword_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)
+    private void PrivateServerText_OnTextChanged(object sender, TextChangedEventArgs eventArgs)
     {
         if (!_initialized) return;
         try
         {
-            _ownerState.SetPrivateServerLink(PrivateServerPassword.Password);
+            _ownerState.SetPrivateServerLink(PrivateServerText.Text);
             PrivateServerStatusText.Text = _ownerState.PrivateServerLink.Length == 0 ? "Not configured" : "Stored securely";
         }
         catch (System.ComponentModel.Win32Exception exception)

@@ -61,7 +61,7 @@
             <Grid Margin="0,7,0,0">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
-                    <Button x:Name="SetupButton" Style="{DynamicResource SettingsButtonStyle}" Click="Setup_OnClick" Content="SET UP RUNNER 1" />
+                    <Button x:Name="SetupButton" Style="{DynamicResource SettingsButtonStyle}" Click="Setup_OnClick" Content="SET UP" />
                     <Button x:Name="RepairButton" Margin="7,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="Repair_OnClick" Content="REPAIR" />
                     <Button x:Name="AddSharedButton" Margin="7,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="AddShared_OnClick" Content="+ ADD SHARED" />
                     <Button x:Name="AddIsolatedButton" Margin="7,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="AddIsolated_OnClick" Content="+ ADD SEPARATE" />

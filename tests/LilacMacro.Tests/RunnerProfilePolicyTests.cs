@@ -59,6 +59,9 @@ public sealed class RunnerProfilePolicyTests
         Assert.DoesNotContain(policy.RegistryRules, rule => rule.ValueName == "TaskbarDa");
         Assert.DoesNotContain(policy.RegistryRules, rule =>
             rule.RelativeKey.StartsWith(@"Software\Policies", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(policy.RegistryRules, rule => rule.ValueName == "HideIcons" && rule.EncodedValue == "1");
+        Assert.Contains(policy.RegistryRules, rule => rule.RelativeKey == @"Control Panel\Colors"
+            && rule.ValueName == "Background" && rule.EncodedValue == "0 0 0");
     }
 
     [Fact]

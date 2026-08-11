@@ -44,6 +44,10 @@ Require-Text $installer 'DefaultDirName=\{autopf\}\\LilacMacro' 'Installer must 
 Require-Text $installer 'PrivilegesRequired=admin' 'Installer must require elevation for lifecycle cleanup.'
 Require-Text $installer 'LilacMacro\.SessionSetup\.exe' 'Installer must include the elevated setup helper.'
 Require-Text $installer "'repair'" 'Installer upgrade must invoke the repair verb.'
+Require-Text $installer 'UPDATESTATE' 'Installer must accept a bounded coordinated-update state.'
+Require-Text $installer 'relaunch-update' 'Installer must relaunch previously active runner UIs after update.'
+Require-Text $installer 'GetSHA256OfFile' 'Installer must rehash itself before coordinated shutdown.'
+Require-Text $installer 'WaitForUpdateParticipants' 'Installer must wait for active LilacMacro processes to flush and exit.'
 Require-Text $installer 'runner unavailable until Repair succeeds' 'Optional runner migration failure must leave the application upgrade usable.'
 Reject-Text $installer 'existing local runner could not be migrated' 'Optional runner migration must not abort the application upgrade.'
 Require-Text $installer "'uninstall-cleanup'" 'Installer uninstall must invoke cleanup before deleting binaries.'
@@ -60,9 +64,12 @@ Require-Text $buildProperties '<RuntimeIdentifiers>win-x64</RuntimeIdentifiers>'
 Require-Text $builder '-c Release' 'Installer build must publish Release binaries.'
 Require-Text $builder 'Release installers require -CertificateThumbprint' 'Release installer must require a certificate.'
 Require-Text $builder 'LilacMacro-Setup\.exe' 'Installer output must use the canonical executable name.'
+Require-Text $builder 'LilacMacro-Setup\.exe\.sha256' 'Installer build must create the release checksum asset.'
+Require-Text $builder 'LICENSE\.md' 'Installer build must create the release license asset.'
+Require-Text $builder 'NOTICE\.md' 'Installer build must create the release notice asset.'
 Require-Text $builder 'https://timestamp\.digicert\.com' 'Code signing must use an HTTPS timestamp service.'
 
-foreach ($verb in @('install', 'repair', 'remove', 'uninstall-cleanup')) {
+foreach ($verb in @('install', 'repair', 'remove', 'uninstall-cleanup', 'relaunch-update')) {
     Require-Text $verbPolicy ('"' + [Regex]::Escape($verb) + '"') "Setup helper allowlist is missing verb: $verb"
 }
 Require-Text $setupProject '<OutputType>WinExe</OutputType>' 'Session setup must be a windowless executable.'

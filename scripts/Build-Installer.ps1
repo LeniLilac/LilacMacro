@@ -85,13 +85,21 @@ try {
     if ($signTool) { Sign-File $setup $signTool }
 
     New-Item -ItemType Directory -Path $artifact | Out-Null
-    Move-Item -LiteralPath $setup -Destination (Join-Path $artifact 'LilacMacro-Setup.exe')
+    $artifactSetup = Join-Path $artifact 'LilacMacro-Setup.exe'
+    Move-Item -LiteralPath $setup -Destination $artifactSetup
+    $setupHash = (Get-FileHash -LiteralPath $artifactSetup -Algorithm SHA256).Hash
+    [IO.File]::WriteAllText(
+        (Join-Path $artifact 'LilacMacro-Setup.exe.sha256'),
+        "$setupHash  LilacMacro-Setup.exe`n",
+        [Text.UTF8Encoding]::new($false))
+    Copy-Item -LiteralPath (Join-Path $repository 'LICENSE.md') -Destination (Join-Path $artifact 'LICENSE.md')
+    Copy-Item -LiteralPath (Join-Path $repository 'NOTICE.md') -Destination (Join-Path $artifact 'NOTICE.md')
     [IO.File]::WriteAllLines((Join-Path $artifact 'BUILD-INFO.txt'), @(
         "artifact=macro-installer", "version=$Version",
         "signed=$(((-not $UnsignedDevelopmentBuild).ToString()).ToLowerInvariant())",
         "built_utc=$([DateTimeOffset]::UtcNow.ToString('O'))"
     ), [Text.UTF8Encoding]::new($false))
-    Write-Output (Join-Path $artifact 'LilacMacro-Setup.exe')
+    Write-Output $artifactSetup
 }
 finally {
     if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force }

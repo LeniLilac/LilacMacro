@@ -11,6 +11,7 @@ using LilacMacro.App.Views;
 using LilacMacro.App.Workspace;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Infrastructure;
+using LilacMacro.App.Updates;
 
 namespace LilacMacro.App;
 
@@ -21,9 +22,12 @@ public partial class MacroShellWindow : Window
     private readonly MacroDashboardPage _macroPage;
     private readonly PlacementSetupPage _setupPage;
     private readonly LocalInstanceManagerController _instanceManager = new();
+    private readonly ApplicationUpdateService _updates = new();
+    private readonly SettingsPage _settingsPage;
     private readonly WindowShutdownState _shutdown = new();
     private readonly DispatcherTimer _toastTimer;
     private MacroShellPage _currentPage;
+    private bool _minimizedForRun;
 
     internal MacroShellWindow(DeepDebugSessionService deepDebug, MacroOwnerState ownerState)
     {
@@ -36,18 +40,54 @@ public partial class MacroShellWindow : Window
         AppToastService.ErrorRaised += AppToastService_OnErrorRaised;
         _ownerState = ownerState;
         _macroPage = new MacroDashboardPage(deepDebug, _ownerState);
+        _macroPage.RunningChanged += MacroPage_OnRunningChanged;
         _setupPage = new PlacementSetupPage(deepDebug, _ownerState);
+        _settingsPage = new SettingsPage(deepDebug, _ownerState, _instanceManager, _updates, SetMacroHotkeyCaptureSuspended);
         _pages = new Dictionary<MacroShellPage, UserControl>
         {
             [MacroShellPage.Macro] = _macroPage,
             [MacroShellPage.Plan] = new PlanPage(_ownerState),
             [MacroShellPage.Setup] = _setupPage,
-            [MacroShellPage.Settings] = new SettingsPage(deepDebug, _ownerState, _instanceManager, SetMacroHotkeyCaptureSuspended),
+            [MacroShellPage.Settings] = _settingsPage,
         };
         InitializeMacroHotkey();
+        _ownerState.DisplayOptionsChanged += OwnerState_OnDisplayOptionsChanged;
+        ApplyDisplayOptions(resize: false);
+        Loaded += MacroShellWindow_OnLoaded;
         Closing += MacroShellWindow_OnClosing;
         Closed += MacroShellWindow_OnClosed;
         Navigate(MacroShellPage.Macro);
+    }
+
+    private async void MacroShellWindow_OnLoaded(object sender, RoutedEventArgs eventArgs)
+    {
+        if (_ownerState.EffectiveMinimizeBehavior == MacroMinimizeBehavior.OnApplicationStart)
+            WindowState = WindowState.Minimized;
+        await _settingsPage.CheckOnStartupAsync();
+    }
+
+    private void OwnerState_OnDisplayOptionsChanged(object? sender, EventArgs eventArgs) =>
+        ApplyDisplayOptions(resize: true);
+
+    private void ApplyDisplayOptions(bool resize)
+    {
+        _macroPage.ApplyLayoutProfile(_ownerState.LayoutProfile);
+        ApplyWorkspaceSize(_ownerState.LayoutProfile, resize);
+    }
+
+    private void MacroPage_OnRunningChanged(bool running)
+    {
+        if (running && _ownerState.EffectiveMinimizeBehavior == MacroMinimizeBehavior.WhileRunning)
+        {
+            _minimizedForRun = WindowState != WindowState.Minimized;
+            WindowState = WindowState.Minimized;
+        }
+        else if (!running && _minimizedForRun)
+        {
+            _minimizedForRun = false;
+            WindowState = WindowState.Normal;
+            Activate();
+        }
     }
 
     private void Navigate(MacroShellPage target)
@@ -183,6 +223,9 @@ public partial class MacroShellWindow : Window
     {
         DisposeMacroHotkey();
         DisposeWindowSizing();
+        _macroPage.RunningChanged -= MacroPage_OnRunningChanged;
+        _ownerState.DisplayOptionsChanged -= OwnerState_OnDisplayOptionsChanged;
+        _updates.Dispose();
         _toastTimer.Stop();
         AppToastService.ErrorRaised -= AppToastService_OnErrorRaised;
     }

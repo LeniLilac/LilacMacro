@@ -116,7 +116,7 @@ Authoring and explicit owner-triggered playback through Setup and Runtime Lab ar
 - Non-secret capture settings, per-session UI-scale calibration hints, placements, OCR runtime, crash logs, and deep-debug archives stay under the current Windows profile. The macro edits only its documented allowlist in the current profile's Roblox global settings immediately before a private-server launch.
 - All committed document-style writes validate first and use temporary-file replacement.
 - Local paths, captures, models, logs, settings, and agent views remain outside Git.
-- Private-server links and webhook URLs are not implemented. Their planned DPAPI boundary is documented in [Privacy](../PRIVACY.md).
+- Private-server links and webhook URLs use DPAPI protection at rest and are redacted from diagnostics. The private-server field is intentionally visible while editing; the webhook remains masked. See [Privacy](../PRIVACY.md).
 
 ## Optional local-session boundary
 
@@ -125,6 +125,8 @@ The local instance manager preserves the same layer direction. Core owns version
 `LilacMacro.SessionSetup.exe` is the only elevated component and accepts only bounded machine/profile verbs. Every runner task starts the installed full `LilacMacro.exe` UI in that standard account on logon or reconnect; macro capture, input, settings normalization, OCR, and recovery therefore remain local to the owning desktop. `LilacMacro.SessionWorker.exe` is retained only for its one-shot profile-policy bootstrap during setup/repair. Legacy IPC/snapshot contracts are not on the active execution path.
 
 Machine readiness means exact-binary compatibility, loopback isolation, account/profile ACLs, endpoint credentials, and full-UI tasks are installed. Roblox/capture readiness belongs to each visible macro UI at run time, exactly as on the main desktop. Native compatibility is cached by exact binary hashes; disposable-VM certification still owns installer, multi-session, rollback, and removal acceptance. See [Local instance manager](LOCAL-SESSION.md).
+
+The owner UI coordinates updates rather than copying binaries into live runner profiles. Core validates one exact GitHub release/asset contract; App performs metadata checks, bounded downloads, hash/Authenticode verification, and records the exact macro PIDs and runner profiles to stop; the signed installer requests ordinary shutdown from every UI, refuses to overwrite an active or uninspectable process, installs once under Program Files, then the allowlisted elevated helper re-registers and launches every configured runner task. Managed runner UIs observe the same machine request and cannot initiate downloads or installation.
 
 ## Planned runtime boundary
 

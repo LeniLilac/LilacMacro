@@ -16,6 +16,8 @@ Each runner receives:
 - one uniquely named interactive scheduled task that launches the installed full UI on logon and remote reconnect;
 - one ACL-restricted profile-policy directory under `%ProgramData%\LilacMacro\Profiles`.
 
+Runner policy hides the globally provisioned desktop icons only inside runner accounts, clears wallpaper, and uses a pure-black desktop background. It does not remove owner shortcuts or change the owner's personalization.
+
 The pinned TermWrap listener, firewall rules, certificate baseline, and rollback journal are machine-level resources shared by all managed instances. Adding or removing Runner 2 does not restart or duplicate that foundation.
 
 ## Configuration modes
@@ -48,7 +50,15 @@ Any failure after mutation runs the rollback journal. Cleanup attempts every ind
 
 `OPEN` writes a secret-free per-profile RDP file and starts `mstsc` only for the selected profile's loopback alias. The profile suppresses the certificate-name warning that Windows otherwise repeats for each `127.0.0.x` alias, while retaining CredSSP account authentication and disabling clipboard, drive, printer, COM-port, smart-card, and device redirection. This exception is bounded to the locally generated loopback profile; no remote destination is accepted. The scheduled task starts the full macro UI in that logged-on desktop. Install Roblox and sign into the intended Roblox account separately in each Windows runner profile; owner-profile Roblox files and login tokens are intentionally not copied.
 
+On the runner's first full-UI launch, LilacMacro opens the official Roblox Login page. When no Roblox player installation is visible to that account, it downloads the official Windows installer through a bounded Roblox-to-RBXCDN HTTPS redirect, validates trusted Authenticode, and runs the visible installer. The owner still completes installation/login in that viewport; LilacMacro never enters credentials. A per-profile marker prevents repeating the bootstrap after Roblox installation is verified.
+
 The RDP viewport must remain visibly connected while that instance captures Roblox. Minimizing, disconnecting, locking, or signing out can make Windows Graphics Capture unavailable; the local macro then follows its normal bounded recovery rather than accepting stale pixels. Multiple runner accounts may remain connected and run concurrently because each session owns its own Roblox process, input gate, macro UI, OCR state, diagnostics, and unique Credential Manager endpoint.
+
+## Coordinated updates
+
+Only **This desktop** checks and downloads updates. Every UI runs the single Program Files installation, so the owner approves one installer rather than updating each Windows account separately. The owner UI records the exact active macro PIDs and configured runners, then starts the signed installer. Each desktop observes a machine-scoped shutdown request and closes through the normal cancellation path. Installation fails closed if a recorded process remains active or cannot be inspected. After replacement and repair, the helper re-registers and launches each configured runner task; the installer reopens the owner UI.
+
+Automatic startup checks fetch metadata only. Download and install are separate owner actions. Runner UIs show that updates are coordinated from **This desktop** and cannot initiate them.
 
 ## Release certification
 

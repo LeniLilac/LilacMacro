@@ -39,10 +39,20 @@ internal sealed class MacroOwnerState
         DiscordUserId = settings.DiscordUserId?.Trim() ?? string.Empty;
         NotifyOnTerminalFailure = settings.NotifyOnTerminalFailure;
         IncludeFailureDetails = settings.IncludeFailureDetails;
+        CheckForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
+        IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
+        LayoutProfile = Enum.IsDefined(settings.LayoutProfile)
+            ? settings.LayoutProfile
+            : MacroLayoutProfile.Full1920x1080;
+        MinimizeBehavior = Enum.IsDefined(settings.MinimizeBehavior)
+            ? settings.MinimizeBehavior
+            : MacroMinimizeBehavior.WhileRunning;
         KeyBindings.Changed += KeyBindings_OnChanged;
     }
 
     public event EventHandler? SelectedPlanChanged;
+
+    public event EventHandler? DisplayOptionsChanged;
 
     public ObservableCollection<PlanPrototype> Plans { get; }
 
@@ -63,6 +73,17 @@ internal sealed class MacroOwnerState
     public bool NotifyOnTerminalFailure { get; private set; }
 
     public bool IncludeFailureDetails { get; private set; }
+
+    public bool CheckForUpdatesOnStartup { get; private set; }
+
+    public bool IncludePrereleaseUpdates { get; private set; }
+
+    public MacroLayoutProfile LayoutProfile { get; private set; }
+
+    public MacroMinimizeBehavior MinimizeBehavior { get; private set; }
+
+    public MacroMinimizeBehavior EffectiveMinimizeBehavior =>
+        MacroDisplayPolicy.EffectiveMinimizeBehavior(LayoutProfile, MinimizeBehavior);
 
     public static async Task<MacroOwnerState> LoadAsync(
         MacroSettingsStore? settingsStore = null,
@@ -129,6 +150,25 @@ internal sealed class MacroOwnerState
         QueueSave();
     }
 
+    public void SetUpdateOptions(bool checkOnStartup, bool includePrerelease)
+    {
+        if (checkOnStartup == CheckForUpdatesOnStartup && includePrerelease == IncludePrereleaseUpdates) return;
+        CheckForUpdatesOnStartup = checkOnStartup;
+        IncludePrereleaseUpdates = includePrerelease;
+        QueueSave();
+    }
+
+    public void SetDisplayOptions(MacroLayoutProfile layout, MacroMinimizeBehavior minimizeBehavior)
+    {
+        if (!Enum.IsDefined(layout) || !Enum.IsDefined(minimizeBehavior))
+            throw new ArgumentOutOfRangeException(nameof(layout));
+        if (layout == LayoutProfile && minimizeBehavior == MinimizeBehavior) return;
+        LayoutProfile = layout;
+        MinimizeBehavior = minimizeBehavior;
+        QueueSave();
+        DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public Task FlushAsync()
     {
         lock (_saveSync) return _pendingSave;
@@ -149,6 +189,10 @@ internal sealed class MacroOwnerState
             DiscordUserId = DiscordUserId,
             NotifyOnTerminalFailure = NotifyOnTerminalFailure,
             IncludeFailureDetails = IncludeFailureDetails,
+            CheckForUpdatesOnStartup = CheckForUpdatesOnStartup,
+            IncludePrereleaseUpdates = IncludePrereleaseUpdates,
+            LayoutProfile = LayoutProfile,
+            MinimizeBehavior = MinimizeBehavior,
         };
         lock (_saveSync)
         {

@@ -7,8 +7,8 @@ namespace LilacMacro.App;
 
 public partial class MacroShellWindow
 {
-    private const double InitialWorkspaceWidth = 1920;
-    private const double InitialWorkspaceHeight = 1080;
+    private double _targetWorkspaceWidth = 1920;
+    private double _targetWorkspaceHeight = 1080;
     private HwndSource? _windowSource;
     private HwndSourceHook? _windowHook;
 
@@ -36,6 +36,17 @@ public partial class MacroShellWindow
     private void WindowSizing_OnContentRendered(object? sender, EventArgs eventArgs)
     {
         ContentRendered -= WindowSizing_OnContentRendered;
+        FitWorkspaceToCurrentMonitor();
+    }
+
+    private void ApplyWorkspaceSize(Runtime.MacroLayoutProfile profile, bool resize)
+    {
+        (_targetWorkspaceWidth, _targetWorkspaceHeight) = Runtime.MacroDisplayPolicy.TargetSize(profile);
+        if (resize && IsLoaded) FitWorkspaceToCurrentMonitor();
+    }
+
+    private void FitWorkspaceToCurrentMonitor()
+    {
         if (WindowState != WindowState.Normal) return;
         nint handle = new WindowInteropHelper(this).Handle;
         DpiScale dpi = VisualTreeHelper.GetDpi(this);
@@ -45,8 +56,8 @@ public partial class MacroShellWindow
         DesktopWorkAreaBounds fitted = WindowsWindowWorkArea.FitNormalBounds(
             new DesktopWorkAreaBounds(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height),
             workArea,
-            InitialWorkspaceWidth,
-            InitialWorkspaceHeight);
+            _targetWorkspaceWidth,
+            _targetWorkspaceHeight);
         Width = fitted.Width;
         Height = fitted.Height;
         Left = fitted.Left;

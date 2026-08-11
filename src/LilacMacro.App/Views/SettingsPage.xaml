@@ -121,8 +121,17 @@
                                 </Grid>
                                 <Grid Margin="0,13,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MACRO LAYOUT" />
+                                    <ComboBox x:Name="LayoutProfileCombo" Grid.Column="1" Width="260" HorizontalAlignment="Left" SelectionChanged="DisplayOptions_OnChanged" />
+                                </Grid>
+                                <Grid Margin="0,13,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MINIMIZE BEHAVIOR" />
-                                    <ComboBox x:Name="MinimizeBehaviorCombo" Grid.Column="1" Width="220" HorizontalAlignment="Left" SelectionChanged="SettingChanged_OnSelectionChanged" />
+                                    <StackPanel Grid.Column="1">
+                                        <ComboBox x:Name="MinimizeBehaviorCombo" Width="260" HorizontalAlignment="Left" SelectionChanged="DisplayOptions_OnChanged" />
+                                        <TextBlock x:Name="CompactLayoutNote" Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" Visibility="Collapsed"
+                                                   Text="Compact mode removes the dock and minimizes while running." />
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </Grid>
@@ -141,20 +150,17 @@
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="UPDATE OPTIONS" />
                                     <StackPanel Grid.Column="1">
-                                        <CheckBox IsChecked="True" Content="Check for updates on startup" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                        <CheckBox Margin="0,9,0,0" Content="Include prerelease builds" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
+                                        <CheckBox x:Name="CheckUpdatesOnStartupCheck" Content="Check for updates on startup" Checked="UpdateOptions_OnChanged" Unchecked="UpdateOptions_OnChanged" />
+                                        <CheckBox x:Name="IncludePrereleaseCheck" Margin="0,9,0,0" Content="Include prerelease builds" Checked="UpdateOptions_OnChanged" Unchecked="UpdateOptions_OnChanged" />
                                     </StackPanel>
-                                </Grid>
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="UPDATE CHANNEL" />
-                                    <ComboBox x:Name="UpdateChannelCombo" Grid.Column="1" Width="180" HorizontalAlignment="Left" SelectionChanged="SettingChanged_OnSelectionChanged" />
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="ACTIONS" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <Button Style="{StaticResource SettingsButtonStyle}" Click="CheckUpdates_OnClick" Content="CHECK NOW" />
+                                        <Button x:Name="CheckUpdatesButton" Style="{StaticResource SettingsButtonStyle}" Click="CheckUpdates_OnClick" Content="CHECK NOW" />
+                                        <Button x:Name="InstallUpdateButton" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Background="{DynamicResource AccentBrush}"
+                                                Visibility="Collapsed" Click="InstallUpdate_OnClick" Content="INSTALL UPDATE" />
                                         <Button Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Tag="data" Click="LocalPath_OnClick" Content="OPEN DATA" />
                                         <Button Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Tag="logs" Click="LocalPath_OnClick" Content="OPEN LOGS" />
                                     </StackPanel>
@@ -170,7 +176,7 @@
                 </StackPanel>
 
                 <StackPanel x:Name="RobloxPanel" Visibility="Collapsed">
-                    <local:LocalInstanceManagerPanel x:Name="LocalInstancesPanel" />
+                    <local:LocalInstanceManagerPanel x:Name="LocalInstancesPanel" Margin="0,0,0,12" />
                     <Border Style="{StaticResource SettingsCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
@@ -181,8 +187,12 @@
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="PRIVATE-SERVER LINK" />
                                     <Grid Grid.Column="1">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                        <PasswordBox x:Name="PrivateServerPassword" MaxLength="2048" PasswordChanged="PrivateServerPassword_OnPasswordChanged" />
-                                        <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Click="TestPrivateServer_OnClick" Content="TEST LINK" />
+                                        <TextBox x:Name="PrivateServerText"
+                                                 MaxLength="2048"
+                                                 VerticalAlignment="Center"
+                                                 VerticalContentAlignment="Center"
+                                                 TextChanged="PrivateServerText_OnTextChanged" />
+                                        <Button Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource SettingsButtonStyle}" Click="TestPrivateServer_OnClick" Content="TEST LINK" />
                                     </Grid>
                                 </Grid>
                                 <Grid Margin="0,7,0,0">

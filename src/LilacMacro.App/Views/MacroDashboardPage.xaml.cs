@@ -39,6 +39,8 @@ public partial class MacroDashboardPage : UserControl
     private bool _initialized;
     private PlanTaskPrototype? _currentTask;
 
+    public event Action<bool>? RunningChanged;
+
     internal MacroDashboardPage(
         DeepDebugSessionService deepDebug,
         MacroOwnerState ownerState)
@@ -62,6 +64,19 @@ public partial class MacroDashboardPage : UserControl
         PlanCombo.ItemsSource = ownerState.Plans;
         PlanCombo.SelectedItem = ownerState.SelectedPlan;
         ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
+        ApplyLayoutProfile(ownerState.LayoutProfile);
+    }
+
+    internal void ApplyLayoutProfile(MacroLayoutProfile profile)
+    {
+        bool dockAllowed = MacroDisplayPolicy.AllowsDock(profile);
+        if (!dockAllowed) RobloxDock.SetRequested(false);
+        DockCard.Visibility = dockAllowed ? Visibility.Visible : Visibility.Collapsed;
+        DockColumn.Width = dockAllowed ? new GridLength(1396) : new GridLength(0);
+        DockSpacerColumn.Width = dockAllowed ? new GridLength(14) : new GridLength(0);
+        StatsCard.SetValue(Grid.ColumnProperty, dockAllowed ? 2 : 0);
+        StatsCard.SetValue(Grid.ColumnSpanProperty, dockAllowed ? 1 : 3);
+        DashboardRoot.MinWidth = dockAllowed ? 1740 : 0;
     }
 
     public bool SetDashboardActive(bool active, out string error)
@@ -390,6 +405,7 @@ public partial class MacroDashboardPage : UserControl
         StopButton.IsEnabled = running;
         PlanCombo.IsEnabled = !running;
         RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+        RunningChanged?.Invoke(running);
     }
 
     private void RefreshUpcomingTasks(PlanPrototype plan)

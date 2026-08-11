@@ -137,12 +137,13 @@ For OCR environment setup, see [OCR and vision](OCR-AND-VISION.md). For all vali
 |---|---|---|
 | Dataset Builder | `Documents\LilacMacro Datasets` | Draft-first; manifest and image writes use temporary files; finalization never overwrites |
 | App capture settings | `%LOCALAPPDATA%\LilacMacro\settings.json` | Atomic replacement |
-| Macro settings | `%LOCALAPPDATA%\LilacMacro\macro-settings.json` before local-instance setup; `%ProgramData%\LilacMacro\Configurations\shared` afterward | Schema-versioned, cross-process-serialized atomic replacement for keybinds, Plan snapshots/selection/reporting options, and DPAPI ciphertext for private-server/webhook secrets; the shared ProgramData root uses machine-scope DPAPI plus an owner/runner ACL |
+| Macro settings | `%LOCALAPPDATA%\LilacMacro\macro-settings.json` before local-instance setup; `%ProgramData%\LilacMacro\Configurations\shared` afterward | Schema-versioned, cross-process-serialized atomic replacement for display/update preferences, keybinds, Plan snapshots/selection/reporting options, and DPAPI ciphertext for private-server/webhook values; the shared ProgramData root uses machine-scope DPAPI plus an owner/runner ACL |
 | Placement authoring | Active configuration root under `placements` | Validated snapshots, serialized save queue, atomic replacement; shared and isolated runner modes select different roots |
 | Local instance profiles | `%ProgramData%\LilacMacro\Profiles` | Owner-journaled runner identity/policy receipts; one ACL-restricted directory per runner |
 | OCR runtime | `%LOCALAPPDATA%\LilacMacro\ocr` | Isolated Python environment and device marker |
 | Crash logging | `%LOCALAPPDATA%\LilacMacro\logs\latest-crash.txt` | Latest unhandled WPF exception |
 | Deep debug | `%LOCALAPPDATA%\LilacMacro\diagnostics` | Bounded ZIP archives plus transient staging; settings use atomic replacement |
+| Application updates | `%LOCALAPPDATA%\LilacMacro\updates`; coordinated request under `%ProgramData%\LilacMacro\Updates` | Public metadata and owner-approved downloads stay per owner; the machine request contains only exact version/hash/process/session/profile coordination data and is cleared after install/relaunch |
 
 Never commit any of this state. See [Privacy](../PRIVACY.md).
 
