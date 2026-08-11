@@ -303,6 +303,40 @@ public sealed class LocalSessionContractTests
         Assert.Equal(expected, TermServiceConfigurationManager.StateName(state));
     }
 
+    [Theory]
+    [InlineData(4, 1, 1, true)]
+    [InlineData(4, 1, 2, true)]
+    [InlineData(4, 1, 3, false)]
+    [InlineData(4, 0, 1, false)]
+    [InlineData(3, 1, 1, false)]
+    [InlineData(1, 1, 1, false)]
+    public void Term_service_stop_retries_only_a_bounded_running_bounce(
+        uint currentState,
+        uint controlsAccepted,
+        int stopRequests,
+        bool expected)
+    {
+        Assert.Equal(expected, TermServiceConfigurationManager.ShouldRetryStop(currentState, controlsAccepted, stopRequests));
+        Assert.Equal(3, TermServiceConfigurationManager.MaximumStopRequests);
+    }
+
+    [Theory]
+    [InlineData("TermService", 1051, 0, true)]
+    [InlineData("TermService", 1051, 2, true)]
+    [InlineData("TermService", 1051, 3, false)]
+    [InlineData("TermService", 1061, 0, false)]
+    [InlineData("UmRdpService", 1051, 0, false)]
+    public void Term_service_bounce_restops_only_the_known_dependent(
+        string serviceName,
+        int error,
+        int dependentRestops,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            TermServiceConfigurationManager.ShouldRestopKnownDependent(serviceName, error, dependentRestops));
+    }
+
     [Fact]
     public void Firewall_isolation_requires_the_exact_enabled_inbound_block_rule()
     {

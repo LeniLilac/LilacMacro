@@ -10,6 +10,7 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
     public const int LocalPort = 33991;
     internal static IReadOnlyList<string> RestartStopOrder { get; } = ["UmRdpService", "TermService"];
     internal static readonly TimeSpan ServiceTransitionTimeout = TimeSpan.FromSeconds(60);
+    internal const int MaximumStopRequests = 3;
     private const string TerminalServerKey = @"SYSTEM\CurrentControlSet\Control\Terminal Server";
     private const string ListenerKey = TerminalServerKey + @"\WinStations\RDP-Tcp";
     private const string ServiceParametersKey = @"SYSTEM\CurrentControlSet\Services\TermService\Parameters";
@@ -62,12 +63,20 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
         if (!QueryServiceStatus(service, ref status))
             throw new Win32Exception(Marshal.GetLastWin32Error(), $"{serviceName} state could not be queried.");
         if (status.CurrentState == 1) return false;
-        if (status.CurrentState != 3 && !ControlService(service, 1, ref status))
+        int stopRequests = 0;
+        if (status.CurrentState != 3)
         {
-            int error = Marshal.GetLastWin32Error();
-            if (error != 1062) throw new Win32Exception(error, $"{serviceName} could not be stopped.");
+            if (ControlService(service, 1, ref status))
+            {
+                stopRequests++;
+            }
+            else
+            {
+                int error = Marshal.GetLastWin32Error();
+                if (error != 1062) throw new Win32Exception(error, $"{serviceName} could not be stopped.");
+            }
         }
-        WaitForState(service, serviceName, 1, ServiceTransitionTimeout);
+        WaitForStopped(scm, service, serviceName, ServiceTransitionTimeout, stopRequests);
         return true;
     }
 
@@ -83,6 +92,44 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
         if (!StartService(service, 0, null) && Marshal.GetLastWin32Error() != 1056)
             throw new Win32Exception(Marshal.GetLastWin32Error(), $"{serviceName} could not be started.");
         WaitForState(service, serviceName, 4, ServiceTransitionTimeout);
+    }
+
+    private static void WaitForStopped(ServiceHandle scm, ServiceHandle service, string serviceName, TimeSpan timeout, int stopRequests)
+    {
+        long deadline = Environment.TickCount64 + (long)timeout.TotalMilliseconds;
+        int dependentRestops = 0;
+        ServiceStatus status = default;
+        while (true)
+        {
+            if (!QueryServiceStatus(service, ref status)) throw new Win32Exception(Marshal.GetLastWin32Error());
+            if (status.CurrentState == 1) return;
+            if (ShouldRetryStop(status.CurrentState, status.ControlsAccepted, stopRequests))
+            {
+                if (ControlService(service, 1, ref status))
+                {
+                    stopRequests++;
+                    continue;
+                }
+
+                int error = Marshal.GetLastWin32Error();
+                if (error == 1062) return;
+                if (ShouldRestopKnownDependent(serviceName, error, dependentRestops))
+                {
+                    StopService(scm, "UmRdpService", required: false);
+                    dependentRestops++;
+                    continue;
+                }
+                if (error is not (1052 or 1061))
+                    throw new Win32Exception(error, $"{serviceName} could not be stopped after it restarted (Win32 error {error}).");
+            }
+
+            long remainingMilliseconds = deadline - Environment.TickCount64;
+            if (remainingMilliseconds <= 0) break;
+            Thread.Sleep(CalculatePollDelay(status.WaitHint, remainingMilliseconds));
+        }
+        throw new TimeoutException(
+            $"{serviceName} did not reach Stopped within {timeout.TotalSeconds:0} seconds after {stopRequests} accepted stop requests " +
+            $"(current {StateName(status.CurrentState)}, checkpoint {status.CheckPoint}, wait hint {status.WaitHint} ms, Win32 exit {status.Win32ExitCode}).");
     }
 
     private static void WaitForState(ServiceHandle service, string serviceName, uint desiredState, TimeSpan timeout)
@@ -108,6 +155,14 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
         long bounded = Math.Clamp(suggested, 500, 2_000);
         return TimeSpan.FromMilliseconds(Math.Min(bounded, Math.Max(1, remainingMilliseconds)));
     }
+
+    internal static bool ShouldRetryStop(uint currentState, uint controlsAccepted, int stopRequests) =>
+        currentState == 4 && (controlsAccepted & 0x00000001) != 0 && stopRequests < MaximumStopRequests;
+
+    internal static bool ShouldRestopKnownDependent(string serviceName, int error, int dependentRestops) =>
+        string.Equals(serviceName, "TermService", StringComparison.Ordinal) &&
+        error == 1051 &&
+        dependentRestops < MaximumStopRequests;
 
     internal static string StateName(uint state) => state switch
     {
