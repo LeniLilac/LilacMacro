@@ -22,9 +22,11 @@ public sealed class FirewallIsolationManager
 {
     public const string TcpRule = "LilacMacro Local Runner RDP Block TCP";
     public const string UdpRule = "LilacMacro Local Runner RDP Block UDP";
+    public const string AuthorizedLoopbackAddress = "127.0.0.2";
     internal const string ExternalRemoteAddresses =
         "0.0.0.0-127.0.0.0,127.0.0.2-255.255.255.255,::-::,::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
     internal static readonly TimeSpan ListenerReadyTimeout = TimeSpan.FromSeconds(15);
+    private const string ListenerStartupPrefix = "The RDP listener did not accept ";
 
     public async Task InstallAsync(CancellationToken cancellationToken)
     {
@@ -44,9 +46,13 @@ public sealed class FirewallIsolationManager
         FirewallIsolationVerification rules = InspectIsolationRules();
         if (!rules.Passed) return rules;
         if (!await WaitForLoopbackListenerAsync(cancellationToken).ConfigureAwait(false))
-            return new(false, $"The RDP listener did not accept 127.0.0.1:{TermServiceConfigurationManager.LocalPort} within {ListenerReadyTimeout.TotalSeconds:0} seconds after restart.");
+            return new(false, $"{ListenerStartupPrefix}{AuthorizedLoopbackAddress}:{TermServiceConfigurationManager.LocalPort} within {ListenerReadyTimeout.TotalSeconds:0} seconds after restart.");
         return FirewallIsolationVerification.Success;
     }
+
+    internal static bool IsListenerStartupDelay(FirewallIsolationVerification verification) =>
+        !verification.Passed
+        && verification.Problem.StartsWith(ListenerStartupPrefix, StringComparison.Ordinal);
 
     internal static bool IsExpectedIsolationRule(
         FirewallRuleObservation rule,
@@ -139,7 +145,7 @@ public sealed class FirewallIsolationManager
             long remainingMilliseconds = deadline - Environment.TickCount64;
             if (remainingMilliseconds <= 0) return false;
             TimeSpan attemptTimeout = TimeSpan.FromMilliseconds(Math.Min(2_000, remainingMilliseconds));
-            if (await CanConnectAsync(IPAddress.Loopback, attemptTimeout, cancellationToken).ConfigureAwait(false)) return true;
+            if (await CanConnectAsync(IPAddress.Parse(AuthorizedLoopbackAddress), attemptTimeout, cancellationToken).ConfigureAwait(false)) return true;
             remainingMilliseconds = deadline - Environment.TickCount64;
             if (remainingMilliseconds <= 0) return false;
             await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(250, remainingMilliseconds)), cancellationToken).ConfigureAwait(false);

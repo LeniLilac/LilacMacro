@@ -13,10 +13,10 @@ internal sealed class MacroSettingsStore
 
     private readonly string _settingsPath;
 
+    internal bool Exists => File.Exists(_settingsPath);
+
     public MacroSettingsStore()
-        : this(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "LilacMacro"))
+        : this(MacroInstanceContext.Current.ConfigurationRoot)
     {
     }
 
@@ -37,6 +37,7 @@ internal sealed class MacroSettingsStore
             {
                 MacroSettings.CurrentSchemaVersion => settings,
                 1 or 2 => MigrateLegacySettings(settings),
+                3 or 4 or 5 => settings with { SchemaVersion = MacroSettings.CurrentSchemaVersion },
                 _ => new MacroSettings(),
             };
         }
@@ -65,6 +66,7 @@ internal sealed class MacroSettingsStore
         string directory = Path.GetDirectoryName(_settingsPath)
             ?? throw new InvalidOperationException("Macro settings path has no parent directory.");
         Directory.CreateDirectory(directory);
+        await using FileStream writeLock = await AcquireWriteLockAsync(cancellationToken).ConfigureAwait(false);
         string temporary = _settingsPath + $".{Guid.NewGuid():N}.tmp";
         try
         {
@@ -85,6 +87,29 @@ internal sealed class MacroSettingsStore
         finally
         {
             if (File.Exists(temporary)) File.Delete(temporary);
+        }
+    }
+
+    private async Task<FileStream> AcquireWriteLockAsync(CancellationToken cancellationToken)
+    {
+        string lockPath = _settingsPath + ".write.lock";
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                return new FileStream(
+                    lockPath,
+                    FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    1,
+                    FileOptions.Asynchronous);
+            }
+            catch (IOException)
+            {
+                await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 }

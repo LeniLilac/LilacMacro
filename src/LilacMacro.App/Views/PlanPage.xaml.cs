@@ -27,6 +27,7 @@ public partial class PlanPage : UserControl
     private static readonly string[] UtilityRoutes = ["Gold Mine refuel", "Resource Drill refuel", "Gold Mine + Resource Drill"];
 
     private readonly ObservableCollection<PlanPrototype> _plans;
+    private readonly MacroOwnerState _ownerState;
     private readonly Dictionary<ListBox, ListBoxReorderDragController<PlanBlockPrototype>> _dragControllers = [];
     private PlanPrototype _selectedPlan;
     private PlanTaskPrototype? _editingTask;
@@ -36,14 +37,16 @@ public partial class PlanPage : UserControl
 
     internal PlanPage(MacroOwnerState ownerState)
     {
+        _ownerState = ownerState;
         _plans = ownerState.Plans;
-        _selectedPlan = _plans[0];
+        _selectedPlan = ownerState.SelectedPlan;
         InitializeComponent();
         PlanSelector.DisplayMemberPath = nameof(PlanPrototype.Name);
         PlanSelector.ItemsSource = _plans;
         TaskDifficultyCombo.ItemsSource = new[] { "Difficulty 1", "Difficulty 2", "Difficulty 3" };
         _initialized = true;
         PlanSelector.SelectedItem = _selectedPlan;
+        _ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
         BindSelectedPlan();
     }
 
@@ -51,7 +54,14 @@ public partial class PlanPage : UserControl
     {
         if (!_initialized || PlanSelector.SelectedItem is not PlanPrototype plan) return;
         _selectedPlan = plan;
+        _ownerState.SelectPlan(plan);
         BindSelectedPlan();
+    }
+
+    private void OwnerState_OnSelectedPlanChanged(object? sender, EventArgs eventArgs)
+    {
+        if (!ReferenceEquals(PlanSelector.SelectedItem, _ownerState.SelectedPlan))
+            PlanSelector.SelectedItem = _ownerState.SelectedPlan;
     }
 
     private void BindSelectedPlan()
@@ -66,9 +76,10 @@ public partial class PlanPage : UserControl
     {
         if (!_initialized) return;
         string name = PlanNameText.Text.Trim();
-        if (name.Length == 0) return;
+        if (name.Length == 0 || string.Equals(name, _selectedPlan.Name, StringComparison.Ordinal)) return;
         _selectedPlan.Name = name;
         PlanSelector.Items.Refresh();
+        _ownerState.NotifyPlansChanged();
     }
 
     private void NewPlan_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -76,13 +87,17 @@ public partial class PlanPage : UserControl
         PlanPrototype plan = new($"Plan {_plans.Count + 1}", []);
         _plans.Add(plan);
         PlanSelector.SelectedItem = plan;
+        _ownerState.NotifyPlansChanged();
     }
 
     private void CopyPlan_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        PlanPrototype copy = _selectedPlan.Clone($"{_selectedPlan.Name} copy");
+        const int suffixLength = 5;
+        string copyName = $"{_selectedPlan.Name[..Math.Min(_selectedPlan.Name.Length, 100 - suffixLength)]} copy";
+        PlanPrototype copy = _selectedPlan.Clone(copyName);
         _plans.Add(copy);
         PlanSelector.SelectedItem = copy;
+        _ownerState.NotifyPlansChanged();
     }
 
     private void DeletePlan_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -96,6 +111,7 @@ public partial class PlanPage : UserControl
         int index = _plans.IndexOf(_selectedPlan);
         _plans.Remove(_selectedPlan);
         PlanSelector.SelectedItem = _plans[Math.Min(index, _plans.Count - 1)];
+        _ownerState.NotifyPlansChanged();
     }
 
     private void ResetProgress_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -187,6 +203,7 @@ public partial class PlanPage : UserControl
 
         Reindex();
         MarkSelected(task);
+        _ownerState.NotifyPlansChanged();
         CloseTaskEditor();
     }
 
@@ -243,6 +260,7 @@ public partial class PlanPage : UserControl
         PlanLoopPrototype loop = new() { Label = $"Loop {AllLoops().Count + 1}" };
         _selectedPlan.Blocks.Add(loop);
         MarkSelected(loop);
+        _ownerState.NotifyPlansChanged();
         OpenLoopEditor(loop);
     }
 
@@ -276,6 +294,7 @@ public partial class PlanPage : UserControl
         }
         _editingLoop.Forever = forever;
         _editingLoop.RepeatCount = count;
+        _ownerState.NotifyPlansChanged();
         CloseLoopEditor();
     }
 
@@ -300,6 +319,7 @@ public partial class PlanPage : UserControl
         FindOwnerCollection(task)?.Remove(task);
         Reindex();
         MarkSelected(_selectedPlan.Blocks.FirstOrDefault());
+        _ownerState.NotifyPlansChanged();
     }
 
     private void DeleteLoop_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -311,6 +331,7 @@ public partial class PlanPage : UserControl
         owner.RemoveAt(index);
         foreach (PlanBlockPrototype child in loop.Children.Reverse()) owner.Insert(index, child);
         Reindex();
+        _ownerState.NotifyPlansChanged();
     }
 
     private void BlockRow_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs eventArgs)
@@ -344,7 +365,10 @@ public partial class PlanPage : UserControl
     private ListBoxReorderDragController<PlanBlockPrototype> EnsureDragController(ListBox list)
     {
         if (_dragControllers.TryGetValue(list, out ListBoxReorderDragController<PlanBlockPrototype>? controller)) return controller;
-        controller = new ListBoxReorderDragController<PlanBlockPrototype>(list, useNativeCrossListDrag: true);
+        controller = new ListBoxReorderDragController<PlanBlockPrototype>(
+            list,
+            useNativeCrossListDrag: true,
+            previewHost: this);
         controller.ReorderRequested += DragController_OnReorderRequested;
         _dragControllers[list] = controller;
         return controller;
@@ -362,6 +386,7 @@ public partial class PlanPage : UserControl
         targetOwner.Insert(Math.Clamp(destination, 0, targetOwner.Count), eventArgs.Source);
         Reindex();
         MarkSelected(eventArgs.Source);
+        _ownerState.NotifyPlansChanged();
     }
 
     private void PopulateDestinations(PlanLoopPrototype? selected)

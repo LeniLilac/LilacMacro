@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using LilacMacro.App.Debugging;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
 using LilacMacro.Windows;
 
 namespace LilacMacro.App.Runtime;
@@ -13,6 +13,7 @@ internal sealed class PrivateServerRejoinService(
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(2);
     private readonly DebugOcrController _debug = new(workspace, ocr);
     private readonly RobloxClientLifecycleService _lifecycle = new();
+    private readonly RobloxProtocolLauncher _launcher = new();
 
     public async Task RejoinAndVerifyLobbyAsync(
         string privateServerLink,
@@ -20,9 +21,9 @@ internal sealed class PrivateServerRejoinService(
         Action<string>? status,
         CancellationToken cancellationToken)
     {
-        Uri uri = Validate(privateServerLink);
+        RobloxPrivateServerLaunchTarget target = Validate(privateServerLink);
         await _lifecycle.PrepareForPrivateServerLaunchAsync(status, cancellationToken).ConfigureAwait(false);
-        Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+        await _launcher.LaunchAsync(target.LaunchUri, cancellationToken).ConfigureAwait(false);
         status?.Invoke("PRIVATE SERVER REJOIN STARTED");
 
         using CancellationTokenSource deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -55,15 +56,15 @@ internal sealed class PrivateServerRejoinService(
         }
     }
 
-    internal static Uri Validate(string value)
+    internal static RobloxPrivateServerLaunchTarget Validate(string value)
     {
-        if (!Uri.TryCreate(value.Trim(), UriKind.Absolute, out Uri? uri) ||
-            uri.Scheme != Uri.UriSchemeHttps ||
-            !(uri.Host.Equals("roblox.com", StringComparison.OrdinalIgnoreCase) ||
-              uri.Host.EndsWith(".roblox.com", StringComparison.OrdinalIgnoreCase)))
+        try
         {
-            throw new InvalidOperationException("Set a valid HTTPS roblox.com private-server link in Settings.");
+            return RobloxPrivateServerLaunchTarget.Parse(value);
         }
-        return uri;
+        catch (InvalidDataException exception)
+        {
+            throw new InvalidOperationException("Set a valid Roblox private-server link in Settings.", exception);
+        }
     }
 }

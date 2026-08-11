@@ -133,6 +133,15 @@ public sealed class RobloxGlobalSettingsTests
         Assert.False(RobloxClientLifecycleService.IsSupportedClient("RobloxStudioBeta"));
     }
 
+    [Fact]
+    public void Lifecycle_repeats_graceful_close_before_tree_termination()
+    {
+        Assert.Equal(2, RobloxClientLifecycleService.GracefulCloseAttemptCount);
+        Assert.Equal(2, RobloxClientLifecycleService.ForcedCloseAttemptCount);
+        Assert.Equal(TimeSpan.FromSeconds(4), RobloxClientLifecycleService.GracefulCloseAttemptTimeout);
+        Assert.Equal(TimeSpan.FromSeconds(1), RobloxClientLifecycleService.ForcedRespawnSettleTime);
+    }
+
     private static string Value(XDocument document, string name) => document.Descendants()
         .Single(element => (string?)element.Attribute("name") == name)
         .Value;

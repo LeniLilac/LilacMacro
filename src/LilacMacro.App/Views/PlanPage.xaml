@@ -183,7 +183,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ComboBox x:Name="PlanSelector" SelectionChanged="PlanSelector_OnSelectionChanged" />
-                <TextBox x:Name="PlanNameText" Grid.Column="2" TextChanged="PlanNameText_OnTextChanged" />
+                <TextBox x:Name="PlanNameText" Grid.Column="2" MaxLength="100" TextChanged="PlanNameText_OnTextChanged" />
                 <StackPanel Grid.Column="3" Margin="9,0,0,0" Orientation="Horizontal">
                     <Button Style="{StaticResource PlanCompactButtonStyle}" Click="NewPlan_OnClick" Content="NEW" />
                     <Button Margin="6,0,0,0" Style="{StaticResource PlanCompactButtonStyle}" Click="CopyPlan_OnClick" Content="COPY" />
@@ -202,9 +202,9 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Grid>
-                    <StackPanel Orientation="Horizontal">
-                        <controls:LucideIcon Width="15" Height="15" Margin="0,0,7,0" Data="{StaticResource Lucide.ListChecks}" />
-                        <TextBlock FontSize="13" FontWeight="Black" Text="PLAN BLOCKS" />
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                        <controls:LucideIcon Width="15" Height="15" Margin="0,0,7,0" VerticalAlignment="Center" Data="{StaticResource Lucide.ListChecks}" />
+                        <TextBlock VerticalAlignment="Center" FontSize="13" FontWeight="Black" Text="PLAN BLOCKS" />
                     </StackPanel>
                     <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                         <Button Style="{StaticResource PlanCompactButtonStyle}" Click="ResetProgress_OnClick" Content="RESET PROGRESS" />

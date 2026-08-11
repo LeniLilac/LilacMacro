@@ -12,7 +12,7 @@
 | [Testing](TESTING.md) | Automated commands, risk-based coverage, and owner-only live testing |
 | [Troubleshooting](TROUBLESHOOTING.md) | Local SDK, OCR, capture, hotkey, dataset, and log problems |
 | [Deep debug](DEEP-DEBUG.md) | Diagnostic archive contract, retention, privacy, and agent inspection |
-| [Optional local runner session](LOCAL-SESSION.md) | Experimental runner account, isolation, worker, profile, and cleanup contract |
+| [Local instance manager](LOCAL-SESSION.md) | Multi-runner account, isolation, full-UI, configuration, and cleanup contract |
 | [Installer](INSTALLER.md) | Signed installer build, upgrade, and uninstall contract |
 
 ## Product and design

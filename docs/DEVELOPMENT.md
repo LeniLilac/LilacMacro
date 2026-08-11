@@ -17,7 +17,7 @@ src/LilacMacro.Windows    Win32, Windows Graphics Capture, hotkeys, and input
 src/LilacMacro.App        WPF shell, developer workbench, lifecycle, and coordination
 src/LilacMacro.Runtime    WPF-free shared Story/Raid/Challenge scheduler and workflow composition
 src/LilacMacro.SessionSetup  Elevated allowlisted local-session provisioning helper
-src/LilacMacro.SessionWorker Windowless process hosted inside the optional runner session
+src/LilacMacro.SessionWorker Windowless one-shot runner-profile policy bootstrap retained for setup compatibility
 tests/LilacMacro.Tests    Deterministic unit and persistence tests
 tools/LilacMacro.DatasetTool  Dataset validation and bounded agent views
 scripts                   Setup and repository validation commands
@@ -38,7 +38,7 @@ Core must not reference WPF, Win32, Direct3D, or user-specific paths. Windows ow
 
 Core's `Vision` namespace owns grayscale adaptive-anchor construction, matching, state composition, and profile persistence. Image decoding and dataset selection remain higher-layer concerns; never add per-element detector classes to Core.
 
-Local-session contracts remain in Core, system mutation and transport remain in Windows, and desktop orchestration remains in App. SessionSetup may compose Core and Windows only; SessionWorker may consume the shared runtime without initializing WPF. Do not move workflow policy into either executable entrypoint.
+Local-instance contracts remain in Core, system mutation remains in Windows, and desktop/instance-manager orchestration remains in App. SessionSetup may compose Core and Windows only. SessionWorker performs only the one-shot runner-profile policy pass in the active design; no scheduled task starts its legacy headless runtime. Do not move workflow policy into either executable entrypoint.
 
 ## Local setup
 
@@ -54,7 +54,7 @@ Validate the installer without mutating Windows:
 ./scripts/Test-Installer.ps1
 ```
 
-Building an installer additionally requires Inno Setup 6. A release build requires a code-signing certificate; `-UnsignedDevelopmentBuild` is local validation only. Do not run the elevated helper on the owner's machine during agent work. See [Installer](INSTALLER.md).
+Building an installer additionally requires Inno Setup 6. A release build requires a code-signing certificate; `-UnsignedDevelopmentBuild` is local validation only. Do not run the elevated helper on the owner's machine during agent work unless the owner explicitly authorizes it for the current task. See [Installer](INSTALLER.md).
 
 Run the current macro-shell prototype with:
 
@@ -137,8 +137,9 @@ For OCR environment setup, see [OCR and vision](OCR-AND-VISION.md). For all vali
 |---|---|---|
 | Dataset Builder | `Documents\LilacMacro Datasets` | Draft-first; manifest and image writes use temporary files; finalization never overwrites |
 | App capture settings | `%LOCALAPPDATA%\LilacMacro\settings.json` | Atomic replacement |
-| Macro keybind settings | `%LOCALAPPDATA%\LilacMacro\macro-settings.json` | Schema-versioned atomic replacement shared by versioned artifacts |
-| Placement authoring | `%LOCALAPPDATA%\LilacMacro\placements` | Validated snapshots, serialized save queue, atomic replacement |
+| Macro settings | `%LOCALAPPDATA%\LilacMacro\macro-settings.json` before local-instance setup; `%ProgramData%\LilacMacro\Configurations\shared` afterward | Schema-versioned, cross-process-serialized atomic replacement for keybinds, Plan snapshots/selection/reporting options, and DPAPI ciphertext for private-server/webhook secrets; the shared ProgramData root uses machine-scope DPAPI plus an owner/runner ACL |
+| Placement authoring | Active configuration root under `placements` | Validated snapshots, serialized save queue, atomic replacement; shared and isolated runner modes select different roots |
+| Local instance profiles | `%ProgramData%\LilacMacro\Profiles` | Owner-journaled runner identity/policy receipts; one ACL-restricted directory per runner |
 | OCR runtime | `%LOCALAPPDATA%\LilacMacro\ocr` | Isolated Python environment and device marker |
 | Crash logging | `%LOCALAPPDATA%\LilacMacro\logs\latest-crash.txt` | Latest unhandled WPF exception |
 | Deep debug | `%LOCALAPPDATA%\LilacMacro\diagnostics` | Bounded ZIP archives plus transient staging; settings use atomic replacement |

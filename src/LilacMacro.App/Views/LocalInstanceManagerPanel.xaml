@@ -1,0 +1,74 @@
+<UserControl x:Class="LilacMacro.App.Views.LocalInstanceManagerPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Padding="16" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource InkBrush}"
+            BorderThickness="2" CornerRadius="4">
+        <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock FontSize="15" FontWeight="Bold" Text="Local instances" />
+                    <TextBlock x:Name="ManagerDetailText" Margin="0,5,0,0" FontSize="10" TextWrapping="Wrap"
+                               Foreground="{DynamicResource InkSoftBrush}" />
+                </StackPanel>
+                <TextBlock x:Name="ManagerStateText" Grid.Column="1" VerticalAlignment="Top" FontFamily="{StaticResource MonoFont}"
+                           FontSize="11" FontWeight="Bold" />
+            </Grid>
+
+            <Border Margin="0,14,0,0" Padding="12" Background="{DynamicResource MutedBrush}"
+                    BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1" CornerRadius="3">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170" /><ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="150" /><ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock FontWeight="Bold" Text="This desktop" />
+                    <TextBlock Grid.Column="1" FontFamily="{StaticResource MonoFont}" Text="CURRENT UI" />
+                    <TextBlock x:Name="DesktopConfigurationText" Grid.Column="2" FontFamily="{StaticResource MonoFont}" />
+                    <TextBlock Grid.Column="3" HorizontalAlignment="Right" FontSize="10"
+                               Foreground="{DynamicResource InkSoftBrush}" Text="Run from this window" />
+                </Grid>
+            </Border>
+
+            <ItemsControl x:Name="InstanceItems" Margin="0,7,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,7" Padding="12" Background="{DynamicResource CardBrush}"
+                                BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1" CornerRadius="3">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" /><ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="150" /><ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock FontWeight="Bold" Text="{Binding DisplayName}" />
+                                    <TextBlock Margin="0,3,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" Text="{Binding AccountName}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}" Text="{Binding SessionState}" />
+                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}" Text="{Binding ConfigurationMode}" />
+                                <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource InkSoftBrush}" Text="{Binding Endpoint}" />
+                                <Button Grid.Column="4" Tag="{Binding Id}" Style="{DynamicResource SettingsButtonStyle}"
+                                        Click="Open_OnClick" Content="OPEN" />
+                                <Button Grid.Column="5" Margin="7,0,0,0" Tag="{Binding Id}" Style="{DynamicResource SettingsButtonStyle}"
+                                        Background="{DynamicResource DangerBrush}" Click="RemoveProfile_OnClick" Content="REMOVE" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Grid Margin="0,7,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="SetupButton" Style="{DynamicResource SettingsButtonStyle}" Click="Setup_OnClick" Content="SET UP RUNNER 1" />
+                    <Button x:Name="RepairButton" Margin="7,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="Repair_OnClick" Content="REPAIR" />
+                    <Button x:Name="AddSharedButton" Margin="7,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="AddShared_OnClick" Content="+ ADD SHARED" />
+                    <Button x:Name="AddIsolatedButton" Margin="7,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="AddIsolated_OnClick" Content="+ ADD SEPARATE" />
+                </StackPanel>
+                <Button x:Name="RemoveAllButton" Grid.Column="1" Style="{DynamicResource SettingsButtonStyle}"
+                        Background="{DynamicResource DangerBrush}" Click="RemoveAll_OnClick" Content="REMOVE ALL" />
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

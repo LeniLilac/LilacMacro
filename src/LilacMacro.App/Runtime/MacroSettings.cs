@@ -1,14 +1,24 @@
-using LilacMacro.Core.LocalSession;
-
 namespace LilacMacro.App.Runtime;
 
 internal sealed record MacroSettings
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 6;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
     public Dictionary<string, int?> KeyBindings { get; init; } = [];
 
-    public ExecutionTarget ExecutionTarget { get; init; } = ExecutionTarget.LocalDesktop;
+    public List<PlanSettingsSnapshot> Plans { get; init; } = [];
+
+    public int SelectedPlanIndex { get; init; }
+
+    public string EncryptedPrivateServerLink { get; init; } = string.Empty;
+
+    public string EncryptedDiscordWebhook { get; init; } = string.Empty;
+
+    public string DiscordUserId { get; init; } = string.Empty;
+
+    public bool NotifyOnTerminalFailure { get; init; } = true;
+
+    public bool IncludeFailureDetails { get; init; }
 }

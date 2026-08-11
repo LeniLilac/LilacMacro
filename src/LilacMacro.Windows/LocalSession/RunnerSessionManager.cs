@@ -4,6 +4,28 @@ namespace LilacMacro.Windows.LocalSession;
 
 public static class RunnerSessionManager
 {
+    public static RunnerSessionObservation Inspect(string accountName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(accountName);
+        if (!WTSEnumerateSessions(nint.Zero, 0, 1, out nint sessions, out int count))
+            return new RunnerSessionObservation(RunnerSessionConnectionState.Unknown, null);
+        try
+        {
+            int size = Marshal.SizeOf<WtsSessionInfo>();
+            for (int index = 0; index < count; index++)
+            {
+                WtsSessionInfo session = Marshal.PtrToStructure<WtsSessionInfo>(sessions + (index * size));
+                string? user = QueryString(session.SessionId, 5);
+                if (!string.Equals(user, accountName, StringComparison.OrdinalIgnoreCase)) continue;
+                return new RunnerSessionObservation(
+                    session.State == 0 ? RunnerSessionConnectionState.Active : RunnerSessionConnectionState.Disconnected,
+                    session.SessionId);
+            }
+            return new RunnerSessionObservation(RunnerSessionConnectionState.SignedOut, null);
+        }
+        finally { WTSFreeMemory(sessions); }
+    }
+
     public static void LogoffAll(string accountName)
     {
         if (!WTSEnumerateSessions(nint.Zero, 0, 1, out nint sessions, out int count)) return;
@@ -42,3 +64,7 @@ public static class RunnerSessionManager
     [DllImport("wtsapi32.dll")]
     private static extern void WTSFreeMemory(nint memory);
 }
+
+public enum RunnerSessionConnectionState { SignedOut, Active, Disconnected, Unknown }
+
+public sealed record RunnerSessionObservation(RunnerSessionConnectionState State, int? SessionId);

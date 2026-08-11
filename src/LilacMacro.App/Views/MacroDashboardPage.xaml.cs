@@ -10,7 +10,6 @@ using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Ocr;
-using LilacMacro.Core.LocalSession;
 using LilacMacro.Core.Placements;
 using LilacMacro.Runtime.Normalization;
 
@@ -20,7 +19,6 @@ public partial class MacroDashboardPage : UserControl
 {
     private readonly DeepDebugSessionService _deepDebug;
     private readonly MacroOwnerState _ownerState;
-    private readonly LocalSessionDesktopController _localSession;
     private readonly WorkspaceController _workspace;
     private readonly OcrRunner _ocr;
     private readonly StoryWireTestRunner _runner;
@@ -43,20 +41,17 @@ public partial class MacroDashboardPage : UserControl
 
     internal MacroDashboardPage(
         DeepDebugSessionService deepDebug,
-        MacroOwnerState ownerState,
-        LocalSessionDesktopController localSession)
+        MacroOwnerState ownerState)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
-        _localSession = localSession;
         _workspace = new WorkspaceController(deepDebug);
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = true };
         _runner = new StoryWireTestRunner(_workspace, _ocr, deepDebug);
         _rejoin = new PrivateServerRejoinService(_workspace, _ocr);
         _uiScale = new UiScaleNormalizer(_workspace, _ocr, deepDebug);
         _placements = new PlacementSetupStore(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "LilacMacro",
+            MacroInstanceContext.Current.ConfigurationRoot,
             "placements"));
         _challengePlacements = new ChallengePlacementResolver(_placements);
         InitializeComponent();
@@ -65,7 +60,8 @@ public partial class MacroDashboardPage : UserControl
         StatsChart.SetPoints(_runStats);
         PlanCombo.DisplayMemberPath = nameof(PlanPrototype.Name);
         PlanCombo.ItemsSource = ownerState.Plans;
-        PlanCombo.SelectedIndex = 0;
+        PlanCombo.SelectedItem = ownerState.SelectedPlan;
+        ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
     }
 
     public bool SetDashboardActive(bool active, out string error)
@@ -100,8 +96,15 @@ public partial class MacroDashboardPage : UserControl
     private void PlanCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
     {
         if (PlanCombo.SelectedItem is not PlanPrototype plan || UpcomingTasksList is null) return;
+        _ownerState.SelectPlan(plan);
         _currentTask = null;
         RefreshUpcomingTasks(plan);
+    }
+
+    private void OwnerState_OnSelectedPlanChanged(object? sender, EventArgs eventArgs)
+    {
+        if (!ReferenceEquals(PlanCombo.SelectedItem, _ownerState.SelectedPlan))
+            PlanCombo.SelectedItem = _ownerState.SelectedPlan;
     }
 
     private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs) => await StartMacroAsync();
@@ -123,33 +126,27 @@ public partial class MacroDashboardPage : UserControl
         try
         {
             PrivateServerRejoinService.Validate(_ownerState.PrivateServerLink);
+            await _ownerState.FlushAsync();
             _runCancellation = new CancellationTokenSource();
             _debugScope = await _deepDebug.OpenSessionAsync(
                 "macro-runtime",
                 new DeepDebugOperationContext("main-macro", new
                 {
                     Plan = plan.Name,
-                    Target = _ownerState.ExecutionTarget.ToString(),
+                    Instance = MacroInstanceContext.Current.DisplayName,
                 }));
             _runtime.Restart();
             _runtimeTimer.Start();
             _runStats.Clear();
             StatsChart.SetPoints(_runStats);
             RefreshRunState(true);
-            if (_ownerState.ExecutionTarget == ExecutionTarget.LocalRunnerSession)
+            string device = SelectOcrDevice();
+            if (!_initialized)
             {
-                _runTask = RunLocalSessionAsync(plan, _runCancellation.Token);
+                await _workspace.InitializeAsync();
+                _initialized = true;
             }
-            else
-            {
-                string device = SelectOcrDevice();
-                if (!_initialized)
-                {
-                    await _workspace.InitializeAsync();
-                    _initialized = true;
-                }
-                _runTask = RunPlanAsync(plan, device, _runCancellation.Token);
-            }
+            _runTask = RunPlanAsync(plan, device, _runCancellation.Token);
             await _runTask;
             AppendLog("PLAN COMPLETE");
         }
@@ -176,23 +173,6 @@ public partial class MacroDashboardPage : UserControl
             _currentTask = null;
             if (PlanCombo.SelectedItem is PlanPrototype selectedPlan) RefreshUpcomingTasks(selectedPlan);
         }
-    }
-
-    private async Task RunLocalSessionAsync(PlanPrototype plan, CancellationToken cancellationToken)
-    {
-        SessionWorkerEvent ready = await _localSession.ConnectAsync(cancellationToken);
-        AppendLog($"LOCAL RUNNER | {ready.Detail}");
-        long revision = await _localSession.PublishSnapshotAsync(_ownerState, plan, cancellationToken);
-        AppendLog($"SNAPSHOT {revision} PUBLISHED");
-        await _localSession.RunAsync(
-            revision,
-            _ownerState.PrivateServerLink,
-            new Progress<SessionRuntimeProgress>(value =>
-            {
-                AppendLog($"{value.Stage} | {value.Detail}");
-                RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
-            }),
-            cancellationToken);
     }
 
     private async Task RunPlanAsync(PlanPrototype plan, string device, CancellationToken cancellationToken)

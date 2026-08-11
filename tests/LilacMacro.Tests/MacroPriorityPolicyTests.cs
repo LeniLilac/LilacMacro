@@ -51,13 +51,14 @@ public sealed class MacroPriorityPolicyTests
 
     [Theory]
     [InlineData("https://www.roblox.com/share?code=secret&type=Server")]
-    [InlineData("https://roblox.com/games/1")]
-    public void AcceptsOnlyHttpsRobloxLinks(string value) =>
-        Assert.Equal(Uri.UriSchemeHttps, PrivateServerRejoinService.Validate(value).Scheme);
+    [InlineData("https://roblox.com/games/1?privateServerLinkCode=secret")]
+    public void ConvertsPrivateServerLinksToRobloxProtocol(string value) =>
+        Assert.Equal("roblox", PrivateServerRejoinService.Validate(value).LaunchUri.Scheme);
 
     [Theory]
     [InlineData("")]
     [InlineData("roblox://placeId=1")]
+    [InlineData("https://roblox.com/games/1")]
     [InlineData("https://example.com/share?code=secret")]
     public void RejectsUnsafePrivateServerLinks(string value) =>
         Assert.Throws<InvalidOperationException>(() => PrivateServerRejoinService.Validate(value));

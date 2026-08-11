@@ -3,6 +3,7 @@ using System.Windows.Threading;
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.DeepDebugViewer;
 using LilacMacro.App.Lifecycle;
+using LilacMacro.App.Infrastructure;
 
 namespace LilacMacro.App;
 
@@ -18,9 +19,11 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs eventArgs)
     {
         base.OnStartup(eventArgs);
+        MacroInstanceContext.Initialize(eventArgs.Args);
         AppLaunchMode launchMode = AppLaunchModePolicy.Resolve(
             eventArgs.Args,
             Environment.ProcessPath);
+        await MacroConfigurationMigrator.EnsureOwnerSharedConfigurationAsync();
         Window startupWindow = launchMode switch
         {
             AppLaunchMode.DatasetBuilder => new MainWindow(_deepDebug, Workspace.ToolShellKind.DatasetBuilder),

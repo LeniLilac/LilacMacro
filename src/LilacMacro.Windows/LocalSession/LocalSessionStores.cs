@@ -57,31 +57,35 @@ public sealed class RunnerSnapshotStore(LocalSessionPaths paths)
         AtomicJsonFile.ReadAsync<RunnerRuntimeSnapshot>(paths.SnapshotPath, cancellationToken);
 }
 
-public sealed class RunnerProfileStore(LocalSessionPaths paths)
+public sealed class RunnerProfileStore(LocalSessionPaths paths, string? profileId = null)
 {
+    private string PolicyPath => profileId is null ? paths.ProfilePolicyPath : paths.ProfilePolicyPathFor(profileId);
+    private string ReceiptPath => profileId is null ? paths.ProfileReceiptPath : paths.ProfileReceiptPathFor(profileId);
+    private string FailurePath => profileId is null ? paths.ProfileFailurePath : paths.ProfileFailurePathFor(profileId);
+
     public Task WritePolicyAsync(RunnerProfilePolicy policy, CancellationToken cancellationToken = default)
     {
         LocalSessionValidationResult validation = LocalSessionValidation.Validate(policy);
         if (!validation.IsValid) throw new InvalidDataException(string.Join(" ", validation.Errors));
-        return AtomicJsonFile.WriteAsync(paths.ProfilePolicyPath, policy, cancellationToken);
+        return AtomicJsonFile.WriteAsync(PolicyPath, policy, cancellationToken);
     }
 
     public Task<RunnerProfilePolicy?> ReadPolicyAsync(CancellationToken cancellationToken = default) =>
-        AtomicJsonFile.ReadAsync<RunnerProfilePolicy>(paths.ProfilePolicyPath, cancellationToken);
+        AtomicJsonFile.ReadAsync<RunnerProfilePolicy>(PolicyPath, cancellationToken);
 
     public Task WriteReceiptAsync(RunnerProfileReceipt receipt, CancellationToken cancellationToken = default) =>
-        AtomicJsonFile.WriteAsync(paths.ProfileReceiptPath, receipt, cancellationToken);
+        AtomicJsonFile.WriteAsync(ReceiptPath, receipt, cancellationToken);
 
     public Task<RunnerProfileReceipt?> ReadReceiptAsync(CancellationToken cancellationToken = default) =>
-        AtomicJsonFile.ReadAsync<RunnerProfileReceipt>(paths.ProfileReceiptPath, cancellationToken);
+        AtomicJsonFile.ReadAsync<RunnerProfileReceipt>(ReceiptPath, cancellationToken);
 
     public Task WriteFailureAsync(RunnerProfileFailure failure, CancellationToken cancellationToken = default)
     {
         LocalSessionValidationResult validation = LocalSessionValidation.Validate(failure);
         if (!validation.IsValid) throw new InvalidDataException(string.Join(" ", validation.Errors));
-        return AtomicJsonFile.WriteAsync(paths.ProfileFailurePath, failure, cancellationToken);
+        return AtomicJsonFile.WriteAsync(FailurePath, failure, cancellationToken);
     }
 
     public Task<RunnerProfileFailure?> ReadFailureAsync(CancellationToken cancellationToken = default) =>
-        AtomicJsonFile.ReadAsync<RunnerProfileFailure>(paths.ProfileFailurePath, cancellationToken);
+        AtomicJsonFile.ReadAsync<RunnerProfileFailure>(FailurePath, cancellationToken);
 }

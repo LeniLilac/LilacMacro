@@ -73,7 +73,7 @@ Map clicks and placement-dot drags are transformed into original-image pixel coo
 
 ## Autosave
 
-Committed edits are validated, cloned into a snapshot, serialized through one ordered save queue, and atomically replaced under `%LOCALAPPDATA%\LilacMacro\placements\<map-id>.json`. A newer valid edit still receives a save attempt if an earlier write failed. Opening another map and closing the macro shell flush pending saves; recoverable failures use the macro shell's dismissible bottom-right error toast instead of hidden inline text.
+Committed edits are validated, cloned into a snapshot, serialized through one ordered save queue, and atomically replaced under the active configuration root's `placements\<map-id>.json`. That root is owner-local before instance setup, shared for This desktop and shared Runners, or profile-specific for a separate Runner. A newer valid edit still receives a save attempt if an earlier write failed. Opening another map and closing the macro shell flush pending saves; recoverable failures use the macro shell's dismissible bottom-right error toast instead of hidden inline text.
 
 Placement documents use schema version 1 and store the map ID, image dimensions, Shared route, and route overrides. Personal map images remain in their dataset directories.
 

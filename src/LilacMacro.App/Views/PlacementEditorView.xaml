@@ -252,25 +252,23 @@
                             <TranslateTransform x:Name="UnitPaletteOffset" X="12" Y="12" />
                         </Border.RenderTransform>
                         <StackPanel>
-                            <primitives:Thumb Height="22" Cursor="SizeAll"
-                                              DragDelta="UnitPalette_OnDragDelta">
+                            <Grid Margin="0,0,0,4">
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}"
+                                           Text="MODE" />
+                                <primitives:Thumb Width="24" Height="18" HorizontalAlignment="Right" Cursor="SizeAll"
+                                                  DragDelta="UnitPalette_OnDragDelta">
                                 <primitives:Thumb.Template>
                                     <ControlTemplate TargetType="primitives:Thumb">
                                         <Grid Background="Transparent">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <controls:LucideIcon Grid.Column="1" Width="14" Height="14"
+                                            <controls:LucideIcon Width="14" Height="14" HorizontalAlignment="Right"
                                                                  VerticalAlignment="Center"
                                                                  Foreground="{DynamicResource InkSoftBrush}"
                                                                  Data="{StaticResource Lucide.GripVertical}" />
                                         </Grid>
                                     </ControlTemplate>
                                 </primitives:Thumb.Template>
-                            </primitives:Thumb>
-                            <TextBlock Margin="0,4,0,4" Style="{StaticResource FieldLabelStyle}"
-                                       Text="MODE" />
+                                </primitives:Thumb>
+                            </Grid>
                             <StackPanel Orientation="Horizontal">
                                 <RadioButton x:Name="PlaceModeButton" GroupName="PlacementCursor" Tag="Place"
                                              Style="{StaticResource CursorModeButtonStyle}" IsChecked="True"

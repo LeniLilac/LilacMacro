@@ -185,6 +185,10 @@
                     </StackPanel>
                 </Border>
 
+                <TextBlock x:Name="InstanceNameText" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontFamily="{StaticResource MonoFont}" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{DynamicResource InkSoftBrush}" />
+
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button
                             Margin="0,0,6,0"

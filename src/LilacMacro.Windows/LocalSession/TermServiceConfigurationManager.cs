@@ -10,6 +10,7 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
     public const int LocalPort = 33991;
     internal static IReadOnlyList<string> RestartStopOrder { get; } = ["UmRdpService", "TermService"];
     internal static readonly TimeSpan ServiceTransitionTimeout = TimeSpan.FromSeconds(60);
+    internal static readonly TimeSpan StopRetryObservationInterval = TimeSpan.FromSeconds(2);
     internal const int MaximumStopRequests = 3;
     private const string TerminalServerKey = @"SYSTEM\CurrentControlSet\Control\Terminal Server";
     private const string ListenerKey = TerminalServerKey + @"\WinStations\RDP-Tcp";
@@ -33,19 +34,87 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
 
     public void Apply() => RegistryStateJournal.Apply(GetMutations());
 
+    public void ApplyAndRestart(IReadOnlyList<OriginalSystemValue> originalSystemState)
+    {
+        ArgumentNullException.ThrowIfNull(originalSystemState);
+        using ServiceHandle scm = OpenManager();
+        List<string> stoppedDependents = [];
+        try
+        {
+            ApplyStopGate();
+            stoppedDependents = StopOwnedServices(scm);
+            Apply();
+            StartOwnedServices(scm, stoppedDependents);
+        }
+        catch (Exception configurationError)
+        {
+            List<Exception> recoveryErrors = [];
+            try { RegistryStateJournal.Restore(originalSystemState); }
+            catch (Exception error) { recoveryErrors.Add(error); }
+            try { StartOwnedServices(scm, stoppedDependents); }
+            catch (Exception error) { recoveryErrors.Add(error); }
+            if (recoveryErrors.Count > 0)
+                throw new AggregateException("TermService configuration failed and immediate restoration was incomplete.", [configurationError, .. recoveryErrors]);
+            throw;
+        }
+    }
+
     public void Restart()
     {
-        using ServiceHandle scm = OpenSCManager(null, null, 0x0001);
-        if (scm.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error(), "Service Control Manager could not be opened.");
+        IReadOnlyList<RegistryMutation> stopGate = [Dword(TerminalServerKey, "fDenyTSConnections", 1)];
+        IReadOnlyList<OriginalSystemValue> originalStopGate = RegistryStateJournal.Capture(stopGate);
+        using ServiceHandle scm = OpenManager();
+        List<string> stoppedDependents = [];
+        try
+        {
+            RegistryStateJournal.Apply(stopGate);
+            stoppedDependents = StopOwnedServices(scm);
+            RegistryStateJournal.Restore(originalStopGate);
+            StartOwnedServices(scm, stoppedDependents);
+        }
+        catch (Exception restartError)
+        {
+            List<Exception> recoveryErrors = [];
+            try { RegistryStateJournal.Restore(originalStopGate); }
+            catch (Exception error) { recoveryErrors.Add(error); }
+            try { StartOwnedServices(scm, stoppedDependents); }
+            catch (Exception error) { recoveryErrors.Add(error); }
+            if (recoveryErrors.Count > 0)
+                throw new AggregateException("TermService restart failed and immediate restoration was incomplete.", [restartError, .. recoveryErrors]);
+            throw;
+        }
+    }
+
+    private static void ApplyStopGate() =>
+        RegistryStateJournal.Apply([Dword(TerminalServerKey, "fDenyTSConnections", 1)]);
+
+    private static ServiceHandle OpenManager()
+    {
+        ServiceHandle scm = OpenSCManager(null, null, 0x0001);
+        if (scm.IsInvalid)
+        {
+            int error = Marshal.GetLastWin32Error();
+            scm.Dispose();
+            throw new Win32Exception(error, "Service Control Manager could not be opened.");
+        }
+        return scm;
+    }
+
+    private static List<string> StopOwnedServices(ServiceHandle scm)
+    {
         List<string> stoppedDependents = [];
         foreach (string serviceName in RestartStopOrder)
         {
             bool required = string.Equals(serviceName, "TermService", StringComparison.Ordinal);
             if (StopService(scm, serviceName, required) && !required) stoppedDependents.Add(serviceName);
         }
+        return stoppedDependents;
+    }
 
+    private static void StartOwnedServices(ServiceHandle scm, IReadOnlyList<string> stoppedDependents)
+    {
         StartNamedService(scm, "TermService", required: true);
-        foreach (string serviceName in stoppedDependents.AsEnumerable().Reverse())
+        foreach (string serviceName in stoppedDependents.Reverse())
             StartNamedService(scm, serviceName, required: false);
     }
 
@@ -76,7 +145,13 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
                 if (error != 1062) throw new Win32Exception(error, $"{serviceName} could not be stopped.");
             }
         }
-        WaitForStopped(scm, service, serviceName, ServiceTransitionTimeout, stopRequests);
+        WaitForStopped(
+            scm,
+            service,
+            serviceName,
+            ServiceTransitionTimeout,
+            stopRequests,
+            stopRequests == 0 ? 0 : Environment.TickCount64);
         return true;
     }
 
@@ -94,7 +169,13 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
         WaitForState(service, serviceName, 4, ServiceTransitionTimeout);
     }
 
-    private static void WaitForStopped(ServiceHandle scm, ServiceHandle service, string serviceName, TimeSpan timeout, int stopRequests)
+    private static void WaitForStopped(
+        ServiceHandle scm,
+        ServiceHandle service,
+        string serviceName,
+        TimeSpan timeout,
+        int stopRequests,
+        long lastAcceptedStopAt)
     {
         long deadline = Environment.TickCount64 + (long)timeout.TotalMilliseconds;
         int dependentRestops = 0;
@@ -103,11 +184,13 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
         {
             if (!QueryServiceStatus(service, ref status)) throw new Win32Exception(Marshal.GetLastWin32Error());
             if (status.CurrentState == 1) return;
-            if (ShouldRetryStop(status.CurrentState, status.ControlsAccepted, stopRequests))
+            long sinceAcceptedStop = Environment.TickCount64 - lastAcceptedStopAt;
+            if (ShouldRetryStop(status.CurrentState, status.ControlsAccepted, stopRequests, sinceAcceptedStop))
             {
                 if (ControlService(service, 1, ref status))
                 {
                     stopRequests++;
+                    lastAcceptedStopAt = Environment.TickCount64;
                     continue;
                 }
 
@@ -156,8 +239,15 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
         return TimeSpan.FromMilliseconds(Math.Min(bounded, Math.Max(1, remainingMilliseconds)));
     }
 
-    internal static bool ShouldRetryStop(uint currentState, uint controlsAccepted, int stopRequests) =>
-        currentState == 4 && (controlsAccepted & 0x00000001) != 0 && stopRequests < MaximumStopRequests;
+    internal static bool ShouldRetryStop(
+        uint currentState,
+        uint controlsAccepted,
+        int stopRequests,
+        long millisecondsSinceAcceptedStop) =>
+        currentState == 4 &&
+        (controlsAccepted & 0x00000001) != 0 &&
+        stopRequests < MaximumStopRequests &&
+        millisecondsSinceAcceptedStop >= StopRetryObservationInterval.TotalMilliseconds;
 
     internal static bool ShouldRestopKnownDependent(string serviceName, int error, int dependentRestops) =>
         string.Equals(serviceName, "TermService", StringComparison.Ordinal) &&

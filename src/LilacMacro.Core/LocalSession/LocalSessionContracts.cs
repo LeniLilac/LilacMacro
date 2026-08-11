@@ -10,6 +10,23 @@ public enum ExecutionTarget
     LocalRunnerSession,
 }
 
+public enum RunnerConfigurationMode
+{
+    Shared,
+    Isolated,
+}
+
+public sealed record LocalRunnerProfile
+{
+    public string Id { get; init; } = string.Empty;
+    public string DisplayName { get; init; } = string.Empty;
+    public string AccountName { get; init; } = string.Empty;
+    public string RunnerSid { get; init; } = string.Empty;
+    public int Slot { get; init; }
+    public string LoopbackAddress { get; init; } = string.Empty;
+    public RunnerConfigurationMode ConfigurationMode { get; init; } = RunnerConfigurationMode.Shared;
+}
+
 public enum LocalSessionState
 {
     Absent,
@@ -27,7 +44,7 @@ public sealed record LocalSessionStatus
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
     public LocalSessionState State { get; init; } = LocalSessionState.Absent;
     public string StatusCode { get; init; } = "absent";
-    public string Detail { get; init; } = "Local runner session is not installed.";
+    public string Detail { get; init; } = "Local instance manager is not installed.";
     public bool CompatibilityPassed { get; init; }
     public bool LoopbackIsolationPassed { get; init; }
     public bool FreshCapturePassed { get; init; }
@@ -98,6 +115,7 @@ public sealed record LocalSessionProvisioningManifest
     public string OwnerSid { get; init; } = string.Empty;
     public string RunnerSid { get; init; } = string.Empty;
     public string RunnerAccountName { get; init; } = "LilacMacroRunner";
+    public IReadOnlyList<LocalRunnerProfile> RunnerProfiles { get; init; } = [];
     public string OsBuild { get; init; } = string.Empty;
     public string AppVersion { get; init; } = string.Empty;
     public string WorkerVersion { get; init; } = string.Empty;

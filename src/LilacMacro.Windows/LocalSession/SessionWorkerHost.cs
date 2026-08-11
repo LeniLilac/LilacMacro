@@ -25,6 +25,7 @@ public sealed class SessionWorkerHost(
         string currentSid = WindowsIdentity.GetCurrent().User?.Value ?? string.Empty;
         if (!string.Equals(currentSid, manifest.RunnerSid, StringComparison.Ordinal))
             throw new UnauthorizedAccessException("The session worker is not running as the provisioned runner SID.");
+        RunnerProcessAccessManager.GrantOwnerValidationAccess(manifest.OwnerSid);
 
         while (!cancellationToken.IsCancellationRequested)
         {

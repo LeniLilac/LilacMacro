@@ -2,7 +2,7 @@
 
 ## Status
 
-**Status: Prototype.** This document defines the implemented application shell plus the Macro, Plan, Setup, and Settings prototype surfaces. It does not claim that plan persistence, owner-validated unattended placement playback, or the unattended macro is complete; see [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md).
+**Status: Prototype.** This document defines the implemented application shell plus the Macro, Plan, Setup, and Settings prototype surfaces. It does not claim that owner-validated unattended placement playback or the unattended macro is complete; see [docs/PROJECT-STATUS.md](docs/PROJECT-STATUS.md).
 
 ## Product scene
 
@@ -89,7 +89,7 @@ Purpose: task and priority configuration.
 - Support the permanent Story, Raid, Challenge, and Expedition modes, limited Event acts, and Utilities in the editor.
 - Support root tasks and repeat loops. Loop settings are `Forever` or a bounded repeat count; nested tasks retain global priority and can be targeted directly from the task editor.
 - Match ExpeditionsMacro's task fields: destination, mode, route and target schedule, defeat retries, challenge types, Expedition difficulty/extraction/boss count, and Story hard mode.
-- The current prototype edits in memory only. Autosave and runtime scheduler consumption remain Planned.
+- Committed plan edits, ordering, loops, names, and the selected plan autosave atomically to the versioned Macro settings contract. Application shutdown and Macro start flush queued writes. Runtime scheduler consumption remains Prototype.
 
 ### Setup
 
@@ -163,7 +163,7 @@ SETUP / STORY / SCHOOL GROUNDS                         [Back to maps]
 - Story maps expose Shared, Act 1 through Act 5, Infinite, Mastery, and Challenge routes.
 - Exact routes use the Shared setup until their first committed edit automatically creates an independent override. Reset removes that override and resumes Shared inheritance. Reset on Shared removes every authored action while retaining the required Start Game boundary.
 - Raid map cards expose Shared plus the act represented by that card. Expedition maps use one Default setup.
-- The saved Team 1-8 selector sits in the map header between route configuration and the reference-view selector. The movable placement palette defaults to the workarea's top-left and contains explicit `Place` and `Select` cursor modes plus Unit Slot 1-6. Modes change only through those controls; placing a unit or pressing a number key never switches modes. Number-row and numpad keys `1` through `6` select the matching Unit Slot whenever Setup owns keyboard focus, except while the owner is typing or using a field selector. Match Steps contains only the action list and Add Step. Match Settings uses the full panel width for the ExpeditionsMacro default-targeting, default-Auto-Upgrade, unit-check interval, placement-attempt, and impossibility-threshold controls. A single Advanced Settings dropdown reveals the copied Step Mode timing, proof checks, upgrade-readiness check, prestart check, and recording-playback delay fields. All Match Settings controls are intentionally unwired until runtime semantics are designed.
+- The saved Team 1-8 selector sits in the map header between route configuration and the reference-view selector. The movable placement palette defaults to the workarea's top-left and contains explicit `Place` and `Select` cursor modes plus Unit Slot 1-6. Its drag grip shares the compact Mode label row instead of reserving an empty header band. Modes change only through those controls; placing a unit or pressing a number key never switches modes. Number-row and numpad keys `1` through `6` select the matching Unit Slot whenever Setup owns keyboard focus, except while the owner is typing or using a field selector. Match Steps contains only the action list and Add Step. Match Settings uses the full panel width for the ExpeditionsMacro default-targeting, default-Auto-Upgrade, unit-check interval, placement-attempt, and impossibility-threshold controls. A single Advanced Settings dropdown reveals the copied Step Mode timing, proof checks, upgrade-readiness check, prestart check, and recording-playback delay fields. All Match Settings controls are intentionally unwired until runtime semantics are designed.
 - Test Setup is the compact primary action in the Match Steps header. It assumes Roblox is already on this map's Match Prestart screen, flushes autosave, performs standard camera alignment, and executes the active route through Start Game and its after-start actions. It becomes Stop Test while running; map, route, and step editing remain locked until completion or cancellation.
 - In `Place` mode, a left-click on the map creates a Place action at the original-image pixel coordinate using the selected Unit Slot and saved route defaults. Every marker inside the cursor's fixed viewport-space proximity radius hides its label and dims its pin together so crowded markers do not hide the intended point; marker tooltips are not shown, and markers cannot be dragged or deleted. In `Select` mode, empty-map clicks do nothing; hovering a marker raises it above neighboring markers and turns its complete label into a red delete button, while dragging only the exact placement dot moves the stable placement. There is no separate delete icon or label drag affordance. Markers use one compact pin with an upper-left unit label and no routed leader lines. A slot used once displays its number; repeated placements display `1a`, `1b`, and so on. Add Step does not contain Place; it opens a centered owner-modal editor for Delay, Reconfigure, Upgrade, and Sell. Edit uses the same styled field surface for an existing row.
 - The timeline always contains one movable Start Game boundary. Steps above it run before start and steps below it run after start.
@@ -188,11 +188,12 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 - General owns appearance, updates, and local-data controls. Game-setting normalization and fresh Lobby verification are mandatory runtime invariants, not settings.
 - General shows the running Macro version as a terse read-only value at the top of Updates and data so installed and local artifacts can be identified without opening build metadata.
 - Roblox owns the private-server link and optional local-session target. Do not expose retry counts, rejoin switches, or a way to disable fresh Lobby evidence.
-- Local Session keeps setup, repair, viewport, and removal in one compact action row. `OPEN SESSION` is available after compatibility and loopback isolation pass, even while fresh runner capture is still awaiting the owner's Roblox bootstrap.
+- Private-server and webhook values use masked fields and current-user DPAPI persistence. Private-server Test Link and runtime resets convert validated Roblox web/share links to the registered `roblox://` protocol so the browser is never the launch intermediary.
+- Local instances presents This desktop plus compact Runner rows with session state, shared/separate configuration, endpoint, `OPEN`, and `REMOVE`. Machine actions remain one terse row: setup, repair, add shared, add separate, and remove all.
 - Discord owns webhook and failure-notification fields.
 - Keybinds uses a compact name, scope, and binding list.
 - Diagnostics owns failure evidence, deep debug, and experimental recording controls.
-- Controls are session-only prototypes unless their current implementation explicitly says otherwise. Theme switching is live, and press-then-key bindings persist atomically across versioned artifacts; current Story/Raid Play and Unit inventory bindings may be unset to use verified OCR button navigation. Areas exposes the same optional binding contract for its future runner. Private-server, webhook, update, and recording effects are not connected; deep-debug diagnostics and folder opening are connected.
+- Controls are session-only prototypes unless their current implementation explicitly says otherwise. Theme switching is live; press-then-key bindings, private-server/webhook secrets, Discord failure options, Plan state, and local-instance profiles persist atomically across versioned artifacts. Every macro UI runs on its own desktop; there is no run-target selector. Current Story/Raid Play and Unit inventory bindings may be unset to use verified OCR button navigation. Areas exposes the same optional binding contract for its future runner. Webhook delivery, update, and recording effects are not connected; private-server protocol launch and deep-debug diagnostics are connected.
 
 ## Visual language
 
@@ -213,18 +214,17 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 
 - **Prototype:** changing tabs changes only the visible page and preserves each page instance.
 - **Prototype:** Setup commits autosave, and application shutdown flushes queued Setup writes or surfaces a clear failure.
+- **Prototype:** committed Plan changes autosave atomically, preserve the selected plan across launches, and flush before shutdown or Macro start.
 - **Planned:** an active macro continues when the user opens Plan, Setup, or Settings.
 - **Prototype:** leaving Setup is blocked while Test Setup owns Roblox input; application shutdown cancels it and waits for input cleanup.
-- **Planned:** committed Plan changes autosave and flush before shutdown or macro start.
 
 ## Deliberately unresolved
 
 The following areas are not designed by this document:
 
-- Plan persistence and conflict behavior
 - Scheduler/runtime integration
 - Complete unattended placement playback and detector integration
-- Private-server and webhook secret persistence
+- Webhook delivery and protected-secret recovery UX
 - Diagnostics capture ownership and recording semantics
 
 Resolve each area in its own design pass without changing the four-tab application structure unless the product requirements change.

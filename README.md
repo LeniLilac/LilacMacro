@@ -32,7 +32,7 @@ Optional OCR setup:
 - **Prototype:** the four-tab macro shell, Setup placement authoring, light/dark themes, and owner-triggered OCR Debug transitions.
 - **Prototype:** Runtime Lab and main Macro can run Story, Raid, and reset-aware Challenge rotation through authored placement playback, terminal verification, private-server Lobby reset, and priority reevaluation.
 - **Planned:** persistent plans and protected secrets, Expedition and limited Event runners, webhooks, and dataset/runtime integration for personalized image detection.
-- **Prototype:** an opt-in, installer-owned local runner account, loopback session isolation, runner-only minimal profile, immutable typed configuration bridge, shared headless Story/Raid/Challenge runtime, IPC, rollback, and uninstall cleanup. It remains unreleased until the pinned native payload and complete lifecycle pass disposable-VM certification.
+- **Prototype:** an opt-in local instance manager with loopback-only RDP, multiple standard runner accounts, one full macro UI per desktop, shared-or-isolated configuration, exact ownership/rollback, and uninstall cleanup. It remains unreleased until the pinned native payload and complete multi-session lifecycle pass disposable-VM certification.
 - **Unresolved:** Macro and Plan page design, complete Settings design, production signing/certification, and a supported release workflow.
 
 See the authoritative matrix in [Project status](docs/PROJECT-STATUS.md). Dataset Builder owns Capture, Review + OCR, and Datasets. Runtime Lab owns Debug and Wire Test. Both are supported internal applications built from the shared App/Core/Windows implementation.
@@ -47,4 +47,4 @@ Start with the [documentation index](docs/README.md). Contributors and coding ag
 
 The project is noncommercial; see [LICENSE.md](LICENSE.md), [NOTICE.md](NOTICE.md), and [PRIVACY.md](PRIVACY.md).
 
-The experimental runner and signed-installer boundaries are documented in [Optional local runner session](docs/LOCAL-SESSION.md) and [Installer](docs/INSTALLER.md).
+The local instance manager and signed-installer boundaries are documented in [Local instance manager](docs/LOCAL-SESSION.md) and [Installer](docs/INSTALLER.md).

@@ -1,9 +1,11 @@
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.LocalSession;
+using LilacMacro.Windows;
 using LilacMacro.Windows.LocalSession;
 
 namespace LilacMacro.Tests;
@@ -11,9 +13,21 @@ namespace LilacMacro.Tests;
 public sealed class LocalSessionContractTests
 {
     [Fact]
-    public void Execution_target_defaults_to_local_desktop()
+    public async Task Every_ui_instance_executes_on_its_own_desktop()
     {
-        Assert.Equal(ExecutionTarget.LocalDesktop, new MacroSettings().ExecutionTarget);
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-local-{Guid.NewGuid():N}");
+        try
+        {
+            MacroOwnerState state = await MacroOwnerState.LoadAsync(
+                new MacroSettingsStore(root),
+                new DpapiSecretProtector());
+
+            Assert.Equal(ExecutionTarget.LocalDesktop, state.ExecutionTarget);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     [Theory]
@@ -21,6 +35,9 @@ public sealed class LocalSessionContractTests
     [InlineData("repair")]
     [InlineData("remove")]
     [InlineData("uninstall-cleanup")]
+    [InlineData("add-shared")]
+    [InlineData("add-isolated")]
+    [InlineData("remove-profile")]
     public void Setup_helper_accepts_only_owned_verbs(string verb)
     {
         Assert.True(LocalSessionSetupVerbPolicy.IsAllowed(verb));
@@ -34,6 +51,15 @@ public sealed class LocalSessionContractTests
     public void Setup_helper_rejects_other_input(string verb)
     {
         Assert.False(LocalSessionSetupVerbPolicy.IsAllowed(verb));
+    }
+
+    [Fact]
+    public void Setup_helper_bounds_profile_removal_arguments()
+    {
+        Assert.True(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["remove-profile", "runner-2"]));
+        Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["remove-profile"]));
+        Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["remove-profile", "../owner"]));
+        Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["add-shared", "runner-2"]));
     }
 
     [Fact]
@@ -121,8 +147,112 @@ public sealed class LocalSessionContractTests
         System.Diagnostics.ProcessStartInfo start = LocalSessionDesktopController.CreateRdpStartInfo();
 
         Assert.Equal("mstsc.exe", start.FileName);
-        Assert.Equal("/v:127.0.0.1:33991 /f", start.Arguments);
+        Assert.Equal("/v:127.0.0.2:33991 /f", start.Arguments);
         Assert.True(start.UseShellExecute);
+    }
+
+    [Fact]
+    public void Each_runner_uses_a_distinct_fullscreen_rdp_endpoint_and_ui_task()
+    {
+        string rdpRoot = Path.Combine(Path.GetTempPath(), $"lilac-rdp-{Guid.NewGuid():N}");
+        LocalRunnerProfile runner2 = LocalRunnerProfileProvisioner.Create(2, RunnerConfigurationMode.Isolated) with
+        {
+            RunnerSid = "S-1-5-21-200",
+        };
+        try
+        {
+            System.Diagnostics.ProcessStartInfo start = LocalInstanceManagerController.CreateRdpStartInfo(runner2, rdpRoot);
+            string arguments = RunnerScheduledTaskManager.CreateArguments(runner2, @"C:\ProgramData\LilacMacro\Configurations\runner-2");
+            string rdpPath = Path.Combine(rdpRoot, "runner-2.rdp");
+            string rdp = File.ReadAllText(rdpPath);
+            byte[] rdpBytes = File.ReadAllBytes(rdpPath);
+
+            Assert.Equal($"\"{rdpPath}\"", start.Arguments);
+            Assert.Equal(new byte[] { 0xff, 0xfe }, rdpBytes[..2]);
+            Assert.Contains("full address:s:127.0.0.3:33991", rdp, StringComparison.Ordinal);
+            Assert.Contains($"username:s:{Environment.MachineName}\\LilacMacroRunner2", rdp, StringComparison.Ordinal);
+            Assert.Contains("authentication level:i:0", rdp, StringComparison.Ordinal);
+            Assert.Contains("enablecredsspsupport:i:1", rdp, StringComparison.Ordinal);
+            Assert.Contains("redirectclipboard:i:0", rdp, StringComparison.Ordinal);
+            Assert.Contains("drivestoredirect:s:", rdp, StringComparison.Ordinal);
+            Assert.Contains("--managed-instance runner-2", arguments, StringComparison.Ordinal);
+            Assert.Contains("--instance-name \"Runner 2\"", arguments, StringComparison.Ordinal);
+            Assert.Contains("--configuration-mode isolated", arguments, StringComparison.Ordinal);
+            Assert.Equal("LilacMacro Instance runner-2", RunnerScheduledTaskManager.TaskNameFor(runner2.Id));
+        }
+        finally
+        {
+            if (Directory.Exists(rdpRoot)) Directory.Delete(rdpRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Interactive_session_rejects_nonowned_rdp_destinations()
+    {
+        LocalRunnerProfile profile = LocalRunnerProfileProvisioner.Create(2, RunnerConfigurationMode.Shared) with
+        {
+            LoopbackAddress = "192.0.2.20",
+        };
+
+        Assert.Throws<InvalidDataException>(() => LocalInstanceManagerController.CreateRdpProfileContent(profile));
+    }
+
+    [Fact]
+    public void Shared_and_isolated_profiles_have_distinct_configuration_and_credential_scopes()
+    {
+        LocalSessionPaths paths = new(@"C:\ProgramData\LilacMacro", @"C:\Program Files\LilacMacro", "native");
+        LocalRunnerProfile shared = LocalRunnerProfileProvisioner.Create(1, RunnerConfigurationMode.Shared) with
+        {
+            RunnerSid = "S-1-5-21-101",
+        };
+        LocalRunnerProfile isolated = LocalRunnerProfileProvisioner.Create(2, RunnerConfigurationMode.Isolated) with
+        {
+            RunnerSid = "S-1-5-21-102",
+        };
+
+        Assert.Equal(paths.SharedConfigurationRoot, paths.ConfigurationRootFor(shared));
+        Assert.Equal(Path.Combine(paths.ConfigurationsRoot, "runner-2"), paths.ConfigurationRootFor(isolated));
+        Assert.Equal("TERMSRV/127.0.0.2", paths.CredentialTargetFor(shared));
+        Assert.Equal("TERMSRV/127.0.0.3", paths.CredentialTargetFor(isolated));
+        Assert.NotEqual(paths.SecretCredentialTargetFor(shared), paths.SecretCredentialTargetFor(isolated));
+    }
+
+    [Fact]
+    public void Manifest_rejects_duplicate_or_unowned_runner_profiles()
+    {
+        LocalRunnerProfile runner = LocalRunnerProfileProvisioner.Create(1, RunnerConfigurationMode.Shared) with
+        {
+            RunnerSid = "S-1-5-21-101",
+        };
+        LocalSessionProvisioningManifest duplicate = new()
+        {
+            OwnerSid = "S-1-5-21-100",
+            RunnerProfiles = [runner, runner],
+        };
+        LocalSessionProvisioningManifest unowned = duplicate with
+        {
+            RunnerProfiles = [runner with { AccountName = "Administrator" }],
+        };
+
+        Assert.False(LocalSessionValidation.Validate(duplicate).IsValid);
+        Assert.False(LocalSessionValidation.Validate(unowned).IsValid);
+        Assert.True(LocalSessionValidation.Validate(duplicate with { RunnerProfiles = [runner] }).IsValid);
+    }
+
+    [Fact]
+    public void Worker_process_path_uses_limited_information_query()
+    {
+        using System.Diagnostics.Process process = System.Diagnostics.Process.GetCurrentProcess();
+        string ownerSid = System.Security.Principal.WindowsIdentity.GetCurrent().User!.Value;
+
+        RunnerProcessAccessManager.GrantOwnerValidationAccess(ownerSid);
+
+        Assert.Equal(
+            Path.GetFullPath(Environment.ProcessPath!),
+            Path.GetFullPath(SessionPipeClient.ReadProcessPath(process.Handle)),
+            ignoreCase: true);
+        Assert.Equal(0x1000u, RunnerProcessAccessManager.OwnerProcessQueryAccess);
+        Assert.Equal(0x0008u, RunnerProcessAccessManager.OwnerTokenQueryAccess);
     }
 
     [Fact]
@@ -245,13 +375,30 @@ public sealed class LocalSessionContractTests
     }
 
     [Fact]
-    public void Runner_rdp_credential_uses_generic_windows_credential_type()
+    public void Runner_rdp_credential_uses_the_generic_type_with_domain_password_migration()
     {
-        Assert.Equal(1, RunnerCredentialManager.CredentialType);
+        Assert.Equal(1, RunnerCredentialManager.RdpCredentialType);
+        Assert.Equal(1, RunnerCredentialManager.SecretCredentialType);
+        Assert.Equal(2, RunnerCredentialManager.LegacyRdpCredentialType);
+        Assert.Equal(
+            @"LILAC-TEST\LilacMacroRunner",
+            RunnerScheduledTaskManager.QualifyLocalAccount("LilacMacroRunner", "LILAC-TEST"));
+        LocalSessionPaths paths = new("program-data", "install", "native");
+        Assert.Equal("TERMSRV/127.0.0.2", paths.CredentialTarget);
+        Assert.Equal("TERMSRV/127.0.0.2:33991", paths.PortCredentialTarget);
         System.ComponentModel.Win32Exception error = RunnerCredentialManager.CredentialError(
             87,
             "Credential write failed.");
         Assert.Contains("Win32 87", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Mutable_worker_status_is_separate_from_the_read_only_provisioning_journal()
+    {
+        LocalSessionPaths paths = new("program-data", "install", "native");
+
+        Assert.Equal(Path.Combine(paths.SessionRoot, "provisioning.json"), paths.JournalPath);
+        Assert.Equal(Path.Combine(paths.RunnerRoot, "status.json"), paths.StatusPath);
     }
 
     [Fact]
@@ -268,6 +415,50 @@ public sealed class LocalSessionContractTests
             accountOnly with { CompletedSteps = [.. accountOnly.CompletedSteps, "term-service-mutation-started"] },
             []));
         Assert.True(LocalSessionProvisioner.RequiresTermServiceRestore(accountOnly, ["changed"]));
+    }
+
+    [Fact]
+    public void Broken_rdp_certificate_is_journaled_for_replacement_and_exact_restoration()
+    {
+        const string brokenThumbprint = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+        OriginalSystemValue[] baseline =
+        [
+            new(RemoteDesktopCertificateManager.BaselineKind, "Remote Desktop", false, null, null),
+            new(
+                RemoteDesktopCertificateManager.CertificateKind,
+                brokenThumbprint,
+                true,
+                RemoteDesktopCertificateManager.MissingKeyCertificateType,
+                Convert.ToBase64String([1, 2, 3])),
+        ];
+
+        Assert.Equal([brokenThumbprint], RemoteDesktopCertificateManager.BrokenBaselineThumbprints(baseline));
+        Assert.Empty(RemoteDesktopCertificateManager.CompareBaseline(
+            baseline,
+            [new RemoteDesktopCertificateObservation(brokenThumbprint, false, Convert.ToBase64String([1, 2, 3]))]));
+        Assert.Contains(
+            RemoteDesktopCertificateManager.CompareBaseline(
+                baseline,
+                [new RemoteDesktopCertificateObservation(new string('B', 40), true, Convert.ToBase64String([4, 5, 6]))]),
+            problem => problem.Contains("Generated RDP certificate remains", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Provisioning_manifest_rejects_malformed_rdp_certificate_journal()
+    {
+        LocalSessionProvisioningManifest manifest = new()
+        {
+            OwnerSid = "S-1-5-21-100",
+            OriginalSystemState =
+            [
+                new("rdp-certificate", "not-a-thumbprint", true, "x509-der-private-key-missing", "not-base64"),
+            ],
+        };
+
+        LocalSessionValidationResult result = LocalSessionValidation.Validate(manifest);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.Contains("certificate", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -304,20 +495,29 @@ public sealed class LocalSessionContractTests
     }
 
     [Theory]
-    [InlineData(4, 1, 1, true)]
-    [InlineData(4, 1, 2, true)]
-    [InlineData(4, 1, 3, false)]
-    [InlineData(4, 0, 1, false)]
-    [InlineData(3, 1, 1, false)]
-    [InlineData(1, 1, 1, false)]
+    [InlineData(4, 1, 1, 1_999, false)]
+    [InlineData(4, 1, 1, 2_000, true)]
+    [InlineData(4, 1, 2, 30_000, true)]
+    [InlineData(4, 1, 3, 30_000, false)]
+    [InlineData(4, 0, 1, 30_000, false)]
+    [InlineData(3, 1, 1, 30_000, false)]
+    [InlineData(1, 1, 1, 30_000, false)]
     public void Term_service_stop_retries_only_a_bounded_running_bounce(
         uint currentState,
         uint controlsAccepted,
         int stopRequests,
+        long millisecondsSinceAcceptedStop,
         bool expected)
     {
-        Assert.Equal(expected, TermServiceConfigurationManager.ShouldRetryStop(currentState, controlsAccepted, stopRequests));
+        Assert.Equal(
+            expected,
+            TermServiceConfigurationManager.ShouldRetryStop(
+                currentState,
+                controlsAccepted,
+                stopRequests,
+                millisecondsSinceAcceptedStop));
         Assert.Equal(3, TermServiceConfigurationManager.MaximumStopRequests);
+        Assert.Equal(TimeSpan.FromSeconds(2), TermServiceConfigurationManager.StopRetryObservationInterval);
     }
 
     [Theory]
@@ -377,6 +577,20 @@ public sealed class LocalSessionContractTests
         Assert.Equal(TimeSpan.FromSeconds(15), FirewallIsolationManager.ListenerReadyTimeout);
     }
 
+    [Theory]
+    [InlineData(false, "The RDP listener did not accept 127.0.0.2:33991 within 15 seconds after restart.", true)]
+    [InlineData(false, "The TCP isolation rule is missing.", false)]
+    [InlineData(true, "", false)]
+    public void Only_a_bounded_listener_startup_delay_authorizes_restart_required_state(
+        bool passed,
+        string problem,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            FirewallIsolationManager.IsListenerStartupDelay(new FirewallIsolationVerification(passed, problem)));
+    }
+
     [Fact]
     public void Missing_scheduled_task_is_an_idempotent_cleanup_success()
     {
@@ -392,6 +606,10 @@ public sealed class LocalSessionContractTests
         Assert.Equal(
             @"LILAC-TEST\LilacMacroRunner",
             RunnerScheduledTaskManager.QualifyLocalAccount("LilacMacroRunner", "LILAC-TEST"));
+        Assert.Equal(3, RunnerScheduledTaskManager.InteractiveTokenLogonType);
+        Assert.Equal(9, RunnerScheduledTaskManager.LogonTriggerType);
+        Assert.Equal(11, RunnerScheduledTaskManager.SessionStateChangeTriggerType);
+        Assert.Equal(3, RunnerScheduledTaskManager.RemoteConnectStateChange);
     }
 
     [Fact]

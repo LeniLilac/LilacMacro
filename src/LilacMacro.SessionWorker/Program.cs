@@ -20,7 +20,11 @@ internal static class Program
             }
             if (args is ["--apply-profile-policy", string policyPath, string receiptPath])
             {
-                return ApplyProfilePolicy(paths, policyPath, receiptPath);
+                return ApplyProfilePolicy(paths, null, policyPath, receiptPath);
+            }
+            if (args is ["--apply-profile-policy", string profileId, string profilePolicyPath, string profileReceiptPath])
+            {
+                return ApplyProfilePolicy(paths, profileId, profilePolicyPath, profileReceiptPath);
             }
             return 64;
         }
@@ -30,13 +34,14 @@ internal static class Program
     private static string BuildVersion() => typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
     private static bool PathsEqual(string left, string right) => string.Equals(Path.GetFullPath(left), Path.GetFullPath(right), StringComparison.OrdinalIgnoreCase);
 
-    private static int ApplyProfilePolicy(LocalSessionPaths paths, string policyPath, string receiptPath)
+    private static int ApplyProfilePolicy(LocalSessionPaths paths, string? profileId, string policyPath, string receiptPath)
     {
-        RunnerProfileStore store = new(paths);
+        RunnerProfileStore store = new(paths, profileId);
         try
         {
-            if (!PathsEqual(policyPath, paths.ProfilePolicyPath) ||
-                !PathsEqual(receiptPath, paths.ProfileReceiptPath))
+            string expectedPolicy = profileId is null ? paths.ProfilePolicyPath : paths.ProfilePolicyPathFor(profileId);
+            string expectedReceipt = profileId is null ? paths.ProfileReceiptPath : paths.ProfileReceiptPathFor(profileId);
+            if (!PathsEqual(policyPath, expectedPolicy) || !PathsEqual(receiptPath, expectedReceipt))
             {
                 return 64;
             }

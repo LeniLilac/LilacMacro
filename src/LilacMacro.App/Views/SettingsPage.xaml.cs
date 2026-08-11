@@ -8,7 +8,7 @@ using LilacMacro.App.Theming;
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Notifications;
-using LilacMacro.Core.LocalSession;
+using LilacMacro.Windows;
 
 namespace LilacMacro.App.Views;
 
@@ -17,19 +17,17 @@ public partial class SettingsPage : UserControl
     private bool _initialized;
     private readonly DeepDebugSessionService _deepDebug;
     private readonly MacroOwnerState _ownerState;
-    private readonly LocalSessionDesktopController _localSession;
     private readonly Action<bool> _keyCaptureStateChanged;
     private MacroKeyBinding? _capturingBinding;
 
     internal SettingsPage(
         DeepDebugSessionService deepDebug,
         MacroOwnerState ownerState,
-        LocalSessionDesktopController localSession,
+        LocalInstanceManagerController instanceManager,
         Action<bool> keyCaptureStateChanged)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
-        _localSession = localSession;
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
         MacroVersionText.Text = BuildVersion();
@@ -39,17 +37,21 @@ public partial class SettingsPage : UserControl
         MinimizeBehaviorCombo.SelectedIndex = 1;
         UpdateChannelCombo.SelectedIndex = 0;
         CaptureIntervalCombo.SelectedIndex = 1;
-        ExecutionTargetCombo.ItemsSource = new[] { "This desktop", "Local runner session" };
-        ExecutionTargetCombo.SelectedIndex = ownerState.ExecutionTarget == ExecutionTarget.LocalRunnerSession ? 1 : 0;
+        LocalInstancesPanel.Initialize(instanceManager, ownerState);
         KeyBindingsItems.ItemsSource = ownerState.KeyBindings.Items;
-        _initialized = true;
-        PrivateServerText.Text = ownerState.PrivateServerLink;
+        PrivateServerPassword.Password = ownerState.PrivateServerLink;
+        WebhookPassword.Password = ownerState.DiscordWebhook;
+        DiscordUserIdText.Text = ownerState.DiscordUserId;
+        NotifyTerminalFailureCheck.IsChecked = ownerState.NotifyOnTerminalFailure;
+        IncludeFailureDetailsCheck.IsChecked = ownerState.IncludeFailureDetails;
         DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
         FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
+        PrivateServerStatusText.Text = ownerState.PrivateServerLink.Length == 0 ? "Not configured" : "Stored securely";
+        WebhookStatusText.Text = ownerState.DiscordWebhook.Length == 0 ? "Not configured" : "Stored securely";
+        _initialized = true;
         _deepDebug.ArchiveSaved += DeepDebug_OnArchiveSaved;
         RefreshThemeButton();
-        _ = RefreshLocalSessionAsync();
     }
 
     private void ThemeButton_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -94,110 +96,57 @@ public partial class SettingsPage : UserControl
 
     private void CheckUpdates_OnClick(object sender, RoutedEventArgs eventArgs) => GeneralStatusText.Text = "Update check is not connected";
     private void LocalPath_OnClick(object sender, RoutedEventArgs eventArgs) => GeneralStatusText.Text = "Folder opening is not connected";
-    private void TestPrivateServer_OnClick(object sender, RoutedEventArgs eventArgs) => PrivateServerStatusText.Text = "Private-server test is not connected";
-
-    private async void LocalSessionAction_OnClick(object sender, RoutedEventArgs eventArgs)
+    private async void TestPrivateServer_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        if (sender is not Button { Tag: string verb }) return;
-        SetLocalSessionActionsEnabled(false);
         try
         {
-            LocalSessionStatus status = await _localSession.MutateAsync(verb);
-            ApplyLocalSessionStatus(status);
+            RobloxPrivateServerLaunchTarget target = RobloxPrivateServerLaunchTarget.Parse(PrivateServerPassword.Password);
+            await new RobloxProtocolLauncher().LaunchAsync(target.LaunchUri, CancellationToken.None);
+            PrivateServerStatusText.Text = "Roblox launch requested";
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException or ArgumentException)
         {
-            AppToastService.ShowError("LOCAL SESSION FAILED", exception.Message);
-            await RefreshLocalSessionAsync();
+            PrivateServerStatusText.Text = exception.Message;
         }
-        finally { await RefreshLocalSessionAsync(); }
     }
 
-    private async void OpenLocalSession_OnClick(object sender, RoutedEventArgs eventArgs)
-    {
-        SetLocalSessionActionsEnabled(false);
-        try
-        {
-            await _localSession.OpenSessionAsync();
-        }
-        catch (Exception exception) when (exception is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
-        {
-            AppToastService.ShowError("LOCAL SESSION FAILED", exception.Message);
-        }
-        finally { await RefreshLocalSessionAsync(); }
-    }
-
-    private async void ExecutionTarget_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
-    {
-        if (!_initialized) return;
-        ExecutionTarget requested = ExecutionTargetCombo.SelectedIndex == 1
-            ? ExecutionTarget.LocalRunnerSession
-            : ExecutionTarget.LocalDesktop;
-        if (requested == ExecutionTarget.LocalRunnerSession)
-        {
-            try
-            {
-                LocalSessionStatus status = await _localSession.GetStatusAsync();
-                if (!status.CanRun)
-                {
-                    await _localSession.ConnectAsync(CancellationToken.None);
-                    status = await _localSession.GetStatusAsync();
-                }
-                if (!status.CanRun) throw new InvalidOperationException(status.Problems.FirstOrDefault() ?? status.Detail);
-                ApplyLocalSessionStatus(status);
-            }
-            catch (Exception exception) when (exception is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException)
-            {
-                ExecutionTargetCombo.SelectedIndex = 0;
-                AppToastService.ShowError("LOCAL SESSION NOT READY", exception.Message);
-                return;
-            }
-        }
-        _ownerState.SetExecutionTarget(requested);
-        await _ownerState.FlushAsync();
-    }
-
-    private async Task RefreshLocalSessionAsync()
-    {
-        LocalSessionStatus status = await _localSession.GetStatusAsync();
-        ApplyLocalSessionStatus(status);
-    }
-
-    private void ApplyLocalSessionStatus(LocalSessionStatus status)
-    {
-        if (!status.CanRun && _ownerState.ExecutionTarget == ExecutionTarget.LocalRunnerSession)
-        {
-            _ownerState.SetExecutionTarget(ExecutionTarget.LocalDesktop);
-            ExecutionTargetCombo.SelectedIndex = 0;
-        }
-        LocalSessionStateText.Text = status.State.ToString().ToUpperInvariant();
-        LocalSessionDetailText.Text = status.Problems.FirstOrDefault() ?? status.Detail;
-        LocalSessionCompatibilityText.Text = status.CompatibilityPassed ? "PASSED" : "NOT VERIFIED";
-        LocalSessionIsolationText.Text = status.LoopbackIsolationPassed ? "LOOPBACK ONLY" : "NOT VERIFIED";
-        LocalSessionVersionText.Text = $"POLICY {ValueOrDash(status.PolicyVersion)}  |  WORKER {ValueOrDash(status.WorkerVersion)}";
-        ExecutionTargetCombo.IsEnabled = status.State is not (LocalSessionState.Installing or LocalSessionState.Removing);
-        SetupLocalSessionButton.IsEnabled = status.State == LocalSessionState.Absent;
-        RepairLocalSessionButton.IsEnabled = status.State is not LocalSessionState.Absent;
-        OpenLocalSessionButton.IsEnabled = status.CanOpenInteractiveSession;
-        RemoveLocalSessionButton.IsEnabled = status.State is not LocalSessionState.Absent;
-    }
-
-    private void SetLocalSessionActionsEnabled(bool enabled)
-    {
-        SetupLocalSessionButton.IsEnabled = enabled;
-        RepairLocalSessionButton.IsEnabled = enabled;
-        OpenLocalSessionButton.IsEnabled = enabled;
-        RemoveLocalSessionButton.IsEnabled = enabled;
-    }
-
-    private static string ValueOrDash(string value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
     private static string BuildVersion() => typeof(SettingsPage).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
-    private void PrivateServerText_OnTextChanged(object sender, TextChangedEventArgs eventArgs)
+    private void PrivateServerPassword_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)
     {
         if (!_initialized) return;
-        _ownerState.PrivateServerLink = PrivateServerText.Text.Trim();
-        PrivateServerStatusText.Text = string.IsNullOrWhiteSpace(_ownerState.PrivateServerLink) ? "Not stored" : "Ready this session";
+        try
+        {
+            _ownerState.SetPrivateServerLink(PrivateServerPassword.Password);
+            PrivateServerStatusText.Text = _ownerState.PrivateServerLink.Length == 0 ? "Not configured" : "Stored securely";
+        }
+        catch (System.ComponentModel.Win32Exception exception)
+        {
+            AppToastService.ShowError("PRIVATE SERVER SAVE FAILED", exception.Message);
+        }
+    }
+
+    private void WebhookPassword_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        if (!_initialized) return;
+        try
+        {
+            _ownerState.SetDiscordWebhook(WebhookPassword.Password);
+            WebhookStatusText.Text = _ownerState.DiscordWebhook.Length == 0 ? "Not configured" : "Stored securely";
+        }
+        catch (System.ComponentModel.Win32Exception exception)
+        {
+            AppToastService.ShowError("WEBHOOK SAVE FAILED", exception.Message);
+        }
+    }
+
+    private void DiscordFailureOptions_OnChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        if (!_initialized) return;
+        _ownerState.SetDiscordFailureOptions(
+            DiscordUserIdText.Text,
+            NotifyTerminalFailureCheck.IsChecked == true,
+            IncludeFailureDetailsCheck.IsChecked == true);
     }
     private void TestWebhook_OnClick(object sender, RoutedEventArgs eventArgs) => WebhookStatusText.Text = "Webhook test is not connected";
 

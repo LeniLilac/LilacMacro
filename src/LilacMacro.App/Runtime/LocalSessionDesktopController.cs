@@ -75,7 +75,6 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
         if (pipe is { IsConnected: true } && connectedReady is not null) return connectedReady;
         LocalSessionProvisioningManifest manifest = await RequireInteractiveSessionAsync(cancellationToken).ConfigureAwait(false);
         await DisconnectAsync().ConfigureAwait(false);
-        StartRdpClient();
         pipe = await SessionPipeClient.ConnectValidatedAsync(paths, manifest.RunnerSid, TimeSpan.FromSeconds(45), cancellationToken).ConfigureAwait(false);
         SessionWorkerCommand handshake = new()
         {
@@ -180,7 +179,7 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
 
     internal static ProcessStartInfo CreateRdpStartInfo()
     {
-        string arguments = $"/v:127.0.0.1:{TermServiceConfigurationManager.LocalPort} /f";
+        string arguments = $"/v:{FirewallIsolationManager.AuthorizedLoopbackAddress}:{TermServiceConfigurationManager.LocalPort} /f";
         return new ProcessStartInfo("mstsc.exe", arguments) { UseShellExecute = true };
     }
 

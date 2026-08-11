@@ -10,6 +10,7 @@ using LilacMacro.App.Notifications;
 using LilacMacro.App.Views;
 using LilacMacro.App.Workspace;
 using LilacMacro.App.Runtime;
+using LilacMacro.App.Infrastructure;
 
 namespace LilacMacro.App;
 
@@ -19,7 +20,7 @@ public partial class MacroShellWindow : Window
     private readonly MacroOwnerState _ownerState;
     private readonly MacroDashboardPage _macroPage;
     private readonly PlacementSetupPage _setupPage;
-    private readonly LocalSessionDesktopController _localSession = new();
+    private readonly LocalInstanceManagerController _instanceManager = new();
     private readonly WindowShutdownState _shutdown = new();
     private readonly DispatcherTimer _toastTimer;
     private MacroShellPage _currentPage;
@@ -27,19 +28,21 @@ public partial class MacroShellWindow : Window
     internal MacroShellWindow(DeepDebugSessionService deepDebug, MacroOwnerState ownerState)
     {
         InitializeComponent();
+        InstanceNameText.Text = MacroInstanceContext.Current.DisplayName.ToUpperInvariant();
+        Title = $"LilacMacro — {MacroInstanceContext.Current.DisplayName}";
         InitializeWindowSizing();
         _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
         _toastTimer.Tick += ToastTimer_OnTick;
         AppToastService.ErrorRaised += AppToastService_OnErrorRaised;
         _ownerState = ownerState;
-        _macroPage = new MacroDashboardPage(deepDebug, _ownerState, _localSession);
+        _macroPage = new MacroDashboardPage(deepDebug, _ownerState);
         _setupPage = new PlacementSetupPage(deepDebug, _ownerState);
         _pages = new Dictionary<MacroShellPage, UserControl>
         {
             [MacroShellPage.Macro] = _macroPage,
             [MacroShellPage.Plan] = new PlanPage(_ownerState),
             [MacroShellPage.Setup] = _setupPage,
-            [MacroShellPage.Settings] = new SettingsPage(deepDebug, _ownerState, _localSession, SetMacroHotkeyCaptureSuspended),
+            [MacroShellPage.Settings] = new SettingsPage(deepDebug, _ownerState, _instanceManager, SetMacroHotkeyCaptureSuspended),
         };
         InitializeMacroHotkey();
         Closing += MacroShellWindow_OnClosing;
@@ -182,6 +185,5 @@ public partial class MacroShellWindow : Window
         DisposeWindowSizing();
         _toastTimer.Stop();
         AppToastService.ErrorRaised -= AppToastService_OnErrorRaised;
-        _ = _localSession.DisposeAsync();
     }
 }

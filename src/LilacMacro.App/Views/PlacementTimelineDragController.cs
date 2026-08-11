@@ -66,6 +66,7 @@ internal sealed class ListBoxReorderDragController<TItem>
     where TItem : class
 {
     private readonly ListBox _list;
+    private readonly FrameworkElement _previewHost;
     private readonly DispatcherTimer _edgeScrollTimer;
     private readonly bool _useNativeCrossListDrag;
     private Point? _origin;
@@ -79,15 +80,20 @@ internal sealed class ListBoxReorderDragController<TItem>
     private TItem? _lastTarget;
     private bool _lastInsertAfter;
 
-    public ListBoxReorderDragController(ListBox list, bool useNativeCrossListDrag = false)
+    public ListBoxReorderDragController(
+        ListBox list,
+        bool useNativeCrossListDrag = false,
+        FrameworkElement? previewHost = null)
     {
         _list = list;
+        _previewHost = previewHost ?? list;
         _useNativeCrossListDrag = useNativeCrossListDrag;
         _edgeScrollTimer = new DispatcherTimer(DispatcherPriority.Input)
         {
             Interval = TimeSpan.FromMilliseconds(45),
         };
         _edgeScrollTimer.Tick += EdgeScrollTimer_OnTick;
+        _list.GiveFeedback += List_OnGiveFeedback;
     }
 
     public event EventHandler<ListReorderEventArgs<TItem>>? ReorderRequested;
@@ -175,6 +181,7 @@ internal sealed class ListBoxReorderDragController<TItem>
 
         _lastTarget = target;
         _lastInsertAfter = insertAfter;
+        ScrollNearEdge(position);
         eventArgs.Effects = DragDropEffects.Move;
         ShowInsertionAdorner(container, insertAfter);
         eventArgs.Handled = true;
@@ -228,18 +235,21 @@ internal sealed class ListBoxReorderDragController<TItem>
 
         _draggedOpacity = _draggedContainer.Opacity;
         ImageBrush snapshot = PlacementTimelineSnapshot.Capture(_draggedContainer);
-        double top = _draggedContainer.TranslatePoint(new Point(), _list).Y;
+        Point topLeft = _draggedContainer.TranslatePoint(new Point(), _previewHost);
+        Point hostOrigin = _list.TranslatePoint(origin, _previewHost);
         _draggedContainer.Opacity = 0;
 
-        AdornerLayer? layer = AdornerLayer.GetAdornerLayer(_list);
+        AdornerLayer? layer = AdornerLayer.GetAdornerLayer(_previewHost);
         if (layer is null) return;
         _previewAdorner = new DragPreviewAdorner(
-            _list,
+            _previewHost,
             snapshot,
+            Math.Max(1, _draggedContainer.ActualWidth - 12),
             _draggedContainer.ActualHeight,
-            origin.Y - top);
+            topLeft.X + 6,
+            hostOrigin.Y - topLeft.Y);
         layer.Add(_previewAdorner);
-        _previewAdorner.Update(origin);
+        _previewAdorner.Update(hostOrigin);
     }
 
     private void RestoreDraggedContainer()
@@ -250,8 +260,17 @@ internal sealed class ListBoxReorderDragController<TItem>
 
     private void UpdateDrag(Point position)
     {
-        _previewAdorner?.Update(position);
+        _previewAdorner?.Update(_list.TranslatePoint(position, _previewHost));
         UpdateDropTarget(position);
+    }
+
+    private void List_OnGiveFeedback(object sender, GiveFeedbackEventArgs eventArgs)
+    {
+        if (!_useNativeCrossListDrag || _previewAdorner is null) return;
+        _previewAdorner.Update(Mouse.GetPosition(_previewHost));
+        eventArgs.UseDefaultCursors = false;
+        Mouse.SetCursor(Cursors.Arrow);
+        eventArgs.Handled = true;
     }
 
     private void UpdateDropTarget(Point position)
@@ -382,7 +401,7 @@ internal sealed class ListBoxReorderDragController<TItem>
 
     private void ClearPreviewAdorner()
     {
-        if (_previewAdorner is not null) AdornerLayer.GetAdornerLayer(_list)?.Remove(_previewAdorner);
+        if (_previewAdorner is not null) AdornerLayer.GetAdornerLayer(_previewHost)?.Remove(_previewAdorner);
         _previewAdorner = null;
     }
 
@@ -410,14 +429,24 @@ internal sealed class ListBoxReorderDragController<TItem>
     private sealed class DragPreviewAdorner : Adorner
     {
         private readonly Brush _snapshot;
+        private readonly double _width;
         private readonly double _height;
+        private readonly double _left;
         private readonly double _grabOffsetY;
         private Point _position;
 
-        public DragPreviewAdorner(UIElement element, Brush snapshot, double height, double grabOffsetY) : base(element)
+        public DragPreviewAdorner(
+            UIElement element,
+            Brush snapshot,
+            double width,
+            double height,
+            double left,
+            double grabOffsetY) : base(element)
         {
             _snapshot = snapshot;
+            _width = width;
             _height = height;
+            _left = left;
             _grabOffsetY = grabOffsetY;
             IsHitTestVisible = false;
         }
@@ -430,9 +459,8 @@ internal sealed class ListBoxReorderDragController<TItem>
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            double width = Math.Max(1, AdornedElement.RenderSize.Width - 12);
-            Rect shadow = new(9, _position.Y - _grabOffsetY + 4, width, _height);
-            Rect row = new(6, _position.Y - _grabOffsetY, width, _height);
+            Rect shadow = new(_left + 3, _position.Y - _grabOffsetY + 4, _width, _height);
+            Rect row = new(_left, _position.Y - _grabOffsetY, _width, _height);
             drawingContext.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(40, 0, 0, 0)), null, shadow, 4, 4);
             drawingContext.PushOpacity(0.9);
             drawingContext.DrawRoundedRectangle(_snapshot, null, row, 4, 4);

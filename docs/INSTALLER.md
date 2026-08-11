@@ -10,10 +10,10 @@ The installer contains:
 
 - the self-contained x64 desktop application;
 - the signed elevated session-setup helper;
-- the signed windowless session worker;
+- the signed windowless profile-policy bootstrap retained for local-instance setup compatibility;
 - the pinned TermWrap payload, hash manifest, license, and notices.
 
-Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local Session, Set Up and approve UAC.
+Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local instances, Set Up Runner 1 and approve UAC. Additional shared/separate runners use the same allowlisted elevated helper.
 
 ## Build
 
@@ -35,4 +35,4 @@ An upgrade that finds an owned provisioning journal attempts an idempotent repai
 
 Installer integration testing occurs only in disposable Windows VMs. Agents do not provision the owner's machine or operate Roblox.
 
-See [Optional local runner session](LOCAL-SESSION.md) and [Testing](TESTING.md).
+See [Local instance manager](LOCAL-SESSION.md) and [Testing](TESTING.md).

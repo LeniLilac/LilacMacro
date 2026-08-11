@@ -475,8 +475,8 @@ internal sealed class StoryWireTestRunner(
         Environment.GetEnvironmentVariable("LILACMACRO_RUNNER_PLACEMENTS") is { Length: > 0 } value
             ? Path.GetFullPath(value)
             : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "LilacMacro",
+                Environment.GetEnvironmentVariable("LILACMACRO_CONFIGURATION_ROOT")
+                    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LilacMacro"),
                 "placements");
 
 }

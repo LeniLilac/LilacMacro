@@ -1,10 +1,10 @@
 # Macro architecture
 
-**Status: Prototype.** The Story/Raid/Challenge scheduler, shared placement/terminal path, and verified private-server Lobby reset are Prototype. Expedition, limited Event acts, persistent plans, and secret persistence remain Planned.
+**Status: Prototype.** The Story/Raid/Challenge scheduler, shared placement/terminal path, verified private-server Lobby reset, persistent Plan authoring, and DPAPI secret persistence are Prototype. Expedition and limited Event acts remain Planned.
 
 ## Root model
 
-Lobby is the only canonical root state. The Plan page will configure independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler will use the configured private-server link to rejoin, verify Lobby, and reevaluate eligibility from the highest priority.
+Lobby is the only canonical root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler uses the configured private-server link to rejoin, verify Lobby, and reevaluate eligibility from the highest priority.
 
 ```mermaid
 flowchart TD
@@ -24,7 +24,7 @@ Direct Repeat Stage remains useful Debug evidence but is not part of this canoni
 
 ## Execution target
 
-`This desktop` is the safe default. The optional `Local runner session` target uses the same scheduler and workflow policies inside a dedicated account; the desktop app publishes an immutable snapshot and sends typed commands rather than raw input. Selection is allowed only when provisioning, exact-binary native preflight, loopback isolation, ACLs, versions, fresh capture, IPC peer identity, and the WPF-free runtime host all pass. Failure or IPC loss cancels the run and releases input. See [Optional local runner session](LOCAL-SESSION.md).
+Every macro UI executes on its own Windows desktop. The main account can run directly, while each optional runner account receives the same full UI inside a loopback-only RDP session. The main UI manages accounts/viewports but does not publish work or forward input to them. Shared runners point at one ACL-restricted configuration root; separate runners receive independent roots. Each instance independently verifies Roblox, capture freshness, Lobby, settings/UI scale, and input ownership before acting. See [Local instance manager](LOCAL-SESSION.md).
 
 ## Scheduler contract
 
@@ -68,7 +68,7 @@ Recovery is an indefinitely available scheduler-level escalation made from indiv
 | Match start | Match Preview, Match Prestart, and Start Game boundary handling |
 | Placement playback | Execute the selected validated route before and after Start Game |
 | Terminal handling | Detect Victory, Defeat, cooldown, timeout, or fatal ambiguity and return an outcome to the scheduler |
-| Persistence and reporting | Autosave Plan state, protect secrets, redact diagnostics, and optionally send bounded webhooks |
+| Persistence and reporting | Atomically autosave Plan state; protect secrets, redact diagnostics, and optionally send bounded webhooks |
 
 Modules exchange typed state/outcome contracts rather than clicking through one another. Every handoff requires fresh evidence for the owned state.
 
@@ -109,7 +109,7 @@ The updated Event sidebar also exposes Boss Bounty and Guess That Unit through t
 - Story, Raid, Challenge, and Expedition are permanent game modes. Their runners own only mode-specific navigation and reuse the shared team, match-start, placement, terminal, and Lobby-reset modules.
 - Event acts are limited content. Each event definition must keep its identity, OCR aliases, routes, availability, and runner adapter behind one removable registration boundary instead of adding branches throughout the scheduler and UI.
 - Utilities are scheduler tasks, not game modes. They use the same priority contract but remain separate from mode navigation.
-- Removing limited content must delete its registration and focused tests without changing shared capture, OCR, input, placement, terminal, or scheduler services. Persisted plans will need an unavailable-content state before Plan persistence ships; they must not silently deserialize as another mode.
+- Removing limited content must delete its registration and focused tests without changing shared capture, OCR, input, placement, terminal, or scheduler services. Persisted plan modes use exact stable names and reject unknown values rather than silently deserializing as another mode; an unavailable-content state is still required before a persisted limited Event task can outlive its registration.
 
 ## State-transition safety
 
@@ -127,12 +127,11 @@ OCR, image detection, and timers may suggest a state. None may authorize input w
 
 ## Persistence and secrets
 
-**Prototype:** the private-server link is accepted only as an HTTPS `roblox.com` URL, retained for the current process, never written to deep-debug data, and opened through the Windows shell. **Planned:** Plan edits autosave atomically, and private-server links plus webhook URLs are protected for the current Windows user with DPAPI. Persisted secrets must remain redacted from UI diagnostics, logs, tests, and captures.
+**Prototype:** Plan edits, selection, and Discord failure options autosave through a serialized queue to a schema-versioned atomic settings file; invalid plan payloads fail closed to the built-in defaults without discarding separately valid settings. Private-server and webhook values are masked in Settings and persisted only as current-user DPAPI ciphertext. Validated web/share links are reduced to bounded share/link codes and launched through the registered `roblox://` protocol without a browser intermediary. Persisted secrets remain redacted from diagnostics, logs, tests, and captures. **Planned:** webhook validation/delivery and explicit recovery UX for DPAPI data that cannot be decrypted.
 
 ## Unresolved design work
 
 - Macro dashboard and run controls
-- Plan priority visualization, drag/reorder behavior, and task editor
 - Eligibility/cooldown policies and completion counters
 - Runtime detector model and confidence calibration
 - Placement success and unit-state detection

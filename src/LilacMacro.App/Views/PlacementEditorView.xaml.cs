@@ -6,6 +6,7 @@ using System.Windows.Media.Imaging;
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
+using LilacMacro.App.Infrastructure;
 using LilacMacro.Core.Placements;
 
 namespace LilacMacro.App.Views;
@@ -40,10 +41,7 @@ public partial class PlacementEditorView : UserControl
         TeamSelector.ItemsSource = Enumerable.Range(1, 8)
             .Select(team => new PlacementNumberOption(team, $"TEAM {team}"))
             .ToArray();
-        string placementRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "LilacMacro",
-            "placements");
+        string placementRoot = Path.Combine(MacroInstanceContext.Current.ConfigurationRoot, "placements");
         _session = new PlacementEditorSession(new PlacementSetupStore(placementRoot));
         _timelinePanel = new PlacementTimelinePanel();
         _timelinePanel.SetupChanged += TimelinePanel_OnSetupChanged;

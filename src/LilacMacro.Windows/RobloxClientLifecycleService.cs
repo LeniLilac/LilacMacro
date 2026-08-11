@@ -6,8 +6,11 @@ namespace LilacMacro.Windows;
 public sealed class RobloxClientLifecycleService
 {
     private static readonly string[] SupportedClientNames = ["RobloxPlayerBeta", "Windows10Universal"];
-    private static readonly TimeSpan GracefulExitTimeout = TimeSpan.FromSeconds(8);
+    internal const int GracefulCloseAttemptCount = 2;
+    internal const int ForcedCloseAttemptCount = 2;
+    internal static readonly TimeSpan GracefulCloseAttemptTimeout = TimeSpan.FromSeconds(4);
     private static readonly TimeSpan ForcedExitTimeout = TimeSpan.FromSeconds(5);
+    internal static readonly TimeSpan ForcedRespawnSettleTime = TimeSpan.FromSeconds(1);
     private readonly RobloxGlobalSettingsStore _settings;
 
     public RobloxClientLifecycleService() : this(new RobloxGlobalSettingsStore()) { }
@@ -19,7 +22,7 @@ public sealed class RobloxClientLifecycleService
         CancellationToken cancellationToken)
     {
         status?.Invoke("STOPPING ROBLOX FOR SETTINGS NORMALIZATION");
-        await StopCurrentSessionClientsAsync(cancellationToken).ConfigureAwait(false);
+        await StopCurrentSessionClientsAsync(status, cancellationToken).ConfigureAwait(false);
         status?.Invoke("NORMALIZING ROBLOX CLIENT SETTINGS");
         var result = await _settings.NormalizeAsync(cancellationToken).ConfigureAwait(false);
         status?.Invoke(result.Changed
@@ -27,33 +30,56 @@ public sealed class RobloxClientLifecycleService
             : "ROBLOX SETTINGS ALREADY NORMALIZED");
     }
 
-    private static async Task StopCurrentSessionClientsAsync(CancellationToken cancellationToken)
+    private static async Task StopCurrentSessionClientsAsync(
+        Action<string>? status,
+        CancellationToken cancellationToken)
     {
-        Process[] clients = FindCurrentSessionClients();
-        try
+        for (int attempt = 0; attempt < GracefulCloseAttemptCount; attempt++)
         {
-            foreach (Process client in clients)
+            Process[] clients = FindCurrentSessionClients();
+            try
             {
-                try
+                if (clients.Length == 0) return;
+                status?.Invoke($"ROBLOX CLOSE REQUEST {attempt + 1}/{GracefulCloseAttemptCount}");
+                foreach (Process client in clients.Where(client => !HasExited(client)))
                 {
-                    if (!client.HasExited) _ = client.CloseMainWindow();
+                    try
+                    {
+                        client.Refresh();
+                        _ = client.CloseMainWindow();
+                    }
+                    catch (Exception error) when (error is InvalidOperationException or Win32Exception)
+                    {
+                    }
                 }
-                catch (Exception error) when (error is InvalidOperationException or Win32Exception)
-                {
-                }
-            }
 
-            await WaitForExitAsync(clients, GracefulExitTimeout, cancellationToken).ConfigureAwait(false);
-            foreach (Process client in clients.Where(client => !HasExited(client)))
-            {
-                try { client.Kill(entireProcessTree: false); }
-                catch (Exception error) when (error is InvalidOperationException or Win32Exception) { }
+                await WaitForExitAsync(clients, GracefulCloseAttemptTimeout, cancellationToken).ConfigureAwait(false);
             }
-            await WaitForExitAsync(clients, ForcedExitTimeout, cancellationToken).ConfigureAwait(false);
+            finally
+            {
+                foreach (Process client in clients) client.Dispose();
+            }
         }
-        finally
+
+        for (int attempt = 0; attempt < ForcedCloseAttemptCount; attempt++)
         {
-            foreach (Process client in clients) client.Dispose();
+            Process[] clients = FindCurrentSessionClients();
+            try
+            {
+                if (clients.Length == 0) return;
+                status?.Invoke($"ROBLOX CLOSE CONFIRMATION DID NOT EXIT | FORCING PROCESS TREE {attempt + 1}/{ForcedCloseAttemptCount}");
+                foreach (Process client in clients.Where(client => !HasExited(client)))
+                {
+                    try { client.Kill(entireProcessTree: true); }
+                    catch (Exception error) when (error is InvalidOperationException or Win32Exception) { }
+                }
+                await WaitForExitAsync(clients, ForcedExitTimeout, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(ForcedRespawnSettleTime, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                foreach (Process client in clients) client.Dispose();
+            }
         }
 
         Process[] remaining = FindCurrentSessionClients();

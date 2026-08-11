@@ -20,6 +20,15 @@ public static class LocalSessionValidation
         if (manifest.RunnerSid.Length > 0 && !IsSid(manifest.RunnerSid)) errors.Add("Runner SID is invalid.");
         if (!string.Equals(manifest.RunnerAccountName, "LilacMacroRunner", StringComparison.Ordinal))
             errors.Add("Runner account name is not owned by LilacMacro.");
+        if (manifest.RunnerProfiles.Count > 16) errors.Add("Too many local runner profiles are configured.");
+        if (manifest.RunnerProfiles.GroupBy(profile => profile.Id, StringComparer.Ordinal).Any(group => group.Count() > 1))
+            errors.Add("Runner profile identifiers are not unique.");
+        if (manifest.RunnerProfiles.GroupBy(profile => profile.AccountName, StringComparer.OrdinalIgnoreCase).Any(group => group.Count() > 1))
+            errors.Add("Runner account names are not unique.");
+        if (manifest.RunnerProfiles.GroupBy(profile => profile.Slot).Any(group => group.Count() > 1))
+            errors.Add("Runner profile slots are not unique.");
+        foreach (LocalRunnerProfile profile in manifest.RunnerProfiles)
+            ValidateRunnerProfile(profile, manifest.State == LocalSessionState.Installing, errors);
         if (manifest.NativePayload.GroupBy(file => file.RelativePath, StringComparer.OrdinalIgnoreCase).Any(group => group.Count() > 1))
             errors.Add("Native payload contains duplicate paths.");
         foreach (NativePayloadFile file in manifest.NativePayload)
@@ -28,6 +37,7 @@ public static class LocalSessionValidation
             if (file.Size <= 0) errors.Add($"Invalid payload size: {file.RelativePath}");
             if (!IsSha256(file.Sha256)) errors.Add($"Invalid payload hash: {file.RelativePath}");
         }
+        ValidateOriginalSystemState(manifest.OriginalSystemState, errors);
         if (manifest.CompatibilityEvidence is { } evidence)
         {
             if (evidence.SchemaVersion != LocalSessionCompatibilityEvidence.CurrentSchemaVersion)
@@ -176,6 +186,38 @@ public static class LocalSessionValidation
     private static LocalSessionValidationResult Result(List<string> errors) =>
         errors.Count == 0 ? LocalSessionValidationResult.Success : new(false, errors);
 
+    private static void ValidateOriginalSystemState(
+        IReadOnlyList<OriginalSystemValue> originals,
+        List<string> errors)
+    {
+        if (originals.Count > 100) errors.Add("Original system-state journal is too large.");
+        OriginalSystemValue[] certificates =
+        [.. originals.Where(item => string.Equals(item.Kind, "rdp-certificate", StringComparison.Ordinal))];
+        int baselineMarkers = originals.Count(item =>
+            string.Equals(item.Kind, "rdp-certificate-baseline", StringComparison.Ordinal));
+        if (baselineMarkers > 1 || certificates.Length > 0 && baselineMarkers != 1)
+            errors.Add("RDP certificate baseline marker is invalid.");
+        if (certificates.GroupBy(item => item.Identifier, StringComparer.OrdinalIgnoreCase).Any(group => group.Count() > 1))
+            errors.Add("RDP certificate baseline contains duplicate thumbprints.");
+        foreach (OriginalSystemValue certificate in certificates)
+        {
+            if (!certificate.Existed || certificate.Identifier.Length != 40 || !certificate.Identifier.All(Uri.IsHexDigit))
+                errors.Add("RDP certificate baseline contains an invalid thumbprint.");
+            if (certificate.ValueType is not ("x509-der-private-key-usable" or "x509-der-private-key-missing"))
+                errors.Add("RDP certificate baseline contains an invalid private-key state.");
+            try
+            {
+                byte[] encoded = Convert.FromBase64String(certificate.EncodedValue ?? string.Empty);
+                if (encoded.Length is < 1 or > 65_536)
+                    errors.Add("RDP certificate baseline contains invalid certificate data.");
+            }
+            catch (FormatException)
+            {
+                errors.Add("RDP certificate baseline contains invalid certificate data.");
+            }
+        }
+    }
+
     private static bool IsSid(string value)
     {
         string[] parts = value.Split('-');
@@ -186,6 +228,24 @@ public static class LocalSessionValidation
     }
 
     private static bool IsSha256(string value) => value.Length == 64 && value.All(Uri.IsHexDigit);
+
+    private static void ValidateRunnerProfile(LocalRunnerProfile profile, bool allowMissingSid, List<string> errors)
+    {
+        if (profile.Id.Length is < 1 or > 32 ||
+            !profile.Id.All(character => char.IsAsciiLetterOrDigit(character) || character == '-'))
+            errors.Add("Runner profile identifier is invalid.");
+        if (profile.DisplayName.Length is < 1 or > 40 || profile.DisplayName.Any(char.IsControl))
+            errors.Add($"Runner profile {profile.Id} has an invalid display name.");
+        if (profile.AccountName.Length is < 1 or > 20 ||
+            !profile.AccountName.StartsWith("LilacMacroRunner", StringComparison.Ordinal) ||
+            !profile.AccountName.All(char.IsAsciiLetterOrDigit))
+            errors.Add($"Runner profile {profile.Id} has an unowned account name.");
+        if ((!allowMissingSid || profile.RunnerSid.Length > 0) && !IsSid(profile.RunnerSid))
+            errors.Add($"Runner profile {profile.Id} has an invalid SID.");
+        if (profile.Slot is < 1 or > 16) errors.Add($"Runner profile {profile.Id} has an invalid slot.");
+        if (!string.Equals(profile.LoopbackAddress, $"127.0.0.{profile.Slot + 1}", StringComparison.Ordinal))
+            errors.Add($"Runner profile {profile.Id} has an invalid loopback address.");
+    }
 
     private static bool IsSafeRelativePath(string value) =>
         value.Length > 0

@@ -7,7 +7,9 @@ namespace LilacMacro.Windows.LocalSession;
 
 public sealed class RunnerCredentialManager
 {
-    internal const int CredentialType = 1;
+    internal const int RdpCredentialType = 1;
+    internal const int SecretCredentialType = 1;
+    internal const int LegacyRdpCredentialType = 2;
     private const int CredPersistLocalMachine = 2;
     private const int ErrorNotFound = 1168;
     private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@$%*-_";
@@ -21,7 +23,13 @@ public sealed class RunnerCredentialManager
         return new string(password);
     }
 
-    public void Write(string targetName, string userName, string password)
+    public void WriteRdp(string targetName, string userName, string password) =>
+        Write(targetName, userName, password, RdpCredentialType);
+
+    public void WriteSecret(string targetName, string userName, string password) =>
+        Write(targetName, userName, password, SecretCredentialType);
+
+    private static void Write(string targetName, string userName, string password, int credentialType)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(targetName);
         ArgumentException.ThrowIfNullOrWhiteSpace(userName);
@@ -33,7 +41,7 @@ public sealed class RunnerCredentialManager
             Marshal.Copy(secret, 0, blob, secret.Length);
             Credential credential = new()
             {
-                Type = CredentialType,
+                Type = (uint)credentialType,
                 TargetName = targetName,
                 CredentialBlobSize = (uint)secret.Length,
                 CredentialBlob = blob,
@@ -52,7 +60,8 @@ public sealed class RunnerCredentialManager
 
     public string ReadPassword(string targetName)
     {
-        if (!CredRead(targetName, CredentialType, 0, out nint pointer))
+        nint pointer;
+        if (!CredRead(targetName, SecretCredentialType, 0, out pointer))
             throw CredentialError(Marshal.GetLastWin32Error(), "Runner credential was not found.");
         try
         {
@@ -70,15 +79,34 @@ public sealed class RunnerCredentialManager
 
     public void Delete(string targetName)
     {
-        if (CredDelete(targetName, CredentialType, 0)) return;
-        int error = Marshal.GetLastWin32Error();
-        if (error != ErrorNotFound)
-            throw CredentialError(error, "Windows Credential Manager could not remove the runner credential.");
+        DeleteIfPresent(targetName, RdpCredentialType);
+        DeleteIfPresent(targetName, LegacyRdpCredentialType);
     }
+
+    public void DeleteRdp(string targetName)
+    {
+        DeleteIfPresent(targetName, RdpCredentialType);
+        DeleteIfPresent(targetName, LegacyRdpCredentialType);
+    }
+
+    public void DeleteSecret(string targetName) => DeleteIfPresent(targetName, SecretCredentialType);
 
     public bool Exists(string targetName)
     {
-        if (!CredRead(targetName, CredentialType, 0, out nint pointer))
+        if (TryReadAndFree(targetName, RdpCredentialType)) return true;
+        if (TryReadAndFree(targetName, LegacyRdpCredentialType)) return true;
+        return false;
+    }
+
+    public bool ExistsRdp(string targetName) =>
+        TryReadAndFree(targetName, RdpCredentialType) ||
+        TryReadAndFree(targetName, LegacyRdpCredentialType);
+
+    public bool ExistsSecret(string targetName) => TryReadAndFree(targetName, SecretCredentialType);
+
+    private static bool TryReadAndFree(string targetName, int credentialType)
+    {
+        if (!CredRead(targetName, credentialType, 0, out nint pointer))
         {
             int error = Marshal.GetLastWin32Error();
             if (error == ErrorNotFound) return false;
@@ -86,6 +114,14 @@ public sealed class RunnerCredentialManager
         }
         CredFree(pointer);
         return true;
+    }
+
+    private static void DeleteIfPresent(string targetName, int credentialType)
+    {
+        if (CredDelete(targetName, credentialType, 0)) return;
+        int error = Marshal.GetLastWin32Error();
+        if (error != ErrorNotFound)
+            throw CredentialError(error, "Windows Credential Manager could not remove the runner credential.");
     }
 
     private static void ZeroAndFree(nint pointer, int length)

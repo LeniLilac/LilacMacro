@@ -1,74 +1,57 @@
-# Optional local runner session
+# Local instance manager
 
-**Status: Prototype and unavailable by default.** Provisioning, isolation, IPC, typed snapshots, runner profile policy, cleanup, installer, pinned TermWrap v0.6 payload, exact-binary native preflight, and the shared windowless Story/Raid/Challenge runtime are implemented. Distribution remains blocked on release signing, disposable-VM lifecycle certification, and owner live acceptance.
+**Status: Prototype and unavailable by default.** The owner can opt into an installer-owned loopback RDP foundation and create up to 16 local LilacMacro instances. Release distribution remains blocked on signing, disposable-VM lifecycle certification, and owner live acceptance.
 
-## Boundary
+## Model
 
-The optional local runner creates one standard `LilacMacroRunner` Windows account and one visibly connected loopback RDP session. It never changes the owner's profile and never grants administrator membership to the runner. TermWrap enables an experimental concurrent client session outside Microsoft's supported Windows client configuration; setup is therefore opt-in, exact-binary probed, and fail-closed.
+LilacMacro does not remote-control a hidden worker. Every configured instance is a standard Windows account with its own visible RDP desktop, Roblox installation/login, and full `LilacMacro.exe` UI. Macro work executes locally in that UI and uses the same ordinary Windows capture/input path as **This desktop**.
 
-LilacMacro uses ordinary Windows capture and input inside the runner session. The desktop controller sends declarative commands and immutable configuration snapshots only. It never forwards raw mouse or keyboard input across sessions.
+Settings, Roblox lists the main UI plus Runner 1, Runner 2, and later profiles. The owner can set up the foundation, add a shared or separate runner, open a runner viewport, repair the machine integration, remove one runner, or remove the complete foundation. Managed runner UIs display the same list read-only; only the provisioning owner may mutate it.
 
-## Components
+Each runner receives:
 
-| Component | Owner |
-|---|---|
-| `LilacMacro.SessionSetup.exe` | Signed elevated helper with only `install`, `repair`, `remove`, and `uninstall-cleanup` verbs |
-| `LilacMacro.SessionWorker.exe` | Windowless runner-session process and named-pipe server |
-| `LocalSessionProvisioner` | Idempotent account, profile, TermService, firewall, task, rollback, and cleanup coordination |
-| `RunnerProfilePolicy` | Versioned, runner-only package and promotion allowlists |
-| `RunnerRuntimeSnapshot` | Immutable plans, placement setups, keybindings, model choice, and non-secret settings |
-| Session pipe contracts | Versioned handshake, snapshot selection, start/stop, events, heartbeat, and cancellation |
+- a non-administrator `LilacMacroRunner...` account with only Remote Desktop Users membership;
+- one unique loopback destination (`127.0.0.2` for Runner 1, `127.0.0.3` for Runner 2, through slot 16) on the owned port;
+- one endpoint-specific Credential Manager record and one app-namespaced repair secret;
+- one uniquely named interactive scheduled task that launches the installed full UI on logon and remote reconnect;
+- one ACL-restricted profile-policy directory under `%ProgramData%\LilacMacro\Profiles`.
 
-Persistent machine-owned state lives below `%ProgramData%\LilacMacro`. The provisioning journal records resource ownership, original system values, versions, hashes, and SIDs. It never stores the generated password. The password is stored as a local-machine Windows Credential Manager credential.
+The pinned TermWrap listener, firewall rules, certificate baseline, and rollback journal are machine-level resources shared by all managed instances. Adding or removing Runner 2 does not restart or duplicate that foundation.
 
-## Preflight and provisioning
+## Configuration modes
 
-Setup verifies the bundled payload hashes, including TermWrap's required x64 Zydis decoder, plus the local TermService hash, existing RDP state, remote-session state, worker binary, and elevation before mutation. It then starts a hidden sacrificial `rundll32.exe` under the Windows debugging API and invokes TermWrap v0.6's published `ServiceMain` export. The debugger loop remains on the dedicated thread that created the probe process, as required by Windows. TermWrap's own offset scanner analyzes the local `termsrv.dll`; it must find every patch needed by the runner. The sacrificial process never changes TermService, registry, firewall, accounts, or the installed DLL. Probe implementation revisions invalidate prior cached evidence as well as binary hash changes.
+`+ ADD SHARED` points the runner at `%ProgramData%\LilacMacro\Configurations\shared`. The main account switches to that root on its next launch, so Plan definitions, selected Plan, keybinds, private-server/webhook settings, and placements are common to the main UI and every shared runner. Existing owner settings and placements seed the shared root once. Secret values are reprotected with machine-scope DPAPI and the directory ACL admits only the provisioning owner, selected shared runners, SYSTEM, and Administrators. Macro-settings writes take a cross-process file lock before atomic replacement.
 
-A successful result is stored in `%ProgramData%\LilacMacro\Session\compatibility-cache.json` and bound to the probe version, architecture, OS build, exact TermService SHA-256, and exact TermWrap SHA-256. A Windows update or native-payload change invalidates the cache automatically and forces a new offline probe. Failed evidence is not cached. Disabled device-redirection patch diagnostics are advisory because the runner explicitly disables those channels; all session-enabling patch failures are blocking.
+`+ ADD SEPARATE` gives the runner `%ProgramData%\LilacMacro\Configurations\runner-N`, with an ACL limited to the owner, that runner, SYSTEM, and Administrators. Its Plan, keybind, secret, and placement edits do not affect any other instance. Runtime state, OCR environments, UI-scale caches, logs, diagnostics, Roblox settings, and Roblox credentials always remain inside the Windows account/session that owns the UI; they are never shared configuration.
 
-Provisioning then:
+Do not edit the same shared Plan or placement simultaneously in two UIs. Writes are serialized and atomic, but a later complete editor snapshot intentionally wins over an earlier snapshot.
 
-1. captures original registry state in the journal;
-2. creates the non-administrator runner and adds only Remote Desktop Users membership;
-3. applies ACLs for the owner SID, runner SID, SYSTEM, and Administrators, then stores the loopback RDP secret as a generic `TERMSRV` credential rather than using the domain-password target grammar;
-4. performs one controlled runner logon and verifies the profile-policy receipt;
-5. applies the pinned TermWrap and loopback RDP configuration;
-6. installs exact enabled all-profile TCP/UDP inbound block rules for the owned port covering every IPv4 and IPv6 remote address except the authorized `127.0.0.1` endpoint, verifies their full semantics through Windows Firewall policy, and waits up to 15 seconds for loopback reachability after TermService restarts; same-host connections to a non-loopback local address are not treated as external-firewall evidence because Windows can route them through the local loopback fast path;
-7. registers the app-owned logon task for the worker with the machine-qualified local runner identity required by current Windows 11 Task Scheduler XML;
-8. starts the worker and validates a fresh WGC frame in the visible session;
-9. validates fresh WGC capture and the shared WPF-free workflow host, then records Ready only when the complete runtime health check passes.
+## Provisioning
 
-Any failure runs the rollback journal. Cleanup attempts every independently owned resource even when an earlier cleanup step fails, treats an already-absent scheduled task as successful idempotent cleanup, reports each real failed step, and restarts TermService only when journal evidence or observed registry drift proves that setup reached the machine-configuration boundary. Restart stops the active Windows 11 `UmRdpService` dependency before `TermService`, then restores both running services. Service-control rejection is reported immediately, while pending start/stop transitions follow the service wait hint on a bounded 60-second deadline. If fresh service evidence shows that Windows returned TermService to stable Running after accepting its stop and currently advertises STOP control support, the helper may issue at most three total stop requests inside that same deadline. Win32 1051 at that boundary authorizes only a bounded re-stop of the known `UmRdpService` dependent before retrying TermService; other states, services, and errors never authorize dependent control. A not-yet-controllable service remains observation-only. A terminal failure reports the current named state, accepted request count, checkpoint, wait hint, and Win32 exit code. If rollback is incomplete, state becomes Recovery Required and the journal remains for repair or cleanup. Repair clears an orphaned journal when live inspection proves that rollback already removed every owned resource and restored every recorded value.
-Failures before the first journal write are recorded as non-mutating setup failures, and the elevated helper persists its final problem before exiting. On application restart, Settings reconciles an orphaned Installing or Removing state against the journal and live helper process, so an interrupted operation cannot remain indefinitely stale.
-Runner profile access failures name the exact runner-hive key and value that Windows rejected, while retaining the bounded failure code, so disposable-VM certification can distinguish a platform policy restriction from a generic setup failure.
+`LilacMacro.SessionSetup.exe` is the only elevated component. It accepts the allowlisted machine actions `install`, `repair`, `remove`, and `uninstall-cleanup`, the bounded profile additions `add-shared` and `add-isolated`, and `remove-profile <runner-id>` with a validated identifier. Ordinary application launch is never elevated.
 
-## Runner profile policy
+Initial setup:
 
-The policy retains an exact per-user package allowlist for future compatibility work, but package removal is not part of the required controlled setup pass. Fresh Windows profiles can register AppX packages asynchronously, so making debloat a provisioning gate is unreliable and unrelated to runtime isolation. The required policy disables only runner-profile promotion, suggestions, notifications, OneDrive/Teams/Office startup, and consumer content through ordinary runner-hive registry values. The Windows 11 `TaskbarDa` Widgets toggle and the per-user `Software\Policies` OneDrive value are intentionally not provisioning requirements because current Windows builds can deny those cosmetic/non-isolation values even while the rest of the profile is writable. OneDrive startup suppression remains required through the runner's ordinary `Run` key.
+1. verifies the signed/pinned native payload and runs the isolated exact-binary TermWrap compatibility probe;
+2. journals the original registry and Remote Desktop certificate state before mutation;
+3. creates Runner 1, applies the minimal runner-profile policy, and stores endpoint-specific credentials;
+4. installs and verifies exact all-profile TCP/UDP inbound block rules for the owned port, applies the loopback RDP integration, and waits for `127.0.0.2:33991`;
+5. registers the Runner 1 full-UI task, removes the legacy windowless-worker task during migration, secures configuration/profile roots, and records the instance manager Ready.
 
-The policy rejects wildcards, all-user/provisioned package mutation, machine service policy, Defender changes, Windows Update changes, registry cleaners, and owner-profile writes. Explorer, DWM, Defender, Firewall, Windows Update, Store infrastructure, WebView2, GPU, audio, networking, WGC, and gaming services remain.
+Repair revalidates the exact native binaries and machine isolation, rotates/reconciles every configured account credential, reapplies each profile policy, and registers one full-UI task per profile. A Windows update or payload change invalidates cached compatibility evidence. The bounded `windows-restart-required` state remains available when exact firewall policy passes but the listener has not initialized yet.
 
-## Runtime and failure behavior
+Any failure after mutation runs the rollback journal. Cleanup attempts every independently owned profile and machine resource even when an earlier step fails. Recovery Required retains the journal and helper so repair/removal can be retried. Owner datasets and shared configuration survive complete removal; isolated runner configuration is removed with that runner.
 
-The named pipe validates protocol version, worker/app version, server executable, server SID, owner SID, runner SID, and snapshot revision. A lost pipe cancels the active worker run and releases ownership. Start requires both a freshly validated WGC frame and the shared headless workflow host; hidden, minimized, disconnected, stale, black, or runtime-less operation must stop rather than authorize input.
+`LilacMacro.SessionWorker.exe` remains packaged as a noninteractive, one-shot runner-profile policy bootstrap for upgrade compatibility. No scheduled task launches its legacy named-pipe runtime, and the main UI does not publish snapshots or proxy commands to another session.
 
-The worker materializes the selected immutable snapshot below its app-owned ProgramData runtime root, validates placements, state contexts, keybindings, OCR model, app version, owner SID, and revision, then executes the shared Lobby-rooted Story/Raid/Challenge scheduler without initializing WPF. `runtime-host-unavailable` remains a fail-closed diagnostic when those runtime dependencies cannot be prepared; it is no longer the expected healthy state.
+## Running instances
 
-The run target remains `This desktop` unless complete health reports Ready. `Local runner session` is not selectable while compatibility, loopback isolation, fresh capture, version, ACL, or runtime support is incomplete.
+`OPEN` writes a secret-free per-profile RDP file and starts `mstsc` only for the selected profile's loopback alias. The profile suppresses the certificate-name warning that Windows otherwise repeats for each `127.0.0.x` alias, while retaining CredSSP account authentication and disabling clipboard, drive, printer, COM-port, smart-card, and device redirection. This exception is bounded to the locally generated loopback profile; no remote destination is accepted. The scheduled task starts the full macro UI in that logged-on desktop. Install Roblox and sign into the intended Roblox account separately in each Windows runner profile; owner-profile Roblox files and login tokens are intentionally not copied.
 
-Settings exposes `OPEN SESSION` after provisioning compatibility and loopback isolation pass, including the expected Degraded bootstrap state before fresh Roblox capture is ready. It launches the full-screen `127.0.0.1:33991` RDP viewport with the app-owned Credential Manager entry so the owner can install Roblox, sign in, and launch it once inside the runner profile. Absent, mutating, recovery-required, compatibility-failed, and isolation-failed states cannot open the viewport. The viewport must remain visibly connected during automation; minimizing or disconnecting it invalidates capture.
+The RDP viewport must remain visibly connected while that instance captures Roblox. Minimizing, disconnecting, locking, or signing out can make Windows Graphics Capture unavailable; the local macro then follows its normal bounded recovery rather than accepting stale pixels. Multiple runner accounts may remain connected and run concurrently because each session owns its own Roblox process, input gate, macro UI, OCR state, diagnostics, and unique Credential Manager endpoint.
 
-## Removal
+## Release certification
 
-Remove and normal uninstall stop the worker and session, delete the task, firewall rules, credential, account, profile, and runner snapshot, and restore recorded system values. Cleanup then verifies every owned resource and every original registry value. Any unresolved resource is listed in status, and the helper plus journal remain so cleanup can be retried.
-
-Owner datasets, placements, and settings are preserved unless a future installer page explicitly offers owner-data deletion. Runner data is always removed.
-
-## Compatibility and release certification
-
-Windows build numbers are not statically allowlisted. Compatibility is decided from the exact local binaries by the offline self-scan described above. Disposable Windows 10/11 x64 VMs remain mandatory release QA for the full mutation lifecycle: clean install, repair, Windows update, session startup, isolation, capture, rollback, remove, and uninstall. That certification tests LilacMacro's integration and cleanup; it does not populate a build catalog or permanently block a newer build whose exact binaries pass the probe.
-
-ARM64, failed native self-scans, active remote RDP use during first setup, non-loopback exposure, stale capture, and incomplete cleanup remain rejected.
+Windows build numbers are not statically allowlisted. Compatibility is decided from the exact local binaries by the offline probe. Disposable Windows 10/11 x64 VM certification remains mandatory for clean install, legacy migration, Runner 1/Runner 2 concurrent startup, shared/separate configuration, repair after Windows Update, individual removal, rollback, full uninstall, and non-loopback isolation.
 
 See [Installer](INSTALLER.md), [Architecture](ARCHITECTURE.md), [Privacy](../PRIVACY.md), and [Troubleshooting](TROUBLESHOOTING.md).

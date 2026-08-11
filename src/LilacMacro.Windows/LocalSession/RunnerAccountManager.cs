@@ -50,6 +50,8 @@ public sealed class RunnerAccountManager
         finally { if (buffer != nint.Zero) NetApiBufferFree(buffer); }
     }
 
+    public string? TryResolveSid(string accountName) => TryResolveAccountSid(accountName);
+
     public void SetPassword(string accountName, string password)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(accountName);

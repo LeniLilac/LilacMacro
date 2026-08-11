@@ -35,7 +35,7 @@ LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox sc
 - Annotation and OCR rectangles use original-image, half-open coordinates and remain inside their owning image or region.
 - Save manifests, settings, and placement documents atomically; never overwrite an existing finalized dataset directory.
 - Keep input cancellation-aware and release every held key or mouse button on all exit paths.
-- Runner setup requires an offline exact-binary native preflight, runner-profile-only policy, loopback-only isolation, and a rollback journal. Cache compatibility only by exact TermService/TermWrap hashes; never provision the owner's machine during agent testing.
+- Runner setup requires an offline exact-binary native preflight, runner-profile-only policy, loopback-only isolation, and a rollback journal. Cache compatibility only by exact TermService/TermWrap hashes. Never provision the owner's machine during agent testing unless the owner explicitly authorizes it for the current task.
 
 ## Architecture and status language
 
