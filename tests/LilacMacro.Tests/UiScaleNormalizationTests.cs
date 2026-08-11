@@ -95,17 +95,35 @@ public sealed class UiScaleNormalizationTests
     }
 
     [Fact]
-    public void GearDetector_RequiresDarkButtonAndNeutralGlyph()
+    public void GearDetector_AcceptsFilledAndOutlinedGlyphsOnDarkFixedButton()
     {
-        RgbImage valid = BlankImage();
-        Fill(valid, new PixelRect(210, 12, 41, 44), 25, 28, 32);
-        Fill(valid, new PixelRect(223, 27, 15, 15), 235, 235, 235);
-        Assert.Equal(new PixelPoint(230, 34), UiScalePanelDetector.DetectSettingsGear(valid));
+        RgbImage filled = BlankImage();
+        Fill(filled, new PixelRect(210, 12, 41, 44), 25, 28, 32);
+        Fill(filled, new PixelRect(221, 25, 18, 18), 235, 235, 235);
+        Fill(filled, new PixelRect(226, 30, 8, 8), 25, 28, 32);
+        Assert.Equal(new PixelPoint(230, 34), UiScalePanelDetector.DetectSettingsGear(filled));
 
+        RgbImage outlined = BlankImage();
+        Fill(outlined, new PixelRect(210, 12, 41, 44), 25, 28, 32);
+        Fill(outlined, new PixelRect(221, 24, 20, 2), 235, 235, 235);
+        Fill(outlined, new PixelRect(221, 42, 20, 2), 235, 235, 235);
+        Fill(outlined, new PixelRect(221, 26, 2, 16), 235, 235, 235);
+        Fill(outlined, new PixelRect(239, 26, 2, 16), 235, 235, 235);
+        Assert.Equal(new PixelPoint(230, 34), UiScalePanelDetector.DetectSettingsGear(outlined));
+    }
+
+    [Fact]
+    public void GearDetector_RejectsMissingButtonAndIncompleteGlyph()
+    {
         RgbImage missingButton = BlankImage();
         Fill(missingButton, new PixelRect(210, 12, 41, 44), 120, 120, 120);
-        Fill(missingButton, new PixelRect(223, 27, 15, 15), 235, 235, 235);
+        Fill(missingButton, new PixelRect(221, 24, 20, 20), 235, 235, 235);
         Assert.Null(UiScalePanelDetector.DetectSettingsGear(missingButton));
+
+        RgbImage incompleteGlyph = BlankImage();
+        Fill(incompleteGlyph, new PixelRect(210, 12, 41, 44), 25, 28, 32);
+        Fill(incompleteGlyph, new PixelRect(221, 24, 20, 4), 235, 235, 235);
+        Assert.Null(UiScalePanelDetector.DetectSettingsGear(incompleteGlyph));
     }
 
     [Fact]
@@ -188,7 +206,8 @@ public sealed class UiScaleNormalizationTests
         {
             RgbImage image = LoadPng(path);
             Assert.NotNull(UiScalePanelDetector.DetectSettingsGear(image));
-            Assert.False(UiScalePanelDetector.DetectPanel(image).Visible);
+            UiScalePanelMatch panel = UiScalePanelDetector.DetectPanel(image);
+            Assert.False(panel.Visible, panel.Visible ? $"{path} | {DescribeDetector(image)}" : path);
         }
     }
 

@@ -35,12 +35,22 @@ internal sealed class UiScaleNormalizer(
         await _debug.PrepareAsync(cancellationToken).ConfigureAwait(false);
         await WaitForLobbyAsync(device, "before opening Settings", cancellationToken).ConfigureAwait(false);
 
-        PixelPoint gear = await DetectGearAsync(cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException("The verified Lobby did not expose the fixed Settings gear.");
-        Record("gear_verified", new { Point = gear });
-        await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, gear, cancellationToken).ConfigureAwait(false);
+        UiScalePanelMatch? alreadyOpen = await DetectAlreadyOpenPanelAsync(cancellationToken).ConfigureAwait(false);
+        UiScalePanelMatch panel;
+        if (alreadyOpen is UiScalePanelMatch openPanel)
+        {
+            panel = openPanel;
+            Record("settings_already_open", new { panel.RenderedScale, panel.ClosePoint });
+        }
+        else
+        {
+            PixelPoint gear = await DetectGearAsync(cancellationToken).ConfigureAwait(false)
+                ?? throw new InvalidOperationException("The verified Lobby did not expose the fixed Settings gear.");
+            Record("gear_verified", new { Point = gear });
+            await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, gear, cancellationToken).ConfigureAwait(false);
+            panel = await WaitForPanelAsync(requireCanonical: false, cancellationToken).ConfigureAwait(false);
+        }
 
-        UiScalePanelMatch panel = await WaitForPanelAsync(requireCanonical: false, cancellationToken).ConfigureAwait(false);
         SettingsSearchEvidence search = await ObserveSettingsSearchAsync(panel, device, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("Settings opened, but fresh OCR could not verify its search field and navigation rail.");
         Record("settings_verified", new { panel.RenderedScale, search.Evidence, search.SearchPoint });
@@ -166,6 +176,19 @@ internal sealed class UiScaleNormalizer(
     {
         RgbImage image = await CaptureRgbAsync(cancellationToken).ConfigureAwait(false);
         return UiScalePanelDetector.DetectSettingsGear(image);
+    }
+
+    private async Task<UiScalePanelMatch?> DetectAlreadyOpenPanelAsync(CancellationToken cancellationToken)
+    {
+        UiScalePanelMatch first = await CapturePanelAsync(cancellationToken).ConfigureAwait(false);
+        if (!first.Visible || !first.Settled) return null;
+
+        await Task.Delay(PollDelay, cancellationToken).ConfigureAwait(false);
+        UiScalePanelMatch second = await CapturePanelAsync(cancellationToken).ConfigureAwait(false);
+        return second.Visible && second.Settled &&
+               Math.Abs(second.RenderedScale - first.RenderedScale) <= 0.006
+            ? second
+            : null;
     }
 
     private async Task<UiScalePanelMatch> CapturePanelAsync(CancellationToken cancellationToken)

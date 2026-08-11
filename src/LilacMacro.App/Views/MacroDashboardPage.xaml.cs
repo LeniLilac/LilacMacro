@@ -434,6 +434,13 @@ public partial class MacroDashboardPage : UserControl
 
     private void AppendLog(string message)
     {
+        if (!Dispatcher.CheckAccess())
+        {
+            if (!Dispatcher.HasShutdownStarted)
+                _ = Dispatcher.BeginInvoke(() => AppendLog(message));
+            return;
+        }
+
         string entry = $"{DateTime.Now:HH:mm:ss} {message}";
         TraceLogText.Text = string.IsNullOrWhiteSpace(TraceLogText.Text) || TraceLogText.Text == "Macro runtime is not connected."
             ? entry

@@ -23,6 +23,7 @@ internal static class UiScalePanelDetector
     private const double BasePanelHalfHeight = 253;
     private static readonly PixelRect CloseSearch = new(980, 32, 256, 162);
     private static readonly PixelRect GearSearch = new(210, 12, 41, 44);
+    private static readonly PixelRect GearGlyphSearch = new(218, 21, 25, 26);
 
     public static PixelPoint? DetectSettingsGear(RgbImage image)
     {
@@ -31,23 +32,49 @@ internal static class UiScalePanelDetector
         int dark = 0;
         long whiteX = 0;
         long whiteY = 0;
+        int minimumWhiteX = GearGlyphSearch.Right;
+        int minimumWhiteY = GearGlyphSearch.Bottom;
+        int maximumWhiteX = GearGlyphSearch.X;
+        int maximumWhiteY = GearGlyphSearch.Y;
+        int[] quadrants = new int[4];
         for (int y = GearSearch.Y; y < GearSearch.Bottom; y++)
         {
             for (int x = GearSearch.X; x < GearSearch.Right; x++)
             {
                 Read(image, x, y, out byte red, out byte green, out byte blue);
-                if (IsNeutralWhite(red, green, blue))
-                {
-                    white++;
-                    whiteX += x;
-                    whiteY += y;
-                }
                 if (IsDark(red, green, blue)) dark++;
             }
         }
 
+        int centerX = GearGlyphSearch.X + GearGlyphSearch.Width / 2;
+        int centerY = GearGlyphSearch.Y + GearGlyphSearch.Height / 2;
+        for (int y = GearGlyphSearch.Y; y < GearGlyphSearch.Bottom; y++)
+        {
+            for (int x = GearGlyphSearch.X; x < GearGlyphSearch.Right; x++)
+            {
+                Read(image, x, y, out byte red, out byte green, out byte blue);
+                if (!IsNeutralWhite(red, green, blue)) continue;
+
+                white++;
+                whiteX += x;
+                whiteY += y;
+                minimumWhiteX = Math.Min(minimumWhiteX, x);
+                minimumWhiteY = Math.Min(minimumWhiteY, y);
+                maximumWhiteX = Math.Max(maximumWhiteX, x);
+                maximumWhiteY = Math.Max(maximumWhiteY, y);
+                int quadrant = (y < centerY ? 0 : 2) + (x < centerX ? 0 : 1);
+                quadrants[quadrant]++;
+            }
+        }
+
         int area = GearSearch.Width * GearSearch.Height;
-        if (white is < 150 or > 310 || dark < area * 0.65)
+        int whiteWidth = maximumWhiteX - minimumWhiteX + 1;
+        int whiteHeight = maximumWhiteY - minimumWhiteY + 1;
+        if (white is < 70 or > 310 ||
+            dark < area * 0.65 ||
+            whiteWidth is < 16 or > 24 ||
+            whiteHeight is < 16 or > 24 ||
+            quadrants.Any(count => count < 12))
             return null;
 
         PixelPoint center = new(
