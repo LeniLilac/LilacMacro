@@ -8,6 +8,8 @@
     <DebugType>embedded</DebugType>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <VersionPrefix>1.0.33</VersionPrefix>
     <Authors>LilacMacro contributors</Authors>
     <Copyright>Copyright 2026 LilacMacro contributors</Copyright>
     <RepositoryType>git</RepositoryType>

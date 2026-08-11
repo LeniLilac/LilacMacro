@@ -83,8 +83,9 @@
                             </Border>
                         </Grid>
                         <Button Content="CHECK LOBBY" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckLobby_OnClick" />
-                        <UniformGrid Columns="3">
+                        <UniformGrid Columns="4">
                             <Button Content="OPEN PLAY" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,4,0" Click="OpenPlay_OnClick" />
+                            <Button Content="OPEN UNITS" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="OpenUnits_OnClick" />
                             <Button Content="OPEN EVENTS" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="OpenEvents_OnClick" />
                             <Button Content="OPEN AREAS" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="OpenAreas_OnClick" />
                         </UniformGrid>
@@ -92,7 +93,11 @@
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
                         <TextBlock Text="EVENT SELECT" Style="{StaticResource SectionTitleStyle}" />
                         <Button Content="CHECK EVENTS" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckEvents_OnClick" />
-                        <Button Content="VILLAIN INVASION" Style="{StaticResource ButtonStyle}" Click="VillainInvasion_OnClick" />
+                        <UniformGrid Columns="3">
+                            <Button Content="VILLAIN INVASION" Style="{StaticResource ButtonStyle}" Margin="0,0,4,0" Click="VillainInvasion_OnClick" />
+                            <Button Content="BOSS BOUNTY" Style="{StaticResource ButtonStyle}" Margin="4,0" Click="BossBounty_OnClick" />
+                            <Button Content="GUESS THAT UNIT" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="GuessThatUnit_OnClick" />
+                        </UniformGrid>
 
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
                         <TextBlock Text="AREAS UI" Style="{StaticResource SectionTitleStyle}" />
@@ -108,11 +113,12 @@
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
                         <TextBlock Text="PLAY UI" Style="{StaticResource SectionTitleStyle}" />
                         <Button Content="CHECK PLAY UI" Style="{StaticResource ButtonStyle}" Margin="0,2,0,9" Click="CheckPlayUi_OnClick" />
-                        <UniformGrid Columns="2" Rows="2">
+                        <UniformGrid Columns="2">
                             <Button Content="STORY" Style="{StaticResource ButtonStyle}" Margin="0,0,4,4" Click="Story_OnClick" />
                             <Button Content="RAID" Style="{StaticResource ButtonStyle}" Margin="4,0,0,4" Click="Raid_OnClick" />
                             <Button Content="CHALLENGE" Style="{StaticResource ButtonStyle}" Margin="0,4,4,0" Click="Challenge_OnClick" />
                             <Button Content="EXPEDITION" Style="{StaticResource ButtonStyle}" Margin="4,4,0,0" Click="Expedition_OnClick" />
+                            <Button Content="TOWER" Style="{StaticResource ButtonStyle}" Margin="0,8,4,0" Click="Tower_OnClick" />
                         </UniformGrid>
 
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
@@ -159,6 +165,7 @@
                             <Button Content="ROSE KINGDOM" Style="{StaticResource ButtonStyle}" Margin="0,4,4,4" Click="Rose_OnClick" />
                             <Button Content="FAIRY KING FOREST" Style="{StaticResource ButtonStyle}" Margin="4,4,0,4" Click="FairyKing_OnClick" />
                             <Button Content="KING'S TOMB" Style="{StaticResource ButtonStyle}" Margin="0,4,4,0" Click="KingsTomb_OnClick" />
+                            <Button Content="EAST TOWN" Style="{StaticResource ButtonStyle}" Margin="4,4,0,0" Click="EastTown_OnClick" />
                         </UniformGrid>
 
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
@@ -181,10 +188,11 @@
                             <Button x:Name="ExpeditionDifficulty2Button" Content="D2" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="ExpeditionDifficulty2_OnClick" />
                             <Button x:Name="ExpeditionDifficulty3Button" Content="D3" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="ExpeditionDifficulty3_OnClick" />
                         </UniformGrid>
-                        <UniformGrid Columns="3">
+                        <UniformGrid Columns="2">
                             <Button Content="SCHOOL" Style="{StaticResource ButtonStyle}" Margin="0,0,4,0" Click="ExpeditionSchool_OnClick" />
-                            <Button Content="FLOWER" Style="{StaticResource ButtonStyle}" Margin="4,0,4,0" Click="ExpeditionFlower_OnClick" />
-                            <Button Content="ROSE" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="ExpeditionRose_OnClick" />
+                            <Button Content="FLOWER" Style="{StaticResource ButtonStyle}" Margin="4,0,0,0" Click="ExpeditionFlower_OnClick" />
+                            <Button Content="ROSE" Style="{StaticResource ButtonStyle}" Margin="0,8,4,0" Click="ExpeditionRose_OnClick" />
+                            <Button Content="EAST TOWN" Style="{StaticResource ButtonStyle}" Margin="4,8,0,0" Click="ExpeditionEastTown_OnClick" />
                         </UniformGrid>
 
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />

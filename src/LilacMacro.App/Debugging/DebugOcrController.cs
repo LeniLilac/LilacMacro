@@ -28,12 +28,14 @@ internal sealed class DebugOcrController(
         string device,
         CancellationToken cancellationToken = default) =>
         _lobby.CheckLobbyAsync(device, cancellationToken);
-
     public Task<DebugRunReport> OpenPlayAsync(
         string device,
         CancellationToken cancellationToken = default) =>
         _lobby.OpenPlayAsync(device, cancellationToken);
-
+    public Task<DebugRunReport> OpenUnitsAsync(
+        string device,
+        CancellationToken cancellationToken = default) =>
+        _lobby.OpenUnitsAsync(device, cancellationToken);
     public Task<DebugRunReport> OpenEventsAsync(
         string device,
         CancellationToken cancellationToken = default) =>

@@ -21,7 +21,7 @@ internal enum StoryWireStage
     MatchRuntime,
 }
 
-internal enum StoryWireStageStatus
+public enum StoryWireStageStatus
 {
     Waiting,
     Running,

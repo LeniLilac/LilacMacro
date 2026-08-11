@@ -22,12 +22,15 @@ $requiredFiles = @(
     'docs/PLACEMENT-AUTHORING.md'
     'docs/MACRO-ARCHITECTURE.md'
     'docs/TROUBLESHOOTING.md'
+    'docs/LOCAL-SESSION.md'
+    'docs/INSTALLER.md'
     'docs/ARCHITECTURE.md'
     'docs/DATASET-FORMAT.md'
     'docs/AGENT-DATASET-WORKFLOW.md'
     'src/LilacMacro.App/AGENTS.md'
     'src/LilacMacro.Core/AGENTS.md'
     'src/LilacMacro.Windows/AGENTS.md'
+    'src/LilacMacro.Runtime/AGENTS.md'
     'tools/AGENTS.md'
     'tests/AGENTS.md'
 )
@@ -43,6 +46,8 @@ $indexTargets = @(
     'docs/DEVELOPMENT.md'
     'docs/TESTING.md'
     'docs/TROUBLESHOOTING.md'
+    'docs/LOCAL-SESSION.md'
+    'docs/INSTALLER.md'
     'docs/ARCHITECTURE.md'
     'docs/GAME-BEHAVIOR.md'
     'docs/OCR-AND-VISION.md'
@@ -54,6 +59,7 @@ $indexTargets = @(
     'src/LilacMacro.App/AGENTS.md'
     'src/LilacMacro.Core/AGENTS.md'
     'src/LilacMacro.Windows/AGENTS.md'
+    'src/LilacMacro.Runtime/AGENTS.md'
     'tools/AGENTS.md'
     'tests/AGENTS.md'
 )
@@ -71,6 +77,8 @@ $agentRouteTargets = @(
     'docs/AGENT-DATASET-WORKFLOW.md'
     'PRIVACY.md'
     'docs/TESTING.md'
+    'docs/LOCAL-SESSION.md'
+    'docs/INSTALLER.md'
 )
 
 $statusFiles = @(
@@ -90,6 +98,8 @@ $statusFiles = @(
     'docs/ARCHITECTURE.md'
     'docs/DATASET-FORMAT.md'
     'docs/AGENT-DATASET-WORKFLOW.md'
+    'docs/LOCAL-SESSION.md'
+    'docs/INSTALLER.md'
 )
 
 function ConvertTo-RepositoryPath([string]$path) {

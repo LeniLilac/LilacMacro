@@ -120,11 +120,6 @@
                                 </Grid>
                                 <Grid Margin="0,13,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="WHEN APP IS RUNNING" />
-                                    <CheckBox x:Name="MinimizeCheck" Grid.Column="1" Content="Minimize while running" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                </Grid>
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MINIMIZE BEHAVIOR" />
                                     <ComboBox x:Name="MinimizeBehaviorCombo" Grid.Column="1" Width="220" HorizontalAlignment="Left" SelectionChanged="SettingChanged_OnSelectionChanged" />
                                 </Grid>
@@ -140,15 +135,9 @@
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PREPARATION" />
                                     <StackPanel Grid.Column="1">
-                                        <CheckBox IsChecked="True" Content="Prepare UI scale" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                        <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Prepare game settings" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
+                                        <CheckBox IsChecked="True" Content="Prepare game settings" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
                                         <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Require verified Lobby" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
                                     </StackPanel>
-                                </Grid>
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="UI SCALE" />
-                                    <ComboBox x:Name="UiScaleCombo" Grid.Column="1" Width="130" HorizontalAlignment="Left" SelectionChanged="SettingChanged_OnSelectionChanged" />
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -196,6 +185,48 @@
                 </StackPanel>
 
                 <StackPanel x:Name="RobloxPanel" Visibility="Collapsed">
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBlock FontSize="15" FontWeight="Bold" Text="Local Session" />
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="RUN TARGET" />
+                                    <ComboBox x:Name="ExecutionTargetCombo" Grid.Column="1" Width="220" HorizontalAlignment="Left"
+                                              SelectionChanged="ExecutionTarget_OnSelectionChanged" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STATUS" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock x:Name="LocalSessionStateText" FontWeight="Bold" Text="ABSENT" />
+                                        <TextBlock x:Name="LocalSessionDetailText" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource InkSoftBrush}" Text="Local runner session is not installed." />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="150" /><ColumnDefinition Width="150" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="HEALTH" />
+                                    <TextBlock x:Name="LocalSessionCompatibilityText" Grid.Column="1" FontFamily="{StaticResource MonoFont}" Text="NOT VERIFIED" />
+                                    <TextBlock x:Name="LocalSessionIsolationText" Grid.Column="2" FontFamily="{StaticResource MonoFont}" Text="NOT VERIFIED" />
+                                    <TextBlock x:Name="LocalSessionVersionText" Grid.Column="3" FontFamily="{StaticResource MonoFont}" Text="POLICY -  |  WORKER -" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="ACTIONS" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button x:Name="SetupLocalSessionButton" Tag="install" Style="{StaticResource SettingsButtonStyle}"
+                                                Click="LocalSessionAction_OnClick" Content="SET UP" />
+                                        <Button x:Name="RepairLocalSessionButton" Tag="repair" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}"
+                                                Click="LocalSessionAction_OnClick" Content="REPAIR" />
+                                        <Button x:Name="RemoveLocalSessionButton" Tag="remove" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}"
+                                                Background="{DynamicResource DangerBrush}" Click="LocalSessionAction_OnClick" Content="REMOVE" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                     <Border Style="{StaticResource SettingsCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>

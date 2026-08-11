@@ -1,3 +1,5 @@
+using LilacMacro.App.Infrastructure;
+
 namespace LilacMacro.App.Workspace;
 
 internal enum ToolShellKind
@@ -11,7 +13,11 @@ internal sealed record ToolShellProfile(
     string DisplayName,
     string WindowTitle,
     PageKind StartPage,
-    IReadOnlyList<PageKind> Pages)
+    IReadOnlyList<PageKind> Pages,
+    string OcrDevice,
+    bool KeepOcrLoaded,
+    bool PreloadOcrOnOpen,
+    bool RetainAllDeepDebugFrames)
 {
     public bool Includes(PageKind page) => Pages.Contains(page);
 
@@ -22,13 +28,21 @@ internal sealed record ToolShellProfile(
             "Dataset Builder",
             "LilacMacro Dataset Builder",
             PageKind.Capture,
-            [PageKind.Capture, PageKind.Review, PageKind.Datasets]),
+            [PageKind.Capture, PageKind.Review, PageKind.Datasets],
+            OcrRunner.GpuDevice,
+            KeepOcrLoaded: true,
+            PreloadOcrOnOpen: true,
+            RetainAllDeepDebugFrames: false),
         ToolShellKind.RuntimeLab => new ToolShellProfile(
             kind,
             "Runtime Lab",
             "LilacMacro Runtime Lab",
             PageKind.Debug,
-            [PageKind.Debug, PageKind.WireTest]),
+            [PageKind.Debug, PageKind.WireTest, PageKind.ScrollTest, PageKind.TeamSwapTest],
+            OcrRunner.GpuDevice,
+            KeepOcrLoaded: true,
+            PreloadOcrOnOpen: true,
+            RetainAllDeepDebugFrames: true),
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 }

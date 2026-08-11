@@ -1,6 +1,6 @@
 # Troubleshooting
 
-**Status: Current local-development and prototype guidance.** There is no packaged installer or supported release artifact yet.
+**Status: Current local-development and prototype guidance.** A prototype installer definition exists, but there is no supported signed release artifact yet.
 
 ## SDK or restore fails
 
@@ -123,6 +123,17 @@ Generate a bounded view instead of opening every frame:
 ```
 
 Read the summary and contact sheets first. See [Agent dataset workflow](AGENT-DATASET-WORKFLOW.md).
+
+## Local runner is unavailable or degraded
+
+- `Absent` means no owned provisioning journal exists. Setup is optional and ordinary application installation does not create the runner.
+- A native compatibility failure happens before mutation. Repair reruns TermWrap's offline scanner against the exact local `termsrv.dll`. A RunDLL message that `TermWrap.dll` or one of its modules was not found indicates an incomplete native payload; the installed `native\termwrap\v0.6\x64` directory must contain both the pinned `TermWrap.dll` and `Zydis.dll`. A missing TermWrap entry point instead indicates a broken or stale probe build; install a build whose probe invokes TermWrap v0.6's published `ServiceMain` export. Do not bypass a missing required patch; inspect the reported scanner diagnostic. A Windows update changes the TermService hash and automatically invalidates prior cached evidence.
+- `Degraded` with `runtime-host-unavailable` means the shared headless runtime could not prepare its OCR or materialized snapshot dependencies. Repair the installed payload and inspect the exact reported dependency; do not bypass it.
+- `capture-unsupported` means the visible loopback session did not provide fresh non-black WGC frames. Keep the RDP client visibly connected; never run blind.
+- `Recovery Required` means rollback or removal could not prove that every owned resource was removed or every original value restored. Keep `%ProgramData%\LilacMacro\Session\provisioning.json`, run Repair or Remove from the same signed installation, and preserve the exact unresolved-resource list.
+- Setup refuses active remote RDP use, existing exposure, failed exact-binary native probes, invalid hashes, unsafe preservation, and unverifiable loopback isolation. These are safety gates, not configuration suggestions.
+
+Normal uninstall invokes the same cleanup path and stops if cleanup is incomplete. Owner datasets and settings remain; runner account/profile, credential, task, firewall rules, snapshots, and native integration must be removed. See [Optional local runner session](LOCAL-SESSION.md).
 
 ## Live UI or Roblox verification
 

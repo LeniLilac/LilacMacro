@@ -65,6 +65,37 @@ internal sealed class MacroKeyBindings
             Required(MacroKeyBindingId.MacroToggle)),
         Required(MacroKeyBindingId.ShiftLock));
 
+    public Dictionary<string, int?> CreatePersistedSnapshot() => Items.ToDictionary(
+        binding => binding.Id.ToString(),
+        binding => binding.VirtualKey,
+        StringComparer.OrdinalIgnoreCase);
+
+    public void ApplyPersisted(IReadOnlyDictionary<string, int?> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        foreach (MacroKeyBinding binding in Items.Where(item => item.Id != MacroKeyBindingId.MacroToggle))
+        {
+            if (!TryGetValue(values, binding.Id, out int? virtualKey)) continue;
+            binding.TryApplyPersisted(virtualKey);
+        }
+
+        MacroKeyBinding macroToggle = this[MacroKeyBindingId.MacroToggle];
+        if (TryGetValue(values, MacroKeyBindingId.MacroToggle, out int? macroKey) &&
+            macroKey is int requiredKey &&
+            KeyboardKey.IsSupportedAutomationKey(requiredKey) &&
+            Items.All(binding => binding.Id == MacroKeyBindingId.MacroToggle || binding.VirtualKey != requiredKey))
+        {
+            macroToggle.SetVirtualKey(requiredKey);
+        }
+
+        foreach (MacroKeyBinding conflict in Items.Where(binding =>
+                     binding.Id != MacroKeyBindingId.MacroToggle &&
+                     binding.VirtualKey == macroToggle.VirtualKey))
+        {
+            conflict.Reset();
+        }
+    }
+
     public void Reset()
     {
         foreach (MacroKeyBinding binding in Items) binding.Reset();
@@ -72,6 +103,21 @@ internal sealed class MacroKeyBindings
 
     private int Required(MacroKeyBindingId id) => this[id].VirtualKey
         ?? throw new InvalidOperationException($"{this[id].Name} must have a key.");
+
+    private static bool TryGetValue(
+        IReadOnlyDictionary<string, int?> values,
+        MacroKeyBindingId id,
+        out int? virtualKey)
+    {
+        foreach ((string key, int? value) in values)
+        {
+            if (!string.Equals(key, id.ToString(), StringComparison.OrdinalIgnoreCase)) continue;
+            virtualKey = value;
+            return true;
+        }
+        virtualKey = null;
+        return false;
+    }
 
     private static MacroKeyBinding Create(
         MacroKeyBindingId id,
@@ -156,6 +202,19 @@ internal sealed class MacroKeyBinding : INotifyPropertyChanged
     {
         VirtualKey = _defaultVirtualKey;
         SetCapturing(false);
+    }
+
+    public bool TryApplyPersisted(int? virtualKey)
+    {
+        if (virtualKey is null)
+        {
+            if (!CanUnset) return false;
+            Unset();
+            return true;
+        }
+        if (!KeyboardKey.IsSupportedAutomationKey(virtualKey.Value)) return false;
+        SetVirtualKey(virtualKey.Value);
+        return true;
     }
 
     public void SetCapturing(bool capturing)

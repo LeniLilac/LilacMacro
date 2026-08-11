@@ -9,10 +9,12 @@ internal sealed class ChallengeRotationStore
     private static readonly JsonSerializerOptions JsonOptions = CreateOptions();
     private readonly string _path;
 
-    public ChallengeRotationStore(string? path = null) => _path = path ?? Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LilacMacro",
-        "challenge-rotation.json");
+    public ChallengeRotationStore(string? path = null) => _path = path
+        ?? Environment.GetEnvironmentVariable("LILACMACRO_RUNNER_CHALLENGE_ROTATION")
+        ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "LilacMacro",
+            "challenge-rotation.json");
 
     public async Task<ChallengeRotationProgress> LoadAsync(CancellationToken cancellationToken)
     {

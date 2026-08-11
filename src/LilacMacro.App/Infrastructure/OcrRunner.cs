@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
-using System.Windows;
-using System.Windows.Media.Imaging;
 using LilacMacro.Core.Geometry;
 using LilacMacro.App.Diagnostics;
 
@@ -16,28 +14,25 @@ public sealed class OcrRunner : IDisposable
     public const string GpuDevice = "gpu:0";
     private static readonly HashSet<string> SupportedModels = [SmallModel, TinyModel];
     private static readonly HashSet<string> SupportedDevices = [CpuDevice, GpuDevice];
-    private readonly SemaphoreSlim _workerGate = new(1, 1);
-    private readonly object _errorLock = new();
-    private readonly StringBuilder _errorTail = new();
-    private readonly string _pythonPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LilacMacro",
-        "ocr",
-        "venv",
-        "Scripts",
-        "python.exe");
-    private readonly string _runtimeMarkerPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LilacMacro",
-        "ocr",
-        "runtime-device.txt");
-    private Process? _persistentWorker;
-    private string? _persistentChannel;
+    private readonly string _ocrRoot;
+    private readonly string _pythonPath;
+    private readonly string _runtimeMarkerPath;
+    private readonly PersistentOcrWorker _persistentWorker;
     private bool _keepLoaded;
     private bool _disposed;
     private readonly DeepDebugSessionService _deepDebug;
 
-    public OcrRunner(DeepDebugSessionService deepDebug) => _deepDebug = deepDebug;
+    public OcrRunner(DeepDebugSessionService deepDebug, string? ocrRoot = null)
+    {
+        _deepDebug = deepDebug;
+        _ocrRoot = Path.GetFullPath(ocrRoot ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "LilacMacro",
+            "ocr"));
+        _pythonPath = Path.Combine(_ocrRoot, "venv", "Scripts", "python.exe");
+        _runtimeMarkerPath = Path.Combine(_ocrRoot, "runtime-device.txt");
+        _persistentWorker = new PersistentOcrWorker(CreateWorkerStartInfo);
+    }
 
     public bool IsInstalled => File.Exists(_pythonPath) && ReadRuntimeDevice() is "cpu" or "gpu";
 
@@ -58,7 +53,7 @@ public sealed class OcrRunner : IDisposable
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (_keepLoaded == value) return;
             _keepLoaded = value;
-            if (!value) StopPersistentWorker();
+            if (!value) _persistentWorker.Stop();
         }
     }
 
@@ -66,7 +61,7 @@ public sealed class OcrRunner : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!SupportedDevices.Contains(device)) throw new ArgumentOutOfRangeException(nameof(device));
-        StopPersistentWorker();
+        _persistentWorker.Stop();
         string script = ResolveBundledFile("scripts", "Setup-Ocr.ps1");
         ProcessStartInfo startInfo = new("powershell.exe")
         {
@@ -82,6 +77,8 @@ public sealed class OcrRunner : IDisposable
         startInfo.ArgumentList.Add(script);
         startInfo.ArgumentList.Add("-Device");
         startInfo.ArgumentList.Add(device == GpuDevice ? "gpu" : "cpu");
+        startInfo.ArgumentList.Add("-InstallRoot");
+        startInfo.ArgumentList.Add(_ocrRoot);
 
         using Process process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Could not start the OCR setup process.");
@@ -95,6 +92,21 @@ public sealed class OcrRunner : IDisposable
             throw new InvalidOperationException(
                 string.IsNullOrWhiteSpace(standardError) ? standardOutput.Trim() : standardError.Trim());
         }
+        if (KeepLoaded) await WarmUpAsync(SmallModel, device, cancellationToken);
+    }
+
+    public async Task WarmUpAsync(
+        string modelName,
+        string device,
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!KeepLoaded) throw new InvalidOperationException("OCR preload requires Keep Loaded.");
+        if (!SupportedModels.Contains(modelName)) throw new ArgumentOutOfRangeException(nameof(modelName));
+        if (!SupportedDevices.Contains(device)) throw new ArgumentOutOfRangeException(nameof(device));
+        if (!IsDeviceReady(device)) throw new InvalidOperationException($"OCR {device} is not set up yet.");
+        await _persistentWorker.WarmUpAsync(modelName, device, cancellationToken);
+        _deepDebug.RecordEvent("ocr", "worker_preloaded", new { Model = modelName, Device = device });
     }
 
     public async Task<OcrWorkerResult> RunAsync(
@@ -122,7 +134,9 @@ public sealed class OcrRunner : IDisposable
         string outputPath = Path.Combine(temporaryRoot, "result.json");
         try
         {
-            await Application.Current.Dispatcher.InvokeAsync(() => WriteCrop(imagePath, crop, cropPath));
+            OcrWorkerResult result = KeepLoaded
+                ? await _persistentWorker.RunAsync(imagePath, crop, cropPath, modelName, device, cancellationToken)
+                : await RunOneShotAsync(imagePath, crop, cropPath, outputPath, modelName, device, cancellationToken);
             _deepDebug.RecordPng(await File.ReadAllBytesAsync(cropPath, cancellationToken), "ocr-crop", new
             {
                 Source = imagePath,
@@ -131,9 +145,6 @@ public sealed class OcrRunner : IDisposable
                 Device = device,
                 KeepLoaded,
             });
-            OcrWorkerResult result = KeepLoaded
-                ? await RunPersistentAsync(cropPath, modelName, device, cancellationToken)
-                : await RunOneShotAsync(cropPath, outputPath, modelName, device, cancellationToken);
             OcrWorkerResult offset = OffsetRegions(result, crop);
             _deepDebug.RecordEvent("ocr", "inference_completed", new
             {
@@ -170,6 +181,8 @@ public sealed class OcrRunner : IDisposable
     }
 
     private async Task<OcrWorkerResult> RunOneShotAsync(
+        string imagePath,
+        PixelRect crop,
         string cropPath,
         string outputPath,
         string modelName,
@@ -178,6 +191,13 @@ public sealed class OcrRunner : IDisposable
     {
         ProcessStartInfo startInfo = CreateWorkerStartInfo();
         startInfo.ArgumentList.Add("--input");
+        startInfo.ArgumentList.Add(imagePath);
+        startInfo.ArgumentList.Add("--crop");
+        startInfo.ArgumentList.Add(crop.X.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        startInfo.ArgumentList.Add(crop.Y.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        startInfo.ArgumentList.Add(crop.Width.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        startInfo.ArgumentList.Add(crop.Height.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        startInfo.ArgumentList.Add("--crop-output");
         startInfo.ArgumentList.Add(cropPath);
         startInfo.ArgumentList.Add("--model");
         startInfo.ArgumentList.Add(modelName);
@@ -221,99 +241,6 @@ public sealed class OcrRunner : IDisposable
             ?? throw new InvalidDataException("OCR worker returned an empty result.");
     }
 
-    private async Task<OcrWorkerResult> RunPersistentAsync(
-        string cropPath,
-        string modelName,
-        string device,
-        CancellationToken cancellationToken)
-    {
-        await _workerGate.WaitAsync(cancellationToken);
-        try
-        {
-            Process process = EnsurePersistentWorker();
-            string requestId = Guid.NewGuid().ToString("N");
-            string channel = _persistentChannel!;
-            string requestPath = Path.Combine(channel, $"request-{requestId}.json");
-            string responsePath = Path.Combine(channel, $"response-{requestId}.json");
-            string request = JsonSerializer.Serialize(new
-            {
-                request_id = requestId,
-                input = cropPath,
-                model = modelName,
-                device,
-            });
-            string temporaryRequest = requestPath + ".tmp";
-            await File.WriteAllTextAsync(temporaryRequest, request, new UTF8Encoding(false), cancellationToken);
-            File.Move(temporaryRequest, requestPath);
-
-            using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeout.CancelAfter(TimeSpan.FromMinutes(2));
-            try
-            {
-                while (!File.Exists(responsePath))
-                {
-                    if (process.HasExited)
-                    {
-                        throw new InvalidOperationException($"OCR worker stopped unexpectedly. {ReadErrorTail()}");
-                    }
-                    await Task.Delay(25, timeout.Token);
-                }
-
-                FileInfo resultFile = new(responsePath);
-                if (resultFile.Length > 1024 * 1024) throw new InvalidDataException("OCR result exceeded the safe size limit.");
-                string json = await File.ReadAllTextAsync(responsePath, timeout.Token);
-                using JsonDocument document = JsonDocument.Parse(json);
-                if (document.RootElement.TryGetProperty("error", out JsonElement error))
-                {
-                    throw new InvalidOperationException($"OCR worker failed: {error.GetString()}");
-                }
-                return JsonSerializer.Deserialize<OcrWorkerResult>(json)
-                    ?? throw new InvalidDataException("OCR worker returned an empty result.");
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                throw new TimeoutException("OCR worker did not finish within 2 minutes.");
-            }
-            finally
-            {
-                TryDeleteFile(requestPath);
-                TryDeleteFile(responsePath);
-                TryDeleteFile(temporaryRequest);
-            }
-        }
-        catch
-        {
-            StopPersistentWorker();
-            throw;
-        }
-        finally
-        {
-            _workerGate.Release();
-        }
-    }
-
-    private Process EnsurePersistentWorker()
-    {
-        if (_persistentWorker is { HasExited: false } running) return running;
-        StopPersistentWorker();
-        lock (_errorLock) _errorTail.Clear();
-        string channel = Path.Combine(Path.GetTempPath(), "LilacMacro", $"worker-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(channel);
-        ProcessStartInfo startInfo = CreateWorkerStartInfo();
-        startInfo.ArgumentList.Add("--serve");
-        startInfo.ArgumentList.Add("--channel");
-        startInfo.ArgumentList.Add(channel);
-        Process process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Could not start the persistent OCR worker.");
-        process.ErrorDataReceived += Worker_OnErrorDataReceived;
-        process.OutputDataReceived += Worker_OnOutputDataReceived;
-        process.BeginErrorReadLine();
-        process.BeginOutputReadLine();
-        _persistentWorker = process;
-        _persistentChannel = channel;
-        return process;
-    }
-
     private ProcessStartInfo CreateWorkerStartInfo()
     {
         string worker = ResolveBundledFile("tools", "ocr_worker.py");
@@ -330,26 +257,6 @@ public sealed class OcrRunner : IDisposable
         startInfo.Environment["PADDLE_PDX_MODEL_SOURCE"] = "BOS";
         startInfo.Environment["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True";
         return startInfo;
-    }
-
-    private void Worker_OnErrorDataReceived(object sender, DataReceivedEventArgs eventArgs)
-    {
-        if (string.IsNullOrWhiteSpace(eventArgs.Data)) return;
-        lock (_errorLock)
-        {
-            _errorTail.AppendLine(eventArgs.Data);
-            if (_errorTail.Length > 4000) _errorTail.Remove(0, _errorTail.Length - 4000);
-        }
-    }
-
-    private static void Worker_OnOutputDataReceived(object sender, DataReceivedEventArgs eventArgs)
-    {
-        // Paddle writes native runtime diagnostics to stdout; draining prevents a full pipe from stalling inference.
-    }
-
-    private string ReadErrorTail()
-    {
-        lock (_errorLock) return _errorTail.ToString().Trim();
     }
 
     private string? ReadRuntimeDevice()
@@ -370,36 +277,6 @@ public sealed class OcrRunner : IDisposable
         }
     }
 
-    private void StopPersistentWorker()
-    {
-        Process? process = _persistentWorker;
-        string? channel = _persistentChannel;
-        _persistentWorker = null;
-        _persistentChannel = null;
-        if (process is null)
-        {
-            if (channel is not null) TryDeleteTemporaryDirectory(channel);
-            return;
-        }
-        try
-        {
-            if (!process.HasExited)
-            {
-                if (channel is not null) File.WriteAllText(Path.Combine(channel, "stop"), string.Empty);
-                if (!process.WaitForExit(750)) process.Kill(entireProcessTree: true);
-            }
-        }
-        catch (InvalidOperationException)
-        {
-            // The owned worker exited between the state check and shutdown.
-        }
-        finally
-        {
-            process.Dispose();
-            if (channel is not null) TryDeleteTemporaryDirectory(channel);
-        }
-    }
-
     private static OcrWorkerResult OffsetRegions(OcrWorkerResult result, PixelRect crop) => result with
     {
         Regions = result.Regions.Select(region => region with
@@ -408,24 +285,6 @@ public sealed class OcrRunner : IDisposable
             Y = checked(region.Y + crop.Y),
         }).ToArray(),
     };
-
-    private static void WriteCrop(string imagePath, PixelRect crop, string destination)
-    {
-        BitmapImage source = new();
-        source.BeginInit();
-        source.CacheOption = BitmapCacheOption.OnLoad;
-        source.UriSource = new Uri(imagePath, UriKind.Absolute);
-        source.EndInit();
-        source.Freeze();
-        PixelSize size = new(source.PixelWidth, source.PixelHeight);
-        if (!crop.IsInside(size)) throw new ArgumentOutOfRangeException(nameof(crop));
-
-        CroppedBitmap cropped = new(source, new Int32Rect(crop.X, crop.Y, crop.Width, crop.Height));
-        PngBitmapEncoder encoder = new();
-        encoder.Frames.Add(BitmapFrame.Create(cropped));
-        using FileStream stream = File.Create(destination);
-        encoder.Save(stream);
-    }
 
     private static string ResolveBundledFile(string directory, string fileName)
     {
@@ -438,18 +297,6 @@ public sealed class OcrRunner : IDisposable
     }
 
     private static string Tail(string value) => value.Length > 1200 ? value[^1200..] : value;
-
-    private static void TryDeleteFile(string path)
-    {
-        try
-        {
-            if (File.Exists(path)) File.Delete(path);
-        }
-        catch (IOException)
-        {
-            // The worker session cleanup retries when the owned process is released.
-        }
-    }
 
     private static void TryDeleteTemporaryDirectory(string path)
     {
@@ -471,7 +318,6 @@ public sealed class OcrRunner : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        StopPersistentWorker();
-        _workerGate.Dispose();
+        _persistentWorker.Dispose();
     }
 }

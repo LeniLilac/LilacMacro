@@ -18,11 +18,13 @@ LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox sc
 - Architecture or ownership: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - Game navigation or OCR state behavior: [docs/GAME-BEHAVIOR.md](docs/GAME-BEHAVIOR.md).
 - OCR or future detection: [docs/OCR-AND-VISION.md](docs/OCR-AND-VISION.md).
+- Expedition reward OCR or reroll economics: [docs/EXPEDITION-REWARD-OPTIMIZATION.md](docs/EXPEDITION-REWARD-OPTIMIZATION.md).
 - Placement work: [docs/PLACEMENT-AUTHORING.md](docs/PLACEMENT-AUTHORING.md).
 - Planned scheduler/runtime: [docs/MACRO-ARCHITECTURE.md](docs/MACRO-ARCHITECTURE.md).
 - Dataset work: [docs/DATASET-FORMAT.md](docs/DATASET-FORMAT.md) and [docs/AGENT-DATASET-WORKFLOW.md](docs/AGENT-DATASET-WORKFLOW.md).
 - Privacy, secrets, or local data: [PRIVACY.md](PRIVACY.md).
 - Deep-debug capture or diagnosis: [docs/DEEP-DEBUG.md](docs/DEEP-DEBUG.md).
+- Installer or optional runner-session work: [docs/LOCAL-SESSION.md](docs/LOCAL-SESSION.md) and [docs/INSTALLER.md](docs/INSTALLER.md).
 - Test scope and commands: [docs/TESTING.md](docs/TESTING.md).
 
 ## Runtime invariants
@@ -33,11 +35,12 @@ LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox sc
 - Annotation and OCR rectangles use original-image, half-open coordinates and remain inside their owning image or region.
 - Save manifests, settings, and placement documents atomically; never overwrite an existing finalized dataset directory.
 - Keep input cancellation-aware and release every held key or mouse button on all exit paths.
+- Runner setup requires an offline exact-binary native preflight, runner-profile-only policy, loopback-only isolation, and a rollback journal. Cache compatibility only by exact TermService/TermWrap hashes; never provision the owner's machine during agent testing.
 
 ## Architecture and status language
 
-- Preserve dependency direction: `Core <- Windows <- App`; tests and tools may consume Core.
-- Core is platform-independent, Windows owns Win32/capture/input, and App owns WPF/lifecycle.
+- Preserve dependency direction: `Core <- Windows <- Runtime <- App`; tests and tools may consume lower layers.
+- Core is platform-independent, Windows owns Win32/capture/input, Runtime owns WPF-free workflow composition, and App owns WPF/lifecycle.
 - Label repository claims as **Implemented**, **Prototype**, **Planned**, or **Unresolved**. Design intent must never be presented as working runtime behavior.
 - Dataset Builder owns Capture/Review/Datasets; Runtime Lab owns Debug/Wire Test. Both are retained owner tools, not dead code.
 - Respect repository limits: production and scripts 500 lines, tests 800 lines, every `AGENTS.md` 120 lines. Split by cohesive ownership instead of evading limits.

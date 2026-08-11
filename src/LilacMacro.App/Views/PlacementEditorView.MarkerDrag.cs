@@ -11,7 +11,7 @@ public partial class PlacementEditorView
 
     private void PlacementMarker_OnDragStarted(object sender, DragStartedEventArgs eventArgs)
     {
-        if (_map is null || !_session.CanEdit ||
+        if (_cursorMode != PlacementCursorMode.Select || _map is null || !_session.CanEdit ||
             sender is not Thumb { DataContext: PlacementStepRowViewModel row } ||
             PlacementMarkers.ItemContainerGenerator.ContainerFromItem(row) is not FrameworkElement container)
         {
@@ -48,7 +48,7 @@ public partial class PlacementEditorView
 
         _placementMarkerDrag = null;
         drag.Container.RenderTransform = Transform.Identity;
-        MapSurface.Cursor = Cursors.Cross;
+        ApplyCursorModeCursor();
         eventArgs.Handled = true;
 
         if (eventArgs.Canceled ||

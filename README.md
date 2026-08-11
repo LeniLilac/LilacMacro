@@ -1,6 +1,6 @@
 # LilacMacro
 
-LilacMacro is a private, Windows-only .NET/WPF tool for building and validating reliable Roblox screen automation. The current prototype provides a macro shell, placement authoring, a focused Dataset Builder, and a separate Runtime Lab for explicit OCR/vision transitions and flow tests. Unattended macro playback is planned.
+LilacMacro is a private, Windows-only .NET/WPF tool for building and validating reliable Roblox screen automation. The current prototype provides a macro shell, placement authoring, a focused Dataset Builder, a separate Runtime Lab for explicit OCR/vision transitions and flow tests, and owner-run Story/Raid/Challenge playback.
 
 ## Requirements
 
@@ -32,7 +32,8 @@ Optional OCR setup:
 - **Prototype:** the four-tab macro shell, Setup placement authoring, light/dark themes, and owner-triggered OCR Debug transitions.
 - **Prototype:** Runtime Lab and main Macro can run Story, Raid, and reset-aware Challenge rotation through authored placement playback, terminal verification, private-server Lobby reset, and priority reevaluation.
 - **Planned:** persistent plans and protected secrets, Expedition and limited Event runners, webhooks, and dataset/runtime integration for personalized image detection.
-- **Unresolved:** Macro and Plan page design, complete Settings design, packaging, and release workflow.
+- **Prototype:** an opt-in, installer-owned local runner account, loopback session isolation, runner-only minimal profile, immutable typed configuration bridge, shared headless Story/Raid/Challenge runtime, IPC, rollback, and uninstall cleanup. It remains unreleased until the pinned native payload and complete lifecycle pass disposable-VM certification.
+- **Unresolved:** Macro and Plan page design, complete Settings design, production signing/certification, and a supported release workflow.
 
 See the authoritative matrix in [Project status](docs/PROJECT-STATUS.md). Dataset Builder owns Capture, Review + OCR, and Datasets. Runtime Lab owns Debug and Wire Test. Both are supported internal applications built from the shared App/Core/Windows implementation.
 
@@ -45,3 +46,5 @@ LilacMacro uses ordinary Windows window management, Windows Graphics Capture, an
 Start with the [documentation index](docs/README.md). Contributors and coding agents must also read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
 
 The project is noncommercial; see [LICENSE.md](LICENSE.md), [NOTICE.md](NOTICE.md), and [PRIVACY.md](PRIVACY.md).
+
+The experimental runner and signed-installer boundaries are documented in [Optional local runner session](docs/LOCAL-SESSION.md) and [Installer](docs/INSTALLER.md).

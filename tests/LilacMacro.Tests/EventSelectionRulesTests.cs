@@ -79,6 +79,25 @@ public sealed class EventSelectionRulesTests
         Assert.Equal(bounds.Center, match.Region.Bounds.Center);
     }
 
+    [Theory]
+    [InlineData(EventDestination.BossBounty, "Boss Bounty", "Boss Bounty")]
+    [InlineData(EventDestination.GuessThatUnit, "Guess That Unit", "Guess That Unit")]
+    public void Find_AcceptsUpdatedEventTargets(
+        EventDestination destination,
+        string text,
+        string expectedTarget)
+    {
+        PixelRect bounds = new(70, 183, 149, 24);
+
+        OcrTargetMatch? match = EventSelectionRules.Find(
+            destination,
+            [Region(text, bounds)]);
+
+        Assert.NotNull(match);
+        Assert.Equal(expectedTarget, match.Target);
+        Assert.Equal(bounds.Center, match.Region.Bounds.Center);
+    }
+
     private static OcrTextRegion Region(string text, PixelRect bounds) => new()
     {
         Bounds = bounds,

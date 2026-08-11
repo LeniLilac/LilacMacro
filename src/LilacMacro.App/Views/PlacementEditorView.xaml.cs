@@ -1,8 +1,11 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Notifications;
+using LilacMacro.App.Runtime;
 using LilacMacro.Core.Placements;
 
 namespace LilacMacro.App.Views;
@@ -11,18 +14,32 @@ public partial class PlacementEditorView : UserControl
 {
     private readonly PlacementEditorSession _session;
     private readonly PlacementTimelinePanel _timelinePanel;
+    private readonly PlacementUnitSelector _unitSelector;
     private PlacementTimelineWindow? _timelineWindow;
     private PlacementMapCardViewModel? _map;
     private bool _refreshing;
+    private bool _refreshingDefaults;
     private double _mapZoom = 1;
     private bool _mapFitMode = true;
     private Point? _mapPanStart;
     private double _mapPanHorizontalOffset;
     private double _mapPanVerticalOffset;
-
+    private PlacementSetupTestService? _testService;
+    private CancellationTokenSource? _testCancellation;
+    private Task<int>? _testTask;
     public PlacementEditorView()
     {
         InitializeComponent();
+        _unitSelector = new PlacementUnitSelector(
+            Unit1Button,
+            Unit2Button,
+            Unit3Button,
+            Unit4Button,
+            Unit5Button,
+            Unit6Button);
+        TeamSelector.ItemsSource = Enumerable.Range(1, 8)
+            .Select(team => new PlacementNumberOption(team, $"TEAM {team}"))
+            .ToArray();
         string placementRoot = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "LilacMacro",
@@ -31,16 +48,27 @@ public partial class PlacementEditorView : UserControl
         _timelinePanel = new PlacementTimelinePanel();
         _timelinePanel.SetupChanged += TimelinePanel_OnSetupChanged;
         _timelinePanel.PopOutRequested += TimelinePanel_OnPopOutRequested;
+        _timelinePanel.TestSetupRequested += TimelinePanel_OnTestSetupRequested;
         TimelineHost.Content = _timelinePanel;
     }
 
     public event EventHandler? BackRequested;
+    public bool IsTestRunning => _testTask is not null;
+
+    internal void ConfigureSetupTest(
+        DeepDebugSessionService deepDebug,
+        MacroOwnerState ownerState)
+    {
+        if (_testService is not null)
+            throw new InvalidOperationException("Setup test services are already configured.");
+        _testService = new PlacementSetupTestService(deepDebug, ownerState);
+    }
 
     public async Task OpenAsync(PlacementMapCardViewModel map)
     {
         ArgumentNullException.ThrowIfNull(map);
         _map = map;
-        MapSurface.Cursor = Cursors.Cross;
+        ApplyCursorModeCursor();
         BreadcrumbText.Text = $"{map.ModeLabel} / {map.DisplayName.ToUpperInvariant()}";
         ViewSelector.ItemsSource = map.Images;
         ViewSelector.SelectedIndex = 0;
@@ -48,6 +76,8 @@ public partial class PlacementEditorView : UserControl
         MapSurface.Height = map.ImageHeight;
         PlacementMarkers.Width = map.ImageWidth;
         PlacementMarkers.Height = map.ImageHeight;
+        UnitPaletteOffset.X = 12;
+        UnitPaletteOffset.Y = 12;
         _mapFitMode = true;
         QueueFitMapToViewport();
         try
@@ -63,6 +93,26 @@ public partial class PlacementEditorView : UserControl
     }
 
     public Task FlushAsync() => _session.FlushAsync();
+    public void CancelTest() => _testCancellation?.Cancel();
+
+    public async Task CompleteForCloseAsync()
+    {
+        CancelTest();
+        if (_testTask is not null)
+        {
+            try
+            {
+                await _testTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+        await _session.FlushAsync();
+        CloseTimelineWindow();
+        _testService?.Dispose();
+        _testService = null;
+    }
 
     private void RefreshRoutes()
     {
@@ -82,14 +132,25 @@ public partial class PlacementEditorView : UserControl
     private void RefreshWorkspace()
     {
         if (_session.Document is null) return;
-        PlacementMarkers.ItemsSource = PlacementStepRowFactory.Create(
-                _session.CurrentRoute,
-                _map?.ImageWidth ?? _session.Document.ImageWidth,
-                _map?.ImageHeight ?? _session.Document.ImageHeight)
-            .Where(row => row.IsPlacement)
-            .ToArray();
+        RefreshPlacementMarkers();
         _timelinePanel.Load(_session);
+        RefreshAuthoringDefaults();
         UpdateReset();
+    }
+
+    private void RefreshAuthoringDefaults()
+    {
+        if (_session.Document is null) return;
+        _refreshingDefaults = true;
+        try
+        {
+            TeamSelector.SelectedValue = _session.CurrentRoute.TeamSlot;
+            _unitSelector.Select(_session.CurrentRoute.SelectedUnitSlot);
+        }
+        finally
+        {
+            _refreshingDefaults = false;
+        }
     }
 
     private void UpdateReset()
@@ -136,18 +197,74 @@ public partial class PlacementEditorView : UserControl
     private void TimelinePanel_OnSetupChanged(object? sender, EventArgs eventArgs)
     {
         RefreshRoutes();
-        PlacementMarkers.ItemsSource = PlacementStepRowFactory.Create(
-                _session.CurrentRoute,
-                _map?.ImageWidth ?? _session.Document?.ImageWidth ?? 1366,
-                _map?.ImageHeight ?? _session.Document?.ImageHeight ?? 700)
-            .Where(row => row.IsPlacement)
-            .ToArray();
+        RefreshPlacementMarkers();
     }
 
     private void TimelinePanel_OnPopOutRequested(object? sender, EventArgs eventArgs)
     {
         if (_timelineWindow is null) PopOutTimeline();
         else _timelineWindow.Close();
+    }
+
+    private async void TimelinePanel_OnTestSetupRequested(object? sender, EventArgs eventArgs)
+    {
+        if (_testTask is not null)
+        {
+            CancelTest();
+            return;
+        }
+        if (_testService is null)
+        {
+            AppToastService.ShowError("SETUP TEST UNAVAILABLE", "Setup test services are not configured.");
+            return;
+        }
+
+        try
+        {
+            await _session.FlushAsync();
+            (PlacementSetupDocument document, PlacementRouteSetup route) = _session.CreatePlaybackSnapshot();
+            _testCancellation = new CancellationTokenSource();
+            SetTestRunning(true);
+            _testTask = _testService.RunAsync(
+                document,
+                route,
+                SetTestStatus,
+                _testCancellation.Token);
+            int executed = await _testTask;
+            SetTestStatus($"COMPLETE - {executed} STEPS");
+        }
+        catch (OperationCanceledException)
+        {
+            SetTestStatus("STOPPED");
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                                           InvalidDataException or InvalidOperationException or ArgumentException)
+        {
+            AppToastService.ShowError("SETUP TEST FAILED", exception.Message);
+            SetTestStatus("FAILED");
+        }
+        finally
+        {
+            _testTask = null;
+            _testCancellation?.Dispose();
+            _testCancellation = null;
+            SetTestRunning(false);
+        }
+    }
+
+    private void SetTestStatus(string status) =>
+        _ = Dispatcher.BeginInvoke(() => _timelinePanel.SetTestStatus(status));
+
+    private void SetTestRunning(bool running)
+    {
+        RouteSelector.IsEnabled = !running;
+        TeamSelector.IsEnabled = !running;
+        UnitPalette.IsEnabled = !running;
+        ViewSelector.IsEnabled = !running;
+        BackToMapsButton.IsEnabled = !running;
+        ResetButton.IsEnabled = !running && _session.CanReset;
+        MapSurface.IsHitTestVisible = !running;
+        _timelinePanel.SetTestState(running, running ? "STARTING" : null);
     }
 
     private void PopOutTimeline()
@@ -181,14 +298,74 @@ public partial class PlacementEditorView : UserControl
         _timelineWindow?.Close();
     }
 
-    private async void MapSurface_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs eventArgs)
+    private async void PlacementEditor_OnPreviewKeyDown(object sender, KeyEventArgs eventArgs)
     {
-        if (_map is null || !_session.CanEdit) return;
-        Point point = eventArgs.GetPosition(MapSurface);
-        int x = (int)Math.Round(Math.Clamp(point.X, 0, _map.ImageWidth - 1));
-        int y = (int)Math.Round(Math.Clamp(point.Y, 0, _map.ImageHeight - 1));
-        await RunEditAsync(() => _session.AddPlacementAsync(x, y));
+        if (_session.Document is null || !_session.CanEdit || IsTestRunning ||
+            PlacementUnitSlotShortcut.IsBlockedByFocus(Keyboard.FocusedElement as DependencyObject))
+        {
+            return;
+        }
+
+        int? unitSlot = PlacementUnitSlotShortcut.Resolve(eventArgs.Key, Keyboard.Modifiers);
+        if (unitSlot is null) return;
         eventArgs.Handled = true;
+        _refreshingDefaults = true;
+        try
+        {
+            _unitSelector.Select(unitSlot.Value);
+        }
+        finally
+        {
+            _refreshingDefaults = false;
+        }
+        await SaveAuthoringDefaultsAsync();
+    }
+
+    private async void TeamSelector_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs) =>
+        await SaveAuthoringDefaultsAsync();
+
+    private async void UnitButton_OnChecked(object sender, RoutedEventArgs eventArgs) =>
+        await SaveAuthoringDefaultsAsync();
+
+    private async Task SaveAuthoringDefaultsAsync()
+    {
+        if (_refreshingDefaults || _session.Document is null ||
+            TeamSelector.SelectedValue is not int teamSlot)
+        {
+            return;
+        }
+
+        PlacementRouteSetup route = _session.CurrentRoute;
+        await RunEditAsync(() => _session.SetRouteDefaultsAsync(
+            teamSlot,
+            _unitSelector.SelectedSlot,
+            route.DefaultStepDelayMilliseconds,
+            route.DefaultTargetingPriority,
+            route.DefaultAutoUpgradePriority));
+    }
+
+    private void UnitPalette_OnDragDelta(object sender, DragDeltaEventArgs eventArgs)
+    {
+        UnitPaletteOffset.X = Math.Clamp(
+            UnitPaletteOffset.X + eventArgs.HorizontalChange,
+            0,
+            Math.Max(0, MapViewportHost.ActualWidth - UnitPalette.ActualWidth));
+        UnitPaletteOffset.Y = Math.Clamp(
+            UnitPaletteOffset.Y + eventArgs.VerticalChange,
+            0,
+            Math.Max(0, MapViewportHost.ActualHeight - UnitPalette.ActualHeight));
+    }
+
+    private void MapViewportHost_OnSizeChanged(object sender, SizeChangedEventArgs eventArgs)
+    {
+        UnitPaletteOffset.X = Math.Clamp(
+            UnitPaletteOffset.X,
+            0,
+            Math.Max(0, eventArgs.NewSize.Width - UnitPalette.ActualWidth));
+        UnitPaletteOffset.Y = Math.Clamp(
+            UnitPaletteOffset.Y,
+            0,
+            Math.Max(0, eventArgs.NewSize.Height - UnitPalette.ActualHeight));
     }
 
     private void MapViewport_OnSizeChanged(object sender, SizeChangedEventArgs eventArgs)
@@ -255,16 +432,22 @@ public partial class PlacementEditorView : UserControl
     {
         double next = Math.Clamp(value, 0.1, 6);
         Point viewportAnchor = anchor ?? new Point(MapViewport.ViewportWidth / 2, MapViewport.ViewportHeight / 2);
-        double logicalX = (MapViewport.HorizontalOffset + viewportAnchor.X) / _mapZoom;
-        double logicalY = (MapViewport.VerticalOffset + viewportAnchor.Y) / _mapZoom;
+        double logicalX = (MapViewport.HorizontalOffset + viewportAnchor.X - MapPanFrame.Padding.Left) / _mapZoom;
+        double logicalY = (MapViewport.VerticalOffset + viewportAnchor.Y - MapPanFrame.Padding.Top) / _mapZoom;
         _mapFitMode = fitMode;
         _mapZoom = next;
         MapScale.ScaleX = next;
         MapScale.ScaleY = next;
         _ = Dispatcher.BeginInvoke(() =>
         {
-            MapViewport.ScrollToHorizontalOffset(logicalX * next - viewportAnchor.X);
-            MapViewport.ScrollToVerticalOffset(logicalY * next - viewportAnchor.Y);
+            double horizontal = fitMode && _map is not null
+                ? MapPanFrame.Padding.Left + _map.ImageWidth * next / 2 - MapViewport.ViewportWidth / 2
+                : MapPanFrame.Padding.Left + logicalX * next - viewportAnchor.X;
+            double vertical = fitMode && _map is not null
+                ? MapPanFrame.Padding.Top + _map.ImageHeight * next / 2 - MapViewport.ViewportHeight / 2
+                : MapPanFrame.Padding.Top + logicalY * next - viewportAnchor.Y;
+            MapViewport.ScrollToHorizontalOffset(horizontal);
+            MapViewport.ScrollToVerticalOffset(vertical);
         });
     }
 

@@ -22,12 +22,14 @@ public sealed class PlacementMapCatalog
             PlacementMapMode.Story,
             "King's Tomb",
             ["Story King's Tomb Map Angle 1", "Story King's Tomb Map Angle 2"]),
+        new("story-east-town", PlacementMapMode.Story, "East Town", ["East Town Story Map Views"]),
         new("raid-spirit-city-act-1", PlacementMapMode.Raid, "Spirit City · Act 1", ["Raid Spirit City Act 1 Map"]),
         new("raid-spirit-city-act-2", PlacementMapMode.Raid, "Spirit City · Act 2", ["Raid Spirit City Act 2 Map"]),
         new("raid-spirit-city-act-3", PlacementMapMode.Raid, "Spirit City · Act 3", ["Raid Spirit City Act 3 Map"]),
         new("expedition-school-grounds", PlacementMapMode.Expedition, "School Grounds", ["Expedition School Ground Map"]),
         new("expedition-flower-forest", PlacementMapMode.Expedition, "Flower Forest", ["Expedition Flower Forest Map"]),
         new("expedition-rose-kingdom", PlacementMapMode.Expedition, "Rose Kingdom", ["Expedition Rose Kingdom Map"]),
+        new("expedition-east-town", PlacementMapMode.Expedition, "East Town", ["Expedition East Town Map Preview"]),
     ];
 
     public async Task<IReadOnlyList<PlacementMapReference>> DiscoverAsync(

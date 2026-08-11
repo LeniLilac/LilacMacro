@@ -24,6 +24,8 @@ public partial class MainWindow : Window
     private readonly Dictionary<PageKind, IWorkspacePage> _pages;
     private readonly CapturePage? _capturePage;
     private readonly StoryWireTestPage? _wireTestPage;
+    private readonly TeamScrollAbTestPage? _scrollTestPage;
+    private readonly TeamSwapTestPage? _teamSwapTestPage;
     private readonly DebugKeySequenceCoordinator? _debugInput;
     private GlobalHotkeyRegistration? _timedCaptureHotkey;
     private GlobalHotkeyRegistration? _manualCaptureHotkey;
@@ -37,8 +39,9 @@ public partial class MainWindow : Window
     {
         _deepDebug = deepDebug;
         _workspace = new WorkspaceController(deepDebug);
-        _ocr = new OcrRunner(deepDebug);
         _profile = ToolShellProfile.Create(kind);
+        _deepDebug.RetainAllFrames = _profile.RetainAllDeepDebugFrames;
+        _ocr = new OcrRunner(deepDebug) { KeepLoaded = _profile.KeepOcrLoaded };
         _currentPage = _profile.StartPage;
         InitializeComponent();
         Title = _profile.WindowTitle;
@@ -48,9 +51,11 @@ public partial class MainWindow : Window
         {
             _capturePage = new CapturePage(_workspace, NavigateAsync, deepDebug);
             _wireTestPage = null;
+            _scrollTestPage = null;
+            _teamSwapTestPage = null;
             _debugInput = null;
             _pages[PageKind.Capture] = _capturePage;
-            _pages[PageKind.Review] = new ReviewPage(_workspace, _ocr);
+            _pages[PageKind.Review] = new ReviewPage(_workspace, _ocr, _profile.OcrDevice);
             _pages[PageKind.Datasets] = new DatasetsPage(_workspace, NavigateAsync);
             _capturePage.CaptureStateChanged += CapturePage_OnCaptureStateChanged;
         }
@@ -58,10 +63,20 @@ public partial class MainWindow : Window
         {
             _capturePage = null;
             _debugInput = new DebugKeySequenceCoordinator(_workspace);
-            _wireTestPage = new StoryWireTestPage(_workspace, _ocr, deepDebug);
-            _pages[PageKind.Debug] = new DebugPage(_workspace, _ocr, _debugInput, deepDebug);
+            _wireTestPage = new StoryWireTestPage(_workspace, _ocr, deepDebug, _profile.OcrDevice);
+            _scrollTestPage = new TeamScrollAbTestPage(_workspace, _ocr, _profile.OcrDevice);
+            _teamSwapTestPage = new TeamSwapTestPage(_workspace, _ocr, deepDebug, _profile.OcrDevice);
+            _pages[PageKind.Debug] = new DebugPage(
+                _workspace,
+                _ocr,
+                _debugInput,
+                deepDebug,
+                _profile.OcrDevice);
             _pages[PageKind.WireTest] = _wireTestPage;
+            _pages[PageKind.ScrollTest] = _scrollTestPage;
+            _pages[PageKind.TeamSwapTest] = _teamSwapTestPage;
             _debugInput.Changed += DebugInput_OnChanged;
+            _teamSwapTestPage.RunningChanged += TeamSwapTestPage_OnRunningChanged;
         }
         ConfigureToolShell();
         _workspace.Changed += Workspace_OnChanged;
@@ -78,6 +93,8 @@ public partial class MainWindow : Window
         DatasetsNav.Visibility = _profile.Includes(PageKind.Datasets) ? Visibility.Visible : Visibility.Collapsed;
         DebugNav.Visibility = _profile.Includes(PageKind.Debug) ? Visibility.Visible : Visibility.Collapsed;
         WireTestNav.Visibility = _profile.Includes(PageKind.WireTest) ? Visibility.Visible : Visibility.Collapsed;
+        ScrollTestNav.Visibility = _profile.Includes(PageKind.ScrollTest) ? Visibility.Visible : Visibility.Collapsed;
+        TeamSwapTestNav.Visibility = _profile.Includes(PageKind.TeamSwapTest) ? Visibility.Visible : Visibility.Collapsed;
         DatasetPill.Visibility = _profile.Kind == ToolShellKind.DatasetBuilder
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -107,7 +124,9 @@ public partial class MainWindow : Window
             Border.BackgroundProperty,
             _deepDebug.Options.Enabled ? "AccentBrush" : "MutedBrush");
         DeepDebugPillText.Text = _deepDebug.Options.Enabled
-            ? $"DEEP DEBUG {_deepDebug.Options.FrameRetentionMinutes}M"
+            ? _profile.RetainAllDeepDebugFrames
+                ? "DEEP DEBUG ON"
+                : $"DEEP DEBUG {_deepDebug.Options.FrameRetentionMinutes}M"
             : "DEEP DEBUG OFF";
     }
 
@@ -119,6 +138,10 @@ public partial class MainWindow : Window
             UpdateDeepDebugStatus();
             RegisterToolHotkeys();
             await NavigateAsync(_profile.StartPage);
+            if (_profile.PreloadOcrOnOpen && _ocr.IsDeviceReady(_profile.OcrDevice))
+            {
+                await _ocr.WarmUpAsync(OcrRunner.SmallModel, _profile.OcrDevice);
+            }
         }
         catch (Exception error)
         {
@@ -199,6 +222,11 @@ public partial class MainWindow : Window
         if (_timedCaptureHotkey?.Matches(message, parameter) == true)
         {
             handled = true;
+            if (_teamSwapTestPage?.RequestStop() == true)
+            {
+                UpdateTimedCaptureKeyStatus();
+                return 0;
+            }
             if (_debugInput?.HandleF6() == true)
             {
                 UpdateTimedCaptureKeyStatus();
@@ -275,9 +303,25 @@ public partial class MainWindow : Window
         UpdateTimedCaptureKeyStatus();
     }
 
+    private void TeamSwapTestPage_OnRunningChanged(object? sender, EventArgs eventArgs)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            _ = Dispatcher.BeginInvoke(UpdateTimedCaptureKeyStatus);
+            return;
+        }
+        UpdateTimedCaptureKeyStatus();
+    }
+
     private void UpdateTimedCaptureKeyStatus()
     {
         if (_timedCaptureHotkey is null) return;
+        if (_teamSwapTestPage?.IsRunning == true)
+        {
+            CaptureKeyPill.SetResourceReference(Border.BackgroundProperty, "YellowBrush");
+            CaptureKeyPillText.Text = "F6 STOP";
+            return;
+        }
         if (_debugInput?.OwnsF6 == true)
         {
             CaptureKeyPill.SetResourceReference(
@@ -345,6 +389,15 @@ public partial class MainWindow : Window
         {
             throw new InvalidOperationException($"{target} is not available in {_profile.DisplayName}.");
         }
+        if (target != _currentPage)
+        {
+            if (_currentPage == PageKind.WireTest && _wireTestPage is not null)
+                await _wireTestPage.StopAsync();
+            if (_currentPage == PageKind.ScrollTest && _scrollTestPage is not null)
+                await _scrollTestPage.StopAsync();
+            if (_currentPage == PageKind.TeamSwapTest && _teamSwapTestPage is not null)
+                await _teamSwapTestPage.StopAsync();
+        }
         if (_currentPage == PageKind.Review && _pages[PageKind.Review] is ReviewPage review)
         {
             await review.FlushPendingAsync();
@@ -405,6 +458,8 @@ public partial class MainWindow : Window
         DatasetsNav.Style = (Style)FindResource(active == PageKind.Datasets ? "NavButtonActiveStyle" : "NavButtonStyle");
         DebugNav.Style = (Style)FindResource(active == PageKind.Debug ? "NavButtonActiveStyle" : "NavButtonStyle");
         WireTestNav.Style = (Style)FindResource(active == PageKind.WireTest ? "NavButtonActiveStyle" : "NavButtonStyle");
+        ScrollTestNav.Style = (Style)FindResource(active == PageKind.ScrollTest ? "NavButtonActiveStyle" : "NavButtonStyle");
+        TeamSwapTestNav.Style = (Style)FindResource(active == PageKind.TeamSwapTest ? "NavButtonActiveStyle" : "NavButtonStyle");
     }
 
     private async void MainWindow_OnClosing(object? sender, CancelEventArgs eventArgs)
@@ -417,6 +472,8 @@ public partial class MainWindow : Window
                 await review.FlushPendingAsync();
             if (_capturePage is not null) await _capturePage.CompleteForCloseAsync();
             if (_wireTestPage is not null) await _wireTestPage.StopAsync();
+            if (_scrollTestPage is not null) await _scrollTestPage.StopAsync();
+            if (_teamSwapTestPage is not null) await _teamSwapTestPage.StopAsync();
             if (_debugInput is not null) await _debugInput.StopAsync();
         }
         finally
@@ -429,6 +486,8 @@ public partial class MainWindow : Window
             _workspace.Dispose();
             _deepDebug.OptionsChanged -= DeepDebug_OnOptionsChanged;
             _deepDebug.ArchiveSaved -= DeepDebug_OnArchiveSaved;
+            if (_teamSwapTestPage is not null)
+                _teamSwapTestPage.RunningChanged -= TeamSwapTestPage_OnRunningChanged;
             _ = Dispatcher.BeginInvoke(Close);
         }
     }
@@ -453,6 +512,10 @@ public partial class MainWindow : Window
     private async void DebugNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.Debug);
 
     private async void WireTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.WireTest);
+
+    private async void ScrollTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.ScrollTest);
+
+    private async void TeamSwapTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.TeamSwapTest);
 
     private void Minimize_OnClick(object sender, RoutedEventArgs eventArgs) => WindowState = WindowState.Minimized;
 

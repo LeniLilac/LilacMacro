@@ -455,6 +455,12 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
 
+    <Style x:Key="ReadOnlyTableItemStyle" TargetType="ListViewItem">
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+
     <Style TargetType="ProgressBar">
         <Setter Property="Height" Value="22" />
         <Setter Property="Foreground" Value="{DynamicResource PinkBrush}" />

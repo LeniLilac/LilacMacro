@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using LilacMacro.App.Notifications;
@@ -12,15 +13,11 @@ public partial class PlacementTimelinePanel : UserControl
     private readonly ListBoxReorderDragController<PlacementStepRowViewModel> _dragController;
     private PlacementEditorSession? _session;
     private IReadOnlyList<PlacementStepRowViewModel> _rows = [];
-    private bool _refreshingDefaults;
     private bool _poppedOut;
 
     public PlacementTimelinePanel()
     {
         InitializeComponent();
-        TeamCombo.ItemsSource = Enumerable.Range(1, 8)
-            .Select(team => new PlacementNumberOption(team, $"TEAM {team}"))
-            .ToArray();
         _dragController = new ListBoxReorderDragController<PlacementStepRowViewModel>(TimelineList);
         _dragController.ReorderRequested += DragController_OnReorderRequested;
     }
@@ -28,6 +25,8 @@ public partial class PlacementTimelinePanel : UserControl
     public event EventHandler? SetupChanged;
 
     public event EventHandler? PopOutRequested;
+
+    public event EventHandler? TestSetupRequested;
 
     public void Load(PlacementEditorSession session)
     {
@@ -50,6 +49,28 @@ public partial class PlacementTimelinePanel : UserControl
             poppedOut ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled);
         SettingsScrollViewer.VerticalScrollBarVisibility =
             poppedOut ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
+    }
+
+    public void SetTestState(bool running, string? status = null)
+    {
+        if (status is not null) PlaybackStatusText.Text = status;
+        TestSetupText.Text = running ? "STOP TEST" : "TEST SETUP";
+        TestSetupIcon.Data = (Geometry)FindResource(running ? "Lucide.Square" : "Lucide.Play");
+        TestSetupButton.Style = (Style)FindResource(
+            running ? "DangerButtonStyle" : "PrimaryButtonStyle");
+        AddStepButton.IsEnabled = !running && _session?.CanEdit == true;
+        TimelineList.IsHitTestVisible = !running && _session?.CanEdit == true;
+        SettingsPanel.IsEnabled = !running;
+    }
+
+    public void SetTestStatus(string status) => PlaybackStatusText.Text = status;
+
+    public void SelectStep(Guid stepId)
+    {
+        PlacementStepRowViewModel? row = _rows.FirstOrDefault(candidate => candidate.Step.Id == stepId);
+        if (row is null) return;
+        TimelineList.SelectedItem = row;
+        TimelineList.ScrollIntoView(row);
     }
 
     private void TimelinePanel_OnPreviewMouseWheel(object sender, MouseWheelEventArgs eventArgs)
@@ -79,21 +100,13 @@ public partial class PlacementTimelinePanel : UserControl
         TimelineList.ItemsSource = _rows;
         AddStepButton.IsEnabled = _session.CanEdit;
         TimelineList.IsHitTestVisible = _session.CanEdit;
-        _refreshingDefaults = true;
-        try
-        {
-            PlacementRouteSetup route = _session.CurrentRoute;
-            TeamCombo.SelectedValue = route.TeamSlot;
-            SetSelectedUnit(route.SelectedUnitSlot);
-        }
-        finally
-        {
-            _refreshingDefaults = false;
-        }
     }
 
     private void PopOutButton_OnClick(object sender, RoutedEventArgs eventArgs) =>
         PopOutRequested?.Invoke(this, EventArgs.Empty);
+
+    private void TestSetupButton_OnClick(object sender, RoutedEventArgs eventArgs) =>
+        TestSetupRequested?.Invoke(this, EventArgs.Empty);
 
     private void StepsTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowSection(showSteps: true);
 
@@ -111,6 +124,7 @@ public partial class PlacementTimelinePanel : UserControl
     {
         StepsPanel.Visibility = showSteps ? Visibility.Visible : Visibility.Collapsed;
         SettingsPanel.Visibility = showSteps ? Visibility.Collapsed : Visibility.Visible;
+        AddStepButton.Visibility = showSteps ? Visibility.Visible : Visibility.Collapsed;
         StepsTabButton.Tag = showSteps ? "Active" : null;
         SettingsTabButton.Tag = showSteps ? null : "Active";
     }
@@ -161,10 +175,22 @@ public partial class PlacementTimelinePanel : UserControl
         object sender,
         System.Windows.Input.MouseButtonEventArgs eventArgs)
     {
-        if (sender is FrameworkElement { DataContext: PlacementStepRowViewModel row })
+        if (sender is FrameworkElement { DataContext: PlacementStepRowViewModel row } rowElement &&
+            !OriginatesInsideButton(eventArgs.OriginalSource as DependencyObject, rowElement))
         {
             _dragController.Begin(row, eventArgs);
         }
+    }
+
+    private static bool OriginatesInsideButton(DependencyObject? origin, DependencyObject row)
+    {
+        for (DependencyObject? current = origin;
+             current is not null && !ReferenceEquals(current, row);
+             current = VisualTreeHelper.GetParent(current))
+        {
+            if (current is ButtonBase) return true;
+        }
+        return false;
     }
 
     private void TimelineList_OnPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs eventArgs) =>
@@ -172,24 +198,21 @@ public partial class PlacementTimelinePanel : UserControl
 
     private void TimelineList_OnPreviewMouseLeftButtonUp(
         object sender,
-        System.Windows.Input.MouseButtonEventArgs eventArgs) => _dragController.Cancel();
+        System.Windows.Input.MouseButtonEventArgs eventArgs) => _dragController.Complete(eventArgs);
 
-    private void TimelineList_OnDragOver(object sender, DragEventArgs eventArgs) =>
-        _dragController.DragOver(eventArgs);
-
-    private void TimelineList_OnDragLeave(object sender, DragEventArgs eventArgs) =>
-        _dragController.DragLeave();
-
-    private void TimelineList_OnDrop(object sender, DragEventArgs eventArgs) =>
-        _dragController.Drop(eventArgs);
+    private void TimelineList_OnLostMouseCapture(object sender, MouseEventArgs eventArgs) =>
+        _dragController.Cancel();
 
     private async void DragController_OnReorderRequested(
         object? sender,
         ListReorderEventArgs<PlacementStepRowViewModel> eventArgs)
     {
         if (_session is null) return;
-        int destination = eventArgs.Target.Index + (eventArgs.InsertAfter ? 1 : 0);
-        if (eventArgs.Source.Index < destination) destination--;
+        int destination = ListReorderDestination.Resolve(
+            eventArgs.Source.Index,
+            eventArgs.Target.Index,
+            eventArgs.InsertAfter,
+            _rows.Count);
         if (eventArgs.Source.Index == destination) return;
         await RunEditAsync(() => _session.MoveStepToAsync(eventArgs.Source.Index, destination));
     }
@@ -201,50 +224,5 @@ public partial class PlacementTimelinePanel : UserControl
     }
 
     private static void ClearError() { }
-
-    private async void TeamCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs) =>
-        await SaveDefaultsAsync();
-
-    private async void UnitButton_OnChecked(object sender, RoutedEventArgs eventArgs) =>
-        await SaveDefaultsAsync();
-
-    private async Task SaveDefaultsAsync()
-    {
-        if (_refreshingDefaults || _session is null || TeamCombo.SelectedValue is not int teamSlot) return;
-        PlacementRouteSetup route = _session.CurrentRoute;
-        await RunEditAsync(() => _session.SetRouteDefaultsAsync(
-            teamSlot,
-            SelectedUnitSlot(),
-            route.DefaultStepDelayMilliseconds,
-            route.DefaultTargetingPriority,
-            route.DefaultAutoUpgradePriority));
-    }
-
-    private int SelectedUnitSlot() => new[]
-        {
-            Unit1Button,
-            Unit2Button,
-            Unit3Button,
-            Unit4Button,
-            Unit5Button,
-            Unit6Button,
-        }
-        .FirstOrDefault(button => button.IsChecked == true)?.Tag is string tag && int.TryParse(tag, out int slot)
-            ? slot
-            : 1;
-
-    private void SetSelectedUnit(int slot)
-    {
-        RadioButton button = slot switch
-        {
-            2 => Unit2Button,
-            3 => Unit3Button,
-            4 => Unit4Button,
-            5 => Unit5Button,
-            6 => Unit6Button,
-            _ => Unit1Button,
-        };
-        button.IsChecked = true;
-    }
 
 }

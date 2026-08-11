@@ -15,11 +15,15 @@ public partial class PlanPage : UserControl
         "School Grounds · Act 1", "School Grounds · Act 2", "School Grounds · Act 3",
         "School Grounds · Act 4", "School Grounds · Act 5", "School Grounds · Infinite",
         "School Grounds · Mastery", "Flower Forest · Act 1", "Rose Kingdom · Act 1",
-        "Fairy King Forest · Act 1", "King's Tomb · Mastery",
+        "Fairy King Forest · Act 1", "King's Tomb · Mastery", "East Town · Act 1",
     ];
     private static readonly string[] RaidRoutes = ["Spirit City · Act 1", "Spirit City · Act 2", "Spirit City · Act 3"];
-    private static readonly string[] ExpeditionRoutes = ["School Grounds", "Flower Forest", "Rose Kingdom"];
-    private static readonly string[] EventRoutes = ["Villain Invasion · Act 1", "Villain Invasion · Act 2", "Villain Invasion · Act 3"];
+    private static readonly string[] ExpeditionRoutes = ["School Grounds", "Flower Forest", "Rose Kingdom", "East Town"];
+    private static readonly string[] EventRoutes =
+    [
+        "Villain Invasion · Act 1", "Villain Invasion · Act 2", "Villain Invasion · Act 3",
+        "Boss Bounty", "Guess That Unit",
+    ];
     private static readonly string[] UtilityRoutes = ["Gold Mine refuel", "Resource Drill refuel", "Gold Mine + Resource Drill"];
 
     private readonly ObservableCollection<PlanPrototype> _plans;
@@ -340,7 +344,7 @@ public partial class PlanPage : UserControl
     private ListBoxReorderDragController<PlanBlockPrototype> EnsureDragController(ListBox list)
     {
         if (_dragControllers.TryGetValue(list, out ListBoxReorderDragController<PlanBlockPrototype>? controller)) return controller;
-        controller = new ListBoxReorderDragController<PlanBlockPrototype>(list);
+        controller = new ListBoxReorderDragController<PlanBlockPrototype>(list, useNativeCrossListDrag: true);
         controller.ReorderRequested += DragController_OnReorderRequested;
         _dragControllers[list] = controller;
         return controller;

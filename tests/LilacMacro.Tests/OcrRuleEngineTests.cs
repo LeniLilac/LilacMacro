@@ -88,6 +88,52 @@ public sealed class OcrRuleEngineTests
         Assert.Equal("abcrewardgamemode42", match.NormalizedText);
     }
 
+    [Fact]
+    public void FindTarget_ComposesAdjacentSameLineFragments()
+    {
+        OcrTargetMatch? match = OcrRuleEngine.FindTarget(
+            new OcrTargetRule("Unit Teams", "unit teams"),
+            [
+                Region("Unit", new PixelRect(384, 179, 39, 19)),
+                Region("Teams", new PixelRect(427, 179, 44, 19)),
+            ]);
+
+        Assert.NotNull(match);
+        Assert.Equal("unitteams", match.NormalizedText);
+        Assert.Equal(new PixelRect(384, 179, 87, 19), match.Region.Bounds);
+    }
+
+    [Fact]
+    public void FindTarget_ComposesOutlinedFragmentsWithOverlappingBounds()
+    {
+        OcrTargetMatch? match = OcrRuleEngine.FindTarget(
+            new OcrTargetRule("Unit Teams", "unit teams"),
+            [
+                Region("Unit", new PixelRect(383, 178, 43, 18)),
+                Region("Teams", new PixelRect(417, 179, 54, 18)),
+            ]);
+
+        Assert.NotNull(match);
+        Assert.Equal("unitteams", match.NormalizedText);
+        Assert.Equal(new PixelRect(383, 178, 88, 19), match.Region.Bounds);
+    }
+
+    [Theory]
+    [InlineData(480, 179)]
+    [InlineData(427, 210)]
+    [InlineData(400, 179)]
+    public void FindTarget_DoesNotComposeSpatiallyUnrelatedFragments(int x, int y)
+    {
+        OcrTargetMatch? match = OcrRuleEngine.FindTarget(
+            new OcrTargetRule("Unit Teams", "unit teams"),
+            [
+                Region("Unit", new PixelRect(384, 179, 39, 19)),
+                Region("Teams", new PixelRect(x, y, 44, 19)),
+            ]);
+
+        Assert.Null(match);
+    }
+
     [Theory]
     [InlineData("Enter Matchmaking")]
     [InlineData("Enter")]

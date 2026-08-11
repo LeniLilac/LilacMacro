@@ -6,6 +6,70 @@ namespace LilacMacro.Tests;
 public sealed class PlacementSetupTests
 {
     [Theory]
+    [InlineData(2, 0, false, 4, 0)]
+    [InlineData(2, 3, true, 4, 3)]
+    [InlineData(0, 1, true, 4, 1)]
+    [InlineData(3, 0, false, 4, 0)]
+    [InlineData(1, 1, false, 4, 1)]
+    public void ReorderDestinationSupportsEveryListBoundary(
+        int sourceIndex,
+        int targetIndex,
+        bool insertAfter,
+        int itemCount,
+        int expectedDestination)
+    {
+        Assert.Equal(
+            expectedDestination,
+            ListReorderDestination.Resolve(sourceIndex, targetIndex, insertAfter, itemCount));
+    }
+
+    [Theory]
+    [InlineData(2, 5, 0, false)]
+    [InlineData(2, 45, 1, false)]
+    [InlineData(2, 80, 3, false)]
+    [InlineData(2, 160, 3, true)]
+    [InlineData(0, 30, 1, false)]
+    [InlineData(0, 80, 2, false)]
+    [InlineData(3, 80, 2, false)]
+    [InlineData(3, 160, 2, true)]
+    [InlineData(-1, 80, 2, false)]
+    public void ReorderHitTestIgnoresStableSourceGapInBothDirections(
+        int sourceIndex,
+        double pointerY,
+        int expectedTargetIndex,
+        bool expectedInsertAfter)
+    {
+        ListReorderHit hit = ListReorderHitTest.Resolve(pointerY, [20, 60, 100, 140], sourceIndex);
+
+        Assert.Equal(expectedTargetIndex, hit.TargetIndex);
+        Assert.Equal(expectedInsertAfter, hit.InsertAfter);
+    }
+
+    [Theory]
+    [InlineData(System.Windows.Input.Key.D1, 1)]
+    [InlineData(System.Windows.Input.Key.D6, 6)]
+    [InlineData(System.Windows.Input.Key.NumPad1, 1)]
+    [InlineData(System.Windows.Input.Key.NumPad6, 6)]
+    public void UnitSlotShortcutsResolveNumberRowAndNumpadKeys(
+        System.Windows.Input.Key key,
+        int expectedSlot)
+    {
+        Assert.Equal(expectedSlot, PlacementUnitSlotShortcut.Resolve(key, System.Windows.Input.ModifierKeys.None));
+    }
+
+    [Theory]
+    [InlineData(System.Windows.Input.Key.D0)]
+    [InlineData(System.Windows.Input.Key.D7)]
+    [InlineData(System.Windows.Input.Key.NumPad7)]
+    [InlineData(System.Windows.Input.Key.D1, System.Windows.Input.ModifierKeys.Control)]
+    public void UnitSlotShortcutsIgnoreUnsupportedOrModifiedKeys(
+        System.Windows.Input.Key key,
+        System.Windows.Input.ModifierKeys modifiers = System.Windows.Input.ModifierKeys.None)
+    {
+        Assert.Null(PlacementUnitSlotShortcut.Resolve(key, modifiers));
+    }
+
+    [Theory]
     [InlineData(1)]
     [InlineData(8)]
     public void TeamSlotsOneThroughEightAreValid(int teamSlot)
@@ -172,6 +236,33 @@ public sealed class PlacementSetupTests
             Assert.Equal(PlacementStepKind.StartGame, session.CurrentRoute.Steps[1].Kind);
             PlacementSetupDocument saved = await store.LoadOrCreateAsync(map.Id, 1366, 700);
             Assert.Equal(PlacementStepKind.Delay, saved.Shared.Steps[0].Kind);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task EditorSessionMovesStartGameBelowAPlacement()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-start-boundary-{Guid.NewGuid():N}");
+        try
+        {
+            PlacementEditorSession session = new(new PlacementSetupStore(root));
+            PlacementMapDefinition map = new(
+                "story-school-grounds",
+                PlacementMapMode.Story,
+                "School Grounds",
+                ["Story School Grounds Map"]);
+            await session.OpenAsync(map, 1366, 700);
+            await session.AddPlacementAsync(600, 350);
+
+            await session.MoveStepToAsync(0, 1);
+            await session.FlushAsync();
+
+            Assert.Equal(PlacementStepKind.Place, session.CurrentRoute.Steps[0].Kind);
+            Assert.Equal(PlacementStepKind.StartGame, session.CurrentRoute.Steps[1].Kind);
         }
         finally
         {

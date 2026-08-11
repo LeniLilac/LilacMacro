@@ -42,7 +42,8 @@ public sealed record TeamSwapLayout(
         PixelSize clientSize)
     {
         ArgumentNullException.ThrowIfNull(regions);
-        OcrTextRegion? title = regions
+        IReadOnlyList<OcrTextRegion> candidates = OcrRegionComposer.AddAdjacentPairs(regions);
+        OcrTextRegion? title = candidates
             .Where(region => OcrRuleEngine.Normalize(region.Text)
                 .Contains("unitteams", StringComparison.Ordinal))
             .OrderBy(region => region.Bounds.Y)
@@ -105,7 +106,10 @@ public sealed record TeamSwapLayout(
         IReadOnlyList<OcrTextRegion> regions)
     {
         List<TeamSwapButton> buttons = [];
-        foreach (OcrTextRegion region in regions)
+        IReadOnlyList<OcrTextRegion> candidates = OcrRegionComposer.AddAdjacentPairs(regions);
+        foreach (OcrTextRegion region in candidates
+            .OrderByDescending(candidate => IsWholeButtonText(candidate.Text))
+            .ThenByDescending(candidate => candidate.Bounds.Width))
         {
             string normalized = OcrRuleEngine.Normalize(region.Text);
             TeamSwapButtonKind? kind = normalized switch
@@ -131,6 +135,9 @@ public sealed record TeamSwapLayout(
         }
         return buttons;
     }
+
+    private static bool IsWholeButtonText(string text) =>
+        OcrRuleEngine.Normalize(text) is "saveteam" or "loadteam";
 
     private static OcrTextRegion? FindFollowingTeamToken(
         OcrTextRegion first,

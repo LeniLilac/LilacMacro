@@ -96,6 +96,48 @@ internal sealed class DebugOcrStateRunner(
             sourceSnapshot);
     }
 
+    public async Task<DebugOcrSnapshot> WaitForMatchAsync(
+        DebugStateSpec state,
+        string device,
+        int maximumObservations,
+        TimeSpan retryDelay,
+        CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumObservations, 1);
+        DebugOcrSnapshot snapshot = await RunAsync(state, device, cancellationToken);
+        for (int attempt = 1; !snapshot.Evaluation.IsMatch && attempt < maximumObservations; attempt++)
+        {
+            await Task.Delay(retryDelay, cancellationToken);
+            snapshot = await RunAsync(state, device, cancellationToken);
+        }
+        return snapshot;
+    }
+
+    public async Task<DebugStateTransitionObservation> WaitForTransitionAsync(
+        DebugStateSpec source,
+        DebugStateSpec destination,
+        string device,
+        int maximumObservations,
+        TimeSpan retryDelay,
+        CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumObservations, 1);
+        DebugStateTransitionObservation observation = await ObserveTransitionAsync(
+            source,
+            destination,
+            device,
+            cancellationToken);
+        for (int attempt = 1;
+             observation.Outcome != ObservedStateTransitionOutcome.DestinationReached &&
+             attempt < maximumObservations;
+             attempt++)
+        {
+            await Task.Delay(retryDelay, cancellationToken);
+            observation = await ObserveTransitionAsync(source, destination, device, cancellationToken);
+        }
+        return observation;
+    }
+
     internal static OcrStateEvaluation Evaluate(
         DebugStateSpec state,
         IReadOnlyList<OcrTextRegion> regions) =>

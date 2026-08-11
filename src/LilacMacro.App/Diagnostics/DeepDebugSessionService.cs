@@ -36,6 +36,8 @@ public sealed class DeepDebugSessionService
 
     public DeepDebugOptions Options { get; private set; }
 
+    public bool RetainAllFrames { get; set; }
+
     public bool IsActive
     {
         get { lock (_gate) return _active is not null; }
@@ -102,7 +104,7 @@ public sealed class DeepDebugSessionService
             StartedAtUtc = DateTimeOffset.UtcNow,
             StagingDirectory = staging,
             Channel = channel,
-            FrameRetentionMinutes = Options.FrameRetentionMinutes,
+            FrameRetentionMinutes = RetainAllFrames ? 0 : Options.FrameRetentionMinutes,
         };
         lock (_gate)
         {
@@ -266,7 +268,9 @@ public sealed class DeepDebugSessionService
                 session.RetainedFrames.Count,
                 Volatile.Read(ref session.DiscardedArtifactCount),
                 visualProfiles,
-                "events.jsonl and timeline.md cover the full operation. PNG evidence uses already-acquired captures and retains only the final rolling window. Visual profiles contain only immutable revisions consulted by this run.",
+                session.RetainsAllFrames
+                    ? "events.jsonl, timeline.md, and already-acquired PNG evidence cover the full operation. Visual profiles contain only immutable revisions consulted by this run."
+                    : "events.jsonl and timeline.md cover the full operation. PNG evidence uses already-acquired captures and retains only the final rolling window. Visual profiles contain only immutable revisions consulted by this run.",
                 session.WriterFailure is null ? null : DeepDebugRedactor.Redact(session.WriterFailure.ToString()),
                 error is null ? null : DeepDebugRedactor.Redact(error.ToString()),
                 "Private-server links, Discord webhooks, Windows usernames, and profile paths are redacted. Captured Roblox pixels can still contain personal game data."));

@@ -20,10 +20,7 @@ internal sealed class StoryWireTestRunner(
     private readonly ChallengeWireNavigator _challenge = new(workspace, ocr, deepDebug);
     private readonly WireHybridEvidenceService _hybrid = new(workspace, deepDebug);
     private readonly PlacementPlaybackService _placements = new(workspace, ocr);
-    private readonly PlacementSetupStore _placementStore = new(Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LilacMacro",
-        "placements"));
+    private readonly PlacementSetupStore _placementStore = new(ResolvePlacementRoot());
 
     public async Task<StoryWireTestResult> RunAsync(
         StoryWireTestOptions options,
@@ -473,5 +470,13 @@ internal sealed class StoryWireTestRunner(
         StoryWireStage.MatchRuntime => "MATCH RUNTIME",
         _ => stage.ToString().ToUpperInvariant(),
     };
+
+    private static string ResolvePlacementRoot() =>
+        Environment.GetEnvironmentVariable("LILACMACRO_RUNNER_PLACEMENTS") is { Length: > 0 } value
+            ? Path.GetFullPath(value)
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "LilacMacro",
+                "placements");
 
 }

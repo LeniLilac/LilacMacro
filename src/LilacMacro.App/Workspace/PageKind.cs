@@ -7,4 +7,6 @@ public enum PageKind
     Datasets,
     Debug,
     WireTest,
+    ScrollTest,
+    TeamSwapTest,
 }

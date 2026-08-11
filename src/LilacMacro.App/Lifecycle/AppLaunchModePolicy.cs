@@ -5,6 +5,7 @@ internal enum AppLaunchMode
     Macro,
     DatasetBuilder,
     RuntimeLab,
+    DeepDebugViewer,
 }
 
 internal static class AppLaunchModePolicy
@@ -13,6 +14,8 @@ internal static class AppLaunchModePolicy
     internal const string DatasetBuilderExecutableName = "LilacMacro.DatasetBuilder";
     internal const string RuntimeLabArgument = "--runtime-lab";
     internal const string RuntimeLabExecutableName = "LilacMacro.RuntimeLab";
+    internal const string DeepDebugViewerArgument = "--deep-debug-viewer";
+    internal const string DeepDebugViewerExecutableName = "LilacMacro.DeepDebugViewer";
 
     public static AppLaunchMode Resolve(IEnumerable<string> arguments, string? processPath)
     {
@@ -24,12 +27,16 @@ internal static class AppLaunchModePolicy
         bool requestsRuntimeLab = arguments.Contains(
             RuntimeLabArgument,
             StringComparer.OrdinalIgnoreCase);
-        if (requestsDatasetBuilder && requestsRuntimeLab)
+        bool requestsDeepDebugViewer = arguments.Contains(
+            DeepDebugViewerArgument,
+            StringComparer.OrdinalIgnoreCase);
+        if ((requestsDatasetBuilder ? 1 : 0) + (requestsRuntimeLab ? 1 : 0) + (requestsDeepDebugViewer ? 1 : 0) > 1)
         {
-            throw new ArgumentException("Choose either Dataset Builder or Runtime Lab, not both.", nameof(arguments));
+            throw new ArgumentException("Choose only one LilacMacro tool mode.", nameof(arguments));
         }
         if (requestsDatasetBuilder) return AppLaunchMode.DatasetBuilder;
         if (requestsRuntimeLab) return AppLaunchMode.RuntimeLab;
+        if (requestsDeepDebugViewer) return AppLaunchMode.DeepDebugViewer;
 
         string executableName = Path.GetFileNameWithoutExtension(processPath) ?? string.Empty;
         if (string.Equals(
@@ -39,8 +46,10 @@ internal static class AppLaunchModePolicy
         {
             return AppLaunchMode.DatasetBuilder;
         }
-        return string.Equals(executableName, RuntimeLabExecutableName, StringComparison.OrdinalIgnoreCase)
-            ? AppLaunchMode.RuntimeLab
+        if (string.Equals(executableName, RuntimeLabExecutableName, StringComparison.OrdinalIgnoreCase))
+            return AppLaunchMode.RuntimeLab;
+        return string.Equals(executableName, DeepDebugViewerExecutableName, StringComparison.OrdinalIgnoreCase)
+            ? AppLaunchMode.DeepDebugViewer
             : AppLaunchMode.Macro;
     }
 }

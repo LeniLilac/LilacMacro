@@ -23,11 +23,12 @@ public partial class ReviewPage : UserControl, IWorkspacePage
     private bool _ocrBusy;
     private bool _intentRefreshQueued;
 
-    public ReviewPage(WorkspaceController workspace, OcrRunner ocr)
+    public ReviewPage(WorkspaceController workspace, OcrRunner ocr, string defaultOcrDevice)
     {
         _workspace = workspace;
         _ocr = ocr;
         InitializeComponent();
+        OcrDeviceCombo.SelectedIndex = defaultOcrDevice == OcrRunner.GpuDevice ? 1 : 0;
         KeepOcrLoadedToggle.IsChecked = _ocr.KeepLoaded;
         VerdictCombo.ItemsSource = Enum.GetValues<FrameVerdict>();
         _autosaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(650) };

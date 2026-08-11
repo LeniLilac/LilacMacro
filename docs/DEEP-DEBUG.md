@@ -1,6 +1,6 @@
 # Deep debug diagnostics
 
-**Status: Implemented.** Deep debug is local, optional, and shared by the main Macro shell, Dataset Builder, and Runtime Lab.
+**Status: Implemented.** Deep debug is local, optional, and shared by the main Macro shell, Dataset Builder, and Runtime Lab. A dedicated viewer is also implemented for owner inspection.
 
 ## Enable and locate
 
@@ -8,10 +8,12 @@
 - Dataset Builder: click the `DEEP DEBUG` pill in the title bar.
 - Runtime Lab: click the `DEEP DEBUG` pill in the title bar.
 - Set `FRAME HISTORY, MIN` from 1 to 120. The value and enabled state persist locally.
+- Runtime Lab retains already-acquired PNG evidence for its complete operation and displays `DEEP DEBUG ON`; the frame-history setting applies to the main Macro and Dataset Builder only.
 - Archives are written to `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - Settings exposes `OPEN DEBUG FOLDER`.
+- Open `LilacMacro.DeepDebugViewer.exe`, choose `OPEN ARCHIVE`, or drop a ZIP onto the window. The viewer does not initialize OCR or Roblox.
 
-The main Macro records its scheduler lifecycle, state and input evidence, terminal result, and private-server reset status without recording the private link. Dataset Builder records timed capture, an entire manual-capture session, and standalone OCR trials. Runtime Lab records Debug actions and complete Story/Raid/Challenge Wire Tests.
+The main Macro records its scheduler lifecycle, state and input evidence, terminal result, and private-server reset status without recording the private link. Dataset Builder records timed capture, an entire manual-capture session, and standalone OCR trials. Runtime Lab records Debug actions, complete Story/Raid/Challenge Wire Tests, and randomized Team Swap Test batches with their seed, target team, elapsed time, terminal status, OCR, scrollbar, click, and transition evidence.
 
 ## Archive contract
 
@@ -24,7 +26,7 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 | `timeline.md` | Fast chronological index with links to retained evidence |
 | `README.md` | Archive reading order and coordinate convention |
 | `configuration/` | Sanitized operation context, runtime options, and environment |
-| `frames/` | Retained PNG captures and detector regions from the final rolling window |
+| `frames/` | Retained PNG captures and detector regions: rolling window for Main Macro/Dataset Builder, complete operation for Runtime Lab |
 | `visual-profiles/` | Bounded immutable profile revisions and locators actually consulted by the run |
 | `latest-crash-sanitized.txt` | Latest crash log when one exists and can be read |
 
@@ -37,7 +39,7 @@ PNG evidence reuses pixels already acquired by the operation. Deep debug does no
 ## Retention and failure behavior
 
 - `events.jsonl` and `timeline.md` cover the complete operation.
-- PNGs older than the configured rolling frame window are removed before archival.
+- Main Macro and Dataset Builder remove PNGs older than the configured rolling frame window before archival. Runtime Lab retains PNG evidence for the complete operation.
 - At most 20 completed archives are retained; oldest archives are deleted after a new archive succeeds.
 - One session owns the recorder at a time.
 - A diagnostics writer or ZIP failure never changes the primary operation result. The staging directory is preserved with `finalization-error.txt` when possible.
@@ -57,6 +59,8 @@ PNG evidence reuses pixels already acquired by the operation. Deep debug does no
 5. Correlate a frame event with the immediately surrounding OCR, vision, window, and input events. Coordinates are Roblox client-relative half-open rectangles.
 
 Contact sheets draw magenta click crosshairs and yellow drag paths on the last selected full-client frame preceding each input. The label preserves the exact client-relative coordinates used by the macro.
+
+The desktop Deep Debug Viewer streams PNG entries directly from the ZIP without extracting them. It provides timestamp-aware playback, nearby machine events, and optional numbered click/scroll overlays translated from client-relative coordinates into full-frame or cropped-frame space. Missing frames and malformed JSONL records remain visible as explicit failures rather than authorizing or hiding an action.
 
 The contact sheet defaults to ignored output under `artifacts\diagnostic-contact-sheets` and never changes the source archive.
 

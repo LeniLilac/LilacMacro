@@ -84,6 +84,17 @@ public sealed class ChallengeStateRulesTests
         Assert.False(result.IsMatch);
     }
 
+    [Fact]
+    public void AvailableAcceptsEastTownMapAlias()
+    {
+        OcrStateEvaluation result = DebugOcrStateRunner.Evaluate(
+            DebugWorkflowCatalog.ChallengeAvailable,
+            Regions("Challenges", "East Town - Act 1", "Back", "Select Stage"));
+
+        Assert.True(result.IsMatch);
+        Assert.Contains(result.Matches, match => match.Target == "East Town");
+    }
+
     private static OcrTextRegion[] Regions(params string[] text) => text
         .Select((value, index) => new OcrTextRegion
         {

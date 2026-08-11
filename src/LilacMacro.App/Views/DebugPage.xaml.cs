@@ -17,7 +17,7 @@ public partial class DebugPage : UserControl, IWorkspacePage
     private readonly DebugEvidenceRunService _evidence;
     private readonly DebugKeySequenceCoordinator _debugInput;
     private readonly List<string> _events = [];
-    private string _device = OcrRunner.CpuDevice;
+    private string _device;
     private DebugEvidenceMode _evidenceMode = DebugEvidenceMode.Ocr;
     private StoryDifficulty _difficulty = StoryDifficulty.Normal;
     private int _expeditionDifficulty = 1;
@@ -28,7 +28,7 @@ public partial class DebugPage : UserControl, IWorkspacePage
         WorkspaceController workspace,
         OcrRunner ocr,
         DebugKeySequenceCoordinator debugInput,
-        DeepDebugSessionService deepDebug)
+        DeepDebugSessionService deepDebug, string defaultOcrDevice)
     {
         _workspace = workspace;
         _ocr = ocr;
@@ -36,13 +36,13 @@ public partial class DebugPage : UserControl, IWorkspacePage
         _evidence = new DebugEvidenceRunService(workspace, deepDebug);
         _debugInput = debugInput;
         _deepDebug = deepDebug;
+        _device = defaultOcrDevice;
         InitializeComponent();
         KeyChainControl.Initialize(debugInput);
         _debugInput.Changed += DebugInput_OnChanged;
         UpdateDifficultyButtons();
         UpdateExpeditionDifficultyButtons();
     }
-
     public Task RefreshAsync()
     {
         KeepLoadedToggle.IsChecked = _ocr.KeepLoaded;
@@ -259,13 +259,12 @@ public partial class DebugPage : UserControl, IWorkspacePage
 
     private async void CheckLobby_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await RunAsync(() => _debug.CheckLobbyAsync(_device), DebugWorkflowCatalog.Lobby);
-
     private async void OpenPlay_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await RunAsync(() => _debug.OpenPlayAsync(_device));
-
+    private async void OpenUnits_OnClick(object sender, RoutedEventArgs eventArgs) =>
+        await RunAsync(() => _debug.OpenUnitsAsync(_device));
     private async void OpenEvents_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await RunAsync(() => _debug.OpenEventsAsync(_device));
-
     private async void OpenAreas_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await RunAsync(() => _debug.OpenAreasAsync(_device));
 
@@ -274,6 +273,12 @@ public partial class DebugPage : UserControl, IWorkspacePage
 
     private async void VillainInvasion_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await SelectEventAsync(EventDestination.VillainInvasion);
+
+    private async void BossBounty_OnClick(object sender, RoutedEventArgs eventArgs) =>
+        await SelectEventAsync(EventDestination.BossBounty);
+
+    private async void GuessThatUnit_OnClick(object sender, RoutedEventArgs eventArgs) =>
+        await SelectEventAsync(EventDestination.GuessThatUnit);
 
     private Task SelectEventAsync(EventDestination destination) =>
         RunAsync(() => _debug.SelectEventAsync(destination, _device));
@@ -309,6 +314,8 @@ public partial class DebugPage : UserControl, IWorkspacePage
     private async void Challenge_OnClick(object sender, RoutedEventArgs eventArgs) => await SelectModeAsync("Challenge");
 
     private async void Expedition_OnClick(object sender, RoutedEventArgs eventArgs) => await SelectModeAsync("Expedition");
+
+    private async void Tower_OnClick(object sender, RoutedEventArgs eventArgs) => await SelectModeAsync("Tower");
 
     private Task SelectModeAsync(string mode) => RunAsync(() => _debug.SelectModeAsync(mode, _device));
 
@@ -368,6 +375,8 @@ public partial class DebugPage : UserControl, IWorkspacePage
 
     private async void KingsTomb_OnClick(object sender, RoutedEventArgs eventArgs) => await SelectMapAsync("King's Tomb");
 
+    private async void EastTown_OnClick(object sender, RoutedEventArgs eventArgs) => await SelectMapAsync("East Town");
+
     private Task SelectMapAsync(string map) => RunAsync(() => _debug.SelectMapAsync(map, _device));
 
     private async void CheckRaidMaps_OnClick(object sender, RoutedEventArgs eventArgs) =>
@@ -396,6 +405,9 @@ public partial class DebugPage : UserControl, IWorkspacePage
 
     private async void ExpeditionRose_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await SelectExpeditionMapAsync("Rose Kingdom");
+
+    private async void ExpeditionEastTown_OnClick(object sender, RoutedEventArgs eventArgs) =>
+        await SelectExpeditionMapAsync("East Town");
 
     private Task SelectExpeditionMapAsync(string map) => RunAsync(
         () => _debug.SelectExpeditionMapAsync(map, _expeditionDifficulty, _device));

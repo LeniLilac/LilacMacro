@@ -2,7 +2,6 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Automation;
 using LilacMacro.Core.Geometry;
-using LilacMacro.Core.Imaging;
 using LilacMacro.Core.Ocr;
 using static LilacMacro.App.Debugging.DebugReportFactory;
 
@@ -15,9 +14,13 @@ internal sealed class DebugTeamSwapRunner(
     private const int EndpointWheelUnits = 10000;
     private const int EndpointScrollMilliseconds = 280;
     private const int EndpointSettleMilliseconds = 90;
-    private const int MiddleDragMilliseconds = 180;
+    private const int MiddleScrollMilliseconds = 280;
+    private const int MaximumLoadAttempts = 2;
+    private const int MaximumStateObservations = 3;
+    private static readonly TimeSpan StateRetryDelay = TimeSpan.FromMilliseconds(100);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
-    private TeamSwapCalibration? _sessionCalibration;
+    private readonly TeamSwapScrollCalibrator _scrollCalibrator = new(workspace, ocr);
+    private TeamSwapScrollCalibrationResult? _sessionCalibration;
 
     public async Task<DebugRunReport> CheckAsync(
         string device,
@@ -55,14 +58,14 @@ internal sealed class DebugTeamSwapRunner(
         bool viewportIsKnownTop = false;
         if (_sessionCalibration is null)
         {
-            CalibrationResult? calibrated = await CalibrateAsync(
+            TeamSwapScrollCalibrationResult? calibrated = await _scrollCalibrator.CalibrateAsync(
                 liveLayout,
                 device,
                 events,
                 cancellationToken);
             if (calibrated is null)
                 return Blocked(snapshot, "TEAM SCROLL CALIBRATION FAILED", events);
-            _sessionCalibration = calibrated.Calibration;
+            _sessionCalibration = calibrated;
             snapshot = calibrated.TopSnapshot;
             liveLayout = CreateTeamLayout(snapshot);
             if (liveLayout is null)
@@ -74,166 +77,200 @@ internal sealed class DebugTeamSwapRunner(
             events.Add("SESSION SCROLL CALIBRATION REUSED");
         }
 
-        TeamSwapResolvedTarget? target = _sessionCalibration.Resolve(
+        TeamSwapResolvedTarget? target = _sessionCalibration.Calibration.Resolve(
             teamNumber,
             liveLayout.TitleBounds);
         if (target is null || !IsInside(target.LoadPoint))
         {
+            events.Add("SESSION SCROLL CALIBRATION STALE; RECALIBRATING");
             _sessionCalibration = null;
-            return Blocked(snapshot, "TEAM CALIBRATION STALE", events);
-        }
-
-        if (!viewportIsKnownTop && target.Viewport != TeamSwapViewport.Bottom)
-        {
-            await ScrollEndpointAsync(
-                target.ScrollAnchor,
-                downward: false,
+            TeamSwapScrollCalibrationResult? recalibrated = await _scrollCalibrator.CalibrateAsync(
+                liveLayout,
+                device,
+                events,
                 cancellationToken);
-            await Task.Delay(EndpointSettleMilliseconds, cancellationToken);
-            events.Add(
-                $"TOP CLAMP {EndpointWheelUnits} / {EndpointScrollMilliseconds} MS " +
-                $"BEFORE {target.Viewport.ToString().ToUpperInvariant()}");
-        }
-
-        if (target.Viewport == TeamSwapViewport.Middle)
-        {
-            if (target.DragStart is null || target.DragEnd is null ||
-                !IsInside(target.DragStart.Value) || !IsInside(target.DragEnd.Value))
+            if (recalibrated is null)
+                return Blocked(snapshot, "TEAM RECALIBRATION FAILED", events);
+            _sessionCalibration = recalibrated;
+            snapshot = recalibrated.TopSnapshot;
+            liveLayout = CreateTeamLayout(snapshot);
+            target = liveLayout is null
+                ? null
+                : recalibrated.Calibration.Resolve(teamNumber, liveLayout.TitleBounds);
+            if (target is null || !IsInside(target.LoadPoint))
             {
                 _sessionCalibration = null;
-                return Blocked(snapshot, "TEAM MIDDLE DRAG INVALID", events);
+                return Blocked(snapshot, "TEAM RECALIBRATION STALE", events);
             }
-            await workspace.DragRobloxAsync(
+            viewportIsKnownTop = true;
+        }
+
+        for (int attempt = 1; attempt <= MaximumLoadAttempts; attempt++)
+        {
+            if (!viewportIsKnownTop && target.Viewport != TeamSwapViewport.Bottom)
+            {
+                await ScrollEndpointAsync(
+                    target.ScrollAnchor,
+                    downward: false,
+                    cancellationToken);
+                await Task.Delay(EndpointSettleMilliseconds, cancellationToken);
+                events.Add(
+                    $"TOP CLAMP {EndpointWheelUnits} / {EndpointScrollMilliseconds} MS " +
+                    $"BEFORE {target.Viewport.ToString().ToUpperInvariant()}");
+            }
+
+            if (target.Viewport == TeamSwapViewport.Middle)
+            {
+                if (target.MiddleWheelUnits <= 0)
+                {
+                    _sessionCalibration = null;
+                    return Blocked(snapshot, "TEAM MIDDLE SCROLL INVALID", events);
+                }
+                await workspace.ScrollRobloxAsync(
+                    DebugWorkflowCatalog.ClientSize,
+                    target.ScrollAnchor,
+                    -target.MiddleWheelUnits,
+                    TimeSpan.FromMilliseconds(MiddleScrollMilliseconds),
+                    cancellationToken);
+                events.Add(
+                    $"CACHED MIDDLE SCROLL {-target.MiddleWheelUnits} / " +
+                    $"{MiddleScrollMilliseconds} MS");
+                TeamScrollbarObservation? observation = await _scrollCalibrator.ObserveAsync(
+                    _sessionCalibration,
+                    liveLayout!.TitleBounds,
+                    cancellationToken);
+                if (observation is null ||
+                    !TeamSwapCalibration.IsMiddlePositionUsable(observation.NormalizedPosition))
+                {
+                    _sessionCalibration = null;
+                    string position = observation is null
+                        ? "NOT FOUND"
+                        : observation.NormalizedPosition.ToString("P2");
+                    events.Add($"MIDDLE THUMB {position}; EXPECTED 40%-60%");
+                    return Blocked(snapshot, "TEAM MIDDLE SCROLL NOT VERIFIED", events);
+                }
+                target = _sessionCalibration.Calibration.Resolve(
+                    teamNumber,
+                    liveLayout.TitleBounds,
+                    observation.NormalizedPosition);
+                if (target is null || !IsInside(target.LoadPoint))
+                {
+                    _sessionCalibration = null;
+                    return Blocked(snapshot, "TEAM MIDDLE LOAD OUTSIDE VIEW", events);
+                }
+                events.Add(
+                    $"MIDDLE THUMB {observation.NormalizedPosition:P2} " +
+                    $"[{observation.Bounds.X},{observation.Bounds.Y}," +
+                    $"{observation.Bounds.Width},{observation.Bounds.Height}]");
+            }
+            else if (target.Viewport == TeamSwapViewport.Bottom)
+            {
+                await ScrollEndpointAsync(
+                    target.ScrollAnchor,
+                    downward: true,
+                    cancellationToken);
+                events.Add($"BOTTOM CLAMP {-EndpointWheelUnits} / {EndpointScrollMilliseconds} MS");
+            }
+
+            await workspace.ClickRobloxAsync(
                 DebugWorkflowCatalog.ClientSize,
-                target.DragStart.Value,
-                target.DragEnd.Value,
-                TimeSpan.FromMilliseconds(MiddleDragMilliseconds),
+                target.LoadPoint,
                 cancellationToken);
             events.Add(
-                $"CACHED MIDDLE DRAG [{target.DragStart.Value.X},{target.DragStart.Value.Y}] -> " +
-                $"[{target.DragEnd.Value.X},{target.DragEnd.Value.Y}] / {MiddleDragMilliseconds} MS");
-        }
-        else if (target.Viewport == TeamSwapViewport.Bottom)
-        {
-            await ScrollEndpointAsync(
+                $"TEAM {teamNumber} {target.Viewport.ToString().ToUpperInvariant()} " +
+                $"LOAD [{target.LoadPoint.X},{target.LoadPoint.Y}] " +
+                $"ATTEMPT {attempt}/{MaximumLoadAttempts}");
+            LoadCompletion completion = await CompleteLoadAsync(
+                teamNumber,
+                device,
                 target.ScrollAnchor,
-                downward: true,
+                events,
                 cancellationToken);
-            events.Add($"BOTTOM CLAMP {-EndpointWheelUnits} / {EndpointScrollMilliseconds} MS");
-        }
-
-        await workspace.ClickRobloxAsync(
-            DebugWorkflowCatalog.ClientSize,
-            target.LoadPoint,
-            cancellationToken);
-        events.Add(
-            $"TEAM {teamNumber} {target.Viewport.ToString().ToUpperInvariant()} " +
-            $"LOAD [{target.LoadPoint.X},{target.LoadPoint.Y}] CENTER");
-        DebugRunReport completed = await CompleteLoadAsync(
-            teamNumber,
-            device,
-            events,
-            cancellationToken);
-        if (!completed.Succeeded)
-        {
-            _sessionCalibration = null;
-            return completed with
+            if (!completion.RetryRequested)
             {
-                Events = [.. completed.Events, "SESSION SCROLL CALIBRATION INVALIDATED"],
-            };
-        }
-        return completed;
-    }
-
-    private async Task<CalibrationResult?> CalibrateAsync(
-        TeamSwapLayout initialLayout,
-        string device,
-        List<string> events,
-        CancellationToken cancellationToken)
-    {
-        PixelRect searchRegion = TeamScrollbarDetector.CreateSearchRegion(
-            initialLayout,
-            DebugWorkflowCatalog.ClientSize);
-        events.Add(
-            $"SLOW SCROLL CALIBRATION ROI [{searchRegion.X},{searchRegion.Y}," +
-            $"{searchRegion.Width},{searchRegion.Height}]");
-
-        await ScrollEndpointAsync(initialLayout.ScrollAnchor.Bounds.Center, downward: false, cancellationToken);
-        RgbImage topFirst = await CaptureScrollbarAsync(searchRegion, cancellationToken);
-        await ScrollEndpointAsync(initialLayout.ScrollAnchor.Bounds.Center, downward: false, cancellationToken);
-        RgbImage topSecond = await CaptureScrollbarAsync(searchRegion, cancellationToken);
-        DebugOcrSnapshot topSnapshot = await RunTeamStateAsync(device, cancellationToken);
-        TeamSwapLayout? topLayout = CreateTeamLayout(topSnapshot);
-        if (topLayout is null) return null;
-
-        bool movedDown = false;
-        try
-        {
-            await ScrollEndpointAsync(topLayout.ScrollAnchor.Bounds.Center, downward: true, cancellationToken);
-            movedDown = true;
-            RgbImage bottomFirst = await CaptureScrollbarAsync(searchRegion, cancellationToken);
-            await ScrollEndpointAsync(topLayout.ScrollAnchor.Bounds.Center, downward: true, cancellationToken);
-            RgbImage bottomSecond = await CaptureScrollbarAsync(searchRegion, cancellationToken);
-            DebugOcrSnapshot bottomSnapshot = await RunTeamStateAsync(device, cancellationToken);
-            TeamSwapLayout? bottomLayout = CreateTeamLayout(bottomSnapshot);
-            if (bottomLayout is null) return null;
-
-            TeamScrollbarEndpoints? endpoints = TeamScrollbarDetector.TryCalibrate(
-                [topFirst, topSecond],
-                [bottomFirst, bottomSecond],
-                searchRegion);
-            if (endpoints is null) return null;
-            TeamSwapCalibration? calibration = TeamSwapCalibration.TryCreate(
-                DebugWorkflowCatalog.ClientSize,
-                topLayout,
-                bottomLayout,
-                endpoints.TopBounds,
-                endpoints.BottomBounds);
-            if (calibration is null) return null;
-            events.Add(
-                $"SCROLLBAR TOP [{endpoints.TopBounds.X},{endpoints.TopBounds.Y}," +
-                $"{endpoints.TopBounds.Width},{endpoints.TopBounds.Height}] BOTTOM " +
-                $"[{endpoints.BottomBounds.X},{endpoints.BottomBounds.Y}," +
-                $"{endpoints.BottomBounds.Width},{endpoints.BottomBounds.Height}] " +
-                $"PITCH {calibration.RowPitch}");
-
-            await ScrollEndpointAsync(bottomLayout.ScrollAnchor.Bounds.Center, downward: false, cancellationToken);
-            movedDown = false;
-            DebugOcrSnapshot restoredTop = await RunTeamStateAsync(device, cancellationToken);
-            if (CreateTeamLayout(restoredTop) is null) return null;
-            events.Add("SCROLLBAR RESTORED TOP; SESSION CALIBRATION STORED");
-            return new CalibrationResult(calibration, restoredTop);
-        }
-        finally
-        {
-            if (movedDown)
-            {
-                try
+                if (!completion.Report.Succeeded)
                 {
-                    await ScrollEndpointAsync(
-                        initialLayout.ScrollAnchor.Bounds.Center,
-                        downward: false,
-                        CancellationToken.None);
+                    return completion.Report with
+                    {
+                        Events = [.. completion.Report.Events,
+                            "SESSION SCROLL CALIBRATION RETAINED"],
+                    };
                 }
-                catch (InvalidOperationException)
-                {
-                    // Input cleanup is already complete; a closed or resized client owns the failure.
-                }
+                return completion.Report;
             }
-        }
-    }
 
-    private async Task<RgbImage> CaptureScrollbarAsync(
-        PixelRect region,
-        CancellationToken cancellationToken)
-    {
-        await Task.Delay(EndpointSettleMilliseconds, cancellationToken);
-        IReadOnlyList<LilacMacro.Windows.Capture.CapturedRgbRegion> captures =
-            await workspace.CaptureRgbRegionsAsync(
-                DebugWorkflowCatalog.ClientSize,
-                [region],
-                cancellationToken);
-        return captures.Single().Image;
+            if (attempt == MaximumLoadAttempts)
+            {
+                return completion.Report with
+                {
+                    Status = $"{completion.Report.Status}; RETRY LIMIT",
+                    Events = [.. completion.Report.Events,
+                        "LOAD RETRY LIMIT 2", "INPUT BLOCKED",
+                        "SESSION SCROLL CALIBRATION RETAINED"],
+                };
+            }
+
+            await ScrollEndpointAsync(target.ScrollAnchor, downward: false, cancellationToken);
+            await Task.Delay(EndpointSettleMilliseconds, cancellationToken);
+            events.Add($"LOAD RETRY TOP CLAMP {EndpointWheelUnits} / {EndpointScrollMilliseconds} MS");
+            snapshot = await RunTeamStateAsync(device, cancellationToken);
+            liveLayout = CreateTeamLayout(snapshot);
+            TeamSwapResolvedTarget? freshTarget = liveLayout is null
+                ? null
+                : _sessionCalibration.Calibration.Resolve(teamNumber, liveLayout.TitleBounds);
+            TeamScrollbarObservation? topObservation = liveLayout is null
+                ? null
+                : await _scrollCalibrator.ObserveAsync(
+                    _sessionCalibration,
+                    liveLayout.TitleBounds,
+                    cancellationToken);
+            TeamSwapRetryGeometryDecision retryDecision =
+                TeamSwapCalibration.DecideRetryGeometry(
+                    snapshot.Evaluation.IsMatch,
+                    liveLayout is not null,
+                    topObservation is not null && TeamSwapCalibration.IsTopPositionUsable(
+                        topObservation.NormalizedPosition),
+                    freshTarget is not null && IsInside(freshTarget.LoadPoint));
+            if (retryDecision == TeamSwapRetryGeometryDecision.Block)
+            {
+                return Blocked(
+                    snapshot,
+                    liveLayout is null ? "TEAM RETRY LAYOUT MISSING" : "TEAM RETRY SOURCE INDETERMINATE",
+                    [.. events, "SESSION SCROLL CALIBRATION RETAINED"]);
+            }
+            if (retryDecision == TeamSwapRetryGeometryDecision.Recalibrate)
+            {
+                events.Add("RETRY GEOMETRY FAILED VALIDATION; RECALIBRATING");
+                _sessionCalibration = await _scrollCalibrator.CalibrateAsync(
+                    liveLayout!,
+                    device,
+                    events,
+                    cancellationToken);
+                if (_sessionCalibration is null)
+                    return Blocked(snapshot, "TEAM RETRY CALIBRATION FAILED", events);
+                snapshot = _sessionCalibration.TopSnapshot;
+                liveLayout = CreateTeamLayout(snapshot);
+                freshTarget = liveLayout is null
+                    ? null
+                    : _sessionCalibration.Calibration.Resolve(teamNumber, liveLayout.TitleBounds);
+                events.Add("SESSION SCROLL CALIBRATION REFRESHED AFTER GEOMETRY FAILURE");
+            }
+            else
+            {
+                events.Add($"RETRY TOP THUMB {topObservation!.NormalizedPosition:P2}");
+                events.Add("FRESH LOAD TARGET RESOLVED; SESSION SCROLL CALIBRATION RETAINED");
+            }
+            target = freshTarget;
+            if (target is null || !IsInside(target.LoadPoint))
+            {
+                _sessionCalibration = null;
+                return Blocked(snapshot, "TEAM RETRY CALIBRATION STALE", events);
+            }
+            viewportIsKnownTop = true;
+            events.Add($"LOAD TEAM RETRY {attempt + 1}/{MaximumLoadAttempts}");
+        }
+
+        throw new InvalidOperationException("The bounded load attempt loop did not return.");
     }
 
     private Task ScrollEndpointAsync(
@@ -246,32 +283,53 @@ internal sealed class DebugTeamSwapRunner(
             TimeSpan.FromMilliseconds(EndpointScrollMilliseconds),
             cancellationToken);
 
-    private async Task<DebugRunReport> CompleteLoadAsync(
+    private async Task<LoadCompletion> CompleteLoadAsync(
         int teamNumber,
         string device,
+        PixelPoint scrollAnchor,
         List<string> events,
         CancellationToken cancellationToken)
     {
         await Task.Delay(250, cancellationToken);
-        DebugStateTransitionObservation confirmTransition = await _states.ObserveTransitionAsync(
-            DebugWorkflowCatalog.TeamSwap,
+        DebugOcrSnapshot confirm = await _states.RunAsync(
             DebugWorkflowCatalog.TeamLoadConfirm,
             device,
             cancellationToken);
-        if (confirmTransition.Outcome != ObservedStateTransitionOutcome.DestinationReached)
+        if (!confirm.Evaluation.IsMatch)
         {
-            events.Add(StateLine(confirmTransition.Destination));
-            return Blocked(
-                confirmTransition.Result,
-                confirmTransition.Outcome == ObservedStateTransitionOutcome.SourceRetained
-                    ? "LOAD TEAM NOT APPLIED"
-                    : "LOAD CONFIRM INDETERMINATE",
-                events);
+            DebugOcrSnapshot save = await _states.RunAsync(
+                DebugWorkflowCatalog.TeamSaveConfirm,
+                device,
+                cancellationToken);
+            if (save.Evaluation.IsMatch)
+            {
+                return await RecoverFromSaveAsync(
+                    save,
+                    device,
+                    scrollAnchor,
+                    events,
+                    cancellationToken);
+            }
+
+            events.Add(StateLine(confirm));
+            events.Add(StateLine(save));
+            DebugOcrSnapshot source = await RunTeamStateAsync(device, cancellationToken);
+            return new LoadCompletion(
+                Blocked(
+                    source,
+                    source.Evaluation.IsMatch
+                        ? "LOAD TEAM NOT APPLIED"
+                        : "LOAD CONFIRM INDETERMINATE",
+                    events),
+                RetryRequested: source.Evaluation.IsMatch);
         }
-        DebugOcrSnapshot confirm = confirmTransition.Destination;
         TeamLoadConfirmLayout? confirmLayout = TeamLoadConfirmLayout.TryCreate(confirm.Regions);
         if (confirmLayout is null)
-            return Blocked(confirm, "CONFIRM + CANCEL MISSING", events);
+        {
+            return new LoadCompletion(
+                Blocked(confirm, "LOAD TEAM + CONFIRM + CANCEL MISSING", events),
+                RetryRequested: false);
+        }
         events.Add(StateLine(confirm));
         await workspace.ClickRobloxAsync(
             DebugWorkflowCatalog.ClientSize,
@@ -280,26 +338,34 @@ internal sealed class DebugTeamSwapRunner(
         events.Add($"CONFIRM [{confirmLayout.ConfirmPoint.X},{confirmLayout.ConfirmPoint.Y}] CENTER");
 
         await Task.Delay(250, cancellationToken);
-        DebugStateTransitionObservation includeTransition = await _states.ObserveTransitionAsync(
+        DebugStateTransitionObservation includeTransition = await _states.WaitForTransitionAsync(
             DebugWorkflowCatalog.TeamLoadConfirm,
             DebugWorkflowCatalog.TeamIncludeEquipment,
             device,
+            MaximumStateObservations,
+            StateRetryDelay,
             cancellationToken);
         if (includeTransition.Outcome != ObservedStateTransitionOutcome.DestinationReached)
         {
             events.Add(StateLine(includeTransition.Destination));
-            return Blocked(
-                includeTransition.Result,
-                includeTransition.Outcome == ObservedStateTransitionOutcome.SourceRetained
-                    ? "CONFIRM NOT APPLIED"
-                    : "INCLUDE EQUIPMENT INDETERMINATE",
-                events);
+            return new LoadCompletion(
+                Blocked(
+                    includeTransition.Result,
+                    includeTransition.Outcome == ObservedStateTransitionOutcome.SourceRetained
+                        ? "CONFIRM NOT APPLIED"
+                        : "INCLUDE EQUIPMENT INDETERMINATE",
+                    events),
+                RetryRequested: false);
         }
         DebugOcrSnapshot include = includeTransition.Destination;
         TeamIncludeEquipmentLayout? includeLayout =
             TeamIncludeEquipmentLayout.TryCreate(include.Regions);
         if (includeLayout is null)
-            return Blocked(include, "INCLUDE GUARDS MISSING", events);
+        {
+            return new LoadCompletion(
+                Blocked(include, "INCLUDE GUARDS MISSING", events),
+                RetryRequested: false);
+        }
         events.Add(StateLine(include));
         await workspace.ClickRobloxAsync(
             DebugWorkflowCatalog.ClientSize,
@@ -308,34 +374,98 @@ internal sealed class DebugTeamSwapRunner(
         events.Add($"INCLUDE [{includeLayout.IncludePoint.X},{includeLayout.IncludePoint.Y}] CENTER");
 
         await Task.Delay(250, cancellationToken);
-        DebugStateTransitionObservation completed = await _states.ObserveTransitionAsync(
+        DebugStateTransitionObservation completed = await _states.WaitForTransitionAsync(
             DebugWorkflowCatalog.TeamIncludeEquipment,
             DebugWorkflowCatalog.TeamSwap,
             device,
+            MaximumStateObservations,
+            StateRetryDelay,
             cancellationToken);
         if (completed.Outcome != ObservedStateTransitionOutcome.DestinationReached)
         {
             events.Add(StateLine(completed.Destination));
-            return Blocked(
-                completed.Result,
-                completed.Outcome == ObservedStateTransitionOutcome.SourceRetained
-                    ? "INCLUDE NOT APPLIED"
-                    : "TEAM RETURN INDETERMINATE",
-                events);
+            return new LoadCompletion(
+                Blocked(
+                    completed.Result,
+                    completed.Outcome == ObservedStateTransitionOutcome.SourceRetained
+                        ? "INCLUDE NOT APPLIED"
+                        : "TEAM RETURN INDETERMINATE",
+                    events),
+                RetryRequested: false);
         }
         events.Add(StateLine(completed.Destination));
-        return new DebugRunReport(
-            completed.Destination,
-            true,
-            $"TEAM {teamNumber} + EQUIPMENT LOADED",
-            events.ToArray());
+        return new LoadCompletion(
+            new DebugRunReport(
+                completed.Destination,
+                true,
+                $"TEAM {teamNumber} + EQUIPMENT LOADED",
+                events.ToArray()),
+            RetryRequested: false);
+    }
+
+    private async Task<LoadCompletion> RecoverFromSaveAsync(
+        DebugOcrSnapshot save,
+        string device,
+        PixelPoint scrollAnchor,
+        List<string> events,
+        CancellationToken cancellationToken)
+    {
+        TeamLoadConfirmLayout? saveLayout = TeamLoadConfirmLayout.TryCreate(save.Regions);
+        if (saveLayout is null)
+        {
+            return new LoadCompletion(
+                Blocked(save, "SAVE TEAM CANCEL MISSING", events),
+                RetryRequested: false);
+        }
+
+        events.Add(StateLine(save));
+        events.Add("SAVE TEAM NEGATIVE EVIDENCE; CONFIRM BLOCKED");
+        await workspace.ClickRobloxAsync(
+            DebugWorkflowCatalog.ClientSize,
+            saveLayout.CancelPoint,
+            cancellationToken);
+        events.Add($"SAVE CANCEL [{saveLayout.CancelPoint.X},{saveLayout.CancelPoint.Y}] CENTER");
+
+        await Task.Delay(250, cancellationToken);
+        DebugOcrSnapshot lingering = await _states.RunAsync(
+            DebugWorkflowCatalog.TeamSaveConfirm,
+            device,
+            cancellationToken);
+        if (lingering.Evaluation.IsMatch)
+        {
+            return new LoadCompletion(
+                Blocked(lingering, "SAVE CANCEL NOT APPLIED", events),
+                RetryRequested: false);
+        }
+
+        await ScrollEndpointAsync(scrollAnchor, downward: false, cancellationToken);
+        await Task.Delay(EndpointSettleMilliseconds, cancellationToken);
+        events.Add($"SAVE RECOVERY TOP CLAMP {EndpointWheelUnits} / {EndpointScrollMilliseconds} MS");
+        DebugOcrSnapshot restored = await RunTeamStateAsync(device, cancellationToken);
+        if (!restored.Evaluation.IsMatch || CreateTeamLayout(restored) is null)
+        {
+            return new LoadCompletion(
+                Blocked(restored, "TEAM TOP NOT RESTORED", events),
+                RetryRequested: false);
+        }
+
+        events.Add(StateLine(restored));
+        return new LoadCompletion(
+            new DebugRunReport(
+                restored,
+                false,
+                "SAVE TEAM CANCELLED; RETRYING LOAD",
+                events.ToArray()),
+            RetryRequested: true);
     }
 
     private Task<DebugOcrSnapshot> RunTeamStateAsync(
         string device,
-        CancellationToken cancellationToken) => _states.RunAsync(
+        CancellationToken cancellationToken) => _states.WaitForMatchAsync(
         DebugWorkflowCatalog.TeamSwap,
         device,
+        MaximumStateObservations,
+        StateRetryDelay,
         cancellationToken);
 
     private static TeamSwapLayout? CreateTeamLayout(DebugOcrSnapshot snapshot) =>
@@ -364,7 +494,7 @@ internal sealed class DebugTeamSwapRunner(
     private static string LayoutLine(TeamSwapLayout layout) =>
         $"VISIBLE SAVE/LOAD ROWS {layout.Rows.Count} PITCH {layout.RowPitch}";
 
-    private sealed record CalibrationResult(
-        TeamSwapCalibration Calibration,
-        DebugOcrSnapshot TopSnapshot);
+    private sealed record LoadCompletion(
+        DebugRunReport Report,
+        bool RetryRequested);
 }

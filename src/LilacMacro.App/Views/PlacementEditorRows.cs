@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using LilacMacro.Core.Placements;
 
 namespace LilacMacro.App.Views;
@@ -21,29 +23,17 @@ public sealed record PlacementOption<T>(T Value, string Label) where T : struct,
 
 public static class PlacementStepRowFactory
 {
-    private const int MarkerLabelHeight = 24;
-    private const int MinimumMarkerLabelWidth = 48;
-
     public static IReadOnlyList<PlacementStepRowViewModel> Create(
         PlacementRouteSetup route,
         int surfaceWidth = 1366,
-        int surfaceHeight = 700)
+        int surfaceHeight = 700,
+        PlacementCursorMode cursorMode = PlacementCursorMode.Place)
     {
         ArgumentNullException.ThrowIfNull(route);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(surfaceWidth);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(surfaceHeight);
         IReadOnlyDictionary<Guid, string> placementLabels =
             PlacementReferencePolicy.BuildDisplayLabels(route.Steps);
-        PlacementMarkerLabelRequest[] requests = route.Steps
-            .Where(step => step.Kind == PlacementStepKind.Place)
-            .Select(step => new PlacementMarkerLabelRequest(
-                step.Id,
-                step.X,
-                step.Y,
-                MarkerLabelWidth(placementLabels[step.Id]),
-                MarkerLabelHeight))
-            .ToArray();
-        IReadOnlyDictionary<Guid, PlacementMarkerLabelPlacement> markerLayouts =
-            PlacementMarkerLabelLayout.Arrange(requests, surfaceWidth, surfaceHeight)
-                .ToDictionary(placement => placement.Key);
         int startGameIndex = route.Steps.FindIndex(step => step.Kind == PlacementStepKind.StartGame);
         return route.Steps.Select((step, index) =>
             new PlacementStepRowViewModel(
@@ -52,30 +42,31 @@ public static class PlacementStepRowFactory
                 startGameIndex,
                 placementLabels,
                 step.Kind == PlacementStepKind.Place
-                    ? PlacementMarkerPresentation.Create(step.X, step.Y, markerLayouts[step.Id])
-                    : PlacementMarkerPresentation.Empty)).ToArray();
+                    ? PlacementMarkerPresentation.Create(step.X, step.Y)
+                    : PlacementMarkerPresentation.Empty,
+                cursorMode)).ToArray();
     }
-
-    private static int MarkerLabelWidth(string label) =>
-        Math.Max(MinimumMarkerLabelWidth, label.Length * 8 + 26);
 }
 
-public sealed class PlacementStepRowViewModel
+public sealed class PlacementStepRowViewModel : INotifyPropertyChanged
 {
     private readonly IReadOnlyDictionary<Guid, string> _placementLabels;
+    private bool _isNearPointer;
 
     public PlacementStepRowViewModel(
         PlacementStep step,
         int index,
         int startGameIndex,
         IReadOnlyDictionary<Guid, string> placementLabels,
-        PlacementMarkerPresentation markerLayout)
+        PlacementMarkerPresentation markerLayout,
+        PlacementCursorMode cursorMode)
     {
         Step = step;
         Index = index;
         StartGameIndex = startGameIndex;
         _placementLabels = placementLabels;
         MarkerLayout = markerLayout;
+        CursorMode = cursorMode;
     }
 
     public PlacementStep Step { get; }
@@ -93,6 +84,28 @@ public sealed class PlacementStepRowViewModel
     public string MarkerLabel => _placementLabels.GetValueOrDefault(Step.Id, Step.UnitSlot.ToString());
 
     public PlacementMarkerPresentation MarkerLayout { get; }
+
+    public PlacementCursorMode CursorMode { get; }
+
+    public bool IsSelectionMode => CursorMode == PlacementCursorMode.Select;
+
+    public bool IsNearPointer
+    {
+        get => _isNearPointer;
+        private set
+        {
+            if (_isNearPointer == value) return;
+            _isNearPointer = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(PinOpacity));
+        }
+    }
+
+    public double PinOpacity => !IsSelectionMode && IsNearPointer ? 0.18 : 1;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public void SetNearPointer(bool value) => IsNearPointer = value;
 
     public string Phase => Step.Kind == PlacementStepKind.StartGame
         ? "START"
@@ -139,4 +152,7 @@ public sealed class PlacementStepRowViewModel
     private static string AutoUpgradeLabel(PlacementAutoUpgradePriority value) => value == PlacementAutoUpgradePriority.Off
         ? "AUTO OFF"
         : $"AUTO {(int)value}";
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

@@ -130,6 +130,8 @@
                     <Button x:Name="DatasetsNav" Content="Datasets" Style="{StaticResource NavButtonStyle}" Click="DatasetsNav_OnClick" />
                     <Button x:Name="DebugNav" Content="Debug" Style="{StaticResource NavButtonStyle}" Click="DebugNav_OnClick" />
                     <Button x:Name="WireTestNav" Content="Wire Test" Style="{StaticResource NavButtonStyle}" Click="WireTestNav_OnClick" />
+                    <Button x:Name="ScrollTestNav" Content="Scroll Test" Style="{StaticResource NavButtonStyle}" Click="ScrollTestNav_OnClick" />
+                    <Button x:Name="TeamSwapTestNav" Content="Team Swap Test" Style="{StaticResource NavButtonStyle}" Click="TeamSwapTestNav_OnClick" />
                 </StackPanel>
             </Grid>
         </Border>

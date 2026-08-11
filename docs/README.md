@@ -8,10 +8,12 @@
 |---|---|
 | [Project status](PROJECT-STATUS.md) | Implemented, Prototype, Planned, and Unresolved boundaries |
 | [Contributing](../CONTRIBUTING.md) | Required change and validation workflow |
-| [Development](DEVELOPMENT.md) | Repository layout, setup, conventions, persistence, and file limits |
+| [Development](DEVELOPMENT.md) | Repository layout, setup, local artifact versioning, conventions, persistence, and file limits |
 | [Testing](TESTING.md) | Automated commands, risk-based coverage, and owner-only live testing |
 | [Troubleshooting](TROUBLESHOOTING.md) | Local SDK, OCR, capture, hotkey, dataset, and log problems |
 | [Deep debug](DEEP-DEBUG.md) | Diagnostic archive contract, retention, privacy, and agent inspection |
+| [Optional local runner session](LOCAL-SESSION.md) | Experimental runner account, isolation, worker, profile, and cleanup contract |
+| [Installer](INSTALLER.md) | Signed installer build, upgrade, and uninstall contract |
 
 ## Product and design
 
@@ -29,6 +31,7 @@
 | [Architecture](ARCHITECTURE.md) | Current project layers, owners, and integration boundaries |
 | [Game behavior](GAME-BEHAVIOR.md) | Field-observed Debug OCR state and action ledger |
 | [OCR and vision](OCR-AND-VISION.md) | Current PaddleOCR pipeline and planned hybrid detection |
+| [Expedition reward optimization](EXPEDITION-REWARD-OPTIMIZATION.md) | Reward-pool OCR evidence, provisional reroll thresholds, and validation plan |
 | [Placement authoring](PLACEMENT-AUTHORING.md) | Current Setup data model and authoring/playback boundary |
 | [Macro architecture](MACRO-ARCHITECTURE.md) | Planned priority scheduler, Lobby reset, modules, and mode flows |
 
@@ -47,6 +50,7 @@ The root [AGENTS.md](../AGENTS.md) routes repository-wide work. More specific ru
 - [App agent instructions](../src/LilacMacro.App/AGENTS.md)
 - [Core agent instructions](../src/LilacMacro.Core/AGENTS.md)
 - [Windows agent instructions](../src/LilacMacro.Windows/AGENTS.md)
+- [Runtime agent instructions](../src/LilacMacro.Runtime/AGENTS.md)
 - [Tools agent instructions](../tools/AGENTS.md)
 - [Test agent instructions](../tests/AGENTS.md)
 

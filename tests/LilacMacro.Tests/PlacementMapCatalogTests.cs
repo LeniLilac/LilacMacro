@@ -9,13 +9,37 @@ public sealed class PlacementMapCatalogTests
     [Fact]
     public void DefinitionsHaveStableUniqueKeys()
     {
-        Assert.Equal(11, PlacementMapCatalog.Definitions.Count);
+        Assert.Equal(13, PlacementMapCatalog.Definitions.Count);
         Assert.Equal(
             PlacementMapCatalog.Definitions.Count,
             PlacementMapCatalog.Definitions.Select(definition => definition.Id).Distinct().Count());
         Assert.Equal(
             PlacementMapCatalog.Definitions.Sum(definition => definition.DatasetNames.Count),
             PlacementMapCatalog.Definitions.SelectMany(definition => definition.DatasetNames).Distinct().Count());
+    }
+
+    [Fact]
+    public async Task DiscoverIncludesFinalizedEastTownStoryAndExpeditionReferences()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-placement-east-town-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            DatasetStore store = new();
+            await CreateDatasetAsync(store, root, "East Town Story Map Views", DateTimeOffset.UtcNow, 1);
+            await CreateDatasetAsync(store, root, "Expedition East Town Map Preview", DateTimeOffset.UtcNow, 2);
+
+            IReadOnlyList<PlacementMapReference> result = await new PlacementMapCatalog(store).DiscoverAsync(root);
+
+            Assert.Collection(
+                result,
+                story => Assert.Equal("story-east-town", story.Definition.Id),
+                expedition => Assert.Equal("expedition-east-town", expedition.Definition.Id));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

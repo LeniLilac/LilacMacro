@@ -7,6 +7,7 @@ public sealed class AppLaunchModePolicyTests
     [Theory]
     [InlineData("--DATASET-BUILDER", "DatasetBuilder")]
     [InlineData("--RUNTIME-LAB", "RuntimeLab")]
+    [InlineData("--DEEP-DEBUG-VIEWER", "DeepDebugViewer")]
     public void Resolve_WithToolArgumentReturnsRequestedMode(string argument, string expected)
     {
         AppLaunchMode result = AppLaunchModePolicy.Resolve(
@@ -19,6 +20,7 @@ public sealed class AppLaunchModePolicyTests
     [Theory]
     [InlineData("LilacMacro.DatasetBuilder.exe", "DatasetBuilder")]
     [InlineData("LilacMacro.RuntimeLab.exe", "RuntimeLab")]
+    [InlineData("LilacMacro.DeepDebugViewer.exe", "DeepDebugViewer")]
     [InlineData("LilacMacro.exe", "Macro")]
     public void Resolve_FromExecutableNameReturnsExpectedMode(string executable, string expected)
     {
@@ -33,7 +35,7 @@ public sealed class AppLaunchModePolicyTests
     public void Resolve_WithConflictingArgumentsRejectsAmbiguousShell()
     {
         Assert.Throws<ArgumentException>(() => AppLaunchModePolicy.Resolve(
-            ["--dataset-builder", "--runtime-lab"],
+            ["--dataset-builder", "--runtime-lab", "--deep-debug-viewer"],
             @"C:\Projects\LilacMacro\LilacMacro.exe"));
     }
 }

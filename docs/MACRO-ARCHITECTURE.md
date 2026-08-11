@@ -21,6 +21,10 @@ flowchart TD
 
 Direct Repeat Stage remains useful Debug evidence but is not part of this canonical loop. Resetting through Lobby makes team selection, task priority, cooldowns, configuration changes, and recovery deterministic between matches.
 
+## Execution target
+
+`This desktop` is the safe default. The optional `Local runner session` target uses the same scheduler and workflow policies inside a dedicated account; the desktop app publishes an immutable snapshot and sends typed commands rather than raw input. Selection is allowed only when provisioning, exact-binary native preflight, loopback isolation, ACLs, versions, fresh capture, IPC peer identity, and the WPF-free runtime host all pass. Failure or IPC loss cancels the run and releases input. See [Optional local runner session](LOCAL-SESSION.md).
+
 ## Scheduler contract
 
 Each task will declare:
@@ -51,6 +55,8 @@ The scheduler evaluates a stable snapshot from highest to lowest priority, runs 
 
 Modules exchange typed state/outcome contracts rather than clicking through one another. Every handoff requires fresh evidence for the owned state.
 
+Placement routes reserve at most 30000 ms of authored guaranteed delay before their `Start Game` boundary. If Roblox's 60-second timer starts the match while those prestart actions are still running, the placement owner completes them in order. At the boundary, repeated fresh Start-screen absence plus independent selected-unit runtime evidence satisfies the boundary without a click, after which the same route continues into after-start actions. The timer is a state transition fallback, never a cancellation signal.
+
 ## Mode flows
 
 All arrows below mean a verified transition, not a timed blind click.
@@ -78,6 +84,8 @@ Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Expedition map and
 ### Event — Planned
 
 Lobby -> Unit Inventory -> Teams -> change team -> Events -> Villain Invasion -> act -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> private-server rejoin -> Lobby.
+
+The updated Event sidebar also exposes Boss Bounty and Guess That Unit through the same live-OCR destination selector. Their downstream flows remain unspecified, so only owner-triggered Debug selection is implemented; neither is treated as a runnable Event task yet.
 
 ## Content lifecycle
 

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>LilacMacro.Runtime</RootNamespace>
+    <AssemblyName>LilacMacro.Runtime</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LilacMacro.Core\LilacMacro.Core.csproj" />
+    <ProjectReference Include="..\LilacMacro.Windows\LilacMacro.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Runner\*.cs" />
+    <Compile Include="..\LilacMacro.App\Diagnostics\*.cs"
+             Link="Diagnostics\%(Filename)%(Extension)" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\AppSettings.cs"
+             Link="Infrastructure\AppSettings.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\AppSettingsStore.cs"
+             Link="Infrastructure\AppSettingsStore.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\OcrRunner.cs"
+             Link="Infrastructure\OcrRunner.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\OcrWorkerResult.cs"
+             Link="Infrastructure\OcrWorkerResult.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\PersistentOcrWorker.cs"
+             Link="Infrastructure\PersistentOcrWorker.cs" />
+    <Compile Include="..\LilacMacro.App\Workspace\CaptureProgress.cs"
+             Link="Workspace\CaptureProgress.cs" />
+    <Compile Include="..\LilacMacro.App\Workspace\CrossProcessRobloxInputGate.cs"
+             Link="Workspace\CrossProcessRobloxInputGate.cs" />
+    <Compile Include="..\LilacMacro.App\Workspace\WorkspaceController.cs"
+             Link="Workspace\WorkspaceController.cs" />
+    <Compile Include="..\LilacMacro.App\Workspace\WorkspaceInputCoordinator.cs"
+             Link="Workspace\WorkspaceInputCoordinator.cs" />
+    <Compile Include="..\LilacMacro.App\Debugging\*.cs"
+             Exclude="..\LilacMacro.App\Debugging\DebugKeySequence*.cs;..\LilacMacro.App\Debugging\TeamScrollAbTestRunner.cs;..\LilacMacro.App\Debugging\TeamSwapTestRunner.cs"
+             Link="Debugging\%(Filename)%(Extension)" />
+    <Compile Include="..\LilacMacro.App\Runtime\ChallengePlacementResolver.cs"
+             Link="Runtime\ChallengePlacementResolver.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\ChallengeRotationStore.cs"
+             Link="Runtime\ChallengeRotationStore.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\MatchTerminalService.cs"
+             Link="Runtime\MatchTerminalService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\PlacementPlaybackService.cs"
+             Link="Runtime\PlacementPlaybackService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\PlacementRuntimeContracts.cs"
+             Link="Runtime\PlacementRuntimeContracts.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\PrivateServerRejoinService.cs"
+             Link="Runtime\PrivateServerRejoinService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\UnitPanelEvidenceService.cs"
+             Link="Runtime\UnitPanelEvidenceService.cs" />
+  </ItemGroup>
+</Project>

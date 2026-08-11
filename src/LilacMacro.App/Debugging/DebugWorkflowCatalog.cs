@@ -37,6 +37,7 @@ internal static class DebugWorkflowCatalog
         new("Raid", "raid", "difficult gamemode", "difficult"),
         new("Challenge", "challenge", "reward gamemode", "reward"),
         new("Expedition", "expedition", "special gamemode", "special"),
+        new("Tower", "tower", "tower mode"),
     ];
 
     public static readonly IReadOnlyList<OcrTargetRule> UnitInventoryTargets =
@@ -54,6 +55,14 @@ internal static class DebugWorkflowCatalog
 
     public static readonly IReadOnlyList<OcrTargetRule> TeamLoadConfirmTargets =
     [
+        new("Load Team", "load team"),
+        new("Confirm", "confirm"),
+        new("Cancel", "cancel"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> TeamSaveConfirmTargets =
+    [
+        new("Save Team", "save team"),
         new("Confirm", "confirm"),
         new("Cancel", "cancel"),
     ];
@@ -79,6 +88,7 @@ internal static class DebugWorkflowCatalog
         new("Rose Kingdom", "rose", "kingdom", "rose kingdom"),
         new("Fairy King Forest", "fairy king", "fairy king forest", "king forest"),
         new("King's Tomb", "kings tomb", "tomb"),
+        new("East Town", "east town", "east", "town"),
     ];
 
     public static readonly IReadOnlyList<OcrTargetRule> ChallengeAvailableTargets =
@@ -108,6 +118,7 @@ internal static class DebugWorkflowCatalog
         new("School Grounds", "school", "grounds", "school grounds"),
         new("Flower Forest", "flower", "forest", "flower forest"),
         new("Rose Kingdom", "rose", "kingdom", "rose kingdom"),
+        new("East Town", "east", "town", "east town"),
     ];
 
     public static readonly IReadOnlyList<OcrTargetRule> StoryActPickerTargets =
@@ -204,14 +215,21 @@ internal static class DebugWorkflowCatalog
 
     public static readonly DebugStateSpec TeamLoadConfirm = new(
         "TEAM LOAD CONFIRM",
-        Dataset("team-swap-confirm-flow-20260802-223223"),
+        Dataset("team-swap-flow-revised-20260808-054531"),
         [2],
-        2,
+        3,
         TeamLoadConfirmTargets);
+
+    public static readonly DebugStateSpec TeamSaveConfirm = new(
+        "TEAM SAVE CONFIRM",
+        Dataset("team-swap-flow-revised-20260808-054531"),
+        [1],
+        3,
+        TeamSaveConfirmTargets);
 
     public static readonly DebugStateSpec TeamIncludeEquipment = new(
         "TEAM INCLUDE EQUIPMENT",
-        Dataset("team-swap-confirm-flow-20260802-223223"),
+        Dataset("team-swap-flow-revised-20260808-054531"),
         [3],
         3,
         TeamIncludeEquipmentTargets);

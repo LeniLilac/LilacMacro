@@ -44,6 +44,8 @@ internal static class DeepDebugSessionWriter
 
     public static void PruneExpiredArtifacts(DeepDebugSession session, DateTimeOffset referenceUtc)
     {
+        if (session.RetainsAllFrames) return;
+
         DateTimeOffset cutoff = referenceUtc.AddMinutes(-session.FrameRetentionMinutes);
         while (session.RetainedFrames.TryPeek(out DeepDebugRetainedFrame? retained, out _) &&
                retained.TimestampUtc < cutoff)

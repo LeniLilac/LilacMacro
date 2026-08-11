@@ -24,11 +24,16 @@ internal sealed class WireHybridEvidenceService(
     private readonly VisualAnchorRegionMatcher _matcher = new();
     private readonly VisualProfileStore _profiles = new();
     private readonly DebugStateDatasetContextLoader _contexts = new();
-    private readonly string _profileRoot = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LilacMacro",
-        "visual-profiles",
-        "wire");
+    private readonly string _profileRoot = ResolveProfileRoot();
+
+    private static string ResolveProfileRoot() =>
+        Environment.GetEnvironmentVariable("LILACMACRO_RUNNER_VISUAL_PROFILES") is { Length: > 0 } value
+            ? Path.GetFullPath(value)
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "LilacMacro",
+                "visual-profiles",
+                "wire");
 
     public async Task<IReadOnlyList<WireVisualComparison>> CompareAsync(
         DebugRunReport report,

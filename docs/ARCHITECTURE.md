@@ -5,13 +5,14 @@
 ## Dependency direction
 
 ```text
-LilacMacro.Core <- LilacMacro.Windows <- LilacMacro.App
-        ^                    ^                 ^
-        +------------ tests and tools --------+
+LilacMacro.Core <- LilacMacro.Windows <- LilacMacro.Runtime <- LilacMacro.App
+        ^                    ^                  ^                  ^
+        +---------------- tests and tools consume lower layers ---+
 ```
 
 - Core is platform-independent and owns deterministic contracts and policies.
 - Windows owns Win32, Windows Graphics Capture, display geometry, hotkeys, and input.
+- Runtime owns reusable WPF-free workflow composition shared by desktop and session execution.
 - App owns WPF, lifecycle, user interaction, and service coordination.
 - Tests may reference the layers they verify. The dataset tool consumes Core contracts and WPF imaging but does not own application workflow.
 
@@ -54,7 +55,7 @@ No Windows service may inject, read Roblox memory, hook the game, or bypass anti
 - Macro is a right-rail runtime dashboard prototype. Its Start/Stop interaction changes local preview state only. Its explicit Dock/Undock control owns only verified Windows window placement and does not start scheduler input.
 - Plan is an in-memory priority authoring prototype. It does not persist plans or feed a scheduler.
 - Setup discovers finalized map datasets and owns placement authoring.
-- Settings groups General, Roblox, Discord, keybind, and diagnostics controls behind internal category tabs. Theme and deep-debug diagnostics are connected. Keybinds are session-only but feed the global macro toggle, Story/Raid navigation, placement playback, and camera alignment; other controls remain session-only prototypes.
+- Settings groups General, Roblox, Discord, keybind, and diagnostics controls behind internal category tabs. Theme and deep-debug diagnostics are connected. Keybinds persist in shared local app state and feed the global macro toggle, Story/Raid navigation, placement playback, and camera alignment; other controls remain session-only prototypes.
 - Semantic color dictionaries can be replaced without rebuilding the visual tree.
 - Central Lucide vector geometry owns icons, and one implicit thin-scrollbar style owns scrollable controls.
 
@@ -71,7 +72,7 @@ Both shells reuse `WorkspaceController`, OCR, vision, diagnostics, and Windows s
 
 ## Deep debug boundary
 
-App owns one process-wide deep-debug recorder because it coordinates WPF lifecycle, Workspace capture, OCR, vision, and input evidence. A bounded single-reader channel serializes events and already-acquired PNG bytes without requesting extra screenshots. The complete text timeline and only the configured final rolling window of images are archived under `%LOCALAPPDATA%\LilacMacro\diagnostics`. Both app surfaces consume the same format; Core and Windows do not depend on diagnostics. See [Deep debug](DEEP-DEBUG.md).
+App owns one process-wide deep-debug recorder because it coordinates WPF lifecycle, Workspace capture, OCR, vision, and input evidence. A bounded single-reader channel serializes events and already-acquired PNG bytes without requesting extra screenshots. The complete text timeline is always archived under `%LOCALAPPDATA%\LilacMacro\diagnostics`; Main Macro and Dataset Builder keep the configured final rolling image window, while Runtime Lab keeps already-acquired images for the complete owner-triggered operation. Both app surfaces consume the same format; Core and Windows do not depend on diagnostics. See [Deep debug](DEEP-DEBUG.md).
 
 ## OCR process boundary
 
@@ -97,7 +98,7 @@ Datasets are self-contained directories governed by [Dataset format](DATASET-FOR
 
 Core owns placement documents and validation. App owns map discovery, gallery state, route editing, map-coordinate transforms, timeline docking/popout, and a serialized autosave queue. Saved documents live under `%LOCALAPPDATA%\LilacMacro\placements`; source map images remain in the dataset root.
 
-Authoring is functional, while live detection and playback are Planned. See [Placement authoring](PLACEMENT-AUTHORING.md).
+Authoring and explicit owner-triggered playback through Setup and Runtime Lab are Prototype. Unattended scheduler integration remains Planned. See [Placement authoring](PLACEMENT-AUTHORING.md).
 
 ## Persistence and trust boundaries
 
@@ -106,6 +107,14 @@ Authoring is functional, while live detection and playback are Planned. See [Pla
 - All committed document-style writes validate first and use temporary-file replacement.
 - Local paths, captures, models, logs, settings, and agent views remain outside Git.
 - Private-server links and webhook URLs are not implemented. Their planned DPAPI boundary is documented in [Privacy](../PRIVACY.md).
+
+## Optional local-session boundary
+
+The experimental local runner preserves the same layer direction. Core owns versioned status, manifest, profile-policy, snapshot, command, event, transition, and validation contracts. Windows owns account, Credential Manager, ACL, TermService, firewall, scheduled-task, session, capture-freshness, rollback, and named-pipe transport adapters. App owns Settings actions, execution-target selection, UAC helper launch, connection lifecycle, and user-visible health.
+
+`LilacMacro.SessionSetup.exe` is the only elevated component and accepts only `install`, `repair`, `remove`, and `uninstall-cleanup`. `LilacMacro.SessionWorker.exe` is windowless and runs inside the dedicated standard account. `LilacMacro.Runtime` owns the WPF-free Story/Raid/Challenge scheduler and links the same workflow, OCR, placement, terminal, and rejoin policies used by the desktop macro. The desktop controller sends typed immutable snapshots and declarative commands; it never forwards raw input across sessions. A lost or invalid pipe cancels work and releases input ownership.
+
+Runtime readiness is separate from provisioning and fresh capture. The worker promotes the runner to Ready only after the shared runtime is available and a fresh WGC frame is verified inside the visibly connected runner session. Native compatibility is established by the bundled scanner against the exact installed TermService binary, then cached by binary hashes; disposable-VM certification still owns installer, native-session, rollback, and removal acceptance. See [Optional local runner session](LOCAL-SESSION.md).
 
 ## Planned runtime boundary
 

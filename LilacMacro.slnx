@@ -2,7 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/LilacMacro.App/LilacMacro.App.csproj" />
     <Project Path="src/LilacMacro.Core/LilacMacro.Core.csproj" />
+    <Project Path="src/LilacMacro.Runtime/LilacMacro.Runtime.csproj" />
     <Project Path="src/LilacMacro.Windows/LilacMacro.Windows.csproj" />
+    <Project Path="src/LilacMacro.SessionSetup/LilacMacro.SessionSetup.csproj" />
+    <Project Path="src/LilacMacro.SessionWorker/LilacMacro.SessionWorker.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LilacMacro.Tests/LilacMacro.Tests.csproj" />

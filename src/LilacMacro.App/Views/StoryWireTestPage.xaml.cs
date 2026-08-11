@@ -23,15 +23,17 @@ public partial class StoryWireTestPage : UserControl, IWorkspacePage
     private readonly ObservableCollection<string> _events = [];
     private readonly ObservableCollection<WireVisualComparison> _comparisons = [];
     private CancellationTokenSource? _runCancellation;
-    private string _device = OcrRunner.CpuDevice;
+    private string _device;
 
     internal StoryWireTestPage(
         WorkspaceController workspace,
         OcrRunner ocr,
-        DeepDebugSessionService deepDebug)
+        DeepDebugSessionService deepDebug,
+        string defaultOcrDevice)
     {
         _ocr = ocr;
         _deepDebug = deepDebug;
+        _device = defaultOcrDevice;
         _runner = new StoryWireTestRunner(workspace, ocr, deepDebug);
         _stages = [];
         InitializeComponent();
@@ -276,7 +278,7 @@ public partial class StoryWireTestPage : UserControl, IWorkspacePage
         }
         else if (mode == WireGameMode.Story)
         {
-            foreach (string map in new[] { "School Grounds", "Flower Forest", "Rose Kingdom", "Fairy King Forest", "King's Tomb" })
+            foreach (string map in new[] { "School Grounds", "Flower Forest", "Rose Kingdom", "Fairy King Forest", "King's Tomb", "East Town" })
                 MapBox.Items.Add(new ComboBoxItem { Content = map });
             string[] tags = ["Act4", "Act5", "Infinite", "Mastery"];
             string[] labels = ["Act 4", "Act 5", "Infinite", "Mastery"];

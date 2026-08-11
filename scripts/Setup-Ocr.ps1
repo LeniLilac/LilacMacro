@@ -1,12 +1,17 @@
 [CmdletBinding()]
 param(
     [ValidateSet('cpu', 'gpu')]
-    [string]$Device = 'cpu'
+    [string]$Device = 'cpu',
+    [string]$InstallRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
 
-$ocrRoot = Join-Path $env:LOCALAPPDATA 'LilacMacro\ocr'
+$ocrRoot = if ([string]::IsNullOrWhiteSpace($InstallRoot)) {
+    Join-Path $env:LOCALAPPDATA 'LilacMacro\ocr'
+} else {
+    [IO.Path]::GetFullPath($InstallRoot)
+}
 $venvRoot = Join-Path $ocrRoot 'venv'
 $venvPython = Join-Path $venvRoot 'Scripts\python.exe'
 $runtimeMarker = Join-Path $ocrRoot 'runtime-device.txt'

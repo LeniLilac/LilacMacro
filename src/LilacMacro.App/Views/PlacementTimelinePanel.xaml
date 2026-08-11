@@ -78,59 +78,45 @@
                     <Button x:Name="SettingsTabButton" Style="{StaticResource SectionTabStyle}"
                             Content="MATCH SETTINGS" Click="SettingsTab_OnClick" />
                 </StackPanel>
-                <Button x:Name="PopOutButton" Grid.Column="1"
-                        Style="{StaticResource PanelMiniButtonStyle}"
-                        Content="POPOUT" Click="PopOutButton_OnClick" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock x:Name="PlaybackStatusText"
+                               MaxWidth="210" Margin="0,0,10,0"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource InkSoftBrush}"
+                               FontSize="10" FontWeight="Bold"
+                               TextTrimming="CharacterEllipsis" />
+                    <Button x:Name="TestSetupButton"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            MinHeight="30" Padding="9,4"
+                            Click="TestSetupButton_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <controls:LucideIcon x:Name="TestSetupIcon"
+                                                 Width="13" Height="13" Margin="0,0,6,0"
+                                                 Data="{StaticResource Lucide.Play}" />
+                            <TextBlock x:Name="TestSetupText"
+                                       VerticalAlignment="Center" Text="TEST SETUP" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="AddStepButton"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            MinHeight="30" Padding="9,4" Click="AddStepButton_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <controls:LucideIcon Width="13" Height="13" Margin="0,0,6,0"
+                                                 Data="{StaticResource Lucide.Plus}" />
+                            <TextBlock VerticalAlignment="Center" Text="ADD STEP" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="PopOutButton"
+                            Style="{StaticResource PanelMiniButtonStyle}"
+                            Content="POPOUT" Click="PopOutButton_OnClick" />
+                </StackPanel>
             </Grid>
 
             <Grid x:Name="StepsPanel" Grid.Row="1" Margin="0,10,0,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <Border Padding="11" Background="{DynamicResource MutedBrush}"
-                        BorderBrush="{DynamicResource ChromeBorderBrush}"
-                        BorderThickness="1" CornerRadius="4">
-                    <WrapPanel>
-                        <StackPanel Width="180" Margin="0,0,18,0">
-                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="TEAM" />
-                            <ComboBox x:Name="TeamCombo" DisplayMemberPath="Label" SelectedValuePath="Value"
-                                      SelectionChanged="TeamCombo_OnSelectionChanged" />
-                        </StackPanel>
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="UNIT SLOT" />
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton x:Name="Unit1Button" GroupName="PlacementUnit" Tag="1" Content="1"
-                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
-                                <RadioButton x:Name="Unit2Button" GroupName="PlacementUnit" Tag="2" Content="2"
-                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
-                                <RadioButton x:Name="Unit3Button" GroupName="PlacementUnit" Tag="3" Content="3"
-                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
-                                <RadioButton x:Name="Unit4Button" GroupName="PlacementUnit" Tag="4" Content="4"
-                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
-                                <RadioButton x:Name="Unit5Button" GroupName="PlacementUnit" Tag="5" Content="5"
-                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
-                                <RadioButton x:Name="Unit6Button" GroupName="PlacementUnit" Tag="6" Content="6"
-                                             Style="{StaticResource PlacementChoiceButtonStyle}" Checked="UnitButton_OnChecked" />
-                            </StackPanel>
-                        </StackPanel>
-                    </WrapPanel>
-                </Border>
-
-                <Button x:Name="AddStepButton" Grid.Row="1" Margin="0,9,0,0" HorizontalAlignment="Right"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        MinHeight="30" Padding="9,4" Click="AddStepButton_OnClick">
-                    <StackPanel Orientation="Horizontal">
-                        <controls:LucideIcon Width="13" Height="13" Margin="0,0,6,0"
-                                             Data="{StaticResource Lucide.Plus}" />
-                        <TextBlock VerticalAlignment="Center" Text="ADD STEP" />
-                    </StackPanel>
-                </Button>
-
-            <ListBox x:Name="TimelineList" Grid.Row="2" Margin="0,9,0,0"
-                     AllowDrop="True" BorderThickness="0" Background="Transparent"
+            <ListBox x:Name="TimelineList"
+                     BorderThickness="0" Background="Transparent"
                      ScrollViewer.CanContentScroll="False"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
@@ -138,15 +124,14 @@
                      ItemContainerStyle="{StaticResource TimelineItemStyle}"
                      PreviewMouseMove="TimelineList_OnPreviewMouseMove"
                      PreviewMouseLeftButtonUp="TimelineList_OnPreviewMouseLeftButtonUp"
-                     DragOver="TimelineList_OnDragOver"
-                     DragLeave="TimelineList_OnDragLeave"
-                     Drop="TimelineList_OnDrop">
+                     LostMouseCapture="TimelineList_OnLostMouseCapture">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border x:Name="RowCard" Padding="8"
+                                <Border x:Name="RowCard" Padding="8" Cursor="SizeAll"
                                         Background="{DynamicResource MutedBrush}"
                                         BorderBrush="{DynamicResource ChromeBorderBrush}"
-                                        BorderThickness="1" CornerRadius="3">
+                                        BorderThickness="1" CornerRadius="3"
+                                        PreviewMouseLeftButtonDown="StepDragHandle_OnPreviewMouseLeftButtonDown">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="5" />
@@ -158,9 +143,7 @@
                                                 HorizontalAlignment="Left" VerticalAlignment="Center"
                                                 Background="{DynamicResource MatchStepPlacementBrush}"
                                                 CornerRadius="2" />
-                                        <Border Grid.Column="1" Background="Transparent" Cursor="SizeAll"
-                                                ToolTip="Drag to reorder"
-                                                PreviewMouseLeftButtonDown="StepDragHandle_OnPreviewMouseLeftButtonDown">
+                                        <Border Grid.Column="1" Background="Transparent">
                                             <controls:LucideIcon Width="15" Height="15"
                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                  Foreground="{DynamicResource InkSoftBrush}"
@@ -220,28 +203,23 @@
             </ListBox>
             </Grid>
 
-            <Border x:Name="SettingsPanel" Grid.Row="1" Margin="0,10,0,0" Padding="12"
-                    Background="{DynamicResource MutedBrush}" BorderBrush="{DynamicResource ChromeBorderBrush}"
+            <Border x:Name="SettingsPanel" Grid.Row="1" Margin="0,10,0,0" Padding="16"
+                    Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource ChromeBorderBrush}"
                     BorderThickness="1" CornerRadius="4" Visibility="Collapsed">
                 <ScrollViewer x:Name="SettingsScrollViewer"
                               VerticalScrollBarVisibility="Disabled"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="20" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="DEFAULT TARGETING" />
-                                <ComboBox SelectedIndex="0">
+                        <TextBlock FontSize="15" FontWeight="Bold" Text="Defaults" />
+                        <StackPanel Margin="0,16,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}"
+                                           Text="DEFAULT TARGETING" />
+                                <ComboBox Grid.Column="1" Width="280" HorizontalAlignment="Left" SelectedIndex="0">
                                     <ComboBoxItem Content="First" />
                                     <ComboBoxItem Content="Last" />
                                     <ComboBoxItem Content="Closest" />
@@ -252,10 +230,15 @@
                                     <ComboBoxItem Content="Fastest" />
                                     <ComboBoxItem Content="None" />
                                 </ComboBox>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="DEFAULT AUTO UPGRADE" />
-                                <ComboBox SelectedIndex="1">
+                            </Grid>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}"
+                                           Text="DEFAULT AUTO UPGRADE" />
+                                <ComboBox Grid.Column="1" Width="280" HorizontalAlignment="Left" SelectedIndex="1">
                                     <ComboBoxItem Content="Off" />
                                     <ComboBoxItem Content="Priority 1" />
                                     <ComboBoxItem Content="Priority 2" />
@@ -264,22 +247,35 @@
                                     <ComboBoxItem Content="Priority 5" />
                                     <ComboBoxItem Content="Priority 6" />
                                 </ComboBox>
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="1" Margin="0,14,0,0">
-                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BETWEEN UNIT CHECKS, MS" />
-                                <TextBox Text="900" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,14,0,0">
-                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLACEMENT ATTEMPTS" />
-                                <TextBox Text="1" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,14,0,0">
-                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="IMPOSSIBILITY THRESHOLD, MIN" />
-                                <TextBox Text="0" />
-                            </StackPanel>
-                        </Grid>
+                            </Grid>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}"
+                                           Text="BETWEEN UNIT CHECKS, MS" />
+                                <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="900" />
+                            </Grid>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}"
+                                           Text="PLACEMENT ATTEMPTS" />
+                                <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="1" />
+                            </Grid>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="240" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}"
+                                           Text="IMPOSSIBILITY THRESHOLD, MIN" />
+                                <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="0" />
+                            </Grid>
+                        </StackPanel>
 
                         <Button x:Name="AdvancedSettingsButton" Margin="0,16,0,0"
                                 HorizontalContentAlignment="Stretch"
@@ -295,67 +291,60 @@
                             </Grid>
                         </Button>
 
-                        <StackPanel x:Name="AdvancedSettingsFields" Margin="0,18,0,0"
+                        <StackPanel x:Name="AdvancedSettingsFields" Margin="0,20,0,0"
                                     Visibility="Collapsed">
-                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STEP MODE ACTIONS" />
-                            <Grid Margin="0,6,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="16" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="16" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="AFTER UNIT SELECTION, MS" />
-                                    <TextBox Text="250" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLACEMENT CLICK BURST, MS" />
-                                    <TextBox Text="50" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="4">
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BEFORE SELECTING UNIT, MS" />
-                                    <TextBox Text="0" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Margin="0,14,0,0">
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BEFORE SELECTED-UNIT CHECK, MS" />
-                                    <TextBox Text="0" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,14,0,0">
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="BETWEEN ACTION KEYS, MS" />
-                                    <TextBox Text="100" />
-                                </StackPanel>
-                            </Grid>
+                            <TextBlock FontSize="15" FontWeight="Bold" Text="Step mode actions" />
+                            <StackPanel Margin="0,16,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="AFTER UNIT SELECTION, MS" />
+                                    <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="250" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="PLACEMENT CLICK BURST, MS" />
+                                    <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="50" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="BEFORE SELECTING UNIT, MS" />
+                                    <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="0" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="BEFORE SELECTED-UNIT CHECK, MS" />
+                                    <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="0" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="BETWEEN ACTION KEYS, MS" />
+                                    <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="100" />
+                                </Grid>
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="VERIFICATION" />
+                                    <StackPanel Grid.Column="1">
+                                        <CheckBox IsChecked="True" Content="Require placement proof" />
+                                        <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Require reconfigure proof" />
+                                        <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Wait for upgrade readiness" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
 
-                            <UniformGrid Margin="0,16,0,0" Columns="3">
-                                <CheckBox Margin="0,0,14,0" IsChecked="True"
-                                          Content="REQUIRE PLACEMENT PROOF" />
-                                <CheckBox Margin="0,0,14,0" IsChecked="True"
-                                          Content="REQUIRE RECONFIGURE PROOF" />
-                                <CheckBox IsChecked="True"
-                                          Content="WAIT FOR UPGRADE READINESS" />
-                            </UniformGrid>
-
-                            <TextBlock Margin="0,20,0,0" Style="{StaticResource FieldLabelStyle}"
-                                       Text="RECORDING MODE START" />
-                            <Grid Margin="0,6,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <CheckBox VerticalAlignment="Center" IsChecked="True"
-                                          Content="REQUIRE START SCREEN" />
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLAYBACK START DELAY, MS" />
-                                    <TextBox Text="0" />
-                                </StackPanel>
-                            </Grid>
+                            <Border Margin="0,20,0,18" BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,1,0,0" />
+                            <TextBlock FontSize="15" FontWeight="Bold" Text="Recording mode start" />
+                            <StackPanel Margin="0,16,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="START SCREEN" />
+                                    <CheckBox Grid.Column="1" IsChecked="True" Content="Require start screen" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="PLAYBACK START DELAY, MS" />
+                                    <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="0" />
+                                </Grid>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

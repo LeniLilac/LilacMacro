@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using LilacMacro.App.Diagnostics;
+using LilacMacro.App.DeepDebugViewer;
 using LilacMacro.App.Lifecycle;
 
 namespace LilacMacro.App;
@@ -14,7 +15,7 @@ public partial class App : Application
         DispatcherUnhandledException += OnUnhandledException;
     }
 
-    protected override void OnStartup(StartupEventArgs eventArgs)
+    protected override async void OnStartup(StartupEventArgs eventArgs)
     {
         base.OnStartup(eventArgs);
         AppLaunchMode launchMode = AppLaunchModePolicy.Resolve(
@@ -24,10 +25,17 @@ public partial class App : Application
         {
             AppLaunchMode.DatasetBuilder => new MainWindow(_deepDebug, Workspace.ToolShellKind.DatasetBuilder),
             AppLaunchMode.RuntimeLab => new MainWindow(_deepDebug, Workspace.ToolShellKind.RuntimeLab),
-            _ => new MacroShellWindow(_deepDebug),
+            AppLaunchMode.DeepDebugViewer => new DeepDebugViewerWindow(),
+            _ => new MacroShellWindow(_deepDebug, await Runtime.MacroOwnerState.LoadAsync()),
         };
         MainWindow = startupWindow;
         startupWindow.Show();
+        if (startupWindow is DeepDebugViewerWindow viewer)
+        {
+            string? archivePath = eventArgs.Args.FirstOrDefault(argument =>
+                argument.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+            if (archivePath is not null) viewer.OpenArchiveFromCommandLine(archivePath);
+        }
     }
 
     private static async void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs eventArgs)

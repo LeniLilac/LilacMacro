@@ -79,6 +79,27 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
+    public async Task RetainAllFrames_RecordsFullOperationPolicy()
+    {
+        DeepDebugSessionService service = new(_root) { RetainAllFrames = true };
+        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "runtime lab",
+            new DeepDebugOperationContext("runtime-lab"));
+        service.RecordPng(
+            PngEncoder.Encode(new RgbImage(1, 1, [1, 2, 3], takeOwnership: true)),
+            "runtime-frame");
+
+        await scope!.CompleteAsync("success");
+
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
+        string manifest = await ReadAsync(archive, "manifest.json");
+        Assert.Contains("\"frameRetentionMinutes\": 0", manifest, StringComparison.Ordinal);
+        Assert.Contains("cover the full operation", manifest, StringComparison.Ordinal);
+        Assert.Contains(archive.Entries, entry => entry.FullName.StartsWith("frames/", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task ConcurrentSessionIsRejected()
     {
         DeepDebugSessionService service = new(_root);

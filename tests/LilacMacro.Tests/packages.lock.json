@@ -139,17 +139,25 @@
       "LilacMacro": {
         "type": "Project",
         "dependencies": {
-          "LilacMacro.Core": "[1.0.0, )",
-          "LilacMacro.Windows": "[1.0.0, )"
+          "LilacMacro.Core": "[1.0.31, )",
+          "LilacMacro.Runtime": "[1.0.31, )",
+          "LilacMacro.Windows": "[1.0.31, )"
         }
       },
       "lilacmacro.core": {
         "type": "Project"
       },
+      "lilacmacro.runtime": {
+        "type": "Project",
+        "dependencies": {
+          "LilacMacro.Core": "[1.0.31, )",
+          "LilacMacro.Windows": "[1.0.31, )"
+        }
+      },
       "lilacmacro.windows": {
         "type": "Project",
         "dependencies": {
-          "LilacMacro.Core": "[1.0.0, )",
+          "LilacMacro.Core": "[1.0.31, )",
           "Vortice.Direct3D11": "[3.8.3, )"
         }
       },
@@ -163,6 +171,7 @@
           "Vortice.DXGI": "3.8.3"
         }
       }
-    }
+    },
+    "net10.0-windows10.0.19041/win-x64": {}
   }
 }

@@ -8,6 +8,7 @@ public sealed record TeamLoadConfirmLayout(
     PixelRect CancelBounds)
 {
     public PixelPoint ConfirmPoint => ConfirmBounds.Center;
+    public PixelPoint CancelPoint => CancelBounds.Center;
 
     public static TeamLoadConfirmLayout? TryCreate(IReadOnlyList<OcrTextRegion> regions)
     {

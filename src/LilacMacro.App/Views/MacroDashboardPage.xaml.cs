@@ -10,6 +10,7 @@ using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Ocr;
+using LilacMacro.Core.LocalSession;
 using LilacMacro.Core.Placements;
 
 namespace LilacMacro.App.Views;
@@ -18,6 +19,7 @@ public partial class MacroDashboardPage : UserControl
 {
     private readonly DeepDebugSessionService _deepDebug;
     private readonly MacroOwnerState _ownerState;
+    private readonly LocalSessionDesktopController _localSession;
     private readonly WorkspaceController _workspace;
     private readonly OcrRunner _ocr;
     private readonly StoryWireTestRunner _runner;
@@ -37,10 +39,14 @@ public partial class MacroDashboardPage : UserControl
     private bool _initialized;
     private PlanTaskPrototype? _currentTask;
 
-    internal MacroDashboardPage(DeepDebugSessionService deepDebug, MacroOwnerState ownerState)
+    internal MacroDashboardPage(
+        DeepDebugSessionService deepDebug,
+        MacroOwnerState ownerState,
+        LocalSessionDesktopController localSession)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
+        _localSession = localSession;
         _workspace = new WorkspaceController(deepDebug);
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = true };
         _runner = new StoryWireTestRunner(_workspace, _ocr, deepDebug);
@@ -114,22 +120,33 @@ public partial class MacroDashboardPage : UserControl
         try
         {
             PrivateServerRejoinService.Validate(_ownerState.PrivateServerLink);
-            string device = SelectOcrDevice();
-            if (!_initialized)
-            {
-                await _workspace.InitializeAsync();
-                _initialized = true;
-            }
             _runCancellation = new CancellationTokenSource();
             _debugScope = await _deepDebug.OpenSessionAsync(
                 "macro-runtime",
-                new DeepDebugOperationContext("main-macro", new { Plan = plan.Name }));
+                new DeepDebugOperationContext("main-macro", new
+                {
+                    Plan = plan.Name,
+                    Target = _ownerState.ExecutionTarget.ToString(),
+                }));
             _runtime.Restart();
             _runtimeTimer.Start();
             _runStats.Clear();
             StatsChart.SetPoints(_runStats);
             RefreshRunState(true);
-            _runTask = RunPlanAsync(plan, device, _runCancellation.Token);
+            if (_ownerState.ExecutionTarget == ExecutionTarget.LocalRunnerSession)
+            {
+                _runTask = RunLocalSessionAsync(plan, _runCancellation.Token);
+            }
+            else
+            {
+                string device = SelectOcrDevice();
+                if (!_initialized)
+                {
+                    await _workspace.InitializeAsync();
+                    _initialized = true;
+                }
+                _runTask = RunPlanAsync(plan, device, _runCancellation.Token);
+            }
             await _runTask;
             AppendLog("PLAN COMPLETE");
         }
@@ -156,6 +173,23 @@ public partial class MacroDashboardPage : UserControl
             _currentTask = null;
             if (PlanCombo.SelectedItem is PlanPrototype selectedPlan) RefreshUpcomingTasks(selectedPlan);
         }
+    }
+
+    private async Task RunLocalSessionAsync(PlanPrototype plan, CancellationToken cancellationToken)
+    {
+        SessionWorkerEvent ready = await _localSession.ConnectAsync(cancellationToken);
+        AppendLog($"LOCAL RUNNER | {ready.Detail}");
+        long revision = await _localSession.PublishSnapshotAsync(_ownerState, plan, cancellationToken);
+        AppendLog($"SNAPSHOT {revision} PUBLISHED");
+        await _localSession.RunAsync(
+            revision,
+            _ownerState.PrivateServerLink,
+            new Progress<SessionRuntimeProgress>(value =>
+            {
+                AppendLog($"{value.Stage} | {value.Detail}");
+                RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+            }),
+            cancellationToken);
     }
 
     private async Task RunPlanAsync(PlanPrototype plan, string device, CancellationToken cancellationToken)

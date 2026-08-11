@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Notifications;
+using LilacMacro.App.Runtime;
 using LilacMacro.Core.Placements;
 
 namespace LilacMacro.App.Views;
@@ -16,14 +18,32 @@ public partial class PlacementSetupPage : UserControl
     private bool _loaded;
     private double _galleryOffset;
 
-    public PlacementSetupPage()
+    internal PlacementSetupPage(
+        DeepDebugSessionService deepDebug,
+        MacroOwnerState ownerState)
     {
         InitializeComponent();
+        PlacementEditor.ConfigureSetupTest(deepDebug, ownerState);
         Loaded += PlacementSetupPage_OnLoaded;
         ApplyCategoryStyles();
     }
 
     public Task FlushAsync() => PlacementEditor.FlushAsync();
+
+    public bool TryDeactivate(out string error)
+    {
+        if (PlacementEditor.IsTestRunning)
+        {
+            error = "Stop the setup test before leaving Setup.";
+            return false;
+        }
+        error = string.Empty;
+        return true;
+    }
+
+    public void PrepareForClose() => PlacementEditor.CancelTest();
+
+    public Task CompleteForCloseAsync() => PlacementEditor.CompleteForCloseAsync();
 
     private async void PlacementSetupPage_OnLoaded(object sender, RoutedEventArgs eventArgs)
     {

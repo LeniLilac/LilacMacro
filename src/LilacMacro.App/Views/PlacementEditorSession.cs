@@ -220,6 +220,14 @@ public sealed class PlacementEditorSession
         lock (_saveSync) return _pendingSave;
     }
 
+    public (PlacementSetupDocument Document, PlacementRouteSetup Route) CreatePlaybackSnapshot()
+    {
+        EnsureOpen();
+        return (
+            PlacementSetupRules.CloneDocument(Document!),
+            PlacementSetupRules.CloneRoute(CurrentRoute, CurrentRoute.RouteId));
+    }
+
     private Task MutateRouteAsync(Action<PlacementRouteSetup> mutation)
     {
         EnsureOpen();

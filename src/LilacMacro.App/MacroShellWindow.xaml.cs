@@ -19,26 +19,27 @@ public partial class MacroShellWindow : Window
     private readonly MacroOwnerState _ownerState;
     private readonly MacroDashboardPage _macroPage;
     private readonly PlacementSetupPage _setupPage;
+    private readonly LocalSessionDesktopController _localSession = new();
     private readonly WindowShutdownState _shutdown = new();
     private readonly DispatcherTimer _toastTimer;
     private MacroShellPage _currentPage;
 
-    public MacroShellWindow(DeepDebugSessionService deepDebug)
+    internal MacroShellWindow(DeepDebugSessionService deepDebug, MacroOwnerState ownerState)
     {
         InitializeComponent();
         InitializeWindowSizing();
         _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
         _toastTimer.Tick += ToastTimer_OnTick;
         AppToastService.ErrorRaised += AppToastService_OnErrorRaised;
-        _ownerState = new MacroOwnerState();
-        _macroPage = new MacroDashboardPage(deepDebug, _ownerState);
-        _setupPage = new PlacementSetupPage();
+        _ownerState = ownerState;
+        _macroPage = new MacroDashboardPage(deepDebug, _ownerState, _localSession);
+        _setupPage = new PlacementSetupPage(deepDebug, _ownerState);
         _pages = new Dictionary<MacroShellPage, UserControl>
         {
             [MacroShellPage.Macro] = _macroPage,
             [MacroShellPage.Plan] = new PlanPage(_ownerState),
             [MacroShellPage.Setup] = _setupPage,
-            [MacroShellPage.Settings] = new SettingsPage(deepDebug, _ownerState, SetMacroHotkeyCaptureSuspended),
+            [MacroShellPage.Settings] = new SettingsPage(deepDebug, _ownerState, _localSession, SetMacroHotkeyCaptureSuspended),
         };
         InitializeMacroHotkey();
         Closing += MacroShellWindow_OnClosing;
@@ -48,6 +49,13 @@ public partial class MacroShellWindow : Window
 
     private void Navigate(MacroShellPage target)
     {
+        if (_currentPage == MacroShellPage.Setup &&
+            target != MacroShellPage.Setup &&
+            !_setupPage.TryDeactivate(out string setupError))
+        {
+            AppToastService.ShowError("SETUP TEST RUNNING", setupError);
+            return;
+        }
         if (_currentPage == MacroShellPage.Macro &&
             target != MacroShellPage.Macro &&
             !_macroPage.SetDashboardActive(false, out string error))
@@ -123,8 +131,10 @@ public partial class MacroShellWindow : Window
 
         try
         {
+            _setupPage.PrepareForClose();
             await _macroPage.CompleteForCloseAsync();
-            await _setupPage.FlushAsync();
+            await _setupPage.CompleteForCloseAsync();
+            await _ownerState.FlushAsync();
             _shutdown.CompleteFlush();
             _ = Dispatcher.BeginInvoke(
                 DispatcherPriority.Normal,
@@ -133,7 +143,7 @@ public partial class MacroShellWindow : Window
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             _shutdown.FailFlush();
-            AppToastService.ShowError("PLACEMENT SAVE FAILED", exception.Message);
+            AppToastService.ShowError("LOCAL SAVE FAILED", exception.Message);
         }
     }
 
@@ -172,5 +182,6 @@ public partial class MacroShellWindow : Window
         DisposeWindowSizing();
         _toastTimer.Stop();
         AppToastService.ErrorRaised -= AppToastService_OnErrorRaised;
+        _ = _localSession.DisposeAsync();
     }
 }

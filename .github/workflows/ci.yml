@@ -23,6 +23,10 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-Documentation.ps1
 
+      - name: Check installer policy
+        shell: pwsh
+        run: ./scripts/Test-Installer.ps1
+
       - name: Check repository policy
         shell: pwsh
         run: ./scripts/Test-RepositoryPolicy.ps1

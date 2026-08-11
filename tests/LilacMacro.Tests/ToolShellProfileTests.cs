@@ -11,6 +11,10 @@ public sealed class ToolShellProfileTests
 
         Assert.Equal(PageKind.Capture, profile.StartPage);
         Assert.Equal([PageKind.Capture, PageKind.Review, PageKind.Datasets], profile.Pages);
+        Assert.Equal("gpu:0", profile.OcrDevice);
+        Assert.True(profile.KeepOcrLoaded);
+        Assert.True(profile.PreloadOcrOnOpen);
+        Assert.False(profile.RetainAllDeepDebugFrames);
     }
 
     [Fact]
@@ -19,6 +23,12 @@ public sealed class ToolShellProfileTests
         ToolShellProfile profile = ToolShellProfile.Create(ToolShellKind.RuntimeLab);
 
         Assert.Equal(PageKind.Debug, profile.StartPage);
-        Assert.Equal([PageKind.Debug, PageKind.WireTest], profile.Pages);
+        Assert.Equal(
+            [PageKind.Debug, PageKind.WireTest, PageKind.ScrollTest, PageKind.TeamSwapTest],
+            profile.Pages);
+        Assert.Equal("gpu:0", profile.OcrDevice);
+        Assert.True(profile.KeepOcrLoaded);
+        Assert.True(profile.PreloadOcrOnOpen);
+        Assert.True(profile.RetainAllDeepDebugFrames);
     }
 }

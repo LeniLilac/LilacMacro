@@ -11,6 +11,31 @@
   <ItemGroup>
     <ProjectReference Include="..\LilacMacro.Core\LilacMacro.Core.csproj" />
     <ProjectReference Include="..\LilacMacro.Windows\LilacMacro.Windows.csproj" />
+    <ProjectReference Include="..\LilacMacro.Runtime\LilacMacro.Runtime.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Diagnostics\*.cs" />
+    <Compile Remove="Infrastructure\AppSettings.cs" />
+    <Compile Remove="Infrastructure\AppSettingsStore.cs" />
+    <Compile Remove="Infrastructure\OcrRunner.cs" />
+    <Compile Remove="Infrastructure\OcrWorkerResult.cs" />
+    <Compile Remove="Infrastructure\PersistentOcrWorker.cs" />
+    <Compile Remove="Workspace\CaptureProgress.cs" />
+    <Compile Remove="Workspace\CrossProcessRobloxInputGate.cs" />
+    <Compile Remove="Workspace\WorkspaceController.cs" />
+    <Compile Remove="Workspace\WorkspaceInputCoordinator.cs" />
+    <Compile Remove="Debugging\*.cs" />
+    <Compile Include="Debugging\DebugKeySequenceCoordinator.cs" />
+    <Compile Include="Debugging\DebugKeySequenceState.cs" />
+    <Compile Include="Debugging\TeamScrollAbTestRunner.cs" />
+    <Compile Include="Debugging\TeamSwapTestRunner.cs" />
+    <Compile Remove="Runtime\ChallengePlacementResolver.cs" />
+    <Compile Remove="Runtime\ChallengeRotationStore.cs" />
+    <Compile Remove="Runtime\MatchTerminalService.cs" />
+    <Compile Remove="Runtime\PlacementPlaybackService.cs" />
+    <Compile Remove="Runtime\PlacementRuntimeContracts.cs" />
+    <Compile Remove="Runtime\PrivateServerRejoinService.cs" />
+    <Compile Remove="Runtime\UnitPanelEvidenceService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\tools\ocr_worker.py" Link="tools\ocr_worker.py" CopyToOutputDirectory="PreserveNewest" />
@@ -27,11 +52,33 @@
           DestinationFiles="$(TargetDir)LilacMacro.RuntimeLab.exe"
           SkipUnchangedFiles="true"
           Condition="'$(AssemblyName)' != 'LilacMacro.RuntimeLab'" />
+    <Copy SourceFiles="$(TargetDir)$(AssemblyName).exe"
+          DestinationFiles="$(TargetDir)LilacMacro.DeepDebugViewer.exe"
+          SkipUnchangedFiles="true"
+          Condition="'$(AssemblyName)' != 'LilacMacro.DeepDebugViewer'" />
     <ItemGroup>
       <FileWrites Include="$(TargetDir)LilacMacro.DatasetBuilder.exe"
                   Condition="'$(AssemblyName)' != 'LilacMacro.DatasetBuilder'" />
       <FileWrites Include="$(TargetDir)LilacMacro.RuntimeLab.exe"
                   Condition="'$(AssemblyName)' != 'LilacMacro.RuntimeLab'" />
+      <FileWrites Include="$(TargetDir)LilacMacro.DeepDebugViewer.exe"
+                  Condition="'$(AssemblyName)' != 'LilacMacro.DeepDebugViewer'" />
     </ItemGroup>
+  </Target>
+  <Target Name="CreatePublishedToolLaunchers"
+          AfterTargets="Publish"
+          Condition="'$(UseAppHost)' != 'false' and Exists('$(PublishDir)$(AssemblyName).exe')">
+    <Copy SourceFiles="$(PublishDir)$(AssemblyName).exe"
+          DestinationFiles="$(PublishDir)LilacMacro.DatasetBuilder.exe"
+          SkipUnchangedFiles="true"
+          Condition="'$(AssemblyName)' != 'LilacMacro.DatasetBuilder'" />
+    <Copy SourceFiles="$(PublishDir)$(AssemblyName).exe"
+          DestinationFiles="$(PublishDir)LilacMacro.RuntimeLab.exe"
+          SkipUnchangedFiles="true"
+          Condition="'$(AssemblyName)' != 'LilacMacro.RuntimeLab'" />
+    <Copy SourceFiles="$(PublishDir)$(AssemblyName).exe"
+          DestinationFiles="$(PublishDir)LilacMacro.DeepDebugViewer.exe"
+          SkipUnchangedFiles="true"
+          Condition="'$(AssemblyName)' != 'LilacMacro.DeepDebugViewer'" />
   </Target>
 </Project>

@@ -1,6 +1,8 @@
 using LilacMacro.Core.Datasets;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Ocr;
+using LilacMacro.Core.LocalSession;
+using System.Text.Json;
 
 namespace LilacMacro.App.Debugging;
 
@@ -16,6 +18,22 @@ internal sealed class DebugStateDatasetContextLoader
         DebugStateSpec state,
         CancellationToken cancellationToken)
     {
+        string? overridePath = Environment.GetEnvironmentVariable("LILACMACRO_RUNNER_STATE_CONTEXTS");
+        if (!string.IsNullOrWhiteSpace(overridePath))
+        {
+            RunnerStateContextSnapshot[] contexts = await ReadOverridesAsync(overridePath, cancellationToken);
+            RunnerStateContextSnapshot context = contexts.FirstOrDefault(candidate =>
+                string.Equals(candidate.State, state.Name, StringComparison.Ordinal))
+                ?? throw new InvalidDataException($"Runner snapshot has no context for {state.Name}.");
+            return new DebugStateDatasetContext(
+                context.RegionOfInterest,
+                context.VisualAnchors.Select(anchor => new DebugVisualAnchorIntent(
+                    anchor.Text,
+                    anchor.MatchMode,
+                    anchor.SpatialSelector,
+                    anchor.SpatialAnchorText)).ToArray());
+        }
+
         DatasetLocation dataset = await _datasets.LoadAsync(state.DatasetDirectory, cancellationToken);
         PixelSize datasetSize = new(dataset.Manifest.ClientWidth, dataset.Manifest.ClientHeight);
         if (datasetSize != DebugWorkflowCatalog.ClientSize)
@@ -62,5 +80,16 @@ internal sealed class DebugStateDatasetContextLoader
         return new DebugStateDatasetContext(
             region ?? throw new InvalidDataException($"{state.Name} has no ROI."),
             visualAnchors);
+    }
+
+    private static async Task<RunnerStateContextSnapshot[]> ReadOverridesAsync(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        await using FileStream stream = File.OpenRead(Path.GetFullPath(path));
+        return await JsonSerializer.DeserializeAsync<RunnerStateContextSnapshot[]>(
+            stream,
+            cancellationToken: cancellationToken)
+            ?? throw new InvalidDataException("Runner state contexts are empty.");
     }
 }

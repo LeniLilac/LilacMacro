@@ -31,6 +31,8 @@ internal sealed class DeepDebugSession
 
     public required int FrameRetentionMinutes { get; init; }
 
+    public bool RetainsAllFrames => FrameRetentionMinutes == 0;
+
     public PriorityQueue<DeepDebugRetainedFrame, long> RetainedFrames { get; } = new();
 
     public ConcurrentDictionary<string, DeepDebugVisualProfileReference> VisualProfiles { get; } =

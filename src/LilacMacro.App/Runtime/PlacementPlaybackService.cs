@@ -27,6 +27,27 @@ internal sealed class PlacementPlaybackService(
         Action<string>? status,
         CancellationToken cancellationToken)
     {
+        int executed = await RunSetupAsync(
+            document, route, keys, device, status, cancellationToken);
+
+        MatchTerminalOutcome outcome = await _terminal.WaitAsync(
+            device, terminalTimeout, status, cancellationToken);
+        if (repeatStage)
+        {
+            await _terminal.RepeatAsync(outcome, device, cancellationToken);
+            status?.Invoke("REPEAT STAGE VERIFIED + CLICKED");
+        }
+        return new PlacementRuntimeResult(outcome, repeatStage, executed);
+    }
+
+    public async Task<int> RunSetupAsync(
+        PlacementSetupDocument document,
+        PlacementRouteSetup route,
+        PlacementRuntimeKeys keys,
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(route);
         PlacementSetupRules.Validate(document);
@@ -39,24 +60,51 @@ internal sealed class PlacementPlaybackService(
             plan.BeforeStart, document, keys, device, placements,
             () => layout, value => layout = value, status, cancellationToken);
 
-        DebugRunReport start = await _debug.StartGameAsync(device, cancellationToken);
-        if (!start.Succeeded) throw new InvalidOperationException(start.Status);
-        status?.Invoke("START GAME VERIFIED + CLICKED");
+        MatchStartBoundaryDecision boundary = await SatisfyStartBoundaryAsync(
+            layout, device, status, cancellationToken);
+        status?.Invoke(boundary == MatchStartBoundaryDecision.AutoStarted
+            ? "START GAME AUTO-STARTED; BOUNDARY SATISFIED"
+            : "START GAME VERIFIED + CLICKED");
         executed++;
-        await Task.Delay(1000, cancellationToken);
+        if (boundary == MatchStartBoundaryDecision.ClickStart)
+        {
+            await Task.Delay(1000, cancellationToken);
+        }
 
         executed += await RunStepsAsync(
             plan.AfterStart, document, keys, device, placements,
             () => layout, value => layout = value, status, cancellationToken);
+        return executed;
+    }
 
-        MatchTerminalOutcome outcome = await _terminal.WaitAsync(
-            device, terminalTimeout, status, cancellationToken);
-        if (repeatStage)
+    private async Task<MatchStartBoundaryDecision> SatisfyStartBoundaryAsync(
+        UnitPanelLayout? layout,
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        for (int attempt = 1; attempt <= PlacementPrestartPolicy.RequiredStartScreenMisses; attempt++)
         {
-            await _terminal.RepeatAsync(outcome, device, cancellationToken);
-            status?.Invoke("REPEAT STAGE VERIFIED + CLICKED");
+            DebugRunReport start = await _debug.StartGameAsync(device, cancellationToken);
+            if (start.Succeeded) return MatchStartBoundaryDecision.ClickStart;
+            status?.Invoke($"START SCREEN ABSENT {attempt}/{PlacementPrestartPolicy.RequiredStartScreenMisses}");
+            if (attempt < PlacementPrestartPolicy.RequiredStartScreenMisses)
+            {
+                await Task.Delay(150, cancellationToken);
+            }
         }
-        return new PlacementRuntimeResult(outcome, repeatStage, executed);
+
+        bool runtimeEvidence = layout is not null &&
+            await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken);
+        MatchStartBoundaryDecision decision = PlacementPrestartPolicy.DecideBoundary(
+            PlacementPrestartPolicy.RequiredStartScreenMisses,
+            runtimeEvidence);
+        if (decision == MatchStartBoundaryDecision.Indeterminate)
+        {
+            throw new InvalidOperationException(
+                "Start Game was absent, but live selected-unit evidence could not verify that the match auto-started.");
+        }
+        return decision;
     }
 
     private async Task<int> RunStepsAsync(

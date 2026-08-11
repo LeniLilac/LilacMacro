@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "name": "TermWrap",
+  "version": "0.6",
+  "source_repository": "https://github.com/llccd/TermWrap",
+  "source_commit": "0da3ac901ab04509d608285caa403a8d1f14f12c",
+  "release_url": "https://github.com/llccd/TermWrap/releases/tag/v0.6",
+  "archive_name": "TermWrap-0.6.zip",
+  "archive_sha256": "0680E2611297F9F7E37A34B4CA869695DF06847F48754E1E5C27C5096C36D1A9",
+  "files": [
+    {
+      "relative_path": "x64/TermWrap.dll",
+      "size": 17920,
+      "sha256": "787FAB7558A96AE874310C334367D8D661A9884B75027DEC94EAC2E24C24914D"
+    },
+    {
+      "relative_path": "x64/Zydis.dll",
+      "size": 635904,
+      "sha256": "AFBDBAF38B8F2789731AB83700B1F4F0095056C3F073288CFE773A103DDBDF81"
+    }
+  ]
+}

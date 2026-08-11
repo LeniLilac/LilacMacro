@@ -47,6 +47,7 @@ Some states require exact normalized boxes, a required first anchor, or multiple
 - The selected device is stored with each OCR trial as `cpu` or `gpu:0`.
 - One-shot mode starts a helper process for a run and exits afterward.
 - `KEEP LOADED` starts one persistent helper and caches detector/recognizer pipelines by model and device for the app session.
+- Dataset Builder and Runtime Lab default to GPU with `KEEP LOADED` enabled. When the GPU runtime is ready, each tool preloads the PP-OCRv6 small detector/recognizer pair as it opens; a missing GPU runtime remains an explicit setup state and never triggers an automatic install or CPU fallback.
 - Requests and responses use a unique temporary channel with a hard deadline, worker-exit detection, bounded JSON, and cleanup.
 - Turning `KEEP LOADED` off or exiting the app terminates the worker and releases its cached pipelines.
 - Batch size is currently one crop or one Debug ROI. GPU speedup therefore depends on image size, model, driver, warm-up, and transfer overhead; never encode assumed timing thresholds as correctness rules.
@@ -76,6 +77,12 @@ Review can show the source image beside a clean OCR map or expand the map with `
 - Delete temporary crops after a run when normal cleanup succeeds.
 - Do not commit the Python environment, Paddle cache, models, crops, results derived from private frames, or owner datasets.
 - Automated tests must not download models or require Paddle, CUDA, or network access.
+
+## Expedition reward-strip evidence
+
+**Planned runtime:** the Expedition optimizer must use one scale-derived compact reward-strip ROI rather than full-client OCR. A 414-frame standard-scale sample supports provisional resource thresholds, while a one-frame small-UI spot check showed that four-times enlargement recovered all ten quantities and enough fuzzy label evidence to resolve the five optimization resources. Raw full-client detection missed most small labels, so it is not an accepted production path.
+
+Quantity correction is resource- and card-contextual. For example, the small frame read `2x` as `Zx`, while other samples can produce similar glyphs for different values; no global text replacement is safe. The complete evidence, parser contract, economics, and blocked validation work are in [Expedition reward optimization](EXPEDITION-REWARD-OPTIMIZATION.md).
 
 ## Adaptive visual-anchor foundation
 

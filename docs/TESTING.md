@@ -8,6 +8,7 @@ Run from the repository root:
 
 ```powershell
 ./scripts/Test-Documentation.ps1
+./scripts/Test-Installer.ps1
 ./scripts/Test-RepositoryPolicy.ps1
 dotnet restore LilacMacro.slnx --locked-mode
 dotnet build LilacMacro.slnx -c Release --no-restore -warnaserror
@@ -16,7 +17,7 @@ dotnet format LilacMacro.slnx --verify-no-changes --no-restore
 git diff --check
 ```
 
-CI runs the documentation and repository checks before restore/build/test/format so structural failures remain quick and legible.
+CI runs the documentation, installer, and repository checks before restore/build/test/format so structural failures remain quick and legible.
 
 ## Focused tests
 
@@ -70,10 +71,17 @@ Automated tests must not require:
 | Persistence/schema | Round trip, invalid data, atomic/collision behavior, full suite | Inspect migration outcome if existing owner data is involved |
 | WPF layout/theme | Build, affected pure tests, full suite, format | Visual check in light and dark modes at relevant window sizes |
 | Capture/window/input | Pure geometry/protocol regression tests, full suite | Owner validates Roblox sizing, focus, capture freshness, cancellation, and cleanup |
-| Deep debug | Archive entries, JSONL parsing, redaction, options persistence, single-owner behavior, full suite | Owner enables it in each surface and confirms a completed operation produces a readable ZIP |
+| Setup test playback | Placement plan and input-protocol tests, warning-free build, full suite | Owner opens the selected map at Match Prestart without camera alignment or the canonical client size, clicks Test Setup, verifies automatic `1366 x 700` sizing, alignment, and complete before/Start/after playback, and confirms Stop Test releases input |
+| Team scrollbar A/B and fidelity test | Synthetic stable/moving/unstable thumb observations plus deterministic ramp-schedule boundaries, warning-free build, full suite | Owner opens Unit Teams, runs Drag or Scroll, confirms each reset reaches the top, and checks that the UI and `results.json` pair each requested wheel amount with its saved frames and measured normalized position |
+| Team swap randomized test | Balanced randomized schedule coverage and seed determinism, translated-ROI client clipping, warning-free build, full suite | Owner opens Unit Teams, runs the chosen trial count, confirms each row reports the requested team, result, elapsed time, and terminal status, and verifies both Stop and F6 cancel without adding a failed trial |
+| Deep debug | Archive entries, camel/snake-case JSONL parsing, redaction, input-marker coordinate translation, surface-specific retention, options persistence, single-owner behavior, full suite | Owner confirms Runtime Lab shows `DEEP DEBUG ON`, a run longer than 15 minutes retains its early frames, completed ZIPs open or drop into the dedicated viewer, nearby events align, click/scroll markers land correctly, and malformed entries fail visibly |
 | Roblox dashboard dock | Style/exposure/activation/work-area policy tests, warning-free build, full suite | Owner validates exact `1366 x 700` client size, interactive dock, background-app focus behavior, taskbar-safe maximize, undock restoration, tab/minimize behavior, and shutdown cleanup |
 | OCR worker | Serialization/timing policy tests where available, full suite | Owner validates installed CPU/GPU runtime and representative crops |
 | Planned macro runtime | State-machine and fail-closed tests before live use | Owner validates bounded transitions and stop behavior in Roblox |
+| Optional local runner contracts | Manifest, profile allowlist, native-diagnostic classification, hash-cache invalidation, rollback/state transitions, snapshot and IPC validation, secret redaction, installer policy, warning-free build, full suite | None on the owner machine; never provision it for agent testing |
+| Optional local runner integration | Disposable Windows 10/11 x64 VMs only: clean install, repair, update, interruption, rollback, remove, uninstall, loopback isolation, ACL/SID checks, capture freshness, crash/cancellation, HDR/DPI/sleep/GPU-reset matrix | Owner may inspect Settings status only after a certified build exists; live Roblox behavior remains owner-operated |
+
+The native preflight must run only in its sacrificial process and cache successful evidence by exact TermService and TermWrap hashes. Disposable VMs certify the end-to-end installer/session/rollback lifecycle, not a static build catalog. Failed required patches, ARM64, active remote use during first setup, non-loopback exposure, stale/black capture, wrong pipe peers, and incomplete cleanup must remain negative tests that fail closed.
 
 ## Manual handoff
 

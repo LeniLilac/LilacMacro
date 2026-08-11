@@ -67,6 +67,9 @@
     </GeometryGroup>
     <PathGeometry x:Key="Lucide.ChevronUp" Figures="M18,15 L12,9 L6,15" />
     <PathGeometry x:Key="Lucide.ChevronDown" Figures="M6,9 L12,15 L18,9" />
+    <GeometryGroup x:Key="Lucide.Shuffle">
+        <PathGeometry Figures="M16,3 H21 V8 M4,20 L21,3 M21,16 V21 H16 M15,15 L21,21 M4,4 L9,9" />
+    </GeometryGroup>
 
     <PathGeometry x:Key="Lucide.Trash2"
                   Figures="M10,11 V17 M14,11 V17 M19,6 V20 A2,2 0 0 1 17,22 H7 A2,2 0 0 1 5,20 V6 M3,6 H21 M8,6 V4 A2,2 0 0 1 10,2 H14 A2,2 0 0 1 16,4 V6" />
@@ -78,4 +81,23 @@
 
     <PathGeometry x:Key="Lucide.Moon"
                   Figures="M20.985,12.486 A9,9 0 1 1 11.512,3.014 C11.917,2.992 12.129,3.474 11.914,3.817 A6,6 0 0 0 20.182,12.085 C20.526,11.87 21.007,12.081 20.985,12.486" />
+    <GeometryGroup x:Key="Lucide.FileArchive">
+        <PathGeometry Figures="M14,2 H6 A2,2 0 0 0 4,4 V20 A2,2 0 0 0 6,22 H18 A2,2 0 0 0 20,20 V8 Z" />
+        <PathGeometry Figures="M14,2 V8 H20 M10,12 V11 M10,18 V17 M10,15 V14" />
+    </GeometryGroup>
+    <GeometryGroup x:Key="Lucide.SkipBack">
+        <PathGeometry Figures="M19,20 L9,12 L19,4 Z" />
+        <PathGeometry Figures="M5,19 V5" />
+    </GeometryGroup>
+    <GeometryGroup x:Key="Lucide.SkipForward">
+        <PathGeometry Figures="M5,4 L15,12 L5,20 Z" />
+        <PathGeometry Figures="M19,5 V19" />
+    </GeometryGroup>
+    <GeometryGroup x:Key="Lucide.Pause">
+        <RectangleGeometry Rect="6,4,4,16" RadiusX="1" RadiusY="1" />
+        <RectangleGeometry Rect="14,4,4,16" RadiusX="1" RadiusY="1" />
+    </GeometryGroup>
+    <GeometryGroup x:Key="Lucide.MousePointerClick">
+        <PathGeometry Figures="M14,4.1 L12,6 M5.1,8 L2.5,7.2 M6,12 L4,14 M7.2,2.5 L8,5.1 M9,9 L15,21 L17,17 L21,15 Z" />
+    </GeometryGroup>
 </ResourceDictionary>

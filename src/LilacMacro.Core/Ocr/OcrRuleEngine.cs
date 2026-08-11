@@ -120,10 +120,11 @@ public static class OcrRuleEngine
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(regions);
 
+        IReadOnlyList<OcrTextRegion> candidates = OcrRegionComposer.AddAdjacentPairs(regions);
         foreach (string alias in target.Aliases)
         {
             string expected = Normalize(alias);
-            OcrTargetMatch? best = regions
+            OcrTargetMatch? best = candidates
                 .Select(region => CreateMatch(target, alias, expected, region))
                 .Where(match => match is not null)
                 .Cast<OcrTargetMatch>()

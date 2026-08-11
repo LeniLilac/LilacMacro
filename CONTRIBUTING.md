@@ -16,7 +16,7 @@ Do not discard, reset, reformat, rename, stage, or commit unrelated owner work. 
 ## Change scope
 
 - Make the smallest cohesive change that resolves the request.
-- Preserve `Core <- Windows <- App` dependency direction.
+- Preserve `Core <- Windows <- Runtime <- App` dependency direction.
 - Add a focused test for deterministic behavior or a regression whenever practical.
 - Keep new production and script files at or below 500 lines and tests at or below 800 lines. Every `AGENTS.md` must remain at or below 120 lines.
 - Split files by owner, policy, or lifecycle before adding a second responsibility.

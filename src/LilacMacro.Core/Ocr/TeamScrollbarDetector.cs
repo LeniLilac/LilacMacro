@@ -5,6 +5,8 @@ namespace LilacMacro.Core.Ocr;
 
 public sealed record TeamScrollbarEndpoints(PixelRect TopBounds, PixelRect BottomBounds);
 
+public sealed record TeamScrollbarObservation(PixelRect Bounds, double NormalizedPosition);
+
 public static class TeamScrollbarDetector
 {
     private const int MinimumBrightness = 112;
@@ -29,8 +31,8 @@ public static class TeamScrollbarDetector
         PixelRect searchRegion)
     {
         if (topFrames.Count < 2 || bottomFrames.Count < 2) return null;
-        PixelRect[] top = StableCandidates(topFrames[0], topFrames[1], searchRegion).ToArray();
-        PixelRect[] bottom = StableCandidates(bottomFrames[0], bottomFrames[1], searchRegion).ToArray();
+        PixelRect[] top = StableCandidates(topFrames, searchRegion).ToArray();
+        PixelRect[] bottom = StableCandidates(bottomFrames, searchRegion).ToArray();
 
         return top
             .SelectMany(topBounds => bottom.Select(bottomBounds => new
@@ -49,20 +51,62 @@ public static class TeamScrollbarDetector
             .FirstOrDefault();
     }
 
+    public static TeamScrollbarObservation? TryObserve(
+        IReadOnlyList<RgbImage> frames,
+        PixelRect searchRegion,
+        TeamScrollbarEndpoints endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(frames);
+        ArgumentNullException.ThrowIfNull(endpoints);
+        if (frames.Count < 2) return null;
+
+        PixelRect top = endpoints.TopBounds;
+        PixelRect bottom = endpoints.BottomBounds;
+        double travel = bottom.Center.Y - top.Center.Y;
+        if (travel <= 0) return null;
+
+        PixelRect[] matches = StableCandidates(frames, searchRegion)
+            .Where(candidate => Math.Abs(candidate.Center.X - top.Center.X) <= 4)
+            .Where(candidate => ShapeError(candidate, top) <= 12)
+            .Where(candidate => candidate.Center.Y >= top.Center.Y - 4)
+            .Where(candidate => candidate.Center.Y <= bottom.Center.Y + 4)
+            .OrderBy(candidate => ShapeError(candidate, top))
+            .ThenBy(candidate => Math.Abs(candidate.Center.X - top.Center.X))
+            .ToArray();
+        if (matches.Length == 0) return null;
+
+        PixelRect bounds = matches[0];
+        double normalized = Math.Clamp((bounds.Center.Y - top.Center.Y) / travel, 0d, 1d);
+        return new TeamScrollbarObservation(bounds, normalized);
+    }
+
     private static IEnumerable<PixelRect> StableCandidates(
-        RgbImage first,
-        RgbImage second,
+        IReadOnlyList<RgbImage> frames,
         PixelRect offset)
     {
-        if (first.Size != second.Size || first.Size.Width != offset.Width || first.Size.Height != offset.Height)
+        if (frames.Count < 2 || frames.Any(frame =>
+                frame.Size.Width != offset.Width || frame.Size.Height != offset.Height))
+        {
             return [];
-        PixelRect[] firstCandidates = FindCandidates(first, offset).ToArray();
-        PixelRect[] secondCandidates = FindCandidates(second, offset).ToArray();
-        return firstCandidates
-            .Where(candidate => secondCandidates.Any(other =>
-                Math.Abs(candidate.Center.X - other.Center.X) <= 2 &&
-                Math.Abs(candidate.Center.Y - other.Center.Y) <= 3 &&
-                ShapeError(candidate, other) <= 8));
+        }
+
+        // A wheel gesture can continue easing briefly after input completes. Prefer the
+        // newest consecutive pair that has actually settled instead of accepting a stale
+        // early position or weakening the spatial stability requirement.
+        for (int index = frames.Count - 2; index >= 0; index--)
+        {
+            PixelRect[] firstCandidates = FindCandidates(frames[index], offset).ToArray();
+            PixelRect[] secondCandidates = FindCandidates(frames[index + 1], offset).ToArray();
+            PixelRect[] stable = firstCandidates
+                .Where(candidate => secondCandidates.Any(other =>
+                    Math.Abs(candidate.Center.X - other.Center.X) <= 2 &&
+                    Math.Abs(candidate.Center.Y - other.Center.Y) <= 3 &&
+                    ShapeError(candidate, other) <= 8))
+                .ToArray();
+            if (stable.Length > 0) return stable;
+        }
+
+        return [];
     }
 
     private static IEnumerable<PixelRect> FindCandidates(RgbImage image, PixelRect offset)

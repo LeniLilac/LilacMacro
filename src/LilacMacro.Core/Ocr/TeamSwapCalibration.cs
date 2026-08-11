@@ -9,11 +9,19 @@ public enum TeamSwapViewport
     Bottom,
 }
 
+public enum TeamSwapRetryGeometryDecision
+{
+    Block,
+    RetainCalibration,
+    Recalibrate,
+}
+
 public sealed record TeamSwapResolvedTarget(
     TeamSwapViewport Viewport,
     PixelPoint LoadPoint,
     PixelPoint? DragStart,
     PixelPoint? DragEnd,
+    int MiddleWheelUnits,
     PixelPoint ScrollAnchor);
 
 public sealed record TeamSwapCalibration(
@@ -26,7 +34,45 @@ public sealed record TeamSwapCalibration(
     IReadOnlyList<PixelPoint> TopLoadPoints,
     IReadOnlyList<PixelPoint> BottomLoadPoints)
 {
+    private const int TotalTeams = 8;
     private const int VisibleTeamsPerEndpoint = 3;
+    private const double ClippedTopLoadLiftRatio = 0.125;
+    public const double MiddleTargetPosition = 0.5;
+    public int MiddleWheelUnits { get; init; }
+
+    public static int? EstimateMiddleWheelUnits(
+        int probeWheelUnits,
+        double observedNormalizedPosition)
+    {
+        if (probeWheelUnits <= 0 ||
+            !double.IsFinite(observedNormalizedPosition) ||
+            observedNormalizedPosition is <= 0.05 or >= 0.9)
+        {
+            return null;
+        }
+
+        double estimate = probeWheelUnits * MiddleTargetPosition / observedNormalizedPosition;
+        if (!double.IsFinite(estimate) || estimate is < 60 or > 10000) return null;
+        return checked((int)Math.Round(estimate, MidpointRounding.AwayFromZero));
+    }
+
+    public static bool IsMiddlePositionUsable(double normalizedPosition) =>
+        double.IsFinite(normalizedPosition) && normalizedPosition is >= 0.4 and <= 0.6;
+
+    public static bool IsTopPositionUsable(double normalizedPosition) =>
+        double.IsFinite(normalizedPosition) && normalizedPosition is >= 0 and <= 0.08;
+
+    public static TeamSwapRetryGeometryDecision DecideRetryGeometry(
+        bool sourceMatches,
+        bool layoutAvailable,
+        bool topThumbValid,
+        bool targetValid)
+    {
+        if (!sourceMatches || !layoutAvailable) return TeamSwapRetryGeometryDecision.Block;
+        return topThumbValid && targetValid
+            ? TeamSwapRetryGeometryDecision.RetainCalibration
+            : TeamSwapRetryGeometryDecision.Recalibrate;
+    }
 
     public static TeamSwapCalibration? TryCreate(
         PixelSize clientSize,
@@ -64,18 +110,23 @@ public sealed record TeamSwapCalibration(
             bottomLoads);
     }
 
-    public TeamSwapResolvedTarget? Resolve(int teamNumber, PixelRect currentTitle)
+    public TeamSwapResolvedTarget? Resolve(
+        int teamNumber,
+        PixelRect currentTitle,
+        double middleNormalizedPosition = MiddleTargetPosition)
     {
         TeamSwapLayout.ValidateTeamNumber(teamNumber);
-        if (currentTitle.Width <= 0 || currentTitle.Height <= 0) return null;
-        double widthRatio = currentTitle.Width / (double)TitleBounds.Width;
-        double heightRatio = currentTitle.Height / (double)TitleBounds.Height;
-        if (widthRatio is < 0.82 or > 1.18 || heightRatio is < 0.72 or > 1.28)
+        if (!currentTitle.IsInside(ClientSize)) return null;
+        int maximumPositionDrift = Math.Max(12, RowPitch / 5);
+        if (Math.Abs(currentTitle.X - TitleBounds.X) > maximumPositionDrift ||
+            Math.Abs(currentTitle.Y - TitleBounds.Y) > maximumPositionDrift)
+        {
             return null;
+        }
 
         TeamSwapViewport viewport;
         PixelPoint source;
-        if (teamNumber <= 2)
+        if (teamNumber <= 3)
         {
             viewport = TeamSwapViewport.Top;
             source = TopLoadPoints[teamNumber - 1];
@@ -87,8 +138,10 @@ public sealed record TeamSwapCalibration(
         }
         else
         {
+            if (!IsMiddlePositionUsable(middleNormalizedPosition)) return null;
             viewport = TeamSwapViewport.Middle;
-            double rowOffset = teamNumber - 3.5;
+            double rowOffset = teamNumber - 1 -
+                middleNormalizedPosition * (TotalTeams - VisibleTeamsPerEndpoint);
             source = new PixelPoint(
                 TopLoadPoints[0].X,
                 checked(TopLoadPoints[0].Y +
@@ -109,6 +162,7 @@ public sealed record TeamSwapCalibration(
             Translate(source, currentTitle),
             dragStart,
             dragEnd,
+            viewport == TeamSwapViewport.Middle ? MiddleWheelUnits : 0,
             Translate(ScrollAnchor, currentTitle));
     }
 
@@ -131,6 +185,16 @@ public sealed record TeamSwapCalibration(
         PixelPoint[] expanded = Enumerable.Range(0, VisibleTeamsPerEndpoint)
             .Select(index => new PixelPoint(x, checked(firstY + index * pitch)))
             .ToArray();
+        if (fromTop)
+        {
+            // The third Load control is clipped by the viewport. Its OCR text center is
+            // below the interactive area, but the upper green edge remains clickable.
+            int lift = Math.Max(2, checked((int)Math.Round(
+                pitch * ClippedTopLoadLiftRatio,
+                MidpointRounding.AwayFromZero)));
+            PixelPoint third = expanded[^1];
+            expanded[^1] = new PixelPoint(third.X, checked(third.Y - lift));
+        }
         return expanded.All(point =>
                 point.X >= 0 && point.X < clientSize.Width &&
                 point.Y >= 0 && point.Y < clientSize.Height)
