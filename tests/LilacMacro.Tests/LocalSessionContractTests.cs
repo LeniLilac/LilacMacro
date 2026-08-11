@@ -276,6 +276,33 @@ public sealed class LocalSessionContractTests
         Assert.Equal(["UmRdpService", "TermService"], TermServiceConfigurationManager.RestartStopOrder);
     }
 
+    [Theory]
+    [InlineData(0, 10_000, 500)]
+    [InlineData(1_000, 10_000, 500)]
+    [InlineData(8_000, 10_000, 800)]
+    [InlineData(30_000, 10_000, 2_000)]
+    [InlineData(30_000, 275, 275)]
+    public void Term_service_polling_honors_wait_hints_with_bounded_delays(
+        uint waitHintMilliseconds,
+        long remainingMilliseconds,
+        int expectedDelayMilliseconds)
+    {
+        Assert.Equal(
+            TimeSpan.FromMilliseconds(expectedDelayMilliseconds),
+            TermServiceConfigurationManager.CalculatePollDelay(waitHintMilliseconds, remainingMilliseconds));
+        Assert.Equal(TimeSpan.FromSeconds(60), TermServiceConfigurationManager.ServiceTransitionTimeout);
+    }
+
+    [Theory]
+    [InlineData(1, "Stopped")]
+    [InlineData(3, "Stop Pending")]
+    [InlineData(4, "Running")]
+    [InlineData(99, "Unknown (99)")]
+    public void Term_service_diagnostics_name_service_states(uint state, string expected)
+    {
+        Assert.Equal(expected, TermServiceConfigurationManager.StateName(state));
+    }
+
     [Fact]
     public void Firewall_isolation_requires_the_exact_enabled_inbound_block_rule()
     {

@@ -9,6 +9,7 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
 {
     public const int LocalPort = 33991;
     internal static IReadOnlyList<string> RestartStopOrder { get; } = ["UmRdpService", "TermService"];
+    internal static readonly TimeSpan ServiceTransitionTimeout = TimeSpan.FromSeconds(60);
     private const string TerminalServerKey = @"SYSTEM\CurrentControlSet\Control\Terminal Server";
     private const string ListenerKey = TerminalServerKey + @"\WinStations\RDP-Tcp";
     private const string ServiceParametersKey = @"SYSTEM\CurrentControlSet\Services\TermService\Parameters";
@@ -66,7 +67,7 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
             int error = Marshal.GetLastWin32Error();
             if (error != 1062) throw new Win32Exception(error, $"{serviceName} could not be stopped.");
         }
-        WaitForState(service, serviceName, 1, TimeSpan.FromSeconds(20));
+        WaitForState(service, serviceName, 1, ServiceTransitionTimeout);
         return true;
     }
 
@@ -81,21 +82,44 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
         }
         if (!StartService(service, 0, null) && Marshal.GetLastWin32Error() != 1056)
             throw new Win32Exception(Marshal.GetLastWin32Error(), $"{serviceName} could not be started.");
-        WaitForState(service, serviceName, 4, TimeSpan.FromSeconds(20));
+        WaitForState(service, serviceName, 4, ServiceTransitionTimeout);
     }
 
     private static void WaitForState(ServiceHandle service, string serviceName, uint desiredState, TimeSpan timeout)
     {
-        DateTime deadline = DateTime.UtcNow + timeout;
+        long deadline = Environment.TickCount64 + (long)timeout.TotalMilliseconds;
         ServiceStatus status = default;
-        while (DateTime.UtcNow < deadline)
+        while (true)
         {
             if (!QueryServiceStatus(service, ref status)) throw new Win32Exception(Marshal.GetLastWin32Error());
             if (status.CurrentState == desiredState) return;
-            Thread.Sleep(200);
+            long remainingMilliseconds = deadline - Environment.TickCount64;
+            if (remainingMilliseconds <= 0) break;
+            Thread.Sleep(CalculatePollDelay(status.WaitHint, remainingMilliseconds));
         }
-        throw new TimeoutException($"{serviceName} did not reach state {desiredState}.");
+        throw new TimeoutException(
+            $"{serviceName} did not reach {StateName(desiredState)} within {timeout.TotalSeconds:0} seconds " +
+            $"(current {StateName(status.CurrentState)}, checkpoint {status.CheckPoint}, wait hint {status.WaitHint} ms, Win32 exit {status.Win32ExitCode}).");
     }
+
+    internal static TimeSpan CalculatePollDelay(uint waitHintMilliseconds, long remainingMilliseconds)
+    {
+        long suggested = waitHintMilliseconds == 0 ? 500 : waitHintMilliseconds / 10L;
+        long bounded = Math.Clamp(suggested, 500, 2_000);
+        return TimeSpan.FromMilliseconds(Math.Min(bounded, Math.Max(1, remainingMilliseconds)));
+    }
+
+    internal static string StateName(uint state) => state switch
+    {
+        1 => "Stopped",
+        2 => "Start Pending",
+        3 => "Stop Pending",
+        4 => "Running",
+        5 => "Continue Pending",
+        6 => "Pause Pending",
+        7 => "Paused",
+        _ => $"Unknown ({state})",
+    };
 
     private static RegistryMutation Dword(string key, string name, int value) => new(key, name, RegistryValueKind.DWord, value);
 
