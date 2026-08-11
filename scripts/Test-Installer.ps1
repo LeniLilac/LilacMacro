@@ -44,6 +44,8 @@ Require-Text $installer 'DefaultDirName=\{autopf\}\\LilacMacro' 'Installer must 
 Require-Text $installer 'PrivilegesRequired=admin' 'Installer must require elevation for lifecycle cleanup.'
 Require-Text $installer 'LilacMacro\.SessionSetup\.exe' 'Installer must include the elevated setup helper.'
 Require-Text $installer "'repair'" 'Installer upgrade must invoke the repair verb.'
+Require-Text $installer 'runner unavailable until Repair succeeds' 'Optional runner migration failure must leave the application upgrade usable.'
+Reject-Text $installer 'existing local runner could not be migrated' 'Optional runner migration must not abort the application upgrade.'
 Require-Text $installer "'uninstall-cleanup'" 'Installer uninstall must invoke cleanup before deleting binaries.'
 Require-Text $installer 'third_party\\termwrap\\v0\.6' 'Installer must bundle the pinned TermWrap payload.'
 Require-Text $installer 'NOTICE\.md' 'Installer must include dependency notices.'

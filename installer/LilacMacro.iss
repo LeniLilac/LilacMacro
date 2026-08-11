@@ -56,7 +56,7 @@ begin
   Result := FileExists(ExpandConstant('{commonappdata}\LilacMacro\Session\provisioning.json'));
 end;
 
-procedure RequireRunnerRepair;
+procedure AttemptRunnerRepair;
 var
   ResultCode: Integer;
 begin
@@ -64,7 +64,7 @@ begin
     exit;
   if not Exec(ExpandConstant('{app}\LilacMacro.SessionSetup.exe'), 'repair', '',
     SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
-    RaiseException('The existing local runner could not be migrated. Run REPAIR and retry the upgrade.');
+    Log('Optional local runner migration did not complete. The application upgrade will continue with the runner unavailable until Repair succeeds.');
 end;
 
 procedure RequireRunnerCleanup;
@@ -81,7 +81,7 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
-    RequireRunnerRepair;
+    AttemptRunnerRepair;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

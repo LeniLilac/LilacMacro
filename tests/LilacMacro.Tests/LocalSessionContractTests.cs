@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using LilacMacro.App.Runtime;
 using LilacMacro.Core.Geometry;
@@ -233,6 +234,42 @@ public sealed class LocalSessionContractTests
             accountOnly with { CompletedSteps = [.. accountOnly.CompletedSteps, "term-service-mutation-started"] },
             []));
         Assert.True(LocalSessionProvisioner.RequiresTermServiceRestore(accountOnly, ["changed"]));
+    }
+
+    [Fact]
+    public void Missing_scheduled_task_is_an_idempotent_cleanup_success()
+    {
+        Assert.True(RunnerScheduledTaskManager.IsMissingTaskFailure(new FileNotFoundException()));
+        Assert.True(RunnerScheduledTaskManager.IsMissingTaskFailure(
+            new COMException("Task not found.", unchecked((int)0x80070002))));
+        Assert.False(RunnerScheduledTaskManager.IsMissingTaskFailure(new IOException("Disk failure.")));
+    }
+
+    [Fact]
+    public async Task Runner_profile_failure_round_trips_for_elevated_setup_diagnostics()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-profile-failure-{Guid.NewGuid():N}");
+        LocalSessionPaths paths = new(root, root, Path.Combine(root, "native"));
+        try
+        {
+            RunnerProfileFailure failure = new()
+            {
+                FailureCode = "profile-policy-access-denied",
+                Detail = "A runner-scoped registry value was rejected.",
+            };
+
+            RunnerProfileStore store = new(paths);
+            await store.WriteFailureAsync(failure);
+
+            RunnerProfileFailure? restored = await store.ReadFailureAsync();
+            Assert.NotNull(restored);
+            Assert.Equal(failure.FailureCode, restored!.FailureCode);
+            Assert.Equal(failure.Detail, restored.Detail);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

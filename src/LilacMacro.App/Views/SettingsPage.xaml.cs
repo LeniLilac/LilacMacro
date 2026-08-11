@@ -32,6 +32,7 @@ public partial class SettingsPage : UserControl
         _localSession = localSession;
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
+        MacroVersionText.Text = BuildVersion();
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on start" };
         UpdateChannelCombo.ItemsSource = new[] { "Stable", "Prerelease" };
         CaptureIntervalCombo.ItemsSource = new[] { "0.5 sec", "1.0 sec", "2.0 sec" };
@@ -174,6 +175,7 @@ public partial class SettingsPage : UserControl
     }
 
     private static string ValueOrDash(string value) => string.IsNullOrWhiteSpace(value) ? "-" : value;
+    private static string BuildVersion() => typeof(SettingsPage).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
     private void PrivateServerText_OnTextChanged(object sender, TextChangedEventArgs eventArgs)
     {

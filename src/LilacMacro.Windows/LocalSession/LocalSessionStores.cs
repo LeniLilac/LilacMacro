@@ -74,4 +74,14 @@ public sealed class RunnerProfileStore(LocalSessionPaths paths)
 
     public Task<RunnerProfileReceipt?> ReadReceiptAsync(CancellationToken cancellationToken = default) =>
         AtomicJsonFile.ReadAsync<RunnerProfileReceipt>(paths.ProfileReceiptPath, cancellationToken);
+
+    public Task WriteFailureAsync(RunnerProfileFailure failure, CancellationToken cancellationToken = default)
+    {
+        LocalSessionValidationResult validation = LocalSessionValidation.Validate(failure);
+        if (!validation.IsValid) throw new InvalidDataException(string.Join(" ", validation.Errors));
+        return AtomicJsonFile.WriteAsync(paths.ProfileFailurePath, failure, cancellationToken);
+    }
+
+    public Task<RunnerProfileFailure?> ReadFailureAsync(CancellationToken cancellationToken = default) =>
+        AtomicJsonFile.ReadAsync<RunnerProfileFailure>(paths.ProfileFailurePath, cancellationToken);
 }

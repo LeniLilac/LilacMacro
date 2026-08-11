@@ -66,6 +66,30 @@ public static class LocalSessionValidation
         return Result(errors);
     }
 
+    public static LocalSessionValidationResult Validate(RunnerProfileFailure failure)
+    {
+        ArgumentNullException.ThrowIfNull(failure);
+        List<string> errors = [];
+        if (failure.SchemaVersion != RunnerProfileFailure.CurrentSchemaVersion)
+            errors.Add("Unsupported runner profile failure schema.");
+        if (failure.FailureCode is not (
+            "profile-policy-access-denied" or
+            "profile-policy-io-failed" or
+            "profile-policy-invalid" or
+            "profile-policy-application-failed"))
+        {
+            errors.Add("Runner profile failure code is invalid.");
+        }
+        if (string.IsNullOrWhiteSpace(failure.Detail) ||
+            failure.Detail.Length > 500 ||
+            failure.Detail.Contains('\r') ||
+            failure.Detail.Contains('\n'))
+        {
+            errors.Add("Runner profile failure detail is invalid.");
+        }
+        return Result(errors);
+    }
+
     public static LocalSessionValidationResult Validate(
         RunnerRuntimeSnapshot snapshot,
         string expectedOwnerSid,

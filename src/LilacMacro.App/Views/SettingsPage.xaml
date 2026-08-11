@@ -133,6 +133,11 @@
                             <StackPanel Grid.Row="1" Margin="0,16,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MACRO VERSION" />
+                                    <TextBlock x:Name="MacroVersionText" Grid.Column="1" VerticalAlignment="Center" FontFamily="Consolas" FontSize="11" FontWeight="SemiBold" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="UPDATE OPTIONS" />
                                     <StackPanel Grid.Column="1">
                                         <CheckBox IsChecked="True" Content="Check for updates on startup" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />

@@ -19,9 +19,19 @@ public sealed record RunnerProfileReceipt
     public DateTimeOffset AppliedAtUtc { get; init; } = DateTimeOffset.UtcNow;
 }
 
+public sealed record RunnerProfileFailure
+{
+    public const int CurrentSchemaVersion = 1;
+
+    public int SchemaVersion { get; init; } = CurrentSchemaVersion;
+    public string FailureCode { get; init; } = string.Empty;
+    public string Detail { get; init; } = string.Empty;
+    public DateTimeOffset ObservedAtUtc { get; init; } = DateTimeOffset.UtcNow;
+}
+
 public sealed record RunnerProfilePolicy
 {
-    public const string CurrentVersion = "1.1.0";
+    public const string CurrentVersion = "1.2.0";
 
     public string Version { get; init; } = CurrentVersion;
     public IReadOnlyList<RunnerPackageRule> PackageRules { get; init; } = DefaultPackageRules;
@@ -29,11 +39,11 @@ public sealed record RunnerProfilePolicy
 
     public static IReadOnlyList<RunnerPackageRule> DefaultPackageRules { get; } =
     [
-        new("Clipchamp.Clipchamp", true),
-        new("Microsoft.549981C3F5F10", true),
-        new("Microsoft.MicrosoftOfficeHub", true),
-        new("MSTeams", true),
-        new("MicrosoftTeams", true),
+        new("Clipchamp.Clipchamp", false),
+        new("Microsoft.549981C3F5F10", false),
+        new("Microsoft.MicrosoftOfficeHub", false),
+        new("MSTeams", false),
+        new("MicrosoftTeams", false),
     ];
 
     public static IReadOnlyList<RunnerRegistryRule> DefaultRegistryRules { get; } =

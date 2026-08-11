@@ -31,7 +31,7 @@ Run `./scripts/Test-Installer.ps1` on every platform-neutral installer change. I
 
 ## Upgrade and uninstall
 
-An upgrade that finds an owned provisioning journal runs an idempotent repair/migration before the upgraded runner can be used. A normal uninstall invokes `uninstall-cleanup` before deleting binaries. If cleanup fails, uninstall stops and retains the signed helper and provisioning journal. The error lists unresolved resources and can be retried after correcting the reported Windows condition.
+An upgrade that finds an owned provisioning journal attempts an idempotent repair/migration before the upgraded runner can be used. If a prior rollback removed every owned resource but left only its journal because an already-absent scheduled task was misclassified as a cleanup failure, migration verifies the empty state and clears that orphan instead of recreating the runner. A failed optional-runner migration leaves the runner unavailable and its exact status available to the upgraded app, but it does not roll back or block the main LilacMacro upgrade. A normal uninstall still invokes `uninstall-cleanup` before deleting binaries. If cleanup fails, uninstall stops and retains the signed helper and provisioning journal. The error lists unresolved resources and can be retried after correcting the reported Windows condition.
 
 Installer integration testing occurs only in disposable Windows VMs. Agents do not provision the owner's machine or operate Roblox.
 

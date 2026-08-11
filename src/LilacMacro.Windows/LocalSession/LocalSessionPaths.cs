@@ -19,6 +19,7 @@ public sealed record LocalSessionPaths(
     public string OcrRoot => Path.Combine(RunnerRoot, "Ocr");
     public string ProfilePolicyPath => Path.Combine(RunnerRoot, "runner-profile-policy.json");
     public string ProfileReceiptPath => Path.Combine(RunnerRoot, "runner-profile-receipt.json");
+    public string ProfileFailurePath => Path.Combine(RunnerRoot, "runner-profile-failure.json");
     public string CompatibilityCachePath => Path.Combine(SessionRoot, "compatibility-cache.json");
     public string CredentialTarget => $"TERMSRV/127.0.0.1:{TermServiceConfigurationManager.LocalPort}";
     public string PayloadManifestPath => Path.Combine(NativePayloadRoot, "payload.json");

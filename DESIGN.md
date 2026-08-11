@@ -184,6 +184,7 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 - Treat the standard Roblox 100% UI scale as a startup invariant. Do not expose a UI-scale selector or an option to skip scale preparation.
 - Use one persistent internal category bar: General, Roblox, Discord, Keybinds, and Diagnostics.
 - General owns appearance, updates, and local-data controls. Game-setting normalization and fresh Lobby verification are mandatory runtime invariants, not settings.
+- General shows the running Macro version as a terse read-only value at the top of Updates and data so installed and local artifacts can be identified without opening build metadata.
 - Roblox owns the private-server link and optional local-session target. Do not expose retry counts, rejoin switches, or a way to disable fresh Lobby evidence.
 - Discord owns webhook and failure-notification fields.
 - Keybinds uses a compact name, scope, and binding list.

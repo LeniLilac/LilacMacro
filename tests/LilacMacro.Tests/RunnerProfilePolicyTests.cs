@@ -12,6 +12,7 @@ public sealed class RunnerProfilePolicyTests
 
         Assert.True(result.IsValid);
         Assert.DoesNotContain(policy.PackageRules, rule => rule.PackageFamilyName.Contains('*'));
+        Assert.DoesNotContain(policy.PackageRules, rule => rule.RemoveWhenPresent);
         Assert.DoesNotContain(policy.RegistryRules, rule =>
             rule.RelativeKey.StartsWith("HKEY_", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(policy.RegistryRules, rule =>
@@ -54,5 +55,21 @@ public sealed class RunnerProfilePolicyTests
         Assert.All(policy.PackageRules, rule => Assert.DoesNotContain("*", rule.PackageFamilyName));
         Assert.Contains(policy.RegistryRules, rule => rule.DeleteWhenPresent && rule.ValueName == "OneDrive");
         Assert.Contains(policy.RegistryRules, rule => rule.RelativeKey.Contains("Notifications", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Profile_failure_requires_bounded_known_diagnostic_fields()
+    {
+        Assert.True(LocalSessionValidation.Validate(new RunnerProfileFailure
+        {
+            FailureCode = "profile-policy-io-failed",
+            Detail = "The runner policy file could not be read.",
+        }).IsValid);
+        Assert.False(LocalSessionValidation.Validate(new RunnerProfileFailure
+        {
+            SchemaVersion = 2,
+            FailureCode = "unknown",
+            Detail = "line one\nline two",
+        }).IsValid);
     }
 }

@@ -39,12 +39,12 @@ Provisioning then:
 8. starts the worker and validates a fresh WGC frame in the visible session;
 9. validates fresh WGC capture and the shared WPF-free workflow host, then records Ready only when the complete runtime health check passes.
 
-Any failure runs the rollback journal. Cleanup attempts every independently owned resource even when an earlier cleanup step fails, reports each failed step, and restarts TermService only when journal evidence or observed registry drift proves that setup reached the machine-configuration boundary. If rollback is incomplete, state becomes Recovery Required and the journal remains for repair or cleanup.
+Any failure runs the rollback journal. Cleanup attempts every independently owned resource even when an earlier cleanup step fails, treats an already-absent scheduled task as successful idempotent cleanup, reports each real failed step, and restarts TermService only when journal evidence or observed registry drift proves that setup reached the machine-configuration boundary. If rollback is incomplete, state becomes Recovery Required and the journal remains for repair or cleanup. Repair clears an orphaned journal when live inspection proves that rollback already removed every owned resource and restored every recorded value.
 Failures before the first journal write are recorded as non-mutating setup failures, and the elevated helper persists its final problem before exiting. On application restart, Settings reconciles an orphaned Installing or Removing state against the journal and live helper process, so an interrupted operation cannot remain indefinitely stale.
 
 ## Runner profile policy
 
-The policy may remove only exact per-user packages from its allowlist, currently Clipchamp, Cortana, Office Hub, and consumer Teams variants. It disables only runner-profile promotion, suggestions, widgets, notifications, OneDrive/Teams/Office startup, and consumer content.
+The policy retains an exact per-user package allowlist for future compatibility work, but package removal is not part of the required controlled setup pass. Fresh Windows profiles can register AppX packages asynchronously, so making debloat a provisioning gate is unreliable and unrelated to runtime isolation. The required policy disables only runner-profile promotion, suggestions, widgets, notifications, OneDrive/Teams/Office startup, and consumer content through runner-hive registry values.
 
 The policy rejects wildcards, all-user/provisioned package mutation, machine service policy, Defender changes, Windows Update changes, registry cleaners, and owner-profile writes. Explorer, DWM, Defender, Firewall, Windows Update, Store infrastructure, WebView2, GPU, audio, networking, WGC, and gaming services remain.
 

@@ -10,7 +10,8 @@ public sealed class RunnerScheduledTaskManager
         dynamic service = Activator.CreateInstance(type) ?? throw new InvalidOperationException("Task Scheduler could not be opened.");
         service.Connect();
         dynamic folder = service.GetFolder("\\");
-        try { folder.DeleteTask(TaskName, 0); } catch (System.Runtime.InteropServices.COMException) { }
+        try { folder.DeleteTask(TaskName, 0); }
+        catch (Exception error) when (IsMissingTaskFailure(error)) { }
         dynamic task = service.NewTask(0);
         task.RegistrationInfo.Description = "Starts LilacMacro's windowless worker inside the owned runner session.";
         task.Principal.UserId = $".\\{accountName}";
@@ -36,7 +37,8 @@ public sealed class RunnerScheduledTaskManager
         dynamic service = Activator.CreateInstance(type)!;
         service.Connect();
         dynamic folder = service.GetFolder("\\");
-        try { folder.DeleteTask(TaskName, 0); } catch (System.Runtime.InteropServices.COMException) { }
+        try { folder.DeleteTask(TaskName, 0); }
+        catch (Exception error) when (IsMissingTaskFailure(error)) { }
     }
 
     public bool Exists()
@@ -47,6 +49,11 @@ public sealed class RunnerScheduledTaskManager
         service.Connect();
         dynamic folder = service.GetFolder("\\");
         try { _ = folder.GetTask(TaskName); return true; }
-        catch (System.Runtime.InteropServices.COMException) { return false; }
+        catch (Exception error) when (IsMissingTaskFailure(error)) { return false; }
     }
+
+    internal static bool IsMissingTaskFailure(Exception error) =>
+        error is FileNotFoundException ||
+        error.HResult == unchecked((int)0x80070002) ||
+        error.InnerException is not null && IsMissingTaskFailure(error.InnerException);
 }

@@ -31,6 +31,11 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
             if (!string.Equals(existing.OwnerSid, ownerSid, StringComparison.Ordinal))
                 throw new UnauthorizedAccessException("Only the Windows account that provisioned this runner may repair it.");
         }
+        if (repair && existing is not null &&
+            await FinalizeCompletedRollbackAsync(existing, cancellationToken).ConfigureAwait(false))
+        {
+            return;
+        }
 
         await statusStore.WriteAsync(new LocalSessionStatus { State = LocalSessionState.Installing, StatusCode = repair ? "repairing" : "installing", Detail = "Provisioning the optional local runner." }, cancellationToken).ConfigureAwait(false);
         NativePayloadVerification payload;
@@ -122,12 +127,21 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
             manifest = await RecordAsync(manifest, "credential-stored", cancellationToken).ConfigureAwait(false);
 
             RunnerProfileStore profileStore = new(paths);
+            DeleteIfPresent(paths.ProfileReceiptPath);
+            DeleteIfPresent(paths.ProfileFailurePath);
             await profileStore.WritePolicyAsync(new RunnerProfilePolicy(), cancellationToken).ConfigureAwait(false);
             int profileExit = await new RunnerProcessLauncher().RunAndWaitAsync(
                 RunnerName, password, paths.WorkerPath,
                 ["--apply-profile-policy", paths.ProfilePolicyPath, paths.ProfileReceiptPath],
                 TimeSpan.FromMinutes(5), cancellationToken).ConfigureAwait(false);
-            if (profileExit != 0) throw new InvalidOperationException("The controlled runner profile policy pass failed.");
+            if (profileExit != 0)
+            {
+                RunnerProfileFailure? failure = await profileStore.ReadFailureAsync(cancellationToken).ConfigureAwait(false);
+                string detail = failure is null
+                    ? "The controlled runner profile policy pass failed without a diagnostic receipt."
+                    : $"The controlled runner profile policy pass failed ({failure.FailureCode}: {failure.Detail}).";
+                throw new InvalidOperationException(detail);
+            }
             RunnerProfileReceipt? receipt = await profileStore.ReadReceiptAsync(cancellationToken).ConfigureAwait(false);
             if (receipt is null || receipt.RunnerSid != runnerSid || receipt.PolicyVersion != RunnerProfilePolicy.CurrentVersion)
                 throw new InvalidDataException("The controlled runner profile could not be verified.");
@@ -248,6 +262,20 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         await statusStore.WriteAsync(new LocalSessionStatus(), cancellationToken).ConfigureAwait(false);
     }
 
+    private async Task<bool> FinalizeCompletedRollbackAsync(
+        LocalSessionProvisioningManifest manifest,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyList<string> unresolved;
+        try { unresolved = cleanupVerifier.Inspect(manifest); }
+        catch { return false; }
+        if (unresolved.Count > 0) return false;
+
+        DeleteIfPresent(paths.JournalPath);
+        await statusStore.WriteAsync(new LocalSessionStatus(), cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
     internal static bool RequiresTermServiceRestore(
         LocalSessionProvisioningManifest manifest,
         IReadOnlyList<string> registryMismatches) =>
@@ -259,6 +287,11 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
     {
         try { action(); }
         catch (Exception exception) { failures.Add($"{step}: {exception.Message}"); }
+    }
+
+    private static void DeleteIfPresent(string path)
+    {
+        if (File.Exists(path)) File.Delete(path);
     }
 
     private static async Task AttemptAsync(List<string> failures, string step, Func<Task> action)
