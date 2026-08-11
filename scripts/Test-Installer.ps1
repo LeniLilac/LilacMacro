@@ -52,6 +52,7 @@ Require-Text $installer 'runner unavailable until Repair succeeds' 'Optional run
 Reject-Text $installer 'existing local runner could not be migrated' 'Optional runner migration must not abort the application upgrade.'
 Require-Text $installer "'uninstall-cleanup'" 'Installer uninstall must invoke cleanup before deleting binaries.'
 Require-Text $installer 'third_party\\termwrap\\v0\.6' 'Installer must bundle the pinned TermWrap payload.'
+Require-Text $installer 'third_party\\termwrap\\v0\.6[^\r\n]+onlyifdoesntexist' 'Installer upgrades must not overwrite the loaded versioned TermWrap payload.'
 Require-Text $installer 'NOTICE\.md' 'Installer must include dependency notices.'
 
 Require-Text $builder 'dotnet publish' 'Installer build must publish through dotnet.'

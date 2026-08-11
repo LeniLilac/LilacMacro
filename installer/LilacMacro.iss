@@ -36,7 +36,7 @@ RestartApplications=no
 
 [Files]
 Source: "{#PublishRoot}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourceRoot}\third_party\termwrap\v0.6\*"; DestDir: "{app}\native\termwrap\v0.6"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceRoot}\third_party\termwrap\v0.6\*"; DestDir: "{app}\native\termwrap\v0.6"; Flags: ignoreversion recursesubdirs createallsubdirs onlyifdoesntexist
 Source: "{#SourceRoot}\LICENSE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceRoot}\NOTICE.md"; DestDir: "{app}"; Flags: ignoreversion
 

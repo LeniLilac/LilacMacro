@@ -13,6 +13,8 @@ The installer contains:
 - the signed windowless profile-policy bootstrap retained for local-instance setup compatibility;
 - the pinned TermWrap payload, hash manifest, license, and notices.
 
+The versioned native payload is install-once. Upgrades do not attempt to overwrite its loaded files; Repair verifies their exact pinned hashes and fails closed on drift. A future native payload must use a new versioned directory and an explicitly certified migration.
+
 Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local instances, Set Up and approve UAC. The initial setup creates Runner 1; additional shared/separate runners use the same allowlisted elevated helper.
 
 ## Build
