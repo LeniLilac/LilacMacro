@@ -91,6 +91,40 @@ public sealed class LocalSessionContractTests
         Assert.False((ready with { Problems = ["stale"] }).CanRun);
     }
 
+    [Theory]
+    [InlineData(LocalSessionState.Ready, true, true, true)]
+    [InlineData(LocalSessionState.Degraded, true, true, true)]
+    [InlineData(LocalSessionState.Degraded, false, true, false)]
+    [InlineData(LocalSessionState.Degraded, true, false, false)]
+    [InlineData(LocalSessionState.Absent, true, true, false)]
+    [InlineData(LocalSessionState.RecoveryRequired, true, true, false)]
+    public void Interactive_session_requires_provisioned_compatible_loopback_state(
+        LocalSessionState state,
+        bool compatibilityPassed,
+        bool loopbackIsolationPassed,
+        bool expected)
+    {
+        LocalSessionStatus status = new()
+        {
+            State = state,
+            CompatibilityPassed = compatibilityPassed,
+            LoopbackIsolationPassed = loopbackIsolationPassed,
+            Problems = ["Fresh runner capture has not been verified."],
+        };
+
+        Assert.Equal(expected, status.CanOpenInteractiveSession);
+    }
+
+    [Fact]
+    public void Interactive_session_uses_fullscreen_loopback_rdp_viewport()
+    {
+        System.Diagnostics.ProcessStartInfo start = LocalSessionDesktopController.CreateRdpStartInfo();
+
+        Assert.Equal("mstsc.exe", start.FileName);
+        Assert.Equal("/v:127.0.0.1:33991 /f", start.Arguments);
+        Assert.True(start.UseShellExecute);
+    }
+
     [Fact]
     public void State_machine_rejects_skipping_installation()
     {

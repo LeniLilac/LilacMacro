@@ -57,6 +57,8 @@ The worker materializes the selected immutable snapshot below its app-owned Prog
 
 The run target remains `This desktop` unless complete health reports Ready. `Local runner session` is not selectable while compatibility, loopback isolation, fresh capture, version, ACL, or runtime support is incomplete.
 
+Settings exposes `OPEN SESSION` after provisioning compatibility and loopback isolation pass, including the expected Degraded bootstrap state before fresh Roblox capture is ready. It launches the full-screen `127.0.0.1:33991` RDP viewport with the app-owned Credential Manager entry so the owner can install Roblox, sign in, and launch it once inside the runner profile. Absent, mutating, recovery-required, compatibility-failed, and isolation-failed states cannot open the viewport. The viewport must remain visibly connected during automation; minimizing or disconnecting it invalidates capture.
+
 ## Removal
 
 Remove and normal uninstall stop the worker and session, delete the task, firewall rules, credential, account, profile, and runner snapshot, and restore recorded system values. Cleanup then verifies every owned resource and every original registry value. Any unresolved resource is listed in status, and the helper plus journal remain so cleanup can be retried.

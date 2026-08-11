@@ -113,6 +113,20 @@ public partial class SettingsPage : UserControl
         finally { await RefreshLocalSessionAsync(); }
     }
 
+    private async void OpenLocalSession_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        SetLocalSessionActionsEnabled(false);
+        try
+        {
+            await _localSession.OpenSessionAsync();
+        }
+        catch (Exception exception) when (exception is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            AppToastService.ShowError("LOCAL SESSION FAILED", exception.Message);
+        }
+        finally { await RefreshLocalSessionAsync(); }
+    }
+
     private async void ExecutionTarget_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
     {
         if (!_initialized) return;
@@ -164,6 +178,7 @@ public partial class SettingsPage : UserControl
         ExecutionTargetCombo.IsEnabled = status.State is not (LocalSessionState.Installing or LocalSessionState.Removing);
         SetupLocalSessionButton.IsEnabled = status.State == LocalSessionState.Absent;
         RepairLocalSessionButton.IsEnabled = status.State is not LocalSessionState.Absent;
+        OpenLocalSessionButton.IsEnabled = status.CanOpenInteractiveSession;
         RemoveLocalSessionButton.IsEnabled = status.State is not LocalSessionState.Absent;
     }
 
@@ -171,6 +186,7 @@ public partial class SettingsPage : UserControl
     {
         SetupLocalSessionButton.IsEnabled = enabled;
         RepairLocalSessionButton.IsEnabled = enabled;
+        OpenLocalSessionButton.IsEnabled = enabled;
         RemoveLocalSessionButton.IsEnabled = enabled;
     }
 

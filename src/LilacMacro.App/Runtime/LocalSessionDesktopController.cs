@@ -73,13 +73,7 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
     public async Task<SessionWorkerEvent> ConnectAsync(CancellationToken cancellationToken)
     {
         if (pipe is { IsConnected: true } && connectedReady is not null) return connectedReady;
-        LocalSessionStatus status = await GetStatusAsync(cancellationToken).ConfigureAwait(false);
-        if (status.State is not (LocalSessionState.Ready or LocalSessionState.Degraded))
-            throw new InvalidOperationException(status.Problems.FirstOrDefault() ?? status.Detail);
-        if (!status.CompatibilityPassed || !status.LoopbackIsolationPassed)
-            throw new InvalidOperationException(status.Problems.FirstOrDefault() ?? status.Detail);
-        LocalSessionProvisioningManifest manifest = await new ProvisioningJournalStore(paths).ReadAsync(cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidDataException("The local runner provisioning journal is missing.");
+        LocalSessionProvisioningManifest manifest = await RequireInteractiveSessionAsync(cancellationToken).ConfigureAwait(false);
         await DisconnectAsync().ConfigureAwait(false);
         StartRdpClient();
         pipe = await SessionPipeClient.ConnectValidatedAsync(paths, manifest.RunnerSid, TimeSpan.FromSeconds(45), cancellationToken).ConfigureAwait(false);
@@ -99,6 +93,12 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
         readerTask = ReadEventsAsync(heartbeatCancellation.Token);
         heartbeatTask = MaintainHeartbeatAsync(heartbeatCancellation.Token);
         return ready;
+    }
+
+    public async Task OpenSessionAsync(CancellationToken cancellationToken = default)
+    {
+        _ = await RequireInteractiveSessionAsync(cancellationToken).ConfigureAwait(false);
+        StartRdpClient();
     }
 
     public async Task<long> PublishSnapshotAsync(
@@ -178,10 +178,39 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
         return JsonSerializer.SerializeToElement(documents, AtomicJsonFile.Options);
     }
 
-    private static void StartRdpClient()
+    internal static ProcessStartInfo CreateRdpStartInfo()
     {
         string arguments = $"/v:127.0.0.1:{TermServiceConfigurationManager.LocalPort} /f";
-        _ = Process.Start(new ProcessStartInfo("mstsc.exe", arguments) { UseShellExecute = true });
+        return new ProcessStartInfo("mstsc.exe", arguments) { UseShellExecute = true };
+    }
+
+    private async Task<LocalSessionProvisioningManifest> RequireInteractiveSessionAsync(
+        CancellationToken cancellationToken)
+    {
+        LocalSessionStatus status = await GetStatusAsync(cancellationToken).ConfigureAwait(false);
+        if (!status.CanOpenInteractiveSession)
+        {
+            throw new InvalidOperationException(
+                status.Problems.FirstOrDefault() ?? "The local runner is not provisioned for an interactive session.");
+        }
+
+        LocalSessionProvisioningManifest manifest = await new ProvisioningJournalStore(paths)
+            .ReadAsync(cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new InvalidDataException("The local runner provisioning journal is missing.");
+        LocalSessionValidationResult validation = LocalSessionValidation.Validate(manifest);
+        if (!validation.IsValid || string.IsNullOrWhiteSpace(manifest.RunnerSid))
+        {
+            throw new InvalidDataException(
+                validation.Errors.FirstOrDefault() ?? "The local runner identity is missing from the provisioning journal.");
+        }
+        return manifest;
+    }
+
+    private static void StartRdpClient()
+    {
+        _ = Process.Start(CreateRdpStartInfo())
+            ?? throw new InvalidOperationException("Windows did not start the local runner RDP viewport.");
     }
 
     private static bool IsSetupHelperRunning()

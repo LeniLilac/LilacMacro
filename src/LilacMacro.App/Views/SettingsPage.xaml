@@ -204,6 +204,8 @@
                                                 Click="LocalSessionAction_OnClick" Content="SET UP" />
                                         <Button x:Name="RepairLocalSessionButton" Tag="repair" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}"
                                                 Click="LocalSessionAction_OnClick" Content="REPAIR" />
+                                        <Button x:Name="OpenLocalSessionButton" Margin="8,0,0,0" IsEnabled="False" Style="{StaticResource SettingsButtonStyle}"
+                                                Click="OpenLocalSession_OnClick" Content="OPEN SESSION" />
                                         <Button x:Name="RemoveLocalSessionButton" Tag="remove" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}"
                                                 Background="{DynamicResource DangerBrush}" Click="LocalSessionAction_OnClick" Content="REMOVE" />
                                     </StackPanel>

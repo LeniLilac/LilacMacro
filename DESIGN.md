@@ -188,6 +188,7 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 - General owns appearance, updates, and local-data controls. Game-setting normalization and fresh Lobby verification are mandatory runtime invariants, not settings.
 - General shows the running Macro version as a terse read-only value at the top of Updates and data so installed and local artifacts can be identified without opening build metadata.
 - Roblox owns the private-server link and optional local-session target. Do not expose retry counts, rejoin switches, or a way to disable fresh Lobby evidence.
+- Local Session keeps setup, repair, viewport, and removal in one compact action row. `OPEN SESSION` is available after compatibility and loopback isolation pass, even while fresh runner capture is still awaiting the owner's Roblox bootstrap.
 - Discord owns webhook and failure-notification fields.
 - Keybinds uses a compact name, scope, and binding list.
 - Diagnostics owns failure evidence, deep debug, and experimental recording controls.

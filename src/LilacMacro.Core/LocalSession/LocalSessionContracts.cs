@@ -43,6 +43,11 @@ public sealed record LocalSessionStatus
         && FreshCapturePassed
         && RuntimeHostPassed
         && Problems.Count == 0;
+
+    public bool CanOpenInteractiveSession =>
+        State is LocalSessionState.Ready or LocalSessionState.Degraded
+        && CompatibilityPassed
+        && LoopbackIsolationPassed;
 }
 
 public sealed record NativePayloadFile(string RelativePath, long Size, string Sha256);
