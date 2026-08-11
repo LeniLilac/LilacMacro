@@ -151,8 +151,9 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
             termService.Apply();
             await firewall.InstallAsync(cancellationToken).ConfigureAwait(false);
             termService.Restart();
-            if (!await firewall.VerifyLoopbackOnlyAsync(cancellationToken).ConfigureAwait(false))
-                throw new InvalidOperationException("Loopback-only RDP isolation could not be verified.");
+            FirewallIsolationVerification isolation = await firewall.VerifyLoopbackOnlyAsync(cancellationToken).ConfigureAwait(false);
+            if (!isolation.Passed)
+                throw new InvalidOperationException($"Loopback-only RDP isolation could not be verified: {isolation.Problem}");
             manifest = await RecordAsync(manifest, "loopback-isolation-verified", cancellationToken).ConfigureAwait(false);
             tasks.Register(RunnerName, password, paths.WorkerPath);
             manifest = await RecordAsync(manifest, "worker-task-registered", cancellationToken).ConfigureAwait(false);

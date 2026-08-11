@@ -34,7 +34,7 @@ Provisioning then:
 3. applies ACLs for the owner SID, runner SID, SYSTEM, and Administrators, then stores the loopback RDP secret as a generic `TERMSRV` credential rather than using the domain-password target grammar;
 4. performs one controlled runner logon and verifies the profile-policy receipt;
 5. applies the pinned TermWrap and loopback RDP configuration;
-6. installs exact enabled all-profile TCP/UDP inbound block rules for the owned port, verifies their full semantics through Windows Firewall policy, and verifies loopback reachability; same-host connections to a non-loopback local address are not treated as external-firewall evidence because Windows can route them through the local loopback fast path;
+6. installs exact enabled all-profile TCP/UDP inbound block rules for the owned port covering every IPv4 and IPv6 remote address except the authorized `127.0.0.1` endpoint, verifies their full semantics through Windows Firewall policy, and waits up to 15 seconds for loopback reachability after TermService restarts; same-host connections to a non-loopback local address are not treated as external-firewall evidence because Windows can route them through the local loopback fast path;
 7. registers the app-owned logon task for the worker with the machine-qualified local runner identity required by current Windows 11 Task Scheduler XML;
 8. starts the worker and validates a fresh WGC frame in the visible session;
 9. validates fresh WGC capture and the shared WPF-free workflow host, then records Ready only when the complete runtime health check passes.

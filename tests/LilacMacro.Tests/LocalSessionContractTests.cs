@@ -287,11 +287,33 @@ public sealed class LocalSessionContractTests
             Protocol: 6,
             LocalPorts: TermServiceConfigurationManager.LocalPort.ToString(System.Globalization.CultureInfo.InvariantCulture),
             Profiles: int.MaxValue,
-            RemoteAddresses: "*");
+            RemoteAddresses: FirewallIsolationManager.ExternalRemoteAddresses);
 
         Assert.True(FirewallIsolationManager.IsExpectedIsolationRule(tcp, FirewallIsolationManager.TcpRule, 6));
+        Assert.True(FirewallIsolationManager.IsExpectedIsolationRule(
+            tcp with { RemoteAddresses = string.Join(',', FirewallIsolationManager.ExternalRemoteAddresses.Split(',').Reverse()) },
+            FirewallIsolationManager.TcpRule,
+            6));
         Assert.False(FirewallIsolationManager.IsExpectedIsolationRule(tcp with { Action = 1 }, FirewallIsolationManager.TcpRule, 6));
         Assert.False(FirewallIsolationManager.IsExpectedIsolationRule(tcp with { RemoteAddresses = "LocalSubnet" }, FirewallIsolationManager.TcpRule, 6));
+        Assert.False(FirewallIsolationManager.IsExpectedIsolationRule(tcp with { RemoteAddresses = "*" }, FirewallIsolationManager.TcpRule, 6));
+        Assert.False(FirewallIsolationManager.IsExpectedIsolationRule(
+            tcp with { RemoteAddresses = $"{FirewallIsolationManager.ExternalRemoteAddresses},127.0.0.1" },
+            FirewallIsolationManager.TcpRule,
+            6));
+    }
+
+    [Fact]
+    public void Firewall_isolation_excludes_only_the_authorized_ipv4_loopback_endpoint()
+    {
+        string[] scope = FirewallIsolationManager.ExternalRemoteAddresses.Split(',');
+
+        Assert.DoesNotContain("127.0.0.1", scope);
+        Assert.Contains("0.0.0.0-127.0.0.0", scope);
+        Assert.Contains("127.0.0.2-255.255.255.255", scope);
+        Assert.Contains("::-::", scope);
+        Assert.Contains("::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", scope);
+        Assert.Equal(TimeSpan.FromSeconds(15), FirewallIsolationManager.ListenerReadyTimeout);
     }
 
     [Fact]

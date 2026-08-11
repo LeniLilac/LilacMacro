@@ -148,6 +148,7 @@ Read the summary and contact sheets first. See [Agent dataset workflow](AGENT-DA
 - A TermService stop failure should identify the rejected service immediately. Current builds stop the active Windows 11 `UmRdpService` dependency before restarting `TermService`; older builds may instead time out with `TermService did not reach state 1` and require Remove followed by an upgrade.
 - Loopback isolation requires a live `127.0.0.1` connection plus exact enabled inbound block rules for TCP and UDP on port 33991 across every firewall profile. A connection from the machine to its own non-loopback address is not an external reachability test on Windows and must not fail setup by itself.
 - Setup refuses active remote RDP use, existing exposure, failed exact-binary native probes, invalid hashes, unsafe preservation, and unverifiable loopback isolation. These are safety gates, not configuration suggestions.
+- An isolation failure now distinguishes an invalid owned firewall scope from an RDP listener that did not accept `127.0.0.1:33991` within the bounded 15-second restart window. The exact owned block scope covers all IPv4 and IPv6 remote addresses except the single authorized `127.0.0.1` endpoint.
 
 Normal uninstall invokes the same cleanup path and stops if cleanup is incomplete. Owner datasets and settings remain; runner account/profile, credential, task, firewall rules, snapshots, and native integration must be removed. See [Optional local runner session](LOCAL-SESSION.md).
 
