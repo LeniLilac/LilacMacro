@@ -197,7 +197,7 @@ public partial class MacroDashboardPage : UserControl
 
     private async Task RunPlanAsync(PlanPrototype plan, string device, CancellationToken cancellationToken)
     {
-        await _uiScale.NormalizeAsync(device, AppendLog, cancellationToken);
+        await ResetLobbyAsync(device, cancellationToken);
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -244,11 +244,7 @@ public partial class MacroDashboardPage : UserControl
                 _blockedUntil[task] = unavailableUntil;
                 AppendLog(result.Status);
                 RefreshUpcomingTasks(plan);
-                await _rejoin.RejoinAndVerifyLobbyAsync(
-                    _ownerState.PrivateServerLink,
-                    device,
-                    AppendLog,
-                    cancellationToken);
+                await ResetLobbyAsync(device, cancellationToken);
                 continue;
             }
 
@@ -267,12 +263,18 @@ public partial class MacroDashboardPage : UserControl
             StatsChart.SetPoints(_runStats);
             RefreshUpcomingTasks(plan);
 
-            await _rejoin.RejoinAndVerifyLobbyAsync(
-                _ownerState.PrivateServerLink,
-                device,
-                AppendLog,
-                cancellationToken);
+            await ResetLobbyAsync(device, cancellationToken);
         }
+    }
+
+    private async Task ResetLobbyAsync(string device, CancellationToken cancellationToken)
+    {
+        await _rejoin.RejoinAndVerifyLobbyAsync(
+            _ownerState.PrivateServerLink,
+            device,
+            AppendLog,
+            cancellationToken);
+        await _uiScale.NormalizeAsync(device, AppendLog, cancellationToken);
     }
 
     private async Task<StoryWireTestOptions> CreateOptionsAsync(

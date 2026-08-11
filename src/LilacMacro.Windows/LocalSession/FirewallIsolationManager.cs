@@ -1,8 +1,17 @@
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
 namespace LilacMacro.Windows.LocalSession;
+
+internal sealed record FirewallRuleObservation(
+    string Name,
+    bool Enabled,
+    int Direction,
+    int Action,
+    int Protocol,
+    string LocalPorts,
+    int Profiles,
+    string RemoteAddresses);
 
 public sealed class FirewallIsolationManager
 {
@@ -25,15 +34,21 @@ public sealed class FirewallIsolationManager
     public async Task<bool> VerifyLoopbackOnlyAsync(CancellationToken cancellationToken)
     {
         if (!await CanConnectAsync(IPAddress.Loopback, cancellationToken).ConfigureAwait(false)) return false;
-        IEnumerable<IPAddress> addresses = NetworkInterface.GetAllNetworkInterfaces()
-            .Where(item => item.OperationalStatus == OperationalStatus.Up && item.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-            .SelectMany(item => item.GetIPProperties().UnicastAddresses)
-            .Select(item => item.Address)
-            .Where(item => item.AddressFamily == AddressFamily.InterNetwork);
-        foreach (IPAddress address in addresses)
-            if (await CanConnectAsync(address, cancellationToken).ConfigureAwait(false)) return false;
-        return true;
+        return IsolationRulesAreExact();
     }
+
+    internal static bool IsExpectedIsolationRule(
+        FirewallRuleObservation rule,
+        string expectedName,
+        int expectedProtocol) =>
+        string.Equals(rule.Name, expectedName, StringComparison.Ordinal) &&
+        rule.Enabled &&
+        rule.Direction == 1 &&
+        rule.Action == 0 &&
+        rule.Protocol == expectedProtocol &&
+        string.Equals(rule.LocalPorts, TermServiceConfigurationManager.LocalPort.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal) &&
+        rule.Profiles == int.MaxValue &&
+        string.Equals(rule.RemoteAddresses, "*", StringComparison.Ordinal);
 
     public bool RulesExist()
     {
@@ -49,6 +64,40 @@ public sealed class FirewallIsolationManager
             udp |= string.Equals(name, UdpRule, StringComparison.Ordinal);
         }
         return tcp || udp;
+    }
+
+    private static bool IsolationRulesAreExact()
+    {
+        Type? type = Type.GetTypeFromProgID("HNetCfg.FwPolicy2");
+        if (type is null) return false;
+        dynamic policy = Activator.CreateInstance(type)!;
+        bool tcp = false;
+        bool udp = false;
+        foreach (dynamic rule in policy.Rules)
+        {
+            string? name = rule.Name as string;
+            if (!string.Equals(name, TcpRule, StringComparison.Ordinal) &&
+                !string.Equals(name, UdpRule, StringComparison.Ordinal)) continue;
+            try
+            {
+                FirewallRuleObservation observation = new(
+                    name,
+                    Convert.ToBoolean(rule.Enabled, System.Globalization.CultureInfo.InvariantCulture),
+                    Convert.ToInt32(rule.Direction, System.Globalization.CultureInfo.InvariantCulture),
+                    Convert.ToInt32(rule.Action, System.Globalization.CultureInfo.InvariantCulture),
+                    Convert.ToInt32(rule.Protocol, System.Globalization.CultureInfo.InvariantCulture),
+                    Convert.ToString(rule.LocalPorts, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+                    Convert.ToInt32(rule.Profiles, System.Globalization.CultureInfo.InvariantCulture),
+                    Convert.ToString(rule.RemoteAddresses, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty);
+                tcp |= IsExpectedIsolationRule(observation, TcpRule, 6);
+                udp |= IsExpectedIsolationRule(observation, UdpRule, 17);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        return tcp && udp;
     }
 
     private static Task AddRuleAsync(string name, string protocol, CancellationToken cancellationToken) =>

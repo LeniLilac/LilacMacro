@@ -18,6 +18,7 @@ LilacMacro is a private, local Windows tool. It has no application telemetry or 
 | Temporary OCR crops | OS temporary storage under `LilacMacro` | Deleted after each run when normal cleanup succeeds. |
 | Agent dataset views | Dataset-local `.agent-view` directory or an explicit output directory | May reproduce private imagery and metadata; never publish or commit them. |
 | Deep-debug archives | `%LOCALAPPDATA%\LilacMacro\diagnostics` | Sanitized text plus retained Roblox/crop/ROI pixels; enabled explicitly, retains at most 20 completed ZIPs. |
+| Roblox client settings | `%LOCALAPPDATA%\Roblox\GlobalBasicSettings_13.xml` | At Macro plan start and private-server reset, the current Windows session closes Roblox and atomically changes only the documented UI/input allowlist. A sibling `.lilacmacro-backup` exists only until replacement is reread or a later run recovers it. |
 | Optional local-runner journal | `%ProgramData%\LilacMacro\Session` | Prototype, machine-owned resource inventory, original system values, hashes, policy version, and owner/runner SIDs. Contains no password. |
 | Optional runner snapshot and policy | `%ProgramData%\LilacMacro\Runner` | Prototype, ACL-restricted immutable non-secret runtime snapshot plus runner policy/receipt. Removed with the runner. |
 | Optional runner credential | Windows Credential Manager | Prototype, random runner-account credential persisted for the loopback RDP endpoint. Never stored in JSON or passed on a command line. |
@@ -32,6 +33,7 @@ LilacMacro is a private, local Windows tool. It has no application telemetry or 
 - Delete local datasets and caches through ordinary Windows file management when no longer needed; LilacMacro does not currently provide a data-erasure workflow.
 - Optional runner setup is runner-profile-only. It must not remove packages, startup entries, notifications, or settings from the owner's profile or all users.
 - Treat the provisioning journal as sensitive system metadata even though it contains no credential. Access is restricted to the owner, SYSTEM, and Administrators.
+- Roblox settings normalization is restricted to the current Windows profile and preserves unknown fields, identifiers, graphics quality, FPS, audio, window placement, and unrelated preferences. It never reads or writes Roblox process memory.
 
 ## Planned secret storage
 

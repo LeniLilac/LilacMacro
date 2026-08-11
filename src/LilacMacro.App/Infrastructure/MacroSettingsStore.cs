@@ -36,7 +36,7 @@ internal sealed class MacroSettingsStore
             return settings?.SchemaVersion switch
             {
                 MacroSettings.CurrentSchemaVersion => settings,
-                1 => settings with { SchemaVersion = MacroSettings.CurrentSchemaVersion },
+                1 or 2 => MigrateLegacySettings(settings),
                 _ => new MacroSettings(),
             };
         }
@@ -44,6 +44,19 @@ internal sealed class MacroSettingsStore
         {
             return new MacroSettings();
         }
+    }
+
+    private static MacroSettings MigrateLegacySettings(MacroSettings settings)
+    {
+        Dictionary<string, int?> keyBindings = new(settings.KeyBindings, StringComparer.OrdinalIgnoreCase);
+        string macroToggle = nameof(MacroKeyBindingId.MacroToggle);
+        if (keyBindings.TryGetValue(macroToggle, out int? virtualKey) && virtualKey == 0x75)
+            keyBindings[macroToggle] = 0x76;
+        return settings with
+        {
+            SchemaVersion = MacroSettings.CurrentSchemaVersion,
+            KeyBindings = keyBindings,
+        };
     }
 
     public async Task SaveAsync(MacroSettings settings, CancellationToken cancellationToken = default)

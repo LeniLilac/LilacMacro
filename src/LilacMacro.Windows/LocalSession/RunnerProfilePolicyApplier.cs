@@ -15,25 +15,14 @@ public sealed class RunnerProfilePolicyApplier
         List<string> applied = [];
         foreach (RunnerRegistryRule rule in policy.RegistryRules)
         {
-            using RegistryKey key = Registry.CurrentUser.CreateSubKey(rule.RelativeKey, writable: true)
-                ?? throw new InvalidOperationException($"Runner registry policy could not create {rule.RelativeKey}.");
-            if (rule.DeleteWhenPresent)
+            try
             {
-                key.DeleteValue(rule.ValueName, throwOnMissingValue: false);
-                if (key.GetValue(rule.ValueName, null) is not null)
-                    throw new InvalidOperationException($"Runner registry policy could not remove {rule.RelativeKey}|{rule.ValueName}.");
-                applied.Add($"{rule.RelativeKey}|{rule.ValueName}|deleted");
-                continue;
+                ApplyRegistryRule(rule, applied);
             }
-            RegistryValueKind kind = Enum.Parse<RegistryValueKind>(rule.ValueKind, ignoreCase: true);
-            object value = kind == RegistryValueKind.DWord
-                ? int.Parse(rule.EncodedValue, System.Globalization.CultureInfo.InvariantCulture)
-                : rule.EncodedValue;
-            key.SetValue(rule.ValueName, value, kind);
-            object? observed = key.GetValue(rule.ValueName, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
-            if (!Equals(observed, value) || key.GetValueKind(rule.ValueName) != kind)
-                throw new InvalidOperationException($"Runner registry policy could not verify {rule.RelativeKey}|{rule.ValueName}.");
-            applied.Add($"{rule.RelativeKey}|{rule.ValueName}");
+            catch (UnauthorizedAccessException error)
+            {
+                throw CreateRegistryAccessException(rule, error);
+            }
         }
 
         List<string> removed = [];
@@ -50,6 +39,36 @@ public sealed class RunnerProfilePolicyApplier
             AppliedRegistryRules = applied,
         };
     }
+
+    private static void ApplyRegistryRule(RunnerRegistryRule rule, ICollection<string> applied)
+    {
+        using RegistryKey key = Registry.CurrentUser.CreateSubKey(rule.RelativeKey, writable: true)
+            ?? throw new InvalidOperationException($"Runner registry policy could not create {rule.RelativeKey}.");
+        if (rule.DeleteWhenPresent)
+        {
+            key.DeleteValue(rule.ValueName, throwOnMissingValue: false);
+            if (key.GetValue(rule.ValueName, null) is not null)
+                throw new InvalidOperationException($"Runner registry policy could not remove {rule.RelativeKey}|{rule.ValueName}.");
+            applied.Add($"{rule.RelativeKey}|{rule.ValueName}|deleted");
+            return;
+        }
+
+        RegistryValueKind kind = Enum.Parse<RegistryValueKind>(rule.ValueKind, ignoreCase: true);
+        object value = kind == RegistryValueKind.DWord
+            ? int.Parse(rule.EncodedValue, System.Globalization.CultureInfo.InvariantCulture)
+            : rule.EncodedValue;
+        key.SetValue(rule.ValueName, value, kind);
+        object? observed = key.GetValue(rule.ValueName, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
+        if (!Equals(observed, value) || key.GetValueKind(rule.ValueName) != kind)
+            throw new InvalidOperationException($"Runner registry policy could not verify {rule.RelativeKey}|{rule.ValueName}.");
+        applied.Add($"{rule.RelativeKey}|{rule.ValueName}");
+    }
+
+    internal static UnauthorizedAccessException CreateRegistryAccessException(
+        RunnerRegistryRule rule,
+        UnauthorizedAccessException error) => new(
+            $"Runner registry policy access was denied at {rule.RelativeKey}|{rule.ValueName}: {error.Message}",
+            error);
 
     private static async Task<bool> RemovePackageAsync(string packageName, CancellationToken cancellationToken)
     {

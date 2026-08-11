@@ -58,6 +58,7 @@ Each tab must have consistent default, hover, pressed, focused, and active state
 The macro shell is not the developer-tool container. Three dedicated launchers reuse the same theme, window chrome, and applicable shared contracts:
 
 - **Dataset Builder:** Capture, Review + OCR, and Datasets only. F5 and F6 retain manual and timed capture ownership.
+- **Macro:** F7 is the default global start/stop key so it does not collide with Dataset Builder or Runtime Lab's F6 ownership. Settings from schema 1 or 2 migrate the former F6 default to F7; later user-selected keys are preserved.
 - **Runtime Lab:** Debug, Wire Test, and bounded runtime tests only. Debug checks can select OCR or saved-image-first evidence with OCR fallback; actions still use fresh OCR bounds. It does not expose dataset capture or authoring navigation; F6 is available only to an explicitly armed Debug key chain. Team Scroll exposes requested units with each measured thumb position. Team Swap Test runs balanced random Teams 1-8 through the shared production path and exposes each trial's outcome. Deep debug retains the complete Runtime Lab operation and its title-bar pill reports `DEEP DEBUG ON` without a duration.
 - **Deep Debug Viewer:** Dedicated archive inspection shell with a frame-first canvas, synchronized event rail, timestamp-aware transport, and optional input markers. It streams ZIP entries and does not initialize OCR or Roblox.
 
@@ -182,6 +183,7 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 - Keep the theme control as the first field inside General / Appearance.
 - Use one Minimize behavior dropdown for Keep visible, Minimize while running, and Minimize on start. Do not duplicate its states with a separate switch.
 - Treat the standard Roblox 100% UI scale as a startup invariant. Do not expose a UI-scale selector or an option to skip scale preparation.
+- Treat the documented Roblox UI/input settings allowlist as a plan-start and private-server-reset invariant. Do not expose per-field overrides; normalization occurs only after the owning Windows session closes Roblox.
 - Use one persistent internal category bar: General, Roblox, Discord, Keybinds, and Diagnostics.
 - General owns appearance, updates, and local-data controls. Game-setting normalization and fresh Lobby verification are mandatory runtime invariants, not settings.
 - General shows the running Macro version as a terse read-only value at the top of Updates and data so installed and local artifacts can be identified without opening build metadata.

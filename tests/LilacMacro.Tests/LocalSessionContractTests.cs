@@ -237,12 +237,44 @@ public sealed class LocalSessionContractTests
     }
 
     [Fact]
+    public void Term_service_restart_stops_the_active_windows_dependency_first()
+    {
+        Assert.Equal(["UmRdpService", "TermService"], TermServiceConfigurationManager.RestartStopOrder);
+    }
+
+    [Fact]
+    public void Firewall_isolation_requires_the_exact_enabled_inbound_block_rule()
+    {
+        FirewallRuleObservation tcp = new(
+            FirewallIsolationManager.TcpRule,
+            Enabled: true,
+            Direction: 1,
+            Action: 0,
+            Protocol: 6,
+            LocalPorts: TermServiceConfigurationManager.LocalPort.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Profiles: int.MaxValue,
+            RemoteAddresses: "*");
+
+        Assert.True(FirewallIsolationManager.IsExpectedIsolationRule(tcp, FirewallIsolationManager.TcpRule, 6));
+        Assert.False(FirewallIsolationManager.IsExpectedIsolationRule(tcp with { Action = 1 }, FirewallIsolationManager.TcpRule, 6));
+        Assert.False(FirewallIsolationManager.IsExpectedIsolationRule(tcp with { RemoteAddresses = "LocalSubnet" }, FirewallIsolationManager.TcpRule, 6));
+    }
+
+    [Fact]
     public void Missing_scheduled_task_is_an_idempotent_cleanup_success()
     {
         Assert.True(RunnerScheduledTaskManager.IsMissingTaskFailure(new FileNotFoundException()));
         Assert.True(RunnerScheduledTaskManager.IsMissingTaskFailure(
             new COMException("Task not found.", unchecked((int)0x80070002))));
         Assert.False(RunnerScheduledTaskManager.IsMissingTaskFailure(new IOException("Disk failure.")));
+    }
+
+    [Fact]
+    public void Runner_task_uses_the_machine_qualified_local_account()
+    {
+        Assert.Equal(
+            @"LILAC-TEST\LilacMacroRunner",
+            RunnerScheduledTaskManager.QualifyLocalAccount("LilacMacroRunner", "LILAC-TEST"));
     }
 
     [Fact]

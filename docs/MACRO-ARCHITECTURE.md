@@ -39,7 +39,7 @@ Each task will declare:
 
 The scheduler evaluates a stable snapshot from highest to lowest priority, runs at most one task, records the terminal outcome, resets to Lobby, then takes a new snapshot. It must remain cancellation-aware and must never hold Roblox input while waiting for eligibility.
 
-Every run begins by normalizing the required Roblox settings to the canonical rendered UI scale, then obtaining fresh Lobby evidence. The displayed numeric value is only a calibration input: the runtime measures panel geometry, applies bounded reciprocal feedback, and validates the result. A per-user/per-Windows-session cached candidate is a revalidated hot-path hint, not evidence. These runtime-owned invariants are never optional user settings.
+Every run and private-server reset begins by closing Roblox in the owning Windows session, atomically normalizing the explicit UI/input allowlist in that profile's Roblox settings file, opening the validated private-server link, and obtaining fresh Lobby evidence. It then normalizes the rendered UI scale. The displayed numeric value is only a calibration input: the runtime measures panel geometry, applies bounded reciprocal feedback, and validates the result. A per-user/per-Windows-session cached candidate is a revalidated hot-path hint, not evidence. These runtime-owned invariants are never optional user settings.
 
 ## Unattended continuity contract
 

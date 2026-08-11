@@ -68,6 +68,13 @@ Turn `KEEP LOADED` off to terminate the resident helper, then retry one-shot OCR
 - Runtime Lab requires exactly `1366 x 700`; Dataset Builder defaults to `1280 x 720` but accepts explicit target dimensions.
 - A display, monitor, DPI, or window-state change invalidates old geometry; reapply and reobserve before capture or input.
 
+## Roblox settings normalization fails
+
+- Plan start and each private-server reset close Roblox before editing `GlobalBasicSettings_13.xml`. Another Roblox client in the same Windows session must not remain open or immediately relaunch during that boundary.
+- A missing file means Roblox has not created settings for that Windows profile. Launch and close Roblox once, then start the plan again.
+- A missing, duplicated, or type-changed required field fails closed instead of rewriting an unfamiliar format. Preserve the exact error and current file for compatibility diagnosis; do not replace the whole document with a template.
+- A `.lilacmacro-backup` sibling is interrupted-replacement evidence. The next normalization validates the current file and either removes the stale backup or restores it before retrying.
+
 ## Roblox will not dock
 
 - Open one supported Roblox player window, return to Macro, and press `Dock`. LilacMacro maximizes when the current viewport cannot contain the physical `1366 x 700` client.
@@ -91,6 +98,11 @@ Turn `KEEP LOADED` off to terminate the resident helper, then retry one-shot OCR
 - Runtime Lab owns F6 only while a Debug key chain is armed for start/cancel.
 - Another application may already own the global hotkey. Close the conflict and restart the relevant tool.
 - The macro shell does not expose either owner-tool hotkey surface.
+
+## Keybind unavailable appears when Macro opens
+
+- Macro start/stop defaults to F7. Settings created before 1.0.37 migrate the former F6 default to F7 so Dataset Builder or Runtime Lab can keep their F6 ownership.
+- If the message names another configured key, that key is already registered globally by another process. Close the conflicting application or choose a different Macro start/stop key under Settings > Keybinds.
 
 ## Dataset will not open or finalize
 
@@ -131,7 +143,9 @@ Read the summary and contact sheets first. See [Agent dataset workflow](AGENT-DA
 - `Degraded` with `runtime-host-unavailable` means the shared headless runtime could not prepare its OCR or materialized snapshot dependencies. Repair the installed payload and inspect the exact reported dependency; do not bypass it.
 - `capture-unsupported` means the visible loopback session did not provide fresh non-black WGC frames. Keep the RDP client visibly connected; never run blind.
 - `Recovery Required` means rollback or removal could not prove that every owned resource was removed or every original value restored. Keep `%ProgramData%\LilacMacro\Session\provisioning.json`, run Repair or Remove from the same signed installation, and preserve the exact unresolved-resource list.
-- A profile-policy failure records a bounded failure code and detail before rollback. Required setup does not remove AppX packages; runner-only notification, suggestion, widget, promotion, consumer-content, and startup suppression remain enforced. An upgrade may clear a stale recovery journal only after live cleanup verification proves the runner account, credential, task, firewall rules, runner data, and registry drift are all absent.
+- A profile-policy failure records a bounded failure code and exact rejected registry value before rollback. Required setup does not remove AppX packages or gate provisioning on the access-restricted Windows 11 `TaskbarDa` Widgets toggle or per-user `Software\Policies` OneDrive value; runner-only notification, suggestion, promotion, consumer-content, and ordinary `Run`-key startup suppression remain enforced. An upgrade may clear a stale recovery journal only after live cleanup verification proves the runner account, credential, task, firewall rules, runner data, and registry drift are all absent.
+- A TermService stop failure should identify the rejected service immediately. Current builds stop the active Windows 11 `UmRdpService` dependency before restarting `TermService`; older builds may instead time out with `TermService did not reach state 1` and require Remove followed by an upgrade.
+- Loopback isolation requires a live `127.0.0.1` connection plus exact enabled inbound block rules for TCP and UDP on port 33991 across every firewall profile. A connection from the machine to its own non-loopback address is not an external reachability test on Windows and must not fail setup by itself.
 - Setup refuses active remote RDP use, existing exposure, failed exact-binary native probes, invalid hashes, unsafe preservation, and unverifiable loopback isolation. These are safety gates, not configuration suggestions.
 
 Normal uninstall invokes the same cleanup path and stops if cleanup is incomplete. Owner datasets and settings remain; runner account/profile, credential, task, firewall rules, snapshots, and native integration must be removed. See [Optional local runner session](LOCAL-SESSION.md).

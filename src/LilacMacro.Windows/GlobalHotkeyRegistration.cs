@@ -20,7 +20,7 @@ public sealed class GlobalHotkeyRegistration : IDisposable
         _id = id;
         if (!NativeMethods.RegisterHotKey(window, id, NoRepeat, virtualKey))
         {
-            throw new Win32Exception("Could not register the global capture key.");
+            throw new Win32Exception("Could not register the global hotkey.");
         }
     }
 

@@ -11,7 +11,7 @@ public sealed class MacroKeyBindingsTests
     {
         MacroRuntimeKeySnapshot snapshot = new MacroKeyBindings().Snapshot();
 
-        Assert.Equal(0x75, snapshot.MacroToggle);
+        Assert.Equal(0x76, snapshot.MacroToggle);
         Assert.Equal('P', snapshot.PlayMenu);
         Assert.Equal('U', snapshot.UnitInventory);
         Assert.Equal('A', snapshot.AreasMenu);
@@ -70,7 +70,7 @@ public sealed class MacroKeyBindingsTests
             [nameof(MacroKeyBindingId.MacroToggle)] = 'Q',
         });
 
-        Assert.Equal(0x75, bindings.Snapshot().MacroToggle);
+        Assert.Equal(0x76, bindings.Snapshot().MacroToggle);
         Assert.Equal('Q', bindings.Snapshot().Placement.QuickPlacement);
     }
 
@@ -81,16 +81,75 @@ public sealed class MacroKeyBindingsTests
         try
         {
             MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
-            first.KeyBindings[MacroKeyBindingId.MacroToggle].SetVirtualKey(0x76);
+            first.KeyBindings[MacroKeyBindingId.MacroToggle].SetVirtualKey(0x77);
             first.KeyBindings[MacroKeyBindingId.PlayMenu].Unset();
             first.KeyBindings[MacroKeyBindingId.QuickPlacement].SetVirtualKey('R');
             await first.FlushAsync();
 
             MacroOwnerState second = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
 
-            Assert.Equal(0x76, second.KeyBindings.Snapshot().MacroToggle);
+            Assert.Equal(0x77, second.KeyBindings.Snapshot().MacroToggle);
             Assert.Null(second.KeyBindings.Snapshot().PlayMenu);
             Assert.Equal('R', second.KeyBindings.Snapshot().Placement.QuickPlacement);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task LegacyF6MacroToggleMigratesToF7(int schemaVersion)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "LilacMacro.Tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(root);
+            await File.WriteAllTextAsync(
+                Path.Combine(root, "macro-settings.json"),
+                $$"""
+                {
+                  "schema_version": {{schemaVersion}},
+                  "key_bindings": {
+                    "MacroToggle": 117,
+                    "PlayMenu": 76
+                  },
+                  "execution_target": 0
+                }
+                """);
+
+            MacroSettings migrated = await new MacroSettingsStore(root).LoadAsync();
+
+            Assert.Equal(MacroSettings.CurrentSchemaVersion, migrated.SchemaVersion);
+            Assert.Equal(0x76, migrated.KeyBindings[nameof(MacroKeyBindingId.MacroToggle)]);
+            Assert.Equal('L', migrated.KeyBindings[nameof(MacroKeyBindingId.PlayMenu)]);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task CurrentSchemaPreservesAnExplicitF6MacroToggle()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "LilacMacro.Tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            await new MacroSettingsStore(root).SaveAsync(new MacroSettings
+            {
+                KeyBindings = new Dictionary<string, int?>
+                {
+                    [nameof(MacroKeyBindingId.MacroToggle)] = 0x75,
+                },
+            });
+
+            MacroSettings settings = await new MacroSettingsStore(root).LoadAsync();
+
+            Assert.Equal(MacroSettings.CurrentSchemaVersion, settings.SchemaVersion);
+            Assert.Equal(0x75, settings.KeyBindings[nameof(MacroKeyBindingId.MacroToggle)]);
         }
         finally
         {

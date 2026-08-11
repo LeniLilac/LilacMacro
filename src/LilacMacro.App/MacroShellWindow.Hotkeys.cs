@@ -55,7 +55,10 @@ public partial class MacroShellWindow
         }
         catch (Exception error) when (error is InvalidOperationException or ArgumentException or Win32Exception)
         {
-            AppToastService.ShowError("KEYBIND UNAVAILABLE", error.Message);
+            string keyName = _ownerState.KeyBindings[MacroKeyBindingId.MacroToggle].KeyName;
+            AppToastService.ShowError(
+                "KEYBIND UNAVAILABLE",
+                $"Macro start / stop ({keyName}) is already in use. Choose another key or close the conflicting app.");
         }
     }
 

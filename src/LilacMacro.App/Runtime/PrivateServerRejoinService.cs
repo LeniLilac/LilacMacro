@@ -2,6 +2,7 @@ using System.Diagnostics;
 using LilacMacro.App.Debugging;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
+using LilacMacro.Windows;
 
 namespace LilacMacro.App.Runtime;
 
@@ -11,6 +12,7 @@ internal sealed class PrivateServerRejoinService(
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(2);
     private readonly DebugOcrController _debug = new(workspace, ocr);
+    private readonly RobloxClientLifecycleService _lifecycle = new();
 
     public async Task RejoinAndVerifyLobbyAsync(
         string privateServerLink,
@@ -19,6 +21,7 @@ internal sealed class PrivateServerRejoinService(
         CancellationToken cancellationToken)
     {
         Uri uri = Validate(privateServerLink);
+        await _lifecycle.PrepareForPrivateServerLaunchAsync(status, cancellationToken).ConfigureAwait(false);
         Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
         status?.Invoke("PRIVATE SERVER REJOIN STARTED");
 

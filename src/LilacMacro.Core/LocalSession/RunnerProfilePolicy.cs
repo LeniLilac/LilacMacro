@@ -31,7 +31,7 @@ public sealed record RunnerProfileFailure
 
 public sealed record RunnerProfilePolicy
 {
-    public const string CurrentVersion = "1.2.0";
+    public const string CurrentVersion = "1.4.0";
 
     public string Version { get; init; } = CurrentVersion;
     public IReadOnlyList<RunnerPackageRule> PackageRules { get; init; } = DefaultPackageRules;
@@ -68,9 +68,7 @@ public sealed record RunnerProfilePolicy
         Dword(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowSyncProviderNotifications", 0),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0),
-        Dword(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarDa", 0),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement", "ScoobeSystemSettingEnabled", 0),
-        Dword(@"Software\Policies\Microsoft\Windows\OneDrive", "DisableFileSyncNGSC", 1),
         Delete(@"Software\Microsoft\Windows\CurrentVersion\Run", "OneDrive"),
         Delete(@"Software\Microsoft\Windows\CurrentVersion\Run", "MSTeams"),
         Delete(@"Software\Microsoft\Windows\CurrentVersion\Run", "com.squirrel.Teams.Teams"),

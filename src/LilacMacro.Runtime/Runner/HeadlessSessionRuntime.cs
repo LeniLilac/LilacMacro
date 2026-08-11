@@ -60,7 +60,10 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         Dictionary<string, DateTimeOffset> blockedUntil = new(StringComparer.Ordinal);
         string device = SelectDevice(ocr, snapshot.PreferGpu);
 
-        await uiScale.NormalizeAsync(
+        await ResetLobbyAsync(
+            rejoin,
+            uiScale,
+            request.PrivateServerLink,
             device,
             detail => progress.Report(new SessionRuntimeProgress
             {
@@ -120,12 +123,30 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                     throw new InvalidOperationException($"{task.Id} exceeded its defeat retry limit.");
             }
 
-            await rejoin.RejoinAndVerifyLobbyAsync(
+            await ResetLobbyAsync(
+                rejoin,
+                uiScale,
                 request.PrivateServerLink,
                 device,
                 detail => Report(progress, task, "lobby-reset", wins, losses, detail),
                 cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    private static async Task ResetLobbyAsync(
+        PrivateServerRejoinService rejoin,
+        UiScaleNormalizer uiScale,
+        string privateServerLink,
+        string device,
+        Action<string> status,
+        CancellationToken cancellationToken)
+    {
+        await rejoin.RejoinAndVerifyLobbyAsync(
+            privateServerLink,
+            device,
+            status,
+            cancellationToken).ConfigureAwait(false);
+        await uiScale.NormalizeAsync(device, status, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<string> MaterializeAsync(RunnerRuntimeSnapshot snapshot, CancellationToken cancellationToken)

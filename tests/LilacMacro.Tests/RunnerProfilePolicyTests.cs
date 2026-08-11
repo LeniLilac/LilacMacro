@@ -1,4 +1,5 @@
 using LilacMacro.Core.LocalSession;
+using LilacMacro.Windows.LocalSession;
 
 namespace LilacMacro.Tests;
 
@@ -55,6 +56,9 @@ public sealed class RunnerProfilePolicyTests
         Assert.All(policy.PackageRules, rule => Assert.DoesNotContain("*", rule.PackageFamilyName));
         Assert.Contains(policy.RegistryRules, rule => rule.DeleteWhenPresent && rule.ValueName == "OneDrive");
         Assert.Contains(policy.RegistryRules, rule => rule.RelativeKey.Contains("Notifications", StringComparison.Ordinal));
+        Assert.DoesNotContain(policy.RegistryRules, rule => rule.ValueName == "TaskbarDa");
+        Assert.DoesNotContain(policy.RegistryRules, rule =>
+            rule.RelativeKey.StartsWith(@"Software\Policies", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -71,5 +75,23 @@ public sealed class RunnerProfilePolicyTests
             FailureCode = "unknown",
             Detail = "line one\nline two",
         }).IsValid);
+    }
+
+    [Fact]
+    public void Registry_access_failure_identifies_the_exact_rule()
+    {
+        RunnerRegistryRule rule = new(
+            @"Software\Policies\Microsoft\Windows\OneDrive",
+            "DisableFileSyncNGSC",
+            "DWord",
+            "1");
+
+        UnauthorizedAccessException error = RunnerProfilePolicyApplier.CreateRegistryAccessException(
+            rule,
+            new UnauthorizedAccessException("Attempted to perform an unauthorized operation."));
+
+        Assert.Contains(rule.RelativeKey, error.Message, StringComparison.Ordinal);
+        Assert.Contains(rule.ValueName, error.Message, StringComparison.Ordinal);
+        Assert.IsType<UnauthorizedAccessException>(error.InnerException);
     }
 }

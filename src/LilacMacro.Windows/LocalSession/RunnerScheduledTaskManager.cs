@@ -6,6 +6,7 @@ public sealed class RunnerScheduledTaskManager
 
     public void Register(string accountName, string password, string workerPath)
     {
+        string qualifiedAccountName = QualifyLocalAccount(accountName, Environment.MachineName);
         Type type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Task Scheduler is unavailable.");
         dynamic service = Activator.CreateInstance(type) ?? throw new InvalidOperationException("Task Scheduler could not be opened.");
         service.Connect();
@@ -14,11 +15,11 @@ public sealed class RunnerScheduledTaskManager
         catch (Exception error) when (IsMissingTaskFailure(error)) { }
         dynamic task = service.NewTask(0);
         task.RegistrationInfo.Description = "Starts LilacMacro's windowless worker inside the owned runner session.";
-        task.Principal.UserId = $".\\{accountName}";
+        task.Principal.UserId = qualifiedAccountName;
         task.Principal.LogonType = 1;
         task.Principal.RunLevel = 0;
         dynamic trigger = task.Triggers.Create(9);
-        trigger.UserId = $".\\{accountName}";
+        trigger.UserId = qualifiedAccountName;
         trigger.Enabled = true;
         dynamic action = task.Actions.Create(0);
         action.Path = workerPath;
@@ -27,7 +28,7 @@ public sealed class RunnerScheduledTaskManager
         task.Settings.DisallowStartIfOnBatteries = false;
         task.Settings.StopIfGoingOnBatteries = false;
         task.Settings.ExecutionTimeLimit = "PT0S";
-        folder.RegisterTaskDefinition(TaskName, task, 6, $".\\{accountName}", password, 1, null);
+        folder.RegisterTaskDefinition(TaskName, task, 6, qualifiedAccountName, password, 1, null);
     }
 
     public void Remove()
@@ -56,4 +57,11 @@ public sealed class RunnerScheduledTaskManager
         error is FileNotFoundException ||
         error.HResult == unchecked((int)0x80070002) ||
         error.InnerException is not null && IsMissingTaskFailure(error.InnerException);
+
+    internal static string QualifyLocalAccount(string accountName, string machineName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(accountName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(machineName);
+        return $"{machineName}\\{accountName}";
+    }
 }

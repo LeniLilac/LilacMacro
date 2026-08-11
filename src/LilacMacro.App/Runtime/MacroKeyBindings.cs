@@ -28,7 +28,7 @@ internal sealed class MacroKeyBindings
     {
         Items = new ObservableCollection<MacroKeyBinding>
         {
-            Create(MacroKeyBindingId.MacroToggle, "Macro start / stop", "Global", 0x75),
+            Create(MacroKeyBindingId.MacroToggle, "Macro start / stop", "Global", 0x76),
             Create(MacroKeyBindingId.PlayMenu, "Play menu", "Navigation", 'P', canUnset: true),
             Create(MacroKeyBindingId.UnitInventory, "Unit inventory", "Team swap", 'U', canUnset: true),
             Create(MacroKeyBindingId.AreasMenu, "Areas menu", "Utilities", 'A', canUnset: true),

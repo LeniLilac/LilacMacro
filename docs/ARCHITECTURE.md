@@ -84,7 +84,11 @@ Review OCR is evidence. Debug input adds explicit state thresholds, a live targe
 
 ## Startup normalization boundary
 
-Runtime owns one UI-scale normalizer shared by desktop Macro, the headless local-session runtime, and Runtime Lab. OCR owns only the semantic Settings/search/UI Scale row structure used to authorize the value-field action. A bounded RGB detector independently measures Settings-panel geometry from the close control and three borders; the displayed scale number is neither parsed nor trusted. Candidate correction uses measured rendered scale, not device assumptions.
+Core owns the exact allowlist and structural XML policy for Roblox's per-profile `UserGameSettings`. Windows owns current-session Roblox process shutdown and the bounded, atomic `GlobalBasicSettings_13.xml` replacement. The file is never edited while a Roblox client in that Windows session remains alive. The policy fails closed on a missing, malformed, duplicated, or type-changed required field, preserves all unrelated XML, keeps a transient sibling rollback file only across replacement verification, and never edits another Windows profile.
+
+At desktop and local-runner plan start and after every terminal private-server reset, Runtime composes shutdown, settings normalization, validated private-server launch, fresh Lobby verification, and rendered UI-scale normalization in that order. Process enumeration is restricted to exact supported Roblox client names in the current Windows session, so the console and isolated runner cannot terminate one another.
+
+Runtime owns one rendered UI-scale normalizer shared by desktop Macro, the headless local-session runtime, and Runtime Lab. OCR owns only the semantic Settings/search/UI Scale row structure used to authorize the value-field action. A bounded RGB detector independently measures Settings-panel geometry from the close control and three borders; the displayed scale number is neither parsed nor trusted. Candidate correction uses measured rendered scale, not device assumptions.
 
 The successful numeric candidate is a disposable performance hint stored at `%LOCALAPPDATA%\LilacMacro\ui-scale-calibration.json`. `%LOCALAPPDATA%` isolates Windows users, and entries are keyed by the current Windows session id so the console and separate RDP sessions cannot silently share a value. Every use remeasures rendered geometry, stale entries fall into the same bounded feedback loop, invalid or unreadable cache data behaves as a miss, and cache-write failure does not weaken runtime verification.
 
@@ -109,7 +113,7 @@ Authoring and explicit owner-triggered playback through Setup and Runtime Lab ar
 ## Persistence and trust boundaries
 
 - Dataset images and annotations stay under the owner-selected dataset root.
-- Non-secret capture settings, per-session UI-scale calibration hints, placements, OCR runtime, crash logs, and deep-debug archives stay under the current Windows profile.
+- Non-secret capture settings, per-session UI-scale calibration hints, placements, OCR runtime, crash logs, and deep-debug archives stay under the current Windows profile. The macro edits only its documented allowlist in the current profile's Roblox global settings immediately before a private-server launch.
 - All committed document-style writes validate first and use temporary-file replacement.
 - Local paths, captures, models, logs, settings, and agent views remain outside Git.
 - Private-server links and webhook URLs are not implemented. Their planned DPAPI boundary is documented in [Privacy](../PRIVACY.md).
