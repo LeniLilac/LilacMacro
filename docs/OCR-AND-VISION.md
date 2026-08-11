@@ -42,6 +42,8 @@ The Debug rule engine:
 
 Some states require exact normalized boxes, a required first anchor, or multiple separate boxes. See [Game behavior](GAME-BEHAVIOR.md). Confidence helps inspect evidence but never substitutes for the required state structure or fresh target coordinates.
 
+Startup UI-scale normalization deliberately does not OCR the displayed numeric scale. OCR verifies the Settings/search/navigation structure and the semantic `Miscellaneous`/`UI Scale` row before input. Independent RGB panel geometry measures the rendered result, because the same numeric input may render differently across devices and Windows sessions.
+
 ## CPU, GPU, and resident workers
 
 - The selected device is stored with each OCR trial as `cpu` or `gpu:0`.

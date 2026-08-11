@@ -1,6 +1,6 @@
 # Project status
 
-**Status: Current as of 2026-08-10.** Update this matrix in the same change that moves a capability across a boundary.
+**Status: Current as of 2026-08-11.** Update this matrix in the same change that moves a capability across a boundary.
 
 The [documentation contract](../CONTRIBUTING.md#documentation-contract) defines the status terms. In short: **Implemented** means production capability exists, **Prototype** means usable but internal or incomplete code exists, **Planned** means accepted design intent, and **Unresolved** means a decision remains open.
 
@@ -41,7 +41,7 @@ The [documentation contract](../CONTRIBUTING.md#documentation-contract) defines 
 | Capability | Status | Contract |
 |---|---|---|
 | Priority task scheduler | Prototype | Main Macro selects the lowest-numbered incomplete task after each terminal result; public unattended continuity, task quarantine, restart escalation, and delayed reconsideration remain Planned |
-| Mandatory startup normalization | Planned | Every public run must normalize required Roblox settings and the standard 100% UI scale, then obtain fresh Lobby evidence; these invariants have no user-facing disable controls |
+| Mandatory startup normalization | Prototype | Desktop Macro, the local-session runtime, and Runtime Lab Wire Test share a bounded UI-scale feedback normalizer and fresh Lobby verification; Runtime Lab Debug also exposes the same normalizer directly. It measures rendered Settings-panel geometry instead of trusting the displayed number, caches only a per-user/per-Windows-session input hint, and recalibrates stale hints. No user-facing disable controls exist; owner live acceptance remains required |
 | Canonical Lobby reset | Prototype | Story/Raid main runs open the session-configured HTTPS roblox.com private-server link, wait for verified Lobby, then reevaluate priority; DPAPI persistence and indefinite scheduler-level recovery escalation remain Planned |
 | Story runner | Prototype | Runtime Lab and main Macro share the complete navigation, authored placement, terminal, and reset path; owner live acceptance remains required |
 | Raid runner | Prototype | Runtime Lab and main Macro share the complete navigation, authored placement, terminal, and reset path; owner live acceptance remains required |

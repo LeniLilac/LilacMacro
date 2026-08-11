@@ -52,6 +52,16 @@ Result/action groups are Repeat Stage/Repeat, View Party/Party, Game Stats, Gain
 - Unit inventory clicks the live Teams center only after the supporting inventory action is present.
 - Closing Unit inventory after a team change reuses its configured key. If unset, the fallback first verifies Team Swap, reacquires the live Units text from the menu ROI, clicks its top-center, and verifies Lobby.
 
+## Startup UI-scale normalization
+
+- Main Macro, the local-session runtime, and Runtime Lab Wire Test always normalize UI scale before task navigation. Runtime Lab Debug exposes the identical operation for owner testing. There is no setting that disables normalization or fresh Lobby verification.
+- Normalization first requires two consecutive fresh Lobby observations, verifies the fixed Settings gear structurally, opens Settings, and requires the Settings heading, search control, and navigation rail. It searches for `UI Scale`, then requires the `Miscellaneous` heading, `UI Scale` label, and its descriptive row text before any value-field click.
+- The displayed numeric value is not OCR evidence and is never treated as the target. A numeric input of `1.00` can render at different physical UI sizes on different display/session configurations.
+- The red close control plus independent cyan left, right, and bottom panel borders own the rendered panel geometry. The normalizer enters a known candidate, waits for two stable observations, and measures the resulting rendered scale. If it is outside `0.98` through `1.02`, the next candidate is `candidate / observed rendered scale`, rounded to two decimals and clamped to the supported `0.80` through `1.20` input range. At most five candidates are entered; non-convergence fails the startup operation without blind input.
+- A successful candidate is cached under the current Windows profile and Windows session. The console owner and local-runner account therefore use separate files, and separate RDP sessions use separate entries. The cache is only a hot-path hint: every run measures the resulting panel geometry, stale hints continue through full feedback calibration, and only a freshly verified canonical result updates the cache.
+- Before closing, the semantic UI Scale row and canonical panel geometry are reacquired. The close click requires fresh structural evidence, and two consecutive Lobby observations complete the operation.
+- `settings-ui-scale-40-scale-datapoints-20260810-182820` supplies 40 chronological panel samples spanning rendered scales `0.80` through `1.20`. `settings-ui-scale-p2-20260810-182357` and `settings-ui-setup-config-p1-20260810-182027` provide Settings search/row and surrounding configuration evidence. Owner live acceptance across desktop and local-runner sessions remains required.
+
 ## Team swap
 
 - Custom team names do not own selection. Rows are formed from the scale-relative Unit Teams title and repeated Save/Load OCR geometry. Horizontally adjacent same-line OCR fragments are composed, including the small box overlap produced by outlined fonts, so split `Unit` + `Teams`, `Save` + `Team`, and `Load` + `Team` results retain the same semantic ownership; separated rows, excessive overlap, or distant fragments do not compose.

@@ -66,7 +66,7 @@ The first shell close request is canceled while queued placement writes flush. A
 `MainWindow` is shared WPF composition behind two dedicated executable launch modes. Each mode constructs only its owned pages:
 
 - Dataset Builder owns Capture, Review, and Datasets: exact client sizing, timed/manual sampling, annotations, OCR trials, and finalized/recoverable dataset discovery.
-- Runtime Lab owns Debug and Wire Test: explicit evidence checks, bounded input transitions, and Story/Raid/Challenge chains with OCR or image-first evidence plus OCR fallback.
+- Runtime Lab owns Debug and Wire Test: explicit evidence checks, bounded input transitions, shared startup UI-scale normalization, and Story/Raid/Challenge chains with OCR or image-first evidence plus OCR fallback.
 
 Both shells reuse `WorkspaceController`, OCR, vision, diagnostics, and Windows services. A cross-process file lease fails closed when a second LilacMacro process attempts Roblox input. Neither tool has an unattended loop. [Game behavior](GAME-BEHAVIOR.md) is the authoritative Debug state/action ledger.
 
@@ -81,6 +81,12 @@ OCR is an optional local Python helper rather than an in-process dependency. The
 App writes one selected crop to a temporary PNG, invokes an allowlisted detector/recognizer pair on an allowlisted device, parses bounded JSON, shifts detected child boxes into original-frame coordinates, and removes the crop. One-shot mode exits per request. `KEEP LOADED` owns one child process and exchanges request/response files through a unique temporary channel with a hard deadline, worker-exit detection, and cleanup; the worker caches pipelines by model and device.
 
 Review OCR is evidence. Debug input adds explicit state thresholds, a live target/layout requirement, fresh capture, and immediate Roblox revalidation. See [OCR and vision](OCR-AND-VISION.md).
+
+## Startup normalization boundary
+
+Runtime owns one UI-scale normalizer shared by desktop Macro, the headless local-session runtime, and Runtime Lab. OCR owns only the semantic Settings/search/UI Scale row structure used to authorize the value-field action. A bounded RGB detector independently measures Settings-panel geometry from the close control and three borders; the displayed scale number is neither parsed nor trusted. Candidate correction uses measured rendered scale, not device assumptions.
+
+The successful numeric candidate is a disposable performance hint stored at `%LOCALAPPDATA%\LilacMacro\ui-scale-calibration.json`. `%LOCALAPPDATA%` isolates Windows users, and entries are keyed by the current Windows session id so the console and separate RDP sessions cannot silently share a value. Every use remeasures rendered geometry, stale entries fall into the same bounded feedback loop, invalid or unreadable cache data behaves as a miss, and cache-write failure does not weaken runtime verification.
 
 ## Adaptive visual-anchor boundary
 
@@ -103,7 +109,7 @@ Authoring and explicit owner-triggered playback through Setup and Runtime Lab ar
 ## Persistence and trust boundaries
 
 - Dataset images and annotations stay under the owner-selected dataset root.
-- Non-secret capture settings, placements, OCR runtime, crash logs, and deep-debug archives stay under the current Windows profile.
+- Non-secret capture settings, per-session UI-scale calibration hints, placements, OCR runtime, crash logs, and deep-debug archives stay under the current Windows profile.
 - All committed document-style writes validate first and use temporary-file replacement.
 - Local paths, captures, models, logs, settings, and agent views remain outside Git.
 - Private-server links and webhook URLs are not implemented. Their planned DPAPI boundary is documented in [Privacy](../PRIVACY.md).

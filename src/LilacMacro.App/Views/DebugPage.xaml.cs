@@ -6,6 +6,7 @@ using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Ocr;
+using LilacMacro.Runtime.Normalization;
 
 namespace LilacMacro.App.Views;
 
@@ -16,6 +17,7 @@ public partial class DebugPage : UserControl, IWorkspacePage
     private readonly DebugOcrController _debug;
     private readonly DebugEvidenceRunService _evidence;
     private readonly DebugKeySequenceCoordinator _debugInput;
+    private readonly UiScaleNormalizer _uiScale;
     private readonly List<string> _events = [];
     private string _device;
     private DebugEvidenceMode _evidenceMode = DebugEvidenceMode.Ocr;
@@ -36,6 +38,7 @@ public partial class DebugPage : UserControl, IWorkspacePage
         _evidence = new DebugEvidenceRunService(workspace, deepDebug);
         _debugInput = debugInput;
         _deepDebug = deepDebug;
+        _uiScale = new UiScaleNormalizer(workspace, ocr, deepDebug);
         _device = defaultOcrDevice;
         InitializeComponent();
         KeyChainControl.Initialize(debugInput);
@@ -259,6 +262,33 @@ public partial class DebugPage : UserControl, IWorkspacePage
 
     private async void CheckLobby_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await RunAsync(() => _debug.CheckLobbyAsync(_device), DebugWorkflowCatalog.Lobby);
+
+    private async void NormalizeUiScale_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        if (_busy) return;
+        SetBusy(true);
+        try
+        {
+            StatusText.Text = "NORMALIZING UI SCALE";
+            StatusBand.SetResourceReference(Border.BackgroundProperty, "YellowBrush");
+            UiScaleNormalizationResult result = await _deepDebug.RunOperationAsync(
+                "ui-scale-normalizer",
+                new DeepDebugOperationContext("runtime-lab", new { Device = _device }),
+                token => _uiScale.NormalizeAsync(_device, AddEvent, token),
+                CancellationToken.None);
+            StatusText.Text = "UI SCALE NORMALIZED";
+            StatusBand.SetResourceReference(Border.BackgroundProperty, "SuccessBrush");
+            OcrMetaText.Text = $"RENDERED {result.RenderedScale:0.000} | NORMALIZED";
+        }
+        catch (Exception error)
+        {
+            ShowError(error.Message);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
     private async void OpenPlay_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await RunAsync(() => _debug.OpenPlayAsync(_device));
     private async void OpenUnits_OnClick(object sender, RoutedEventArgs eventArgs) =>

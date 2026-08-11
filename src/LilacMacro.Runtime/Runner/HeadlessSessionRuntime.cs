@@ -9,6 +9,7 @@ using LilacMacro.Core.LocalSession;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Placements;
 using LilacMacro.Windows.LocalSession;
+using LilacMacro.Runtime.Normalization;
 
 namespace LilacMacro.Runtime.Runner;
 
@@ -50,6 +51,7 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         await workspace.InitializeAsync(cancellationToken).ConfigureAwait(false);
 
         StoryWireTestRunner runner = new(workspace, ocr, deepDebug);
+        UiScaleNormalizer uiScale = new(workspace, ocr, deepDebug);
         PrivateServerRejoinService rejoin = new(workspace, ocr);
         PlacementSetupStore placements = new(Path.Combine(revisionRoot, PlacementDirectoryName));
         ChallengePlacementResolver challengePlacements = new(placements);
@@ -57,6 +59,15 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         Dictionary<string, int> losses = snapshot.Tasks.ToDictionary(task => task.Id, _ => 0, StringComparer.Ordinal);
         Dictionary<string, DateTimeOffset> blockedUntil = new(StringComparer.Ordinal);
         string device = SelectDevice(ocr, snapshot.PreferGpu);
+
+        await uiScale.NormalizeAsync(
+            device,
+            detail => progress.Report(new SessionRuntimeProgress
+            {
+                Stage = "startup-normalization",
+                Detail = detail,
+            }),
+            cancellationToken).ConfigureAwait(false);
 
         while (true)
         {

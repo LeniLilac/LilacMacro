@@ -12,6 +12,7 @@ using LilacMacro.App.Workspace;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.LocalSession;
 using LilacMacro.Core.Placements;
+using LilacMacro.Runtime.Normalization;
 
 namespace LilacMacro.App.Views;
 
@@ -24,6 +25,7 @@ public partial class MacroDashboardPage : UserControl
     private readonly OcrRunner _ocr;
     private readonly StoryWireTestRunner _runner;
     private readonly PrivateServerRejoinService _rejoin;
+    private readonly UiScaleNormalizer _uiScale;
     private readonly PlacementSetupStore _placements;
     private readonly ChallengePlacementResolver _challengePlacements;
     private readonly Stopwatch _runtime = new();
@@ -51,6 +53,7 @@ public partial class MacroDashboardPage : UserControl
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = true };
         _runner = new StoryWireTestRunner(_workspace, _ocr, deepDebug);
         _rejoin = new PrivateServerRejoinService(_workspace, _ocr);
+        _uiScale = new UiScaleNormalizer(_workspace, _ocr, deepDebug);
         _placements = new PlacementSetupStore(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "LilacMacro",
@@ -194,6 +197,7 @@ public partial class MacroDashboardPage : UserControl
 
     private async Task RunPlanAsync(PlanPrototype plan, string device, CancellationToken cancellationToken)
     {
+        await _uiScale.NormalizeAsync(device, AppendLog, cancellationToken);
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();

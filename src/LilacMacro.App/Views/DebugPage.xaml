@@ -72,6 +72,13 @@
 
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
                         <StackPanel x:Name="ActionPanel">
+                        <TextBlock Text="STARTUP" Style="{StaticResource SectionTitleStyle}" />
+                        <Button Content="NORMALIZE UI SCALE"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="0,2,0,0"
+                                Click="NormalizeUiScale_OnClick" />
+
+                        <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />

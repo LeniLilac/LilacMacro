@@ -7,6 +7,7 @@ namespace LilacMacro.App.Debugging;
 
 internal enum StoryWireStage
 {
+    Startup,
     Lobby,
     Units,
     Teams,
