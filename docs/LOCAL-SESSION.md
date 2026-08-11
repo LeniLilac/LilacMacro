@@ -31,7 +31,7 @@ Provisioning then:
 
 1. captures original registry state in the journal;
 2. creates the non-administrator runner and adds only Remote Desktop Users membership;
-3. applies ACLs for the owner SID, runner SID, SYSTEM, and Administrators;
+3. applies ACLs for the owner SID, runner SID, SYSTEM, and Administrators, then stores the loopback RDP secret as a generic `TERMSRV` credential rather than using the domain-password target grammar;
 4. performs one controlled runner logon and verifies the profile-policy receipt;
 5. applies the pinned TermWrap and loopback RDP configuration;
 6. installs inbound block rules and verifies loopback-only reachability;
@@ -39,7 +39,8 @@ Provisioning then:
 8. starts the worker and validates a fresh WGC frame in the visible session;
 9. validates fresh WGC capture and the shared WPF-free workflow host, then records Ready only when the complete runtime health check passes.
 
-Any failure runs the rollback journal. If rollback is incomplete, state becomes Recovery Required and the journal remains for repair or cleanup.
+Any failure runs the rollback journal. Cleanup attempts every independently owned resource even when an earlier cleanup step fails, reports each failed step, and restarts TermService only when journal evidence or observed registry drift proves that setup reached the machine-configuration boundary. If rollback is incomplete, state becomes Recovery Required and the journal remains for repair or cleanup.
+Failures before the first journal write are recorded as non-mutating setup failures, and the elevated helper persists its final problem before exiting. On application restart, Settings reconciles an orphaned Installing or Removing state against the journal and live helper process, so an interrupted operation cannot remain indefinitely stale.
 
 ## Runner profile policy
 

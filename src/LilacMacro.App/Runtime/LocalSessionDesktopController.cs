@@ -24,7 +24,17 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
 
     public async Task<LocalSessionStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
-        LocalSessionStatus status = await new LocalSessionStatusStore(paths).ReadAsync(cancellationToken).ConfigureAwait(false);
+        LocalSessionStatusStore store = new(paths);
+        LocalSessionStatus status = await store.ReadAsync(cancellationToken).ConfigureAwait(false);
+        LocalSessionStatus reconciled = LocalSessionValidation.ReconcileInterruptedOperation(
+            status,
+            File.Exists(paths.JournalPath),
+            IsSetupHelperRunning());
+        if (!ReferenceEquals(status, reconciled))
+        {
+            await store.WriteAsync(reconciled, cancellationToken).ConfigureAwait(false);
+            status = reconciled;
+        }
         if (status.State is not (LocalSessionState.Ready or LocalSessionState.Degraded)
             || !File.Exists(paths.JournalPath)) return status;
 
@@ -172,6 +182,16 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
     {
         string arguments = $"/v:127.0.0.1:{TermServiceConfigurationManager.LocalPort} /f";
         _ = Process.Start(new ProcessStartInfo("mstsc.exe", arguments) { UseShellExecute = true });
+    }
+
+    private static bool IsSetupHelperRunning()
+    {
+        Process[] processes = Process.GetProcessesByName("LilacMacro.SessionSetup");
+        try { return processes.Length > 0; }
+        finally
+        {
+            foreach (Process process in processes) process.Dispose();
+        }
     }
 
     private async Task MaintainHeartbeatAsync(CancellationToken cancellationToken)

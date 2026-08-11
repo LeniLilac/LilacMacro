@@ -7,7 +7,7 @@ namespace LilacMacro.Windows.LocalSession;
 
 public sealed class RunnerCredentialManager
 {
-    private const int CredTypeDomainPassword = 2;
+    internal const int CredentialType = 1;
     private const int CredPersistLocalMachine = 2;
     private const int ErrorNotFound = 1168;
     private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@$%*-_";
@@ -33,7 +33,7 @@ public sealed class RunnerCredentialManager
             Marshal.Copy(secret, 0, blob, secret.Length);
             Credential credential = new()
             {
-                Type = CredTypeDomainPassword,
+                Type = CredentialType,
                 TargetName = targetName,
                 CredentialBlobSize = (uint)secret.Length,
                 CredentialBlob = blob,
@@ -41,7 +41,7 @@ public sealed class RunnerCredentialManager
                 UserName = userName,
             };
             if (!CredWrite(ref credential, 0))
-                throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows Credential Manager rejected the runner credential.");
+                throw CredentialError(Marshal.GetLastWin32Error(), "Windows Credential Manager rejected the runner credential.");
         }
         finally
         {
@@ -52,8 +52,8 @@ public sealed class RunnerCredentialManager
 
     public string ReadPassword(string targetName)
     {
-        if (!CredRead(targetName, CredTypeDomainPassword, 0, out nint pointer))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "Runner credential was not found.");
+        if (!CredRead(targetName, CredentialType, 0, out nint pointer))
+            throw CredentialError(Marshal.GetLastWin32Error(), "Runner credential was not found.");
         try
         {
             Credential credential = Marshal.PtrToStructure<Credential>(pointer);
@@ -70,19 +70,19 @@ public sealed class RunnerCredentialManager
 
     public void Delete(string targetName)
     {
-        if (CredDelete(targetName, CredTypeDomainPassword, 0)) return;
+        if (CredDelete(targetName, CredentialType, 0)) return;
         int error = Marshal.GetLastWin32Error();
         if (error != ErrorNotFound)
-            throw new Win32Exception(error, "Windows Credential Manager could not remove the runner credential.");
+            throw CredentialError(error, "Windows Credential Manager could not remove the runner credential.");
     }
 
     public bool Exists(string targetName)
     {
-        if (!CredRead(targetName, CredTypeDomainPassword, 0, out nint pointer))
+        if (!CredRead(targetName, CredentialType, 0, out nint pointer))
         {
             int error = Marshal.GetLastWin32Error();
             if (error == ErrorNotFound) return false;
-            throw new Win32Exception(error, "Windows Credential Manager could not inspect the runner credential.");
+            throw CredentialError(error, "Windows Credential Manager could not inspect the runner credential.");
         }
         CredFree(pointer);
         return true;
@@ -94,6 +94,9 @@ public sealed class RunnerCredentialManager
         for (int index = 0; index < length; index++) Marshal.WriteByte(pointer, index, 0);
         Marshal.FreeCoTaskMem(pointer);
     }
+
+    internal static Win32Exception CredentialError(int code, string action) =>
+        new(code, $"{action} {new Win32Exception(code).Message} (Win32 {code}).");
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct Credential

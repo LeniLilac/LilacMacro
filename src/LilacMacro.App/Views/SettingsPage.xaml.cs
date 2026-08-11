@@ -33,13 +33,9 @@ public partial class SettingsPage : UserControl
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on start" };
-        RecoveryAttemptsCombo.ItemsSource = new[] { "0", "1", "2", "3" };
-        GameProfileCombo.ItemsSource = new[] { "Required defaults", "Custom", "Do not prepare" };
         UpdateChannelCombo.ItemsSource = new[] { "Stable", "Prerelease" };
         CaptureIntervalCombo.ItemsSource = new[] { "0.5 sec", "1.0 sec", "2.0 sec" };
         MinimizeBehaviorCombo.SelectedIndex = 1;
-        RecoveryAttemptsCombo.SelectedIndex = 2;
-        GameProfileCombo.SelectedIndex = 0;
         UpdateChannelCombo.SelectedIndex = 0;
         CaptureIntervalCombo.SelectedIndex = 1;
         ExecutionTargetCombo.ItemsSource = new[] { "This desktop", "Local runner session" };

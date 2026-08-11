@@ -9,10 +9,10 @@ internal static class Program
     private static int Main(string[] args)
     {
         if (args.Length != 1 || !LocalSessionSetupVerbPolicy.IsAllowed(args[0])) return 64;
+        string root = AppContext.BaseDirectory;
+        LocalSessionProvisioner provisioner = new(LocalSessionPaths.CreateDefault(root));
         try
         {
-            string root = AppContext.BaseDirectory;
-            LocalSessionProvisioner provisioner = new(LocalSessionPaths.CreateDefault(root));
             CancellationToken cancellationToken = CancellationToken.None;
             if (args[0] == "install") provisioner.InstallOrRepairAsync(BuildVersion(), repair: false, cancellationToken).GetAwaiter().GetResult();
             else if (args[0] == "repair") provisioner.InstallOrRepairAsync(BuildVersion(), repair: true, cancellationToken).GetAwaiter().GetResult();
@@ -21,8 +21,10 @@ internal static class Program
             else return 64;
             return 0;
         }
-        catch
+        catch (Exception exception)
         {
+            try { provisioner.RecordUnhandledFailureAsync(args[0], exception).GetAwaiter().GetResult(); }
+            catch (Exception recordingError) when (recordingError is IOException or UnauthorizedAccessException) { }
             return 1;
         }
     }

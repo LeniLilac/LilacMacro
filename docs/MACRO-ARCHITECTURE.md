@@ -10,7 +10,8 @@ Lobby is the only canonical root state. The Plan page will configure independent
 flowchart TD
     A["Start or terminal match"] --> B["Rejoin configured private server"]
     B --> C{"Fresh Lobby evidence?"}
-    C -- "No" --> D["Bounded recovery or stop"]
+    C -- "No" --> D["Escalate bounded recovery"]
+    D --> B
     C -- "Yes" --> E["Evaluate tasks from highest priority"]
     E --> F{"Eligible task found?"}
     F -- "No" --> G["Wait with cancellation and reevaluate"]
@@ -37,6 +38,22 @@ Each task will declare:
 - completion accounting.
 
 The scheduler evaluates a stable snapshot from highest to lowest priority, runs at most one task, records the terminal outcome, resets to Lobby, then takes a new snapshot. It must remain cancellation-aware and must never hold Roblox input while waiting for eligibility.
+
+Every run begins by normalizing the required Roblox settings, including the standard 100% UI scale, then obtaining fresh Lobby evidence. These are runtime-owned invariants and are never optional user settings.
+
+## Unattended continuity contract
+
+The public-release objective is that a configured run does not terminate because an ordinary visual, timing, Roblox, network, or task anomaly occurs while the user is away. Normal terminal conditions are an explicit user stop, invalid or incomplete user configuration detected before safe execution, an unsupported setup/environment that cannot start safely, or external process/OS termination. Safety failures stop the current action and release input; they do not silently end the scheduler.
+
+Recovery is an indefinitely available scheduler-level escalation made from individually bounded, cancellable episodes:
+
+1. release all input, reacquire Roblox, and expand the bounded temporal observation window using fresh evidence;
+2. reopen the configured private server, restore canonical client geometry and required game/UI settings, and verify Lobby;
+3. restart Roblox, reacquire it, normalize settings again, and verify Lobby;
+4. quarantine the failing task with an inspectable reason, continue with the next eligible task, and periodically reconsider quarantined work under a bounded backoff policy;
+5. when no task is currently safe or eligible, wait without holding input and repeat recovery until cancellation or configuration changes.
+
+“Indefinitely available” never means infinite clicking, an unbounded wait inside one state owner, stale evidence, or bypassing a safety gate. Each observation window, input attempt, transition, restart, and cleanup remains capped. Fresh evidence must authorize every input, cancellation must interrupt every layer, and held keys/buttons must be released before any retry, restart, quarantine, or wait. Recovery history, task quarantine, and the active escalation level must remain visible in diagnostics.
 
 ## Shared modules
 

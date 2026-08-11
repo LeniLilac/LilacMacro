@@ -40,8 +40,9 @@ The [documentation contract](../CONTRIBUTING.md#documentation-contract) defines 
 
 | Capability | Status | Contract |
 |---|---|---|
-| Priority task scheduler | Prototype | Main Macro selects the lowest-numbered incomplete task after each terminal result; unsupported highest-priority modes stop visibly instead of being skipped |
-| Canonical Lobby reset | Prototype | Story/Raid main runs open the session-configured HTTPS roblox.com private-server link, wait for verified Lobby, then reevaluate priority; DPAPI persistence remains Planned |
+| Priority task scheduler | Prototype | Main Macro selects the lowest-numbered incomplete task after each terminal result; public unattended continuity, task quarantine, restart escalation, and delayed reconsideration remain Planned |
+| Mandatory startup normalization | Planned | Every public run must normalize required Roblox settings and the standard 100% UI scale, then obtain fresh Lobby evidence; these invariants have no user-facing disable controls |
+| Canonical Lobby reset | Prototype | Story/Raid main runs open the session-configured HTTPS roblox.com private-server link, wait for verified Lobby, then reevaluate priority; DPAPI persistence and indefinite scheduler-level recovery escalation remain Planned |
 | Story runner | Prototype | Runtime Lab and main Macro share the complete navigation, authored placement, terminal, and reset path; owner live acceptance remains required |
 | Raid runner | Prototype | Runtime Lab and main Macro share the complete navigation, authored placement, terminal, and reset path; owner live acceptance remains required |
 | Challenge runner | Prototype | Main Macro and Runtime Lab share type rotation, random-map recognition, authored Challenge placement playback, terminal handling, Lobby return, and per-type half-hour/daily-limit eligibility; owner live acceptance remains required |

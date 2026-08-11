@@ -59,38 +59,53 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         }
 
         IReadOnlyList<RegistryMutation> mutations = termService.GetMutations();
-        LocalSessionProvisioningManifest manifest = existing is null ? new LocalSessionProvisioningManifest
+        LocalSessionProvisioningManifest manifest;
+        try
         {
-            State = LocalSessionState.Installing,
-            OwnerSid = ownerSid,
-            OsBuild = compatibility.OsBuild,
-            AppVersion = appVersion,
-            WorkerVersion = appVersion,
-            PolicyVersion = RunnerProfilePolicy.CurrentVersion,
-            NativePayloadVersion = payload.Version,
-            NativePayload = payload.Files,
-            CompatibilityEvidence = compatibility.Evidence,
-            OriginalSystemState = RegistryStateJournal.Capture(mutations),
-            OwnedResources =
-            [
-                new("local-account", RunnerName), new("credential", paths.CredentialTarget),
-                new("scheduled-task", RunnerScheduledTaskManager.TaskName),
-                new("firewall-rule", FirewallIsolationManager.TcpRule), new("firewall-rule", FirewallIsolationManager.UdpRule),
-            ],
-        } : existing with
+            manifest = existing is null ? new LocalSessionProvisioningManifest
+            {
+                State = LocalSessionState.Installing,
+                OwnerSid = ownerSid,
+                OsBuild = compatibility.OsBuild,
+                AppVersion = appVersion,
+                WorkerVersion = appVersion,
+                PolicyVersion = RunnerProfilePolicy.CurrentVersion,
+                NativePayloadVersion = payload.Version,
+                NativePayload = payload.Files,
+                CompatibilityEvidence = compatibility.Evidence,
+                OriginalSystemState = RegistryStateJournal.Capture(mutations),
+                OwnedResources =
+                [
+                    new("local-account", RunnerName), new("credential", paths.CredentialTarget),
+                    new("scheduled-task", RunnerScheduledTaskManager.TaskName),
+                    new("firewall-rule", FirewallIsolationManager.TcpRule), new("firewall-rule", FirewallIsolationManager.UdpRule),
+                ],
+            } : existing with
+            {
+                State = LocalSessionState.Installing,
+                OsBuild = compatibility.OsBuild,
+                AppVersion = appVersion,
+                WorkerVersion = appVersion,
+                PolicyVersion = RunnerProfilePolicy.CurrentVersion,
+                NativePayloadVersion = payload.Version,
+                NativePayload = payload.Files,
+                CompatibilityEvidence = compatibility.Evidence,
+                UpdatedAtUtc = DateTimeOffset.UtcNow,
+            };
+            manifest = manifest with { CompletedSteps = AddStep(manifest, "native-preflight-passed") };
+            await journalStore.WriteAsync(manifest, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception preparationError)
         {
-            State = LocalSessionState.Installing,
-            OsBuild = compatibility.OsBuild,
-            AppVersion = appVersion,
-            WorkerVersion = appVersion,
-            PolicyVersion = RunnerProfilePolicy.CurrentVersion,
-            NativePayloadVersion = payload.Version,
-            NativePayload = payload.Files,
-            CompatibilityEvidence = compatibility.Evidence,
-            UpdatedAtUtc = DateTimeOffset.UtcNow,
-        };
-        manifest = manifest with { CompletedSteps = AddStep(manifest, "native-preflight-passed") };
-        await journalStore.WriteAsync(manifest, cancellationToken).ConfigureAwait(false);
+            await statusStore.WriteAsync(new LocalSessionStatus
+            {
+                State = existing is null ? LocalSessionState.Absent : LocalSessionState.Degraded,
+                StatusCode = "setup-preparation-failed",
+                Detail = "Local runner setup stopped before Windows was changed.",
+                Problems = [preparationError.Message],
+            }, cancellationToken).ConfigureAwait(false);
+            throw;
+        }
 
         try
         {
@@ -118,6 +133,7 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
                 throw new InvalidDataException("The controlled runner profile could not be verified.");
             manifest = await RecordAsync(manifest, "profile-verified", cancellationToken).ConfigureAwait(false);
 
+            manifest = await RecordAsync(manifest, "term-service-mutation-started", cancellationToken).ConfigureAwait(false);
             termService.Apply();
             await firewall.InstallAsync(cancellationToken).ConfigureAwait(false);
             termService.Restart();
@@ -162,6 +178,26 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
 
     public Task RemoveAsync(CancellationToken cancellationToken) => RemoveAsync(purgeStatusAfterSuccess: false, cancellationToken);
 
+    public async Task RecordUnhandledFailureAsync(string verb, Exception error, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(verb);
+        ArgumentNullException.ThrowIfNull(error);
+        LocalSessionStatus current = await statusStore.ReadAsync(cancellationToken).ConfigureAwait(false);
+        if (current.State is not (LocalSessionState.Installing or LocalSessionState.Removing)
+            && current.Problems.Count > 0) return;
+
+        bool recoveryRequired = File.Exists(paths.JournalPath);
+        await statusStore.WriteAsync(new LocalSessionStatus
+        {
+            State = recoveryRequired ? LocalSessionState.RecoveryRequired : LocalSessionState.Absent,
+            StatusCode = "setup-helper-failed",
+            Detail = recoveryRequired
+                ? "The local-session helper stopped before cleanup was verified. Run Remove or Repair."
+                : "The local-session helper stopped before Windows was changed.",
+            Problems = [$"{verb}: {error.Message}"],
+        }, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task RemoveAsync(bool purgeStatusAfterSuccess, CancellationToken cancellationToken)
     {
         EnsureElevated();
@@ -182,19 +218,53 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
 
     private async Task RemoveInternalAsync(LocalSessionProvisioningManifest manifest, CancellationToken cancellationToken)
     {
-        RunnerSessionManager.LogoffAll(RunnerName);
-        tasks.Remove();
-        await firewall.RemoveAsync(cancellationToken).ConfigureAwait(false);
-        RegistryStateJournal.Restore(manifest.OriginalSystemState);
-        termService.Restart();
-        credentials.Delete(paths.CredentialTarget);
-        string? profilePath = GetProfilePath(manifest.RunnerSid);
-        accounts.Remove(RunnerName, profilePath);
-        DeleteOwnedRunnerDirectory();
-        IReadOnlyList<string> unresolved = cleanupVerifier.Inspect(manifest);
-        if (unresolved.Count > 0) throw new LocalSessionCleanupException(unresolved);
+        List<string> failures = [];
+        Attempt(failures, "runner session logoff", () => RunnerSessionManager.LogoffAll(RunnerName));
+        Attempt(failures, "scheduled-task removal", tasks.Remove);
+        await AttemptAsync(failures, "firewall removal", () => firewall.RemoveAsync(cancellationToken)).ConfigureAwait(false);
+
+        IReadOnlyList<string> registryMismatches;
+        try { registryMismatches = RegistryStateJournal.FindRestoreMismatches(manifest.OriginalSystemState); }
+        catch (Exception exception)
+        {
+            failures.Add($"registry inspection: {exception.Message}");
+            registryMismatches = ["Registry state could not be inspected."];
+        }
+        if (RequiresTermServiceRestore(manifest, registryMismatches))
+        {
+            Attempt(failures, "registry restoration", () => RegistryStateJournal.Restore(manifest.OriginalSystemState));
+            Attempt(failures, "TermService restart", termService.Restart);
+        }
+
+        Attempt(failures, "credential removal", () => credentials.Delete(paths.CredentialTarget));
+        string? profilePath = null;
+        Attempt(failures, "runner profile lookup", () => profilePath = GetProfilePath(manifest.RunnerSid));
+        Attempt(failures, "runner account removal", () => accounts.Remove(RunnerName, profilePath));
+        Attempt(failures, "runner data removal", DeleteOwnedRunnerDirectory);
+        try { failures.AddRange(cleanupVerifier.Inspect(manifest)); }
+        catch (Exception exception) { failures.Add($"cleanup verification: {exception.Message}"); }
+        if (failures.Count > 0) throw new LocalSessionCleanupException(failures.Distinct(StringComparer.Ordinal).ToArray());
         if (File.Exists(paths.JournalPath)) File.Delete(paths.JournalPath);
         await statusStore.WriteAsync(new LocalSessionStatus(), cancellationToken).ConfigureAwait(false);
+    }
+
+    internal static bool RequiresTermServiceRestore(
+        LocalSessionProvisioningManifest manifest,
+        IReadOnlyList<string> registryMismatches) =>
+        manifest.CompletedSteps.Contains("term-service-mutation-started", StringComparer.Ordinal)
+        || manifest.CompletedSteps.Contains("loopback-isolation-verified", StringComparer.Ordinal)
+        || registryMismatches.Count > 0;
+
+    private static void Attempt(List<string> failures, string step, Action action)
+    {
+        try { action(); }
+        catch (Exception exception) { failures.Add($"{step}: {exception.Message}"); }
+    }
+
+    private static async Task AttemptAsync(List<string> failures, string step, Func<Task> action)
+    {
+        try { await action().ConfigureAwait(false); }
+        catch (Exception exception) { failures.Add($"{step}: {exception.Message}"); }
     }
 
     private async Task<LocalSessionProvisioningManifest> RecordAsync(LocalSessionProvisioningManifest manifest, string step, CancellationToken cancellationToken)

@@ -129,27 +129,6 @@
                     <Border Style="{StaticResource SettingsCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                            <TextBlock FontSize="15" FontWeight="Bold" Text="Startup" />
-                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PREPARATION" />
-                                    <StackPanel Grid.Column="1">
-                                        <CheckBox IsChecked="True" Content="Prepare game settings" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                        <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Require verified Lobby" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                    </StackPanel>
-                                </Grid>
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="GAME PROFILE" />
-                                    <ComboBox x:Name="GameProfileCombo" Grid.Column="1" Width="160" HorizontalAlignment="Left" SelectionChanged="SettingChanged_OnSelectionChanged" />
-                                </Grid>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <Border Style="{StaticResource SettingsCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                             <TextBlock FontSize="15" FontWeight="Bold" Text="Updates and data" />
                             <StackPanel Grid.Row="1" Margin="0,16,0,0">
                                 <Grid>
@@ -245,28 +224,6 @@
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STATUS" />
                                     <TextBlock x:Name="PrivateServerStatusText" Grid.Column="1" FontSize="10" Foreground="{DynamicResource InkSoftBrush}" Text="Not stored" />
-                                </Grid>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <Border Style="{StaticResource SettingsCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                            <TextBlock FontSize="15" FontWeight="Bold" Text="Reset and recovery" />
-                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="RESET BEHAVIOR" />
-                                    <StackPanel Grid.Column="1">
-                                        <CheckBox Content="Rejoin at plan start" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                        <CheckBox Margin="0,9,0,0" Content="Rejoin after recoverable failure" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                        <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Require fresh Lobby evidence" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                    </StackPanel>
-                                </Grid>
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="RECOVERY ATTEMPTS" />
-                                    <ComboBox x:Name="RecoveryAttemptsCombo" Grid.Column="1" Width="120" HorizontalAlignment="Left" SelectionChanged="SettingChanged_OnSelectionChanged" />
                                 </Grid>
                             </StackPanel>
                         </Grid>

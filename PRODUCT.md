@@ -27,6 +27,7 @@ Do not resemble a generic dark neon gamer dashboard, translucent glass UI, bland
 - Open on Macro and use the fixed top tabs Macro, Plan, Setup, and Settings. Dataset Builder and Runtime Lab remain separate owner tools rather than primary macro-shell navigation.
 - Use terse tool labels and live values. Do not add onboarding prose, marketing headlines, safety blurbs, or instructional guide panels.
 - Verify every external state before presenting it as complete.
+- Public unattended runs recover from runtime anomalies instead of ending: each input episode remains bounded and evidence-gated while the scheduler escalates through reacquisition, Roblox restart, task quarantine, and delayed retry until the user stops it.
 - Keep evidence inspectable through exact dimensions, timestamps, hashes, and explicit frame verdicts.
 - Make annotation fast: image navigation, box creation, labeling, and notes stay in one workspace.
 - Compare OCR models on the same saved crop; confidence is evidence, never authorization by itself.

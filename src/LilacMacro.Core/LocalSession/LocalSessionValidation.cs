@@ -120,6 +120,28 @@ public static class LocalSessionValidation
         _ => from == to,
     };
 
+    public static LocalSessionStatus ReconcileInterruptedOperation(
+        LocalSessionStatus status,
+        bool journalExists,
+        bool helperActive)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+        if (helperActive || status.State is not (LocalSessionState.Installing or LocalSessionState.Removing)) return status;
+        bool recoveryRequired = journalExists;
+        return status with
+        {
+            State = recoveryRequired ? LocalSessionState.RecoveryRequired : LocalSessionState.Absent,
+            StatusCode = "setup-interrupted",
+            Detail = recoveryRequired
+                ? "Local-session setup was interrupted after Windows changes were recorded. Run Remove or Repair."
+                : "Local-session setup was interrupted before Windows was changed. Set Up can be retried.",
+            Problems = status.Problems.Count > 0
+                ? status.Problems
+                : ["The elevated local-session helper is no longer running."],
+            ObservedAtUtc = DateTimeOffset.UtcNow,
+        };
+    }
+
     public static bool FixedTimeHashEquals(string expectedHex, ReadOnlySpan<byte> actualBytes)
     {
         if (!IsSha256(expectedHex)) return false;
@@ -130,8 +152,14 @@ public static class LocalSessionValidation
     private static LocalSessionValidationResult Result(List<string> errors) =>
         errors.Count == 0 ? LocalSessionValidationResult.Success : new(false, errors);
 
-    private static bool IsSid(string value) =>
-        value.StartsWith("S-1-", StringComparison.Ordinal) && value.All(character => char.IsDigit(character) || character == '-');
+    private static bool IsSid(string value)
+    {
+        string[] parts = value.Split('-');
+        return parts.Length >= 3
+            && string.Equals(parts[0], "S", StringComparison.Ordinal)
+            && string.Equals(parts[1], "1", StringComparison.Ordinal)
+            && parts.Skip(2).All(part => part.Length > 0 && part.All(char.IsDigit));
+    }
 
     private static bool IsSha256(string value) => value.Length == 64 && value.All(Uri.IsHexDigit);
 
