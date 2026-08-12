@@ -45,6 +45,10 @@
             <RowDefinition Height="82" />
         </Grid.RowDefinitions>
 
+        <Border Grid.Row="1" Grid.RowSpan="3"
+                Background="{DynamicResource AppBackgroundPatternBrush}"
+                IsHitTestVisible="False" />
+
         <Border Grid.Row="0" Background="{DynamicResource CardBrush}"
                 BorderBrush="{DynamicResource InkBrush}" BorderThickness="0,0,0,3"
                 MouseLeftButtonDown="Header_OnMouseLeftButtonDown">

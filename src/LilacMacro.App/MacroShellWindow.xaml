@@ -227,7 +227,9 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1" Background="{DynamicResource AppBackgroundBrush}">
+        <Grid Grid.Row="1">
+            <Border Background="{DynamicResource AppBackgroundPatternBrush}"
+                    IsHitTestVisible="False" />
             <ContentControl x:Name="PageHost" />
         </Grid>
 

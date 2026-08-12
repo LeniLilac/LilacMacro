@@ -181,7 +181,7 @@ The canonical route, timeline, coordinate, autosave, and playback-boundary contr
 
 Purpose: keybinds, webhooks, Roblox private server links, and other application settings.
 
-- Keep the theme controls as the first fields inside General / Appearance. Mode is a direct Light/Dark toggle followed by one compact two-row palette grid: ten solid families on the first row and ten gradient families on the second. Each swatch has a distinct Light and Dark definition, updates its preview with the active mode, and shows an outline plus check badge when selected; theme names remain available as tooltips rather than consuming row space.
+- Keep the theme controls as the first fields inside the General / Theme card. Mode is a direct Light/Dark toggle followed by one compact two-row palette grid: ten solid families on the first row and ten gradient families on the second. Each tactile swatch uses the same ink outline and hard offset shadow as other controls, has a distinct Light and Dark definition, updates its preview with the active mode, and shows a check badge when selected; theme names remain available as tooltips rather than consuming row space.
 - Use one Minimize behavior dropdown for Keep visible, Minimize while running, and Minimize on start. Compact layout forces Minimize while running and makes that constraint visible instead of presenting an ineffective choice.
 - Treat the standard Roblox 100% UI scale as a startup invariant. Do not expose a UI-scale selector or an option to skip scale preparation.
 - Treat the documented Roblox UI/input settings allowlist as a plan-start and private-server-reset invariant. Do not expose per-field overrides; normalization occurs only after the owning Windows session closes Roblox.
@@ -200,6 +200,7 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 
 - Continue the existing SquareClaim-inspired Lilac theme rather than introducing a second visual system.
 - Use the paper background as the main canvas and the card surface only where a bounded interactive region is necessary.
+- Render a gradient theme once across the complete window canvas rather than repeating it per pattern tile. Draw the decorative layer independently: a visible 16-pixel dot field beneath continuous, gently slanted diagonal rules spaced about 80 pixels apart.
 - Use ink outlines and hard offset shadows consistently. Do not add soft shadows, glass effects, gradient text, or neon styling. The selected gradient theme may tint the application canvas and primary accent fills; bounded card surfaces, text, destructive actions, status colors, and game-state evidence remain solid and semantic.
 - Use pink for the primary action and active working selection, yellow for secondary semantic emphasis, green for confirmed success, and red only for destructive or failed states.
 - Plan state chips use dedicated theme tokens: mint Ready, lavender Waiting, amber Cooldown, and dusty-pink Complete. Each theme supplies separate restrained backgrounds and readable text colors; global success and warning fills are not reused.

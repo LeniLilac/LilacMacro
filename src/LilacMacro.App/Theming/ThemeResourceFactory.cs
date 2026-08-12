@@ -56,7 +56,8 @@ internal static class ThemeResourceFactory
             resources["AccentBrush"] = Freeze(AppPaletteCatalog.CreateGradient(palette.Stops));
             resources["PinkBrush"] = resources["AccentBrush"];
         }
-        resources["AppBackgroundBrush"] = CreateBackground(palette, paper, ink, light);
+        resources["AppBackgroundBrush"] = CreateBackgroundFill(palette, paper, light);
+        resources["AppBackgroundPatternBrush"] = CreateBackgroundPattern(ink, light);
         resources["ThemePaletteOverlay"] = true;
         return resources;
     }
@@ -67,37 +68,52 @@ internal static class ThemeResourceFactory
         return luminance > 0.46 ? Parse("#171116") : Colors.White;
     }
 
-    private static DrawingBrush CreateBackground(AppPaletteDefinition palette, Color paper, Color ink, bool light)
+    private static Brush CreateBackgroundFill(AppPaletteDefinition palette, Color paper, bool light)
     {
-        Brush fill;
         if (palette.Kind == AppPaletteKind.Gradient)
         {
             Color baseColor = light ? Colors.White : Parse("#0E0C0F");
             Color[] surfaceStops = palette.Stops.Select(color => Mix(baseColor, color, light ? 0.10 : 0.18)).ToArray();
-            fill = AppPaletteCatalog.CreateGradient(surfaceStops);
-        }
-        else
-        {
-            fill = new SolidColorBrush(paper);
+            return Freeze(AppPaletteCatalog.CreateGradient(surfaceStops));
         }
 
+        return Freeze(new SolidColorBrush(paper));
+    }
+
+    private static DrawingBrush CreateBackgroundPattern(Color ink, bool light)
+    {
+        const double dotSpacing = 16;
+        const double lineSpacing = 80;
+        const double patternHeight = 352;
+
+        GeometryDrawing dot = new(
+            new SolidColorBrush(WithAlpha(ink, light ? 34 : 42)),
+            null,
+            new EllipseGeometry(new Point(dotSpacing / 2, dotSpacing / 2), 1.35, 1.35));
+        DrawingBrush dotPattern = new(dot)
+        {
+            TileMode = TileMode.Tile,
+            Viewport = new Rect(0, 0, dotSpacing, dotSpacing),
+            ViewportUnits = BrushMappingMode.Absolute,
+            Viewbox = new Rect(0, 0, dotSpacing, dotSpacing),
+            ViewboxUnits = BrushMappingMode.Absolute,
+        };
+
         DrawingGroup group = new();
-        group.Children.Add(new GeometryDrawing(fill, null, Geometry.Parse("M0,0 H26 V26 H0 Z")));
         group.Children.Add(new GeometryDrawing(
-            new SolidColorBrush(WithAlpha(ink, light ? 36 : 31)),
+            dotPattern,
             null,
-            new EllipseGeometry(new Point(4, 4), 1, 1)));
-        RectangleGeometry slash = new(new Rect(18, 0, 1, 15)) { Transform = new MatrixTransform(1, 0.22, -0.22, 1, 0, 0) };
+            new RectangleGeometry(new Rect(0, 0, lineSpacing, patternHeight))));
         group.Children.Add(new GeometryDrawing(
-            new SolidColorBrush(WithAlpha(ink, light ? 13 : 9)),
             null,
-            slash));
+            new Pen(new SolidColorBrush(WithAlpha(ink, light ? 18 : 24)), 1),
+            new LineGeometry(new Point(lineSpacing, 0), new Point(0, patternHeight))));
         DrawingBrush brush = new(group)
         {
             TileMode = TileMode.Tile,
-            Viewport = new Rect(0, 0, 26, 26),
+            Viewport = new Rect(0, 0, lineSpacing, patternHeight),
             ViewportUnits = BrushMappingMode.Absolute,
-            Viewbox = new Rect(0, 0, 26, 26),
+            Viewbox = new Rect(0, 0, lineSpacing, patternHeight),
             ViewboxUnits = BrushMappingMode.Absolute,
         };
         return Freeze(brush);

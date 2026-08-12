@@ -70,26 +70,35 @@
     <SolidColorBrush x:Key="ScrollTrackBrush" Color="{StaticResource ScrollTrackColor}" />
     <SolidColorBrush x:Key="ScrollThumbBrush" Color="{StaticResource ScrollThumbColor}" />
     <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="{StaticResource ScrollThumbHoverColor}" />
-    <DrawingBrush x:Key="AppBackgroundBrush" TileMode="Tile"
-                  Viewport="0,0,26,26" ViewportUnits="Absolute"
-                  Viewbox="0,0,26,26" ViewboxUnits="Absolute">
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource PaperColor}" />
+    <DrawingBrush x:Key="AppBackgroundPatternBrush" TileMode="Tile"
+                  Viewport="0,0,80,352" ViewportUnits="Absolute"
+                  Viewbox="0,0,80,352" ViewboxUnits="Absolute">
         <DrawingBrush.Drawing>
             <DrawingGroup>
-                <GeometryDrawing Brush="#FFF7FB" Geometry="M0,0 H26 V26 H0 Z" />
-                <DrawingGroup Opacity="0.14">
-                    <GeometryDrawing Brush="#171116">
-                        <GeometryDrawing.Geometry>
-                            <EllipseGeometry Center="4,4" RadiusX="1" RadiusY="1" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup>
-                <DrawingGroup Opacity="0.05">
-                    <GeometryDrawing Brush="#171116">
-                        <GeometryDrawing.Geometry>
-                            <RectangleGeometry Rect="18,0,1,15" Transform="1,0.22,-0.22,1,0,0" />
-                        </GeometryDrawing.Geometry>
-                    </GeometryDrawing>
-                </DrawingGroup>
+                <GeometryDrawing Geometry="M0,0 H80 V352 H0 Z">
+                    <GeometryDrawing.Brush>
+                        <DrawingBrush TileMode="Tile"
+                                      Viewport="0,0,16,16" ViewportUnits="Absolute"
+                                      Viewbox="0,0,16,16" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <GeometryDrawing Brush="#22171116">
+                                    <GeometryDrawing.Geometry>
+                                        <EllipseGeometry Center="8,8" RadiusX="1.35" RadiusY="1.35" />
+                                    </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#12171116" Thickness="1" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <LineGeometry StartPoint="80,0" EndPoint="0,352" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
             </DrawingGroup>
         </DrawingBrush.Drawing>
     </DrawingBrush>

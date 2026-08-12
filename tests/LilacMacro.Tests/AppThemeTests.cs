@@ -47,7 +47,8 @@ public sealed class AppThemeTests
             "ChromeBorderColor", "ChromeBorderBrush", "PressedSurfaceColor", "PressedSurfaceBrush",
             "ScrollTrackColor", "ScrollTrackBrush", "ScrollThumbColor", "ScrollThumbBrush",
             "ScrollThumbHoverColor", "ScrollThumbHoverBrush", "ShadowColor", "ShadowBrush",
-            "AccentShadowColor", "AccentShadowBrush", "AppBackgroundBrush", "ThemePaletteOverlay",
+            "AccentShadowColor", "AccentShadowBrush", "AppBackgroundBrush", "AppBackgroundPatternBrush",
+            "ThemePaletteOverlay",
         ];
 
         foreach (AppColorTheme theme in AppPaletteCatalog.Themes)
@@ -58,9 +59,21 @@ public sealed class AppThemeTests
                 Assert.All(required, key => Assert.True(resources.Contains(key), $"{mode}/{theme} omitted {key}."));
                 AppPaletteDefinition definition = AppPaletteCatalog.Get(theme, mode);
                 if (definition.Kind == AppPaletteKind.Gradient)
+                {
                     Assert.IsType<LinearGradientBrush>(resources["AccentBrush"]);
+                    LinearGradientBrush background = Assert.IsType<LinearGradientBrush>(resources["AppBackgroundBrush"]);
+                    Assert.Equal(BrushMappingMode.RelativeToBoundingBox, background.MappingMode);
+                }
                 else
+                {
                     Assert.IsType<SolidColorBrush>(resources["AccentBrush"]);
+                    Assert.IsType<SolidColorBrush>(resources["AppBackgroundBrush"]);
+                }
+
+                DrawingBrush pattern = Assert.IsType<DrawingBrush>(resources["AppBackgroundPatternBrush"]);
+                Assert.Equal(TileMode.Tile, pattern.TileMode);
+                Assert.Equal(BrushMappingMode.Absolute, pattern.ViewportUnits);
+                Assert.Equal(new System.Windows.Rect(0, 0, 80, 352), pattern.Viewport);
             }
         }
     }

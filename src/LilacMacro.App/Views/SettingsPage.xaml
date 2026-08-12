@@ -59,14 +59,19 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Grid ToolTip="{Binding Name}">
+                            <Border x:Name="SwatchShadow"
+                                    Margin="3,3,0,0"
+                                    Background="{DynamicResource InkBrush}"
+                                    CornerRadius="5" />
                             <Border x:Name="SwatchFace"
+                                    Margin="0,0,3,3"
                                     Background="{Binding PreviewBrush}"
-                                    BorderBrush="{DynamicResource ChromeBorderBrush}"
+                                    BorderBrush="{DynamicResource InkBrush}"
                                     BorderThickness="2"
-                                    CornerRadius="6" />
+                                    CornerRadius="5" />
                             <Border x:Name="SelectedBadge"
                                     Width="17" Height="17"
-                                    Margin="0,3,3,0"
+                                    Margin="0,3,6,0"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Top"
                                     Background="{Binding CheckBackdropBrush}"
@@ -81,11 +86,12 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="SwatchFace" Property="BorderBrush" Value="{DynamicResource InkBrush}" />
+                                <Setter TargetName="SwatchFace" Property="Margin" Value="0,0,4,4" />
+                                <Setter TargetName="SwatchShadow" Property="Margin" Value="4,4,0,0" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="SwatchFace" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                                 <Setter TargetName="SwatchFace" Property="BorderThickness" Value="3" />
+                                <Setter TargetName="SwatchShadow" Property="Background" Value="{DynamicResource AccentBrush}" />
                                 <Setter TargetName="SelectedBadge" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
