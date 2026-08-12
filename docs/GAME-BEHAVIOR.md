@@ -100,7 +100,7 @@ Result/action groups are Repeat Stage/Repeat, View Party/Party, Game Stats, Gain
 - Match prestart selects the lowest of the two live Start Game rectangles and clicks its center. Roblox may automatically start after its 60-second prestart timer; placement playback still finishes all authored prestart actions, then treats the Start boundary as already satisfied only after three fresh Start-screen misses plus selected-unit runtime evidence. It then continues into after-start actions. Missing Start evidence without independent runtime evidence fails closed.
 - Defeat and Victory click the live Repeat or Repeat Stage center only after their result heading and two supporting groups own the state.
 
-Direct Repeat Stage remains Debug evidence. The planned priority scheduler instead returns through a private-server Lobby reset; see [Macro architecture](MACRO-ARCHITECTURE.md).
+The priority scheduler records the verified terminal outcome and reevaluates priority before choosing a result action. If the exact same Story or Raid task remains selected, it clicks the freshly verified Repeat Stage target, waits for verified Match Prestart, reruns the authored placement route, and retains the already-selected team and camera angle. A changed or completed task, Challenge, or unavailable Repeat action returns through a private-server Lobby reset; the result screen cannot change acts or modes. See [Macro architecture](MACRO-ARCHITECTURE.md).
 
 ## Story, Raid, and Challenge Wire Test
 
@@ -108,7 +108,7 @@ Direct Repeat Stage remains Debug evidence. The planned priority scheduler inste
 - It reuses the state ownership and clicks above, polls destinations only within a 20-second bound, and blocks at the first state that cannot be freshly verified.
 - After Include Equipment, it requires Team Swap again, taps the configured Units key, and requires Lobby before opening Play.
 - Capture hotkeys are suppressed while the wire owns the workflow. Stop or application shutdown cancels the run; input cleanup remains owned by the shared Windows input service.
-- By default, a successful wire ends at verified Match Prestart. `Run placements + match` explicitly continues through the effective authored route, Start Game boundary, after-start actions, and verified Victory or Defeat. `Repeat Stage` remains explicit Debug evidence and is not the canonical priority loop.
+- By default, a successful wire ends at verified Match Prestart. `Run placements + match` explicitly continues through the effective authored route, Start Game boundary, after-start actions, and verified Victory or Defeat. Its `Repeat Stage` toggle remains explicit Debug evidence; scheduler-owned repetition is a separate exact-task decision made after outcome accounting and priority reevaluation.
 
 ## Selected-unit and Upgrade evidence
 
@@ -124,7 +124,7 @@ Direct Repeat Stage remains Debug evidence. The planned priority scheduler inste
 ## Camera and key-chain evidence
 
 - Debug Camera Align verifies Roblox, scrolls down 5000 wheel units over 1 second, temporarily toggles standard Left Shift lock, then performs a straight-down 5000-relative-unit right-button camera drag over 1 second. Story/Raid match setup uses the session Shift Lock binding for the same balanced toggle. Cleanup releases input, restores the cursor, and balances temporary Shift Lock.
-- Setup `Test Setup` assumes the selected map is already at Match Prestart. It flushes the active placement route, applies the same session-key camera alignment, then runs every authored action around the required Start Game boundary through the shared production placement service. Guaranteed authored delays before that boundary are capped at 30000 ms. An automatic game start does not interrupt the remaining prestart sequence; the shared boundary policy verifies that transition and then continues after-start actions. It does not navigate, load a team, wait for a terminal result, or repeat. Stop and application shutdown cancel it; Setup navigation is blocked until it finishes or stops.
+- Setup `Test Setup` assumes the selected map is already at Match Prestart. It flushes the active placement route, applies the same session-key camera alignment, then runs every authored action around the required Start Game boundary through the shared production placement service. Guaranteed authored delays before that boundary are capped at 30000 ms. An automatic game start does not interrupt the remaining prestart sequence; the shared boundary policy verifies that transition and then continues after-start actions. It does not navigate, load a team, wait for a terminal result, or repeat. Scheduler-owned exact-task Repeat Stage deliberately skips both team loading and camera alignment because Roblox retains them. Stop and application shutdown cancel Setup testing; Setup navigation is blocked until it finishes or stops.
 - The Debug key chain accepts at most 32 physical-key holds, each 1-120000 ms, with at most 600000 ms total hold time. Arm + Focus gives it temporary ownership of F6; F6 starts and cancels it. F6 cannot be a chain key, and cancellation releases the current key.
 
 Any new field observation must update this ledger and its deterministic Core tests in the same change.

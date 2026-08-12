@@ -92,7 +92,8 @@ internal sealed record StoryWireTestResult(
     StoryWireStage Stage,
     string Status,
     DateTimeOffset? UnavailableUntilUtc = null,
-    bool DailyLimitReached = false);
+    bool DailyLimitReached = false,
+    MatchTerminalOutcome? Outcome = null);
 
 internal sealed record ChallengeNavigationResult(
     bool Succeeded,

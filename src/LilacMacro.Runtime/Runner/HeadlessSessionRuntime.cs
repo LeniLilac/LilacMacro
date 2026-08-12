@@ -5,6 +5,7 @@ using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
 using LilacMacro.Core.LocalSession;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Placements;
@@ -72,10 +73,13 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             }),
             cancellationToken).ConfigureAwait(false);
 
+        RunnerTaskSnapshot? repeatedTask = null;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            RunnerTaskSnapshot? task = SelectTask(snapshot.Tasks, wins, blockedUntil);
+            bool repeatedEntry = repeatedTask is not null;
+            RunnerTaskSnapshot? task = repeatedTask ?? SelectTask(snapshot.Tasks, wins, blockedUntil);
+            repeatedTask = null;
             if (task is null)
             {
                 if (snapshot.Tasks.All(candidate => candidate.Mode == RunnerTaskMode.Challenge || wins[candidate.Id] >= candidate.Target))
@@ -93,24 +97,35 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                 placements,
                 challengePlacements,
                 cancellationToken).ConfigureAwait(false);
-            StoryWireTestResult result = await runner.RunAsync(
-                options,
-                new InlineProgress<StoryWireProgress>(value => Report(
-                    progress,
-                    task,
-                    StoryWireTestRunner.Format(value.Stage),
-                    wins,
-                    losses,
-                    value.Detail)),
-                cancellationToken).ConfigureAwait(false);
+            InlineProgress<StoryWireProgress> wireProgress = new(value => Report(
+                progress,
+                task,
+                StoryWireTestRunner.Format(value.Stage),
+                wins,
+                losses,
+                value.Detail));
+            StoryWireTestResult result = repeatedEntry
+                ? await runner.RunRepeatedAsync(options, wireProgress, cancellationToken).ConfigureAwait(false)
+                : await runner.RunAsync(options, wireProgress, cancellationToken).ConfigureAwait(false);
             if (!result.Succeeded) throw new InvalidOperationException(result.Status);
 
             if (result.UnavailableUntilUtc is DateTimeOffset unavailableUntil)
             {
                 blockedUntil[task.Id] = unavailableUntil;
                 Report(progress, task, "blocked", wins, losses, result.Status);
+                await ResetLobbyAsync(
+                    rejoin,
+                    uiScale,
+                    request.PrivateServerLink,
+                    device,
+                    detail => Report(progress, task, "lobby-reset", wins, losses, detail),
+                    cancellationToken).ConfigureAwait(false);
+                continue;
             }
-            else if (result.Status.StartsWith("VICTORY", StringComparison.Ordinal))
+
+            MatchTerminalOutcome outcome = result.Outcome
+                ?? throw new InvalidOperationException("The completed match did not return a terminal outcome.");
+            if (outcome == MatchTerminalOutcome.Victory)
             {
                 wins[task.Id]++;
                 Report(progress, task, "victory", wins, losses, result.Status);
@@ -121,6 +136,30 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                 Report(progress, task, "defeat", wins, losses, result.Status);
                 if (losses[task.Id] > task.DefeatRetries)
                     throw new InvalidOperationException($"{task.Id} exceeded its defeat retry limit.");
+            }
+
+            RunnerTaskSnapshot? nextTask = SelectTask(snapshot.Tasks, wins, blockedUntil);
+            if (MatchContinuationPolicy.ShouldRepeat(
+                    hasVerifiedTerminalOutcome: true,
+                    modeSupportsRepeat: task.Mode is RunnerTaskMode.Story or RunnerTaskMode.Raid,
+                    sameTaskSelected: string.Equals(task.Id, nextTask?.Id, StringComparison.Ordinal)))
+            {
+                try
+                {
+                    await runner.RepeatStageAsync(
+                        outcome,
+                        options,
+                        wireProgress,
+                        cancellationToken).ConfigureAwait(false);
+                    Report(progress, task, "repeat-continuation", wins, losses, "TEAM + CAMERA RETAINED");
+                    repeatedTask = task;
+                    continue;
+                }
+                catch (Exception error) when (error is not OperationCanceledException)
+                {
+                    Report(progress, task, "repeat-fallback", wins, losses,
+                        $"REPEAT UNAVAILABLE | LOBBY RESET | {error.Message}");
+                }
             }
 
             await ResetLobbyAsync(

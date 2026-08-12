@@ -4,11 +4,11 @@
 
 ## Root model
 
-Lobby is the only canonical root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler uses the configured private-server link to rejoin, verify Lobby, and reevaluate eligibility from the highest priority.
+Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story/Raid selection may continue through Repeat Stage; any task, act, or mode change returns through verified Lobby.
 
 ```mermaid
 flowchart TD
-    A["Start or terminal match"] --> B["Rejoin configured private server"]
+    A["Plan start"] --> B["Rejoin configured private server"]
     B --> C{"Fresh Lobby evidence?"}
     C -- "No" --> D["Escalate bounded recovery"]
     D --> B
@@ -17,10 +17,14 @@ flowchart TD
     F -- "No" --> G["Wait with cancellation and reevaluate"]
     F -- "Yes" --> H["Run one mode workflow"]
     H --> I["Victory, defeat, cooldown, or bounded failure"]
-    I --> B
+    I --> J["Record outcome and reevaluate priority"]
+    J -- "Exact same Story/Raid task" --> K["Verify and click Repeat Stage"]
+    K --> L["Verify Match Prestart; retain team and camera"]
+    L --> H
+    J -- "Changed, complete, Challenge, or Repeat unavailable" --> B
 ```
 
-Direct Repeat Stage remains useful Debug evidence but is not part of this canonical loop. Resetting through Lobby makes team selection, task priority, cooldowns, configuration changes, and recovery deterministic between matches.
+Repeat Stage is a bounded fast path, not a competing scheduler. It is authorized only after a typed terminal outcome and a fresh priority decision select the exact same Story/Raid task. The continuation verifies Match Prestart and reruns placements without team selection or camera alignment because Roblox retains both. Resetting through Lobby remains mandatory for task/act/mode changes, completion, Challenge, and Repeat failure.
 
 ## Execution target
 
@@ -37,9 +41,9 @@ Each task will declare:
 - retry and failure budget;
 - completion accounting.
 
-The scheduler evaluates a stable snapshot from highest to lowest priority, runs at most one task, records the terminal outcome, resets to Lobby, then takes a new snapshot. It must remain cancellation-aware and must never hold Roblox input while waiting for eligibility.
+The scheduler evaluates a stable snapshot from highest to lowest priority, runs at most one task, records the terminal outcome, and immediately reevaluates priority. If the same supported task remains selected it may use Repeat Stage; otherwise it resets to Lobby before the next task. It must remain cancellation-aware and must never hold Roblox input while waiting for eligibility.
 
-Every run and private-server reset begins by closing Roblox in the owning Windows session, atomically normalizing the explicit UI/input allowlist in that profile's Roblox settings file, opening the validated private-server link, and obtaining fresh Lobby evidence. It then normalizes the rendered UI scale. The displayed numeric value is only a calibration input: the runtime measures panel geometry, applies bounded reciprocal feedback, and validates the result. A per-user/per-Windows-session cached candidate is a revalidated hot-path hint, not evidence. These runtime-owned invariants are never optional user settings.
+Every plan start and private-server reset begins by closing Roblox in the owning Windows session, atomically normalizing the explicit UI/input allowlist in that profile's Roblox settings file, opening the validated private-server link, and obtaining fresh Lobby evidence. It then normalizes the rendered UI scale. The displayed numeric value is only a calibration input: the runtime measures panel geometry, applies bounded reciprocal feedback, and validates the result. A per-user/per-Windows-session cached candidate is a revalidated hot-path hint, not evidence. These runtime-owned invariants are never optional user settings.
 
 ## Unattended continuity contract
 
@@ -80,11 +84,11 @@ All arrows below mean a verified transition, not a timed blind click.
 
 ### Story — Prototype
 
-Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Story map -> Story act and Normal/Hard -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> private-server rejoin -> Lobby.
+Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Story map -> Story act and Normal/Hard -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> exact same task: Repeat Stage -> verified Match Prestart with retained team/camera; otherwise private-server rejoin -> Lobby.
 
 ### Raid — Prototype
 
-Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Raid map -> Raid act -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> private-server rejoin -> Lobby.
+Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Raid map -> Raid act -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> exact same task: Repeat Stage -> verified Match Prestart with retained team/camera; otherwise private-server rejoin -> Lobby.
 
 ### Challenge — Prototype
 

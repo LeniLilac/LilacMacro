@@ -40,6 +40,12 @@ internal sealed class PlacementPlaybackService(
         return new PlacementRuntimeResult(outcome, repeatStage, executed);
     }
 
+    public Task RepeatAsync(
+        MatchTerminalOutcome outcome,
+        string device,
+        CancellationToken cancellationToken) =>
+        _terminal.RepeatAsync(outcome, device, cancellationToken);
+
     public async Task<int> RunSetupAsync(
         PlacementSetupDocument document,
         PlacementRouteSetup route,

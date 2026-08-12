@@ -19,8 +19,7 @@ internal sealed class StoryWireTestRunner(
     private readonly DebugLobbyRunner _lobby = new(workspace, ocr);
     private readonly ChallengeWireNavigator _challenge = new(workspace, ocr, deepDebug);
     private readonly WireHybridEvidenceService _hybrid = new(workspace, deepDebug);
-    private readonly PlacementPlaybackService _placements = new(workspace, ocr);
-    private readonly PlacementSetupStore _placementStore = new(ResolvePlacementRoot());
+    private readonly StoryMatchRuntimeRunner _matchRuntime = new(workspace, ocr);
 
     public async Task<StoryWireTestResult> RunAsync(
         StoryWireTestOptions options,
@@ -90,8 +89,41 @@ internal sealed class StoryWireTestRunner(
         if (!options.RunMatchRuntime)
             return new StoryWireTestResult(true, StoryWireStage.MatchPrestart, "MATCH PRESTART VERIFIED");
 
-        return await RunMatchRuntimeAsync(options, progress, cancellationToken);
+        return await _matchRuntime.RunAsync(options, progress, alignCamera: true, cancellationToken);
     }
+
+    public async Task<StoryWireTestResult> RunRepeatedAsync(
+        StoryWireTestOptions options,
+        IProgress<StoryWireProgress> progress,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(progress);
+        if (options.GameMode == WireGameMode.Challenge)
+            throw new InvalidOperationException("Challenge cannot continue through Repeat Stage.");
+
+        await _debug.PrepareAsync(cancellationToken);
+        if (!await CheckAsync(
+                StoryWireStage.MatchPrestart,
+                DebugWorkflowCatalog.MatchPrestart,
+                _debug.CheckMatchPrestartAsync,
+                options,
+                progress,
+                cancellationToken))
+            return Failed(StoryWireStage.MatchPrestart);
+
+        if (!options.RunMatchRuntime)
+            return new StoryWireTestResult(true, StoryWireStage.MatchPrestart, "MATCH PRESTART VERIFIED");
+
+        return await _matchRuntime.RunAsync(options, progress, alignCamera: false, cancellationToken);
+    }
+
+    public Task RepeatStageAsync(
+        MatchTerminalOutcome outcome,
+        StoryWireTestOptions options,
+        IProgress<StoryWireProgress> progress,
+        CancellationToken cancellationToken) =>
+        _matchRuntime.RepeatStageAsync(outcome, options, progress, cancellationToken);
 
     private async Task<ChallengeNavigationResult> NavigateChallengeAsync(
         StoryWireTestOptions options,
@@ -131,80 +163,6 @@ internal sealed class StoryWireTestRunner(
         options.GameMode == WireGameMode.Story
             ? _debug.SelectActAsync(options.Act, options.Difficulty, options.Device, cancellationToken)
             : _debug.SelectRaidActAsync(options.Act, options.Device, cancellationToken);
-
-    private async Task<StoryWireTestResult> RunMatchRuntimeAsync(
-        StoryWireTestOptions options,
-        IProgress<StoryWireProgress> progress,
-        CancellationToken cancellationToken)
-    {
-        progress.Report(new StoryWireProgress(StoryWireStage.MatchRuntime, StoryWireStageStatus.Running, "RUNNING", []));
-        try
-        {
-            await workspace.AlignCameraAsync(
-                DebugWorkflowCatalog.ClientSize,
-                options.ShiftLockVirtualKey,
-                cancellationToken);
-            progress.Report(new StoryWireProgress(
-                StoryWireStage.MatchRuntime,
-                StoryWireStageStatus.Running,
-                "CAMERA ALIGNED",
-                ["CAMERA ALIGNED"]));
-            PlacementMapDefinition map = ResolvePlacementMap(options);
-            PlacementSetupDocument document = await _placementStore.LoadAsync(map.Id, cancellationToken);
-            string routeId = options.GameMode == WireGameMode.Challenge ? "challenge" : RouteId(options.Act);
-            PlacementRouteDefinition routeDefinition = PlacementRouteCatalog.For(map)
-                .FirstOrDefault(candidate => candidate.Id == routeId)
-                ?? PlacementRouteCatalog.For(map).First(candidate => candidate.IsShared);
-            PlacementRouteSetup route = PlacementRouteCatalog.EffectiveRoute(document, routeDefinition);
-            PlacementRuntimeResult result = await _placements.RunAsync(
-                document,
-                route,
-                options.PlacementKeys,
-                options.Device,
-                options.RepeatStage,
-                TimeSpan.FromMinutes(30),
-                message => progress.Report(new StoryWireProgress(
-                    StoryWireStage.MatchRuntime,
-                    StoryWireStageStatus.Running,
-                    message,
-                    [message])),
-                cancellationToken);
-            string status = $"{result.Outcome.ToString().ToUpperInvariant()} VERIFIED";
-            progress.Report(new StoryWireProgress(StoryWireStage.MatchRuntime, StoryWireStageStatus.Passed, status, [status]));
-            return new StoryWireTestResult(true, StoryWireStage.MatchRuntime, status);
-        }
-        catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException)
-        {
-            progress.Report(new StoryWireProgress(
-                StoryWireStage.MatchRuntime,
-                StoryWireStageStatus.Failed,
-                error.Message,
-                [error.Message]));
-            return Failed(StoryWireStage.MatchRuntime);
-        }
-    }
-
-    private static PlacementMapDefinition ResolvePlacementMap(StoryWireTestOptions options)
-    {
-        string id = options.GameMode == WireGameMode.Raid
-            ? $"raid-spirit-city-{RouteId(options.Act)}"
-            : $"story-{Slug(options.Map)}";
-        return PlacementMapCatalog.Definitions.First(candidate => candidate.Id == id);
-    }
-
-    private static string RouteId(StoryAct act) => act switch
-    {
-        StoryAct.Act1 => "act-1",
-        StoryAct.Act2 => "act-2",
-        StoryAct.Act3 => "act-3",
-        StoryAct.Act4 => "act-4",
-        StoryAct.Act5 => "act-5",
-        StoryAct.Infinite => "infinite",
-        StoryAct.Mastery => "mastery",
-        _ => throw new ArgumentOutOfRangeException(nameof(act)),
-    };
-
-    private static string Slug(string value) => value.ToLowerInvariant().Replace("'", string.Empty).Replace(' ', '-');
 
     private async Task<bool> LoadTeamAsync(
         StoryWireTestOptions options,
@@ -470,13 +428,5 @@ internal sealed class StoryWireTestRunner(
         StoryWireStage.MatchRuntime => "MATCH RUNTIME",
         _ => stage.ToString().ToUpperInvariant(),
     };
-
-    private static string ResolvePlacementRoot() =>
-        Environment.GetEnvironmentVariable("LILACMACRO_RUNNER_PLACEMENTS") is { Length: > 0 } value
-            ? Path.GetFullPath(value)
-            : Path.Combine(
-                Environment.GetEnvironmentVariable("LILACMACRO_CONFIGURATION_ROOT")
-                    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LilacMacro"),
-                "placements");
 
 }

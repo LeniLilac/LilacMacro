@@ -9,6 +9,7 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Placements;
 using LilacMacro.Runtime.Normalization;
@@ -193,14 +194,17 @@ public partial class MacroDashboardPage : UserControl
     private async Task RunPlanAsync(PlanPrototype plan, string device, CancellationToken cancellationToken)
     {
         await ResetLobbyAsync(device, cancellationToken);
+        PlanTaskPrototype? repeatedTask = null;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
             DateTimeOffset now = DateTimeOffset.UtcNow;
-            PlanTaskPrototype? task = MacroPriorityPolicy.Select(
-                plan,
-                _victories,
-                candidate => !_blockedUntil.TryGetValue(candidate, out DateTimeOffset until) || now >= until);
+            bool repeatedEntry = repeatedTask is not null;
+            PlanTaskPrototype? task = repeatedTask ?? MacroPriorityPolicy.Select(
+                    plan,
+                    _victories,
+                    candidate => !_blockedUntil.TryGetValue(candidate, out DateTimeOffset until) || now >= until);
+            repeatedTask = null;
             if (task is null)
             {
                 PlanTaskPrototype[] pending = MacroPriorityPolicy.Flatten(plan)
@@ -224,14 +228,14 @@ public partial class MacroDashboardPage : UserControl
             AppendLog($"RUN {task.Name}");
 
             StoryWireTestOptions options = await CreateOptionsAsync(task, device, cancellationToken);
-            StoryWireTestResult result = await _runner.RunAsync(
-                options,
-                new Progress<StoryWireProgress>(progress =>
-                {
-                    AppendLog($"{StoryWireTestRunner.Format(progress.Stage)} | {progress.Detail}");
-                    RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
-                }),
-                cancellationToken);
+            Progress<StoryWireProgress> progress = new(value =>
+            {
+                AppendLog($"{StoryWireTestRunner.Format(value.Stage)} | {value.Detail}");
+                RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+            });
+            StoryWireTestResult result = repeatedEntry
+                ? await _runner.RunRepeatedAsync(options, progress, cancellationToken)
+                : await _runner.RunAsync(options, progress, cancellationToken);
             if (!result.Succeeded) throw new InvalidOperationException(result.Status);
 
             if (result.UnavailableUntilUtc is DateTimeOffset unavailableUntil)
@@ -243,7 +247,9 @@ public partial class MacroDashboardPage : UserControl
                 continue;
             }
 
-            bool victory = result.Status.StartsWith("VICTORY", StringComparison.Ordinal);
+            MatchTerminalOutcome outcome = result.Outcome
+                ?? throw new InvalidOperationException("The completed match did not return a terminal outcome.");
+            bool victory = outcome == MatchTerminalOutcome.Victory;
             if (victory)
             {
                 _victories[task] = _victories.GetValueOrDefault(task) + 1;
@@ -257,6 +263,29 @@ public partial class MacroDashboardPage : UserControl
             _runStats.Add(new RunStatsPoint(_runtime.Elapsed, victory));
             StatsChart.SetPoints(_runStats);
             RefreshUpcomingTasks(plan);
+
+            PlanTaskPrototype? nextTask = MacroPriorityPolicy.Select(
+                plan,
+                _victories,
+                candidate => !_blockedUntil.TryGetValue(candidate, out DateTimeOffset until) ||
+                    DateTimeOffset.UtcNow >= until);
+            if (MatchContinuationPolicy.ShouldRepeat(
+                    hasVerifiedTerminalOutcome: true,
+                    modeSupportsRepeat: task.Mode is PlanTaskMode.Story or PlanTaskMode.Raid,
+                    sameTaskSelected: ReferenceEquals(task, nextTask)))
+            {
+                try
+                {
+                    await _runner.RepeatStageAsync(outcome, options, progress, cancellationToken);
+                    AppendLog("REPEAT CONTINUATION | TEAM + CAMERA RETAINED");
+                    repeatedTask = task;
+                    continue;
+                }
+                catch (Exception error) when (error is not OperationCanceledException)
+                {
+                    AppendLog($"REPEAT UNAVAILABLE | LOBBY RESET | {error.Message}");
+                }
+            }
 
             await ResetLobbyAsync(device, cancellationToken);
         }
