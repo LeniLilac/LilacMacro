@@ -52,6 +52,7 @@ internal sealed class StoryMatchRuntimeRunner(
                 options.PlacementKeys,
                 options.Device,
                 options.RepeatStage,
+                RaidDropDismissalPolicy.IsEnabled(options.GameMode, options.Act),
                 TimeSpan.FromMinutes(30),
                 message => progress.Report(new StoryWireProgress(
                     StoryWireStage.MatchRuntime,

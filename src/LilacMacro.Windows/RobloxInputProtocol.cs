@@ -13,6 +13,10 @@ internal static class RobloxInputProtocol
     public const int InterKeyDelayMilliseconds = 25;
     public const int ShiftLockKeyHoldMilliseconds = 70;
     public const int ShiftLockSettleMilliseconds = 250;
+    public const int QuickPlacementUnitKeyHoldMilliseconds = 110;
+    public const int QuickPlacementUnitSelectionDelayMilliseconds = 250;
+    public const int QuickPlacementClickCount = 3;
+    public const int QuickPlacementBurstMilliseconds = 50;
     public const int CameraInputIncrementCount = 50;
     public const int CameraZoomWheelDelta = -5000;
     public const int CameraPitchDelta = 5000;
@@ -39,5 +43,20 @@ internal static class RobloxInputProtocol
     {
         if (incrementsRemaining < 1) throw new ArgumentOutOfRangeException(nameof(incrementsRemaining));
         return remaining / incrementsRemaining;
+    }
+
+    public static (int HoldMilliseconds, int GapMilliseconds) RapidClickTiming(
+        int clickCount,
+        int durationMilliseconds)
+    {
+        if (clickCount <= 0) throw new ArgumentOutOfRangeException(nameof(clickCount));
+        if (durationMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(durationMilliseconds));
+        if (clickCount == 1) return (durationMilliseconds, 0);
+
+        int hold = Math.Min(
+            ClickHoldMilliseconds,
+            durationMilliseconds / (clickCount * 2));
+        int gap = (durationMilliseconds - (hold * clickCount)) / (clickCount - 1);
+        return (Math.Max(0, hold), Math.Max(0, gap));
     }
 }

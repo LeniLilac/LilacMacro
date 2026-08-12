@@ -15,6 +15,7 @@ internal sealed class MatchTerminalService(
     public async Task<MatchTerminalOutcome> WaitAsync(
         string device,
         TimeSpan timeout,
+        bool dismissRaidDrops,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
@@ -36,6 +37,14 @@ internal sealed class MatchTerminalService(
                 {
                     status?.Invoke("DEFEAT VERIFIED");
                     return MatchTerminalOutcome.Defeat;
+                }
+                if (dismissRaidDrops)
+                {
+                    await workspace.ClickRobloxAsync(
+                        DebugWorkflowCatalog.ClientSize,
+                        RaidDropDismissalPolicy.ActionPoint,
+                        deadline.Token);
+                    status?.Invoke("RAID DROP DISMISSAL CLICK");
                 }
                 status?.Invoke("WAITING FOR VICTORY / DEFEAT");
                 await Task.Delay(PollInterval, deadline.Token);

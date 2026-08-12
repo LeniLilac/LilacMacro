@@ -9,10 +9,6 @@ namespace LilacMacro.Windows;
 
 public sealed class RobloxInputService(RobloxWindowService windows)
 {
-    private const int PlacementClickCount = 3;
-    private const int PlacementBurstMilliseconds = 50;
-    private const int UnitSelectionDelayMilliseconds = 50;
-
     public async Task FocusClientAsync(
         RobloxWindow window,
         PixelSize expectedSize,
@@ -143,9 +139,14 @@ public sealed class RobloxInputService(RobloxWindowService windows)
                 client = await PrepareAsync(window, expectedSize, placement.Point, cancellationToken).ConfigureAwait(false);
                 if (selectedSlot != placement.UnitSlot)
                 {
-                    await TapKeyAsync('0' + placement.UnitSlot, cancellationToken).ConfigureAwait(false);
+                    await TapKeyAsync(
+                        '0' + placement.UnitSlot,
+                        RobloxInputProtocol.QuickPlacementUnitKeyHoldMilliseconds,
+                        cancellationToken).ConfigureAwait(false);
                     selectedSlot = placement.UnitSlot;
-                    await Task.Delay(UnitSelectionDelayMilliseconds, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(
+                        RobloxInputProtocol.QuickPlacementUnitSelectionDelayMilliseconds,
+                        cancellationToken).ConfigureAwait(false);
                 }
                 await ClickBurstRetainingCursorAsync(client, placement.Point, cancellationToken).ConfigureAwait(false);
             }
@@ -278,7 +279,18 @@ public sealed class RobloxInputService(RobloxWindowService windows)
 
     private static async Task TapKeyAsync(int virtualKey, CancellationToken cancellationToken)
     {
-        AutomationKeyPress keyPress = new(virtualKey, RobloxInputProtocol.ShiftLockKeyHoldMilliseconds);
+        await TapKeyAsync(
+            virtualKey,
+            RobloxInputProtocol.ShiftLockKeyHoldMilliseconds,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task TapKeyAsync(
+        int virtualKey,
+        int holdMilliseconds,
+        CancellationToken cancellationToken)
+    {
+        AutomationKeyPress keyPress = new(virtualKey, holdMilliseconds);
         await HoldKeyAsync(keyPress, cancellationToken).ConfigureAwait(false);
     }
 
@@ -288,23 +300,31 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         CancellationToken cancellationToken)
     {
         MoveCursorWithRegisteredMotion(client, point);
-        Stopwatch clock = Stopwatch.StartNew();
-        for (int click = 0; click < PlacementClickCount; click++)
+        await Task.Delay(
+            RobloxInputProtocol.ClickPositionSettleMilliseconds,
+            cancellationToken).ConfigureAwait(false);
+        (int holdMilliseconds, int gapMilliseconds) = RobloxInputProtocol.RapidClickTiming(
+            RobloxInputProtocol.QuickPlacementClickCount,
+            RobloxInputProtocol.QuickPlacementBurstMilliseconds);
+        for (int click = 0; click < RobloxInputProtocol.QuickPlacementClickCount; click++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             NativeInputMethods.mouse_event(NativeInputMethods.MouseLeftDown, 0, 0, 0, 0);
             try
             {
-                await Task.Delay(RobloxInputProtocol.ClickHoldMilliseconds, cancellationToken).ConfigureAwait(false);
+                if (holdMilliseconds > 0)
+                {
+                    await Task.Delay(holdMilliseconds, cancellationToken).ConfigureAwait(false);
+                }
             }
             finally
             {
                 NativeInputMethods.mouse_event(NativeInputMethods.MouseLeftUp, 0, 0, 0, 0);
             }
-            await DelayUntilAsync(
-                clock,
-                TimeSpan.FromMilliseconds(PlacementBurstMilliseconds * ((click + 1d) / PlacementClickCount)),
-                cancellationToken).ConfigureAwait(false);
+            if (click + 1 < RobloxInputProtocol.QuickPlacementClickCount && gapMilliseconds > 0)
+            {
+                await Task.Delay(gapMilliseconds, cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 

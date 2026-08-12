@@ -23,6 +23,7 @@ internal sealed class PlacementPlaybackService(
         PlacementRuntimeKeys keys,
         string device,
         bool repeatStage,
+        bool dismissRaidDrops,
         TimeSpan terminalTimeout,
         Action<string>? status,
         CancellationToken cancellationToken)
@@ -31,7 +32,7 @@ internal sealed class PlacementPlaybackService(
             document, route, keys, device, status, cancellationToken);
 
         MatchTerminalOutcome outcome = await _terminal.WaitAsync(
-            device, terminalTimeout, status, cancellationToken);
+            device, terminalTimeout, dismissRaidDrops, status, cancellationToken);
         if (repeatStage)
         {
             await _terminal.RepeatAsync(outcome, device, cancellationToken);

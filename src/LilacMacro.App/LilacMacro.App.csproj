@@ -35,6 +35,7 @@
     <Compile Remove="Runtime\PlacementPlaybackService.cs" />
     <Compile Remove="Runtime\PlacementRuntimeContracts.cs" />
     <Compile Remove="Runtime\PrivateServerRejoinService.cs" />
+    <Compile Remove="Runtime\RaidDropDismissalPolicy.cs" />
     <Compile Remove="Runtime\UnitPanelEvidenceService.cs" />
   </ItemGroup>
   <ItemGroup>

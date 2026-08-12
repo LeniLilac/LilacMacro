@@ -25,12 +25,12 @@ public partial class MacroDashboardPage : UserControl
     private readonly StoryWireTestRunner _runner;
     private readonly PrivateServerRejoinService _rejoin;
     private readonly UiScaleNormalizer _uiScale;
-    private readonly PlacementSetupStore _placements;
-    private readonly ChallengePlacementResolver _challengePlacements;
+    private readonly MacroTaskOptionsFactory _taskOptions;
     private readonly Stopwatch _runtime = new();
     private readonly Dictionary<PlanTaskPrototype, int> _victories = [];
     private readonly Dictionary<PlanTaskPrototype, int> _defeats = [];
     private readonly Dictionary<PlanTaskPrototype, DateTimeOffset> _blockedUntil = [];
+    private readonly MacroUnattendedRecoveryRunner _recovery;
     private readonly List<RunStatsPoint> _runStats = [];
     private readonly DispatcherTimer _runtimeTimer;
     private DeepDebugScope? _debugScope;
@@ -53,10 +53,17 @@ public partial class MacroDashboardPage : UserControl
         _runner = new StoryWireTestRunner(_workspace, _ocr, deepDebug);
         _rejoin = new PrivateServerRejoinService(_workspace, _ocr);
         _uiScale = new UiScaleNormalizer(_workspace, _ocr, deepDebug);
-        _placements = new PlacementSetupStore(Path.Combine(
+        PlacementSetupStore placements = new(Path.Combine(
             MacroInstanceContext.Current.ConfigurationRoot,
             "placements"));
-        _challengePlacements = new ChallengePlacementResolver(_placements);
+        _taskOptions = new MacroTaskOptionsFactory(ownerState, placements);
+        _recovery = new MacroUnattendedRecoveryRunner(
+            _blockedUntil,
+            () => _currentTask,
+            () => _currentTask = null,
+            AppendLog,
+            RefreshUpcomingTasks,
+            deepDebug);
         InitializeComponent();
         _runtimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _runtimeTimer.Tick += (_, _) => RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
@@ -162,7 +169,14 @@ public partial class MacroDashboardPage : UserControl
                 await _workspace.InitializeAsync();
                 _initialized = true;
             }
-            _runTask = RunPlanAsync(plan, device, _runCancellation.Token);
+            await MacroPlanPreflight.ValidateAsync(
+                plan,
+                async (task, token) => _ = await _taskOptions.CreateAsync(task, device, token),
+                _runCancellation.Token);
+            _runTask = _recovery.RunAsync(
+                plan,
+                (madeProgress, token) => RunPlanAsync(plan, device, madeProgress, token),
+                _runCancellation.Token);
             await _runTask;
             AppendLog("PLAN COMPLETE");
         }
@@ -191,7 +205,11 @@ public partial class MacroDashboardPage : UserControl
         }
     }
 
-    private async Task RunPlanAsync(PlanPrototype plan, string device, CancellationToken cancellationToken)
+    private async Task RunPlanAsync(
+        PlanPrototype plan,
+        string device,
+        Action madeProgress,
+        CancellationToken cancellationToken)
     {
         await ResetLobbyAsync(device, cancellationToken);
         PlanTaskPrototype? repeatedTask = null;
@@ -227,7 +245,7 @@ public partial class MacroDashboardPage : UserControl
             RefreshUpcomingTasks(plan);
             AppendLog($"RUN {task.Name}");
 
-            StoryWireTestOptions options = await CreateOptionsAsync(task, device, cancellationToken);
+            StoryWireTestOptions options = await _taskOptions.CreateAsync(task, device, cancellationToken);
             Progress<StoryWireProgress> progress = new(value =>
             {
                 AppendLog($"{StoryWireTestRunner.Format(value.Stage)} | {value.Detail}");
@@ -242,6 +260,7 @@ public partial class MacroDashboardPage : UserControl
             {
                 _blockedUntil[task] = unavailableUntil;
                 AppendLog(result.Status);
+                _currentTask = null;
                 RefreshUpcomingTasks(plan);
                 await ResetLobbyAsync(device, cancellationToken);
                 continue;
@@ -261,6 +280,8 @@ public partial class MacroDashboardPage : UserControl
                     throw new InvalidOperationException($"{task.Name} exceeded its defeat retry limit.");
             }
             _runStats.Add(new RunStatsPoint(_runtime.Elapsed, victory));
+            _recovery.MarkTaskSucceeded(task);
+            madeProgress();
             StatsChart.SetPoints(_runStats);
             RefreshUpcomingTasks(plan);
 
@@ -287,6 +308,7 @@ public partial class MacroDashboardPage : UserControl
                 }
             }
 
+            _currentTask = null;
             await ResetLobbyAsync(device, cancellationToken);
         }
     }
@@ -301,112 +323,12 @@ public partial class MacroDashboardPage : UserControl
         await _uiScale.NormalizeAsync(device, AppendLog, cancellationToken);
     }
 
-    private async Task<StoryWireTestOptions> CreateOptionsAsync(
-        PlanTaskPrototype task,
-        string device,
-        CancellationToken cancellationToken)
-    {
-        WireGameMode gameMode = task.Mode switch
-        {
-            PlanTaskMode.Raid => WireGameMode.Raid,
-            PlanTaskMode.Challenge => WireGameMode.Challenge,
-            _ => WireGameMode.Story,
-        };
-        (string mapName, StoryAct act) = gameMode == WireGameMode.Challenge
-            ? ("AUTO", StoryAct.Act1)
-            : ParseRoute(task.Route);
-        int team;
-        if (gameMode == WireGameMode.Challenge)
-        {
-            team = await _challengePlacements.ResolveCommonTeamAsync(cancellationToken);
-        }
-        else
-        {
-            string mapId = gameMode == WireGameMode.Raid
-                ? $"raid-spirit-city-{RouteId(act)}"
-                : $"story-{Slug(mapName)}";
-            PlacementMapDefinition map = PlacementMapCatalog.Definitions.First(candidate => candidate.Id == mapId);
-            PlacementSetupDocument document = await _placements.LoadAsync(map.Id, cancellationToken);
-            PlacementRouteDefinition definition = PlacementRouteCatalog.For(map)
-                .FirstOrDefault(candidate => candidate.Id == RouteId(act))
-                ?? PlacementRouteCatalog.For(map).First(candidate => candidate.IsShared);
-            PlacementRouteSetup route = PlacementRouteCatalog.EffectiveRoute(document, definition);
-            team = route.TeamSlot;
-        }
-        MacroRuntimeKeySnapshot keys = _ownerState.KeyBindings.Snapshot();
-        RegularChallengeType[] challengeTypes = gameMode == WireGameMode.Challenge
-            ? EnabledChallengeTypes(task)
-            : [];
-        return new StoryWireTestOptions(
-            DebugEvidenceMode.ImageWithOcrFallback,
-            gameMode,
-            team,
-            mapName,
-            act,
-            task.HardMode ? StoryDifficulty.Hard : StoryDifficulty.Normal,
-            challengeTypes,
-            new StoryWireNavigationKeys(keys.PlayMenu, keys.UnitInventory, keys.AreasMenu),
-            keys.Placement,
-            keys.ShiftLock,
-            device,
-            RunMatchRuntime: true,
-            RepeatStage: false);
-    }
-
-    private static RegularChallengeType[] EnabledChallengeTypes(PlanTaskPrototype task)
-    {
-        List<RegularChallengeType> types = [];
-        if (task.RunTrait) types.Add(RegularChallengeType.Trait);
-        if (task.RunStat) types.Add(RegularChallengeType.Stat);
-        if (task.RunSprite) types.Add(RegularChallengeType.Sprite);
-        if (types.Count == 0) throw new InvalidDataException("Challenge task has no enabled types.");
-        return [.. types];
-    }
-
     private string SelectOcrDevice()
     {
         if (_ocr.IsDeviceReady(OcrRunner.GpuDevice)) return OcrRunner.GpuDevice;
         if (_ocr.IsDeviceReady(OcrRunner.CpuDevice)) return OcrRunner.CpuDevice;
         throw new InvalidOperationException("Set up OCR in Dataset Builder before starting the macro.");
     }
-
-    private static (string Map, StoryAct Act) ParseRoute(string route)
-    {
-        string[] parts = route.Split('·', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(part => part.Trim().TrimEnd('Â').Trim())
-            .ToArray();
-        string map = parts.FirstOrDefault() ?? throw new InvalidDataException("Task route has no map.");
-        string actText = parts.FirstOrDefault(part => part.StartsWith("Act ", StringComparison.OrdinalIgnoreCase))
-            ?? parts.FirstOrDefault(part => part.Equals("Infinite", StringComparison.OrdinalIgnoreCase) ||
-                part.Equals("Mastery", StringComparison.OrdinalIgnoreCase))
-            ?? "Act 1";
-        StoryAct act = actText.ToLowerInvariant() switch
-        {
-            "act 1" => StoryAct.Act1,
-            "act 2" => StoryAct.Act2,
-            "act 3" => StoryAct.Act3,
-            "act 4" => StoryAct.Act4,
-            "act 5" => StoryAct.Act5,
-            "infinite" => StoryAct.Infinite,
-            "mastery" => StoryAct.Mastery,
-            _ => throw new InvalidDataException("Task route act is invalid."),
-        };
-        return (map, act);
-    }
-
-    private static string RouteId(StoryAct act) => act switch
-    {
-        StoryAct.Act1 => "act-1",
-        StoryAct.Act2 => "act-2",
-        StoryAct.Act3 => "act-3",
-        StoryAct.Act4 => "act-4",
-        StoryAct.Act5 => "act-5",
-        StoryAct.Infinite => "infinite",
-        StoryAct.Mastery => "mastery",
-        _ => throw new ArgumentOutOfRangeException(nameof(act)),
-    };
-
-    private static string Slug(string value) => value.ToLowerInvariant().Replace("'", string.Empty).Replace(' ', '-');
 
     private void StopButton_OnClick(object sender, RoutedEventArgs eventArgs) => _runCancellation?.Cancel();
 
@@ -448,7 +370,7 @@ public partial class MacroDashboardPage : UserControl
                 ReferenceEquals(task, _currentTask)
                     ? $"CURRENT · PRIORITY {task.Priority}"
                     : $"{task.ModeLabel.ToUpperInvariant()} · PRIORITY {task.Priority}",
-                task.Mode == PlanTaskMode.Challenge && _blockedUntil.TryGetValue(task, out DateTimeOffset until)
+                _blockedUntil.TryGetValue(task, out DateTimeOffset until) && until > DateTimeOffset.UtcNow
                     ? $"NEXT {until:MM-dd HH:mm}Z"
                     : task.Mode is PlanTaskMode.Utilities or PlanTaskMode.Challenge
                     ? task.TargetLabel

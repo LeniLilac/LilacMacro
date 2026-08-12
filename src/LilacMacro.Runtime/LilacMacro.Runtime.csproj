@@ -48,6 +48,8 @@
              Link="Runtime\PlacementRuntimeContracts.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\PrivateServerRejoinService.cs"
              Link="Runtime\PrivateServerRejoinService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\RaidDropDismissalPolicy.cs"
+             Link="Runtime\RaidDropDismissalPolicy.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\UnitPanelEvidenceService.cs"
              Link="Runtime\UnitPanelEvidenceService.cs" />
   </ItemGroup>
