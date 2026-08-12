@@ -16,7 +16,6 @@ public partial class RobloxDockSurface : UserControl
     private Window? _owner;
     private bool _requested;
     private bool _dashboardActive = true;
-    private bool _allowDockedSourceForeground;
     private bool _releaseForClose;
     private string _status = "READY · 1366 x 700";
     private string? _lastReportedError;
@@ -45,7 +44,6 @@ public partial class RobloxDockSurface : UserControl
         _requested = requested;
         if (!requested)
         {
-            _allowDockedSourceForeground = false;
             if (!_dock.TryUndock(out string error)) ReportError(error);
             SetStatus("READY · 1366 x 700", "ROBLOX NOT DOCKED");
             return;
@@ -56,7 +54,6 @@ public partial class RobloxDockSurface : UserControl
     public bool SetDashboardActive(bool active, out string error)
     {
         _dashboardActive = active;
-        if (!active) _allowDockedSourceForeground = false;
         if (!active && !_dock.TryUndock(out error)) return false;
         if (active) RefreshDock();
         error = string.Empty;
@@ -112,23 +109,10 @@ public partial class RobloxDockSurface : UserControl
 
     private void Owner_OnStateChanged(object? sender, EventArgs eventArgs) => RefreshDock();
 
-    private void Owner_OnActivationChanged(object? sender, EventArgs eventArgs)
-    {
-        if (_owner?.IsActive == true)
-        {
-            UpdateSourceFocusAuthorization();
-            RefreshDock();
-            return;
-        }
-
+    private void Owner_OnActivationChanged(object? sender, EventArgs eventArgs) =>
         _ = Dispatcher.BeginInvoke(
             DispatcherPriority.Input,
-            new Action(() =>
-            {
-                UpdateSourceFocusAuthorization();
-                RefreshDock();
-            }));
-    }
+            new Action(RefreshDock));
 
     private void UpdateTargetDipSize()
     {
@@ -160,29 +144,6 @@ public partial class RobloxDockSurface : UserControl
             RobloxWindow? source = maintenance == RobloxDockMaintenanceAction.Acquire
                 ? _windows.FindBest()
                 : null;
-            if (maintenance == RobloxDockMaintenanceAction.Acquire && source is null)
-            {
-                SetStatus("ROBLOX NOT FOUND", "OPEN ROBLOX");
-                return;
-            }
-            bool canOwnDock = maintenance != RobloxDockMaintenanceAction.Acquire
-                ? RobloxDockActivationPolicy.CanMaintainDock(
-                    owner.IsActive,
-                    docked: true,
-                    _dock.IsSourceForeground,
-                    _allowDockedSourceForeground)
-                : RobloxDockActivationPolicy.CanAcquireDock(
-                    owner.IsActive,
-                    source is { } candidate && _dock.IsForeground(candidate),
-                    _allowDockedSourceForeground);
-            if (!canOwnDock)
-            {
-                _allowDockedSourceForeground = false;
-                if (!_dock.TrySuspend(out string error)) ReportError(error);
-                SetStatus("PAUSED", "LILACMACRO IS IN BACKGROUND");
-                return;
-            }
-
             nint ownerHandle = new WindowInteropHelper(owner).Handle;
             if (sourceHandle == nint.Zero)
             {
@@ -211,7 +172,6 @@ public partial class RobloxDockSurface : UserControl
                 _dock.Dock(source.Value, x, y);
             }
 
-            UpdateSourceFocusAuthorization();
             _lastReportedError = null;
             _status = "DOCKED · 1366 x 700";
             PlaceholderPanel.Visibility = Visibility.Collapsed;
@@ -223,15 +183,6 @@ public partial class RobloxDockSurface : UserControl
             SetStatus("DOCK FAILED", "ROBLOX NOT DOCKED");
             ReportError(exception.Message);
         }
-    }
-
-    private void UpdateSourceFocusAuthorization()
-    {
-        _allowDockedSourceForeground = RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
-            _owner?.IsActive == true,
-            _dock.HasTrackedSource,
-            _dock.IsSourceForeground,
-            _allowDockedSourceForeground);
     }
 
     private bool TryGetTargetLocation(Window owner, out int x, out int y)

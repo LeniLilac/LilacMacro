@@ -85,58 +85,6 @@ public sealed class RobloxWindowDockTests
     }
 
     [Theory]
-    [InlineData(true, false, false, false, true)]
-    [InlineData(false, true, true, true, true)]
-    [InlineData(false, false, true, true, false)]
-    [InlineData(false, true, true, false, false)]
-    [InlineData(false, true, false, true, false)]
-    public void ActivationPolicy_RequiresOwnerOrAuthorizedDockedSource(
-        bool ownerActive,
-        bool docked,
-        bool sourceForeground,
-        bool sourceFocusAllowed,
-        bool expected)
-    {
-        Assert.Equal(
-            expected,
-            RobloxDockActivationPolicy.CanMaintainDock(
-                ownerActive,
-                docked,
-                sourceForeground,
-                sourceFocusAllowed));
-    }
-
-    [Theory]
-    [InlineData(true, false, false, true)]
-    [InlineData(false, true, true, true)]
-    [InlineData(false, true, false, false)]
-    [InlineData(false, false, true, false)]
-    public void AcquisitionPolicy_RequiresOwnerOrAuthorizedForegroundRoblox(
-        bool ownerActive,
-        bool requestedSourceForeground,
-        bool sourceFocusAllowed,
-        bool expected)
-    {
-        Assert.Equal(
-            expected,
-            RobloxDockActivationPolicy.CanAcquireDock(
-                ownerActive,
-                requestedSourceForeground,
-                sourceFocusAllowed));
-    }
-
-    [Fact]
-    public void SuspendedDock_DoesNotReacquireFromBackgroundRobloxFocus()
-    {
-        bool sourceFocusAllowed = false;
-
-        Assert.False(RobloxDockActivationPolicy.CanAcquireDock(
-            ownerActive: false,
-            requestedSourceForeground: true,
-            sourceFocusAllowed));
-    }
-
-    [Theory]
     [InlineData(false, false, RobloxDockMaintenanceAction.Acquire)]
     [InlineData(false, true, RobloxDockMaintenanceAction.Acquire)]
     [InlineData(true, true, RobloxDockMaintenanceAction.Maintain)]
@@ -150,53 +98,17 @@ public sealed class RobloxWindowDockTests
     }
 
     [Fact]
-    public void ActivationPolicy_AllowsTrackedForegroundSourceDuringStyleRepair()
+    public void ForegroundRoblox_ReacquiresOnceAndRemainsExposed()
     {
-        Assert.True(RobloxDockActivationPolicy.CanMaintainDock(
-            ownerActive: false,
-            docked: true,
-            sourceForeground: true,
-            sourceFocusAllowed: true));
-    }
+        Assert.Equal(
+            RobloxDockMaintenanceAction.Acquire,
+            RobloxDockMaintenancePolicy.Resolve(hasTrackedSource: false, docked: false));
+        Assert.True(IsExposed(202, Dashboard));
 
-    [Fact]
-    public void FocusAuthorization_ArmsWhileOwnerIsActiveAndSurvivesDirectRobloxFocus()
-    {
-        bool authorized = RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
-            ownerActive: true,
-            hasTrackedSource: true,
-            sourceForeground: false,
-            currentlyAuthorized: false);
-
-        authorized = RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
-            ownerActive: false,
-            hasTrackedSource: true,
-            sourceForeground: true,
-            currentlyAuthorized: authorized);
-
-        Assert.True(authorized);
-        Assert.True(RobloxDockActivationPolicy.CanMaintainDock(
-            ownerActive: false,
-            docked: true,
-            sourceForeground: true,
-            sourceFocusAllowed: authorized));
-    }
-
-    [Theory]
-    [InlineData(false, true, false, true)]
-    [InlineData(false, true, true, false)]
-    [InlineData(true, false, false, true)]
-    public void FocusAuthorization_DoesNotAuthorizeAnUntrackedOrIndirectSource(
-        bool ownerActive,
-        bool hasTrackedSource,
-        bool sourceForeground,
-        bool currentlyAuthorized)
-    {
-        Assert.False(RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
-            ownerActive,
-            hasTrackedSource,
-            sourceForeground,
-            currentlyAuthorized));
+        Assert.Equal(
+            RobloxDockMaintenanceAction.Maintain,
+            RobloxDockMaintenancePolicy.Resolve(hasTrackedSource: true, docked: true));
+        Assert.True(IsExposed(202, Dashboard));
     }
 
     private static bool IsExposed(
