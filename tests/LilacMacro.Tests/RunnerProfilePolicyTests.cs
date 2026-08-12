@@ -57,8 +57,9 @@ public sealed class RunnerProfilePolicyTests
         Assert.Contains(policy.RegistryRules, rule => rule.DeleteWhenPresent && rule.ValueName == "OneDrive");
         Assert.Contains(policy.RegistryRules, rule => rule.RelativeKey.Contains("Notifications", StringComparison.Ordinal));
         Assert.DoesNotContain(policy.RegistryRules, rule => rule.ValueName == "TaskbarDa");
-        RunnerRegistryRule[] managedPolicies =
-        [.. policy.RegistryRules.Where(rule => rule.RelativeKey.StartsWith(@"Software\Policies", StringComparison.OrdinalIgnoreCase))];
+        Assert.DoesNotContain(policy.RegistryRules, rule =>
+            rule.RelativeKey.StartsWith(@"Software\Policies", StringComparison.OrdinalIgnoreCase));
+        RunnerRegistryRule[] managedPolicies = [.. policy.ElevatedRegistryRules];
         Assert.Equal(2, managedPolicies.Length);
         Assert.Contains(managedPolicies, rule => rule.RelativeKey == @"Software\Policies\Microsoft\Windows\OOBE"
             && rule.ValueName == "DisablePrivacyExperience" && rule.EncodedValue == "1");
@@ -67,6 +68,24 @@ public sealed class RunnerProfilePolicyTests
         Assert.Contains(policy.RegistryRules, rule => rule.ValueName == "HideIcons" && rule.EncodedValue == "1");
         Assert.Contains(policy.RegistryRules, rule => rule.RelativeKey == @"Control Panel\Colors"
             && rule.ValueName == "Background" && rule.EncodedValue == "0 0 0");
+    }
+
+    [Fact]
+    public void Elevated_registry_policy_rejects_any_rule_outside_the_exact_onboarding_allowlist()
+    {
+        RunnerProfilePolicy policy = new()
+        {
+            ElevatedRegistryRules =
+            [
+                .. RunnerProfilePolicy.DefaultElevatedRegistryRules,
+                new RunnerRegistryRule(@"Software\Policies\Microsoft\Windows\Explorer", "DisableSearchBoxSuggestions", "DWord", "1"),
+            ],
+        };
+
+        LocalSessionValidationResult result = LocalSessionValidation.Validate(policy);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.Contains("exact onboarding allowlist", StringComparison.Ordinal));
     }
 
     [Fact]

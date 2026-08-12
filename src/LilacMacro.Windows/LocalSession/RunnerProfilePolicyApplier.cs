@@ -17,7 +17,7 @@ public sealed class RunnerProfilePolicyApplier
         {
             try
             {
-                ApplyRegistryRule(rule, applied);
+                ApplyRegistryRule(Registry.CurrentUser, rule, applied);
             }
             catch (UnauthorizedAccessException error)
             {
@@ -40,9 +40,12 @@ public sealed class RunnerProfilePolicyApplier
         };
     }
 
-    private static void ApplyRegistryRule(RunnerRegistryRule rule, ICollection<string> applied)
+    internal static void ApplyRegistryRule(
+        RegistryKey root,
+        RunnerRegistryRule rule,
+        ICollection<string> applied)
     {
-        using RegistryKey key = Registry.CurrentUser.CreateSubKey(rule.RelativeKey, writable: true)
+        using RegistryKey key = root.CreateSubKey(rule.RelativeKey, writable: true)
             ?? throw new InvalidOperationException($"Runner registry policy could not create {rule.RelativeKey}.");
         if (rule.DeleteWhenPresent)
         {

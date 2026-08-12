@@ -56,7 +56,10 @@ internal sealed class LocalRunnerProfileProvisioner(LocalSessionPaths paths)
         RunnerProfileStore store = new(paths, profile.Id);
         DeleteIfPresent(paths.ProfileReceiptPathFor(profile.Id));
         DeleteIfPresent(paths.ProfileFailurePathFor(profile.Id));
-        await store.WritePolicyAsync(new RunnerProfilePolicy(), cancellationToken).ConfigureAwait(false);
+        RunnerProfilePolicy policy = new();
+        await store.WritePolicyAsync(policy, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<string> elevatedRegistryRules = new RunnerElevatedProfilePolicyApplier()
+            .Apply(profile.AccountName, password, runnerSid, policy.ElevatedRegistryRules);
         int profileExit = await new RunnerProcessLauncher().RunAndWaitAsync(
             profile.AccountName,
             password,
@@ -75,6 +78,13 @@ internal sealed class LocalRunnerProfileProvisioner(LocalSessionPaths paths)
         RunnerProfileReceipt? receipt = await store.ReadReceiptAsync(cancellationToken).ConfigureAwait(false);
         if (receipt is null || receipt.RunnerSid != runnerSid || receipt.PolicyVersion != RunnerProfilePolicy.CurrentVersion)
             throw new InvalidDataException($"The controlled {profile.DisplayName} profile could not be verified.");
+        receipt = receipt with
+        {
+            AppliedRegistryRules = [.. receipt.AppliedRegistryRules, .. elevatedRegistryRules],
+        };
+        if (receipt.AppliedRegistryRules.Count != policy.RegistryRules.Count + policy.ElevatedRegistryRules.Count)
+            throw new InvalidDataException($"The controlled {profile.DisplayName} registry policy receipt is incomplete.");
+        await store.WriteReceiptAsync(receipt, cancellationToken).ConfigureAwait(false);
 
         tasks.Register(provisioned, paths.AppPath, paths.ConfigurationRootFor(provisioned));
         return provisioned;

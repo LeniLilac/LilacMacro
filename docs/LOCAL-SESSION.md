@@ -17,7 +17,7 @@ Each runner receives:
 - one ACL-restricted profile-policy directory under `%ProgramData%\LilacMacro\Profiles`.
 
 Runner policy hides the globally provisioned desktop icons only inside runner accounts, clears wallpaper, and uses a pure-black desktop background. It does not remove owner shortcuts or change the owner's personalization.
-The same runner-scoped policy suppresses Windows' first-logon privacy experience and Microsoft Edge's first-run page so the official Roblox login bootstrap is immediately usable. Repair reapplies these supported per-user policies to existing runners.
+The same runner-scoped policy suppresses Windows' first-logon privacy experience and Microsoft Edge's first-run page so the official Roblox login bootstrap is immediately usable. Because Windows protects each user's `Software\Policies` branch from standard-user writes, the elevated setup helper writes only those two exact allowlisted values into the runner's loaded user hive; the controlled runner pass continues to own ordinary personalization. Repair reapplies both layers to existing runners.
 
 The pinned TermWrap listener, firewall rules, certificate baseline, and rollback journal are machine-level resources shared by all managed instances. Adding or removing Runner 2 does not restart or duplicate that foundation.
 

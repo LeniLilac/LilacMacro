@@ -64,7 +64,16 @@ public static class LocalSessionValidation
             errors.Add("Runner package policy may not contain wildcard removals.");
         if (policy.PackageRules.GroupBy(rule => rule.PackageFamilyName, StringComparer.OrdinalIgnoreCase).Any(group => group.Count() > 1))
             errors.Add("Runner package policy contains duplicates.");
-        foreach (RunnerRegistryRule rule in policy.RegistryRules)
+        if (!policy.ElevatedRegistryRules.SequenceEqual(RunnerProfilePolicy.DefaultElevatedRegistryRules))
+            errors.Add("Runner elevated registry policy must match the exact onboarding allowlist.");
+        RunnerRegistryRule[] allRegistryRules = [.. policy.RegistryRules, .. policy.ElevatedRegistryRules];
+        if (allRegistryRules
+            .GroupBy(rule => $"{rule.RelativeKey}|{rule.ValueName}", StringComparer.OrdinalIgnoreCase)
+            .Any(group => group.Count() > 1))
+        {
+            errors.Add("Runner registry policy contains duplicates.");
+        }
+        foreach (RunnerRegistryRule rule in allRegistryRules)
         {
             if (rule.RelativeKey.StartsWith("HKEY_", StringComparison.OrdinalIgnoreCase))
                 errors.Add("Runner policy registry paths must be relative to the runner hive.");
