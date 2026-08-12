@@ -29,6 +29,7 @@ public partial class PlanPage : UserControl
     private readonly ObservableCollection<PlanPrototype> _plans;
     private readonly MacroOwnerState _ownerState;
     private readonly Dictionary<ListBox, ListBoxReorderDragController<PlanBlockPrototype>> _dragControllers = [];
+    private ListBoxReorderDragController<PlanBlockPrototype>? _activeDragController;
     private PlanPrototype _selectedPlan;
     private PlanTaskPrototype? _editingTask;
     private PlanLoopPrototype? _editingLoop;
@@ -350,8 +351,12 @@ public partial class PlanPage : UserControl
         ListBox? list = FindAncestor<ListBox>(element);
         if (list is null) return;
         MarkSelected(block);
-        EnsureDragController(list).Begin(block, eventArgs);
+        _activeDragController = EnsureDragController(list);
+        _activeDragController.Begin(block, eventArgs);
     }
+
+    private void PlanPage_OnPreviewDragOver(object sender, DragEventArgs eventArgs) =>
+        _activeDragController?.UpdateNativePreview(eventArgs.GetPosition(this));
 
     private void BlockList_OnPreviewMouseMove(object sender, MouseEventArgs eventArgs) => Controller(sender)?.Continue(eventArgs);
     private void BlockList_OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs eventArgs) => Controller(sender)?.Cancel();
@@ -370,8 +375,16 @@ public partial class PlanPage : UserControl
             useNativeCrossListDrag: true,
             previewHost: this);
         controller.ReorderRequested += DragController_OnReorderRequested;
+        controller.DragEnded += DragController_OnDragEnded;
         _dragControllers[list] = controller;
         return controller;
+    }
+
+    private void DragController_OnDragEnded(object? sender, EventArgs eventArgs)
+    {
+        _activeDragController = null;
+        MarkSelected(null);
+        foreach (ListBox list in _dragControllers.Keys) list.SelectedItem = null;
     }
 
     private void DragController_OnReorderRequested(object? sender, ListReorderEventArgs<PlanBlockPrototype> eventArgs)
@@ -385,7 +398,6 @@ public partial class PlanPage : UserControl
         sourceOwner.Remove(eventArgs.Source);
         targetOwner.Insert(Math.Clamp(destination, 0, targetOwner.Count), eventArgs.Source);
         Reindex();
-        MarkSelected(eventArgs.Source);
         _ownerState.NotifyPlansChanged();
     }
 

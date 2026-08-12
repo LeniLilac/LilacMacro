@@ -83,7 +83,7 @@ Purpose: task and priority configuration.
 - Present tasks as independent priority candidates, not a consecutive workflow.
 - Match ExpeditionsMacro's compact Plan blocks: grip, global priority, mode, generated task summary, target/progress, and compact row actions. Do not expose separate task names, teams, placement-route inheritance, eligibility, or other Lilac-only metadata.
 - Use the topmost ready task as the visible scheduling rule.
-- Reorder task priority from the leading Lucide grip with the same insertion-line drag behavior used by Setup timelines. Drag previews and insertion feedback are removed from their original adorner layer on drop or cancellation, so no row highlight can remain above later overlays. Do not show redundant up/down buttons.
+- Reorder task priority from the leading Lucide grip with the same insertion-line drag behavior used by Setup timelines. The translucent preview follows routed drag coordinates across plan-level and loop lists, and drag selection, preview, and insertion feedback all clear on drop or cancellation so no phantom row remains. Do not show redundant up/down buttons.
 - Plan row actions match Setup rows: a compact `Edit` button followed by the shared Lucide trash button.
 - Keep plan creation, copy, rename, and deletion in one compact toolbar.
 - Add and edit tasks through one centered modal rather than an anchored popover or permanent editor rail.

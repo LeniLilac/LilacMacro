@@ -100,6 +100,8 @@ internal sealed class ListBoxReorderDragController<TItem>
 
     public event EventHandler<ListReorderEventArgs<TItem>>? ReorderRequested;
 
+    public event EventHandler? DragEnded;
+
     public void Begin(TItem row, MouseButtonEventArgs eventArgs)
     {
         _dragged = row;
@@ -218,6 +220,8 @@ internal sealed class ListBoxReorderDragController<TItem>
 
     public void Cancel()
     {
+        bool hadPendingDrag = _dragged is not null || _origin is not null || _isDragging ||
+                              _previewAdorner is not null || _insertionAdorner is not null;
         RestoreDraggedContainer();
         _edgeScrollTimer.Stop();
         _dragged = null;
@@ -228,6 +232,12 @@ internal sealed class ListBoxReorderDragController<TItem>
         ClearInsertionAdorner();
         ClearPreviewAdorner();
         if (ReferenceEquals(Mouse.Captured, _list)) Mouse.Capture(null);
+        if (hadPendingDrag) DragEnded?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void UpdateNativePreview(Point position)
+    {
+        if (_useNativeCrossListDrag) _previewAdorner?.Update(position);
     }
 
     private void BeginVisualDrag(TItem row, Point origin)

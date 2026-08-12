@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:LilacMacro.App.Controls"
-             xmlns:local="clr-namespace:LilacMacro.App.Views">
+             xmlns:local="clr-namespace:LilacMacro.App.Views"
+             PreviewDragOver="PlanPage_OnPreviewDragOver">
     <UserControl.Resources>
         <Style x:Key="PlanCompactButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
             <Setter Property="MinHeight" Value="32" />
