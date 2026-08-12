@@ -29,7 +29,6 @@ public partial class PlanPage : UserControl
     private readonly ObservableCollection<PlanPrototype> _plans;
     private readonly MacroOwnerState _ownerState;
     private readonly Dictionary<ListBox, ListBoxReorderDragController<PlanBlockPrototype>> _dragControllers = [];
-    private ListBoxReorderDragController<PlanBlockPrototype>? _activeDragController;
     private PlanPrototype _selectedPlan;
     private PlanTaskPrototype? _editingTask;
     private PlanLoopPrototype? _editingLoop;
@@ -351,18 +350,12 @@ public partial class PlanPage : UserControl
         ListBox? list = FindAncestor<ListBox>(element);
         if (list is null) return;
         MarkSelected(block);
-        _activeDragController = EnsureDragController(list);
-        _activeDragController.Begin(block, eventArgs);
+        EnsureDragController(list).Begin(block, eventArgs);
     }
 
-    private void PlanPage_OnPreviewDragOver(object sender, DragEventArgs eventArgs) =>
-        _activeDragController?.UpdateNativePreview(eventArgs.GetPosition(this));
-
     private void BlockList_OnPreviewMouseMove(object sender, MouseEventArgs eventArgs) => Controller(sender)?.Continue(eventArgs);
-    private void BlockList_OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs eventArgs) => Controller(sender)?.Cancel();
-    private void BlockList_OnDragOver(object sender, DragEventArgs eventArgs) => Controller(sender)?.DragOver(eventArgs);
-    private void BlockList_OnDragLeave(object sender, DragEventArgs eventArgs) => Controller(sender)?.DragLeave();
-    private void BlockList_OnDrop(object sender, DragEventArgs eventArgs) => Controller(sender)?.Drop(eventArgs);
+    private void BlockList_OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs eventArgs) => Controller(sender)?.Complete(eventArgs);
+    private void BlockList_OnLostMouseCapture(object sender, MouseEventArgs eventArgs) => Controller(sender)?.Cancel();
 
     private ListBoxReorderDragController<PlanBlockPrototype>? Controller(object sender) =>
         sender is ListBox list ? EnsureDragController(list) : null;
@@ -370,10 +363,7 @@ public partial class PlanPage : UserControl
     private ListBoxReorderDragController<PlanBlockPrototype> EnsureDragController(ListBox list)
     {
         if (_dragControllers.TryGetValue(list, out ListBoxReorderDragController<PlanBlockPrototype>? controller)) return controller;
-        controller = new ListBoxReorderDragController<PlanBlockPrototype>(
-            list,
-            useNativeCrossListDrag: true,
-            previewHost: this);
+        controller = new ListBoxReorderDragController<PlanBlockPrototype>(list);
         controller.ReorderRequested += DragController_OnReorderRequested;
         controller.DragEnded += DragController_OnDragEnded;
         _dragControllers[list] = controller;
@@ -382,7 +372,6 @@ public partial class PlanPage : UserControl
 
     private void DragController_OnDragEnded(object? sender, EventArgs eventArgs)
     {
-        _activeDragController = null;
         MarkSelected(null);
         foreach (ListBox list in _dragControllers.Keys) list.SelectedItem = null;
     }

@@ -68,7 +68,6 @@ internal sealed class ListBoxReorderDragController<TItem>
     private readonly ListBox _list;
     private readonly FrameworkElement _previewHost;
     private readonly DispatcherTimer _edgeScrollTimer;
-    private readonly bool _useNativeCrossListDrag;
     private Point? _origin;
     private TItem? _dragged;
     private bool _isDragging;
@@ -82,20 +81,15 @@ internal sealed class ListBoxReorderDragController<TItem>
     private TItem? _lastTarget;
     private bool _lastInsertAfter;
 
-    public ListBoxReorderDragController(
-        ListBox list,
-        bool useNativeCrossListDrag = false,
-        FrameworkElement? previewHost = null)
+    public ListBoxReorderDragController(ListBox list)
     {
         _list = list;
-        _previewHost = previewHost ?? list;
-        _useNativeCrossListDrag = useNativeCrossListDrag;
+        _previewHost = list;
         _edgeScrollTimer = new DispatcherTimer(DispatcherPriority.Input)
         {
             Interval = TimeSpan.FromMilliseconds(45),
         };
         _edgeScrollTimer.Tick += EdgeScrollTimer_OnTick;
-        _list.GiveFeedback += List_OnGiveFeedback;
     }
 
     public event EventHandler<ListReorderEventArgs<TItem>>? ReorderRequested;
@@ -125,21 +119,6 @@ internal sealed class ListBoxReorderDragController<TItem>
         if (!_isDragging)
         {
             BeginVisualDrag(_dragged, _origin.Value);
-            if (_useNativeCrossListDrag)
-            {
-                TItem row = _dragged;
-                try
-                {
-                    Mouse.Capture(null);
-                    DragDrop.DoDragDrop(_list, new DataObject(typeof(TItem), row), DragDropEffects.Move);
-                }
-                finally
-                {
-                    Cancel();
-                }
-                return;
-            }
-
             _isDragging = true;
             _edgeScrollTimer.Start();
         }
@@ -171,53 +150,6 @@ internal sealed class ListBoxReorderDragController<TItem>
         }
     }
 
-    public void DragOver(DragEventArgs eventArgs)
-    {
-        Point position = eventArgs.GetPosition(_list);
-        if (!TryGetDragged(eventArgs.Data, out _) ||
-            !TryFindTarget(position, out TItem? target, out ListBoxItem? container, out bool insertAfter))
-        {
-            eventArgs.Effects = DragDropEffects.None;
-            ClearInsertionAdorner();
-            eventArgs.Handled = true;
-            return;
-        }
-
-        _lastTarget = target;
-        _lastInsertAfter = insertAfter;
-        ScrollNearEdge(position);
-        eventArgs.Effects = DragDropEffects.Move;
-        ShowInsertionAdorner(container, insertAfter);
-        eventArgs.Handled = true;
-    }
-
-    public void DragLeave()
-    {
-        if (!_list.IsMouseOver) ClearInsertionAdorner();
-    }
-
-    public void Drop(DragEventArgs eventArgs)
-    {
-        try
-        {
-            if (!TryGetDragged(eventArgs.Data, out TItem? source)) return;
-            Point position = eventArgs.GetPosition(_list);
-            bool found = TryFindTarget(position, out TItem? target, out _, out bool insertAfter);
-            target ??= _lastTarget;
-            if (!found) insertAfter = _lastInsertAfter;
-            if (target is null) return;
-
-            ReorderRequested?.Invoke(this, new ListReorderEventArgs<TItem>(source, target, insertAfter));
-            _list.SelectedItem = source;
-            eventArgs.Effects = DragDropEffects.Move;
-        }
-        finally
-        {
-            ClearInsertionAdorner();
-            eventArgs.Handled = true;
-        }
-    }
-
     public void Cancel()
     {
         bool hadPendingDrag = _dragged is not null || _origin is not null || _isDragging ||
@@ -233,11 +165,6 @@ internal sealed class ListBoxReorderDragController<TItem>
         ClearPreviewAdorner();
         if (ReferenceEquals(Mouse.Captured, _list)) Mouse.Capture(null);
         if (hadPendingDrag) DragEnded?.Invoke(this, EventArgs.Empty);
-    }
-
-    public void UpdateNativePreview(Point position)
-    {
-        if (_useNativeCrossListDrag) _previewAdorner?.Update(position);
     }
 
     private void BeginVisualDrag(TItem row, Point origin)
@@ -275,15 +202,6 @@ internal sealed class ListBoxReorderDragController<TItem>
     {
         _previewAdorner?.Update(_list.TranslatePoint(position, _previewHost));
         UpdateDropTarget(position);
-    }
-
-    private void List_OnGiveFeedback(object sender, GiveFeedbackEventArgs eventArgs)
-    {
-        if (!_useNativeCrossListDrag || _previewAdorner is null) return;
-        _previewAdorner.Update(Mouse.GetPosition(_previewHost));
-        eventArgs.UseDefaultCursors = false;
-        Mouse.SetCursor(Cursors.Arrow);
-        eventArgs.Handled = true;
     }
 
     private void UpdateDropTarget(Point position)
@@ -341,12 +259,6 @@ internal sealed class ListBoxReorderDragController<TItem>
         Point position = Mouse.GetPosition(_list);
         ScrollNearEdge(position);
         UpdateDrag(position);
-    }
-
-    private static bool TryGetDragged(IDataObject data, [NotNullWhen(true)] out TItem? row)
-    {
-        row = data.GetData(typeof(TItem)) as TItem;
-        return row is not null;
     }
 
     private void ScrollNearEdge(Point position)
