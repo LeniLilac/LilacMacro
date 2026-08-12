@@ -30,18 +30,44 @@ internal sealed class UnitPanelEvidenceService(
             string? dps = layout is null
                 ? null
                 : snapshot.Regions.FirstOrDefault(region => region.Bounds == layout.DpsText)?.Text;
-            if (dps is not null && UnitPanelLayout.IsPhantomDps(dps))
-                throw new InvalidOperationException("Phantom placement detected from DPS ???.");
-            if (layout is not null && dps is not null && UnitPanelLayout.IsPhysicalDps(dps) &&
+            bool physical = dps is not null && UnitPanelLayout.IsPhysicalDps(dps);
+            bool phantom = dps is not null && UnitPanelLayout.IsPhantomDps(dps);
+            if (layout is not null && (physical || phantom) &&
                 tracker.Observe(layout) is { } stable)
             {
-                status?.Invoke($"UNIT PANEL CALIBRATED {stable.UpgradeControl}");
+                status?.Invoke($"UNIT PANEL CALIBRATED {stable.UpgradeControl} {(phantom ? "PHANTOM" : "PHYSICAL")}");
                 return stable;
             }
             status?.Invoke($"UNIT PANEL CALIBRATION {observation}/8");
             await Task.Delay(100, cancellationToken);
         }
-        throw new InvalidOperationException("Priority, Sell, and physical DPS evidence did not stabilize.");
+        throw new InvalidOperationException("Priority, Sell, and configurable DPS evidence did not stabilize.");
+    }
+
+    public async Task<bool> WaitForConfigurableSelectionAsync(
+        UnitPanelLayout layout,
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + PanelTimeout;
+        int stable = 0;
+        while (DateTimeOffset.UtcNow <= deadline || stable > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            PanelObservation observation = await ObservePanelAsync(layout, device, cancellationToken);
+            stable = observation.Physical || observation.Phantom ? stable + 1 : 0;
+            if (stable >= 2)
+            {
+                status?.Invoke(observation.Phantom
+                    ? "PHANTOM UNIT PANEL VERIFIED"
+                    : "PHYSICAL UNIT PANEL VERIFIED");
+                return true;
+            }
+            await Task.Delay(100, cancellationToken);
+        }
+        status?.Invoke("CONFIGURABLE UNIT PROOF TIMEOUT");
+        return false;
     }
 
     public async Task<bool> WaitForPhysicalSelectionAsync(

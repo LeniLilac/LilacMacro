@@ -182,11 +182,11 @@ internal sealed class PlacementPlaybackService(
                 }
                 else
                 {
-                    selected = await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken);
+                    selected = await _panel.WaitForConfigurableSelectionAsync(layout, device, status, cancellationToken);
                 }
             }
             if (!selected || layout is null)
-                throw new InvalidOperationException($"Unit {step.UnitSlot} at {point.Point} did not produce physical selection proof.");
+                throw new InvalidOperationException($"Unit {step.UnitSlot} at {point.Point} did not produce configurable selection proof.");
 
             PlacementExecutionState state = new(step, point.Point);
             placements.Add(step.Id, state);
@@ -213,8 +213,14 @@ internal sealed class PlacementPlaybackService(
         UnitPanelLayout layout = getLayout() ?? throw new InvalidOperationException("Unit panel layout was not calibrated.");
         PlacementExecutionState target = ResolveTarget(step, placements);
         await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, target.LivePoint, cancellationToken);
-        if (!await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken))
-            throw new InvalidOperationException($"{step.Kind} target did not produce physical selection proof.");
+        bool selected = UnitPanelSelectionPolicy.AllowsPhantom(step.Kind)
+            ? await _panel.WaitForConfigurableSelectionAsync(layout, device, status, cancellationToken)
+            : await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken);
+        if (!selected)
+        {
+            string required = UnitPanelSelectionPolicy.RequiresPhysical(step.Kind) ? "physical" : "configurable";
+            throw new InvalidOperationException($"{step.Kind} target did not produce {required} selection proof.");
+        }
 
         switch (step.Kind)
         {

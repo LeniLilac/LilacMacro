@@ -37,6 +37,22 @@ public sealed class UnitPanelLayoutTests
     }
 
     [Theory]
+    [InlineData(PlacementStepKind.Place, true, false)]
+    [InlineData(PlacementStepKind.Reconfigure, true, false)]
+    [InlineData(PlacementStepKind.Sell, true, false)]
+    [InlineData(PlacementStepKind.Upgrade, false, true)]
+    [InlineData(PlacementStepKind.Delay, false, false)]
+    [InlineData(PlacementStepKind.StartGame, false, false)]
+    public void PhantomPolicyMatchesSupportedUnitPanelActions(
+        PlacementStepKind kind,
+        bool allowsPhantom,
+        bool requiresPhysical)
+    {
+        Assert.Equal(allowsPhantom, UnitPanelSelectionPolicy.AllowsPhantom(kind));
+        Assert.Equal(requiresPhysical, UnitPanelSelectionPolicy.RequiresPhysical(kind));
+    }
+
+    [Theory]
     [InlineData(0.66, 0.08, 0.48, UnitUpgradeState.Affordable)]
     [InlineData(0.00, 0.74, 0.48, UnitUpgradeState.Unaffordable)]
     [InlineData(0.00, 0.76, 0.94, UnitUpgradeState.Maxed)]

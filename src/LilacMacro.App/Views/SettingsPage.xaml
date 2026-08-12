@@ -155,7 +155,7 @@
                     <Border Style="{StaticResource SettingsCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                            <TextBlock FontSize="15" FontWeight="Bold" Text="Appearance" />
+                            <TextBlock FontSize="15" FontWeight="Bold" Text="Theme" />
                             <StackPanel Grid.Row="1" Margin="0,16,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -169,10 +169,7 @@
                                 </Grid>
                                 <Grid Margin="0,13,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="COLOR THEME" />
-                                        <TextBlock Margin="0,3,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" Text="SOLID / GRADIENT" />
-                                    </StackPanel>
+                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="COLOR THEME" />
                                     <ListBox x:Name="ThemePaletteList"
                                              Grid.Column="1"
                                              Width="500"
@@ -191,9 +188,17 @@
                                         </ListBox.ItemsPanel>
                                     </ListBox>
                                 </Grid>
-                                <Grid Margin="0,13,0,0">
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBlock FontSize="15" FontWeight="Bold" Text="Macro window" />
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MACRO LAYOUT" />
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="LAYOUT" />
                                     <ComboBox x:Name="LayoutProfileCombo" Grid.Column="1" Width="260" HorizontalAlignment="Left" SelectionChanged="DisplayOptions_OnChanged" />
                                 </Grid>
                                 <Grid Margin="0,13,0,0">

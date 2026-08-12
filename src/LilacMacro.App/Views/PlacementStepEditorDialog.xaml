@@ -116,7 +116,7 @@
                                       SelectedValuePath="Value" />
                         </StackPanel>
 
-                        <StackPanel x:Name="DelayFields">
+                        <StackPanel x:Name="DelayFields" Margin="0,12,0,0">
                             <TextBlock Style="{StaticResource FieldLabelStyle}" Text="DURATION, MS" />
                             <TextBox x:Name="DelayDurationText" />
                         </StackPanel>

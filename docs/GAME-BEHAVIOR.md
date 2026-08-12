@@ -112,8 +112,8 @@ Direct Repeat Stage remains Debug evidence. The planned priority scheduler inste
 
 ## Selected-unit and Upgrade evidence
 
-- The first physical placement uses bounded Priority, Sell, and DPS OCR observations to calibrate the selected-unit panel at the current UI scale. Three consistent layouts are required.
-- `DPS ???` rejects a phantom placement. Numeric DPS ending in `/s` is physical selection evidence. Later rows capture only the compact derived panel regions and use tiny DPS OCR only for physical-versus-phantom proof.
+- The first selected placement uses bounded Priority, Sell, and DPS OCR observations to calibrate the selected-unit panel at the current UI scale. Three consistent configurable layouts are required.
+- `DPS ???` identifies a phantom placement whose Targeting, Auto Upgrade priority, and Sell controls remain actionable. Place configuration, Reconfigure, and Sell may proceed after stable phantom-panel proof. Upgrade remains forbidden until numeric DPS ending in `/s` proves a physical unit. Later rows capture only the compact derived panel regions and use tiny DPS OCR for physical-versus-phantom ownership.
 - Upgrade readiness is classified from two compact RGB regions derived from the live Priority/Sell geometry: green main control means affordable, gray main plus the normal-width gray extension means unaffordable, and gray main plus an expanded gray extension means maxed.
 - Unaffordable waits are bounded. Unknown color evidence fails closed. Maxed stops remaining Upgrade presses for that action.
 - Runtime Lab Debug and Wire Test expose `OCR` and `IMAGE + OCR FALLBACK`. `OCR` verifies every check through OCR and does not build or run image profiles.
