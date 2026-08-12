@@ -13,8 +13,11 @@ public static class RobloxDockActivationPolicy
         return currentlyAuthorized && sourceForeground;
     }
 
-    public static bool CanAcquireDock(bool ownerActive, bool requestedSourceForeground) =>
-        ownerActive || requestedSourceForeground;
+    public static bool CanAcquireDock(
+        bool ownerActive,
+        bool requestedSourceForeground,
+        bool sourceFocusAllowed) =>
+        ownerActive || requestedSourceForeground && sourceFocusAllowed;
 
     public static bool CanMaintainDock(
         bool ownerActive,

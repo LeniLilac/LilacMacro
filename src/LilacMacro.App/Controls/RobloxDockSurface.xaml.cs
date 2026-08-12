@@ -160,6 +160,11 @@ public partial class RobloxDockSurface : UserControl
             RobloxWindow? source = maintenance == RobloxDockMaintenanceAction.Acquire
                 ? _windows.FindBest()
                 : null;
+            if (maintenance == RobloxDockMaintenanceAction.Acquire && source is null)
+            {
+                SetStatus("ROBLOX NOT FOUND", "OPEN ROBLOX");
+                return;
+            }
             bool canOwnDock = maintenance != RobloxDockMaintenanceAction.Acquire
                 ? RobloxDockActivationPolicy.CanMaintainDock(
                     owner.IsActive,
@@ -168,7 +173,8 @@ public partial class RobloxDockSurface : UserControl
                     _allowDockedSourceForeground)
                 : RobloxDockActivationPolicy.CanAcquireDock(
                     owner.IsActive,
-                    source is { } candidate && _dock.IsForeground(candidate));
+                    source is { } candidate && _dock.IsForeground(candidate),
+                    _allowDockedSourceForeground);
             if (!canOwnDock)
             {
                 _allowDockedSourceForeground = false;

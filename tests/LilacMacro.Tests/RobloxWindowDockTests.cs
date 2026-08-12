@@ -107,17 +107,33 @@ public sealed class RobloxWindowDockTests
     }
 
     [Theory]
-    [InlineData(true, false, true)]
-    [InlineData(false, true, true)]
-    [InlineData(false, false, false)]
-    public void AcquisitionPolicy_AllowsRequestedForegroundRobloxToBeReacquired(
+    [InlineData(true, false, false, true)]
+    [InlineData(false, true, true, true)]
+    [InlineData(false, true, false, false)]
+    [InlineData(false, false, true, false)]
+    public void AcquisitionPolicy_RequiresOwnerOrAuthorizedForegroundRoblox(
         bool ownerActive,
         bool requestedSourceForeground,
+        bool sourceFocusAllowed,
         bool expected)
     {
         Assert.Equal(
             expected,
-            RobloxDockActivationPolicy.CanAcquireDock(ownerActive, requestedSourceForeground));
+            RobloxDockActivationPolicy.CanAcquireDock(
+                ownerActive,
+                requestedSourceForeground,
+                sourceFocusAllowed));
+    }
+
+    [Fact]
+    public void SuspendedDock_DoesNotReacquireFromBackgroundRobloxFocus()
+    {
+        bool sourceFocusAllowed = false;
+
+        Assert.False(RobloxDockActivationPolicy.CanAcquireDock(
+            ownerActive: false,
+            requestedSourceForeground: true,
+            sourceFocusAllowed));
     }
 
     [Theory]
