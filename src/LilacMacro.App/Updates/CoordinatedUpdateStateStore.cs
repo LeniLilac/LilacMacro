@@ -33,7 +33,7 @@ internal static class CoordinatedUpdateStateStore
         int[] participantPids = DiscoverParticipants(out HashSet<int> participantSessions);
         LocalSessionProvisioningManifest? manifest = await new ProvisioningJournalStore(paths)
             .ReadAsync(cancellationToken).ConfigureAwait(false);
-        string[] activeRunners = ProfilesFrom(manifest)
+        string[] activeRunners = LocalSessionProfileCompatibility.ResolveProfiles(manifest)
             .Where(profile => RunnerSessionManager.Inspect(profile.AccountName).SessionId is int sessionId
                 && participantSessions.Contains(sessionId))
             .Select(profile => profile.Id)
@@ -95,18 +95,4 @@ internal static class CoordinatedUpdateStateStore
         return pids.Order().ToArray();
     }
 
-    private static IReadOnlyList<LocalRunnerProfile> ProfilesFrom(LocalSessionProvisioningManifest? manifest)
-    {
-        if (manifest is null) return [];
-        if (manifest.RunnerProfiles.Count > 0) return manifest.RunnerProfiles;
-        return [new LocalRunnerProfile
-        {
-            Id = "runner-1",
-            AccountName = manifest.RunnerAccountName,
-            RunnerSid = manifest.RunnerSid,
-            Slot = 1,
-            LoopbackAddress = "127.0.0.2",
-            ConfigurationMode = RunnerConfigurationMode.Shared,
-        }];
-    }
 }

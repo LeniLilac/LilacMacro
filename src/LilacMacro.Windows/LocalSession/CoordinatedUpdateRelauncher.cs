@@ -15,7 +15,7 @@ public sealed class CoordinatedUpdateRelauncher(LocalSessionPaths paths)
 
         LocalSessionProvisioningManifest? manifest = await new ProvisioningJournalStore(paths)
             .ReadAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<LocalRunnerProfile> profiles = manifest?.RunnerProfiles ?? [];
+        IReadOnlyList<LocalRunnerProfile> profiles = LocalSessionProfileCompatibility.ResolveProfiles(manifest);
         string[] unknown = state.ActiveRunnerIds
             .Where(id => profiles.All(profile => profile.Id != id))
             .ToArray();

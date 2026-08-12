@@ -292,6 +292,44 @@ public sealed class LocalSessionContractTests
     }
 
     [Fact]
+    public void Empty_multi_instance_manifest_does_not_recreate_removed_runner()
+    {
+        LocalSessionProvisioningManifest manifest = new()
+        {
+            RunnerAccountName = "LilacMacroRunner",
+            RunnerSid = string.Empty,
+            RunnerProfiles = [],
+        };
+
+        IReadOnlyList<LocalRunnerProfile> profiles = LocalSessionProfileCompatibility.ResolveProfiles(manifest);
+        LocalSessionProvisioningManifest? normalized = LocalSessionProfileCompatibility.NormalizeManifest(manifest);
+
+        Assert.Empty(profiles);
+        Assert.NotNull(normalized);
+        Assert.Empty(normalized.RunnerProfiles);
+    }
+
+    [Fact]
+    public void Legacy_single_runner_manifest_is_still_migrated()
+    {
+        LocalSessionProvisioningManifest manifest = new()
+        {
+            RunnerAccountName = "LilacMacroRunner",
+            RunnerSid = "S-1-5-21-101",
+            RunnerProfiles = [],
+        };
+
+        LocalRunnerProfile profile = Assert.Single(LocalSessionProfileCompatibility.ResolveProfiles(manifest));
+        LocalSessionProvisioningManifest? normalized = LocalSessionProfileCompatibility.NormalizeManifest(manifest);
+
+        Assert.Equal("runner-1", profile.Id);
+        Assert.Equal("Runner 1", profile.DisplayName);
+        Assert.Equal(manifest.RunnerSid, profile.RunnerSid);
+        Assert.NotNull(normalized);
+        Assert.Single(normalized.RunnerProfiles);
+    }
+
+    [Fact]
     public void Worker_process_path_uses_limited_information_query()
     {
         using System.Diagnostics.Process process = System.Diagnostics.Process.GetCurrentProcess();

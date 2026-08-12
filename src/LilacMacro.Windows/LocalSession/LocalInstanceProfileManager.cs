@@ -96,15 +96,7 @@ public sealed class LocalInstanceProfileManager(LocalSessionPaths paths)
     {
         LocalSessionProvisioningManifest? manifest = await journalStore.ReadAsync(cancellationToken).ConfigureAwait(false);
         if (manifest is null) throw new InvalidOperationException("The local instance manager is not installed.");
-        if (manifest.RunnerProfiles.Count > 0) return manifest;
-        return manifest with
-        {
-            RunnerProfiles = [LocalRunnerProfileProvisioner.Create(1, RunnerConfigurationMode.Shared) with
-            {
-                AccountName = manifest.RunnerAccountName,
-                RunnerSid = manifest.RunnerSid,
-            }],
-        };
+        return LocalSessionProfileCompatibility.NormalizeManifest(manifest)!;
     }
 
     private Task WriteReadyAsync(LocalSessionProvisioningManifest manifest, CancellationToken cancellationToken) =>

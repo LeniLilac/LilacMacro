@@ -16,6 +16,8 @@ Each runner receives:
 - one uniquely named interactive scheduled task that launches the installed full UI on logon and remote reconnect;
 - one ACL-restricted profile-policy directory under `%ProgramData%\LilacMacro\Profiles`.
 
+Removing the final runner leaves the instance-manager foundation installed with zero configured runners. The empty manifest is preserved as empty, so the removed runner does not reappear as a legacy Runner 1; `ADD SHARED` or `ADD SEPARATE` creates a new Runner 1, while `REMOVE ALL` removes the remaining machine-level foundation.
+
 Runner policy hides the globally provisioned desktop icons only inside runner accounts, clears wallpaper, and uses a pure-black desktop background. It does not remove owner shortcuts or change the owner's personalization.
 The same runner-scoped policy suppresses Windows' first-logon privacy experience and Microsoft Edge's first-run page so the official Roblox login bootstrap is immediately usable. Because Windows protects each user's `Software\Policies` branch from standard-user writes, the elevated setup helper writes only those two exact allowlisted values into the runner's loaded user hive; the controlled runner pass continues to own ordinary personalization. Repair reapplies both layers to existing runners.
 

@@ -13,10 +13,7 @@ public sealed class LocalSessionCleanupVerifier(
     public IReadOnlyList<string> Inspect(LocalSessionProvisioningManifest manifest)
     {
         List<string> unresolved = [];
-        IReadOnlyList<LocalRunnerProfile> profiles = manifest.RunnerProfiles.Count > 0
-            ? manifest.RunnerProfiles
-            : [LocalRunnerProfileProvisioner.Create(1, RunnerConfigurationMode.Shared) with
-                { AccountName = manifest.RunnerAccountName, RunnerSid = manifest.RunnerSid }];
+        IReadOnlyList<LocalRunnerProfile> profiles = LocalSessionProfileCompatibility.ResolveProfiles(manifest);
         foreach (LocalRunnerProfile profile in profiles)
         {
             if (accounts.Exists(profile.AccountName)) unresolved.Add($"Local account remains: {profile.AccountName}");

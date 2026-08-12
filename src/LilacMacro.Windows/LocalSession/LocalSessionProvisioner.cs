@@ -27,7 +27,7 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
     {
         EnsureElevated();
         string ownerSid = WindowsIdentity.GetCurrent().User?.Value ?? throw new InvalidOperationException("Owner SID is unavailable.");
-        LocalSessionProvisioningManifest? existing = NormalizeProfiles(
+        LocalSessionProvisioningManifest? existing = LocalSessionProfileCompatibility.NormalizeManifest(
             await journalStore.ReadAsync(cancellationToken).ConfigureAwait(false));
         if (!repair && existing is not null) throw new InvalidOperationException("A provisioning journal already exists. Use repair or remove.");
         if (!repair && accounts.Exists(RunnerName)) throw new InvalidOperationException("LilacMacroRunner already exists but is not owned by this installation.");
@@ -265,7 +265,7 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
 
     private async Task RemoveInternalAsync(LocalSessionProvisioningManifest manifest, CancellationToken cancellationToken)
     {
-        manifest = NormalizeProfiles(manifest)!;
+        manifest = LocalSessionProfileCompatibility.NormalizeManifest(manifest)!;
         List<string> failures = [];
         foreach (LocalRunnerProfile profile in manifest.RunnerProfiles)
             Attempt(failures, $"{profile.DisplayName} removal", () => profileProvisioner.Remove(profile, removeConfiguration: true));
@@ -368,17 +368,6 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         if (!root.StartsWith(parent, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Profile path escaped the owned ProgramData root.");
         if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
-    }
-
-    private static LocalSessionProvisioningManifest? NormalizeProfiles(LocalSessionProvisioningManifest? manifest)
-    {
-        if (manifest is null || manifest.RunnerProfiles.Count > 0) return manifest;
-        LocalRunnerProfile legacy = LocalRunnerProfileProvisioner.Create(1, RunnerConfigurationMode.Shared) with
-        {
-            AccountName = manifest.RunnerAccountName,
-            RunnerSid = manifest.RunnerSid,
-        };
-        return manifest with { RunnerProfiles = [legacy] };
     }
 
     private Task WriteRecoveryAsync(Exception setup, Exception rollback, CancellationToken cancellationToken) =>

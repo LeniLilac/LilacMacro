@@ -42,7 +42,7 @@ internal sealed class LocalInstanceManagerController
         }
         LocalSessionProvisioningManifest? manifest = await new ProvisioningJournalStore(paths)
             .ReadAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<LocalRunnerProfile> profiles = ProfilesFrom(manifest);
+        IReadOnlyList<LocalRunnerProfile> profiles = LocalSessionProfileCompatibility.ResolveProfiles(manifest);
         if (string.Equals(status.StatusCode, "instance-manager-ready", StringComparison.Ordinal))
             status = status with { Detail = $"{profiles.Count} local macro instance(s) configured." };
         return new LocalInstanceManagerSnapshot(
@@ -220,22 +220,6 @@ internal sealed class LocalInstanceManagerController
     private static string QuoteArgument(string value) => value.All(character => char.IsAsciiLetterOrDigit(character) || character == '-')
         ? value
         : $"\"{value.Replace("\"", "\\\"")}\"";
-
-    private static IReadOnlyList<LocalRunnerProfile> ProfilesFrom(LocalSessionProvisioningManifest? manifest)
-    {
-        if (manifest is null) return [];
-        if (manifest.RunnerProfiles.Count > 0) return manifest.RunnerProfiles;
-        return [new LocalRunnerProfile
-        {
-            Id = "runner-1",
-            DisplayName = "Runner 1",
-            AccountName = manifest.RunnerAccountName,
-            RunnerSid = manifest.RunnerSid,
-            Slot = 1,
-            LoopbackAddress = "127.0.0.2",
-            ConfigurationMode = RunnerConfigurationMode.Shared,
-        }];
-    }
 
     private static bool IsSetupHelperRunning()
     {
