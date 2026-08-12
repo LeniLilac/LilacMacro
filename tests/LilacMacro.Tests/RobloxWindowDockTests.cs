@@ -120,6 +120,29 @@ public sealed class RobloxWindowDockTests
             RobloxDockActivationPolicy.CanAcquireDock(ownerActive, requestedSourceForeground));
     }
 
+    [Theory]
+    [InlineData(false, false, RobloxDockMaintenanceAction.Acquire)]
+    [InlineData(false, true, RobloxDockMaintenanceAction.Acquire)]
+    [InlineData(true, true, RobloxDockMaintenanceAction.Maintain)]
+    [InlineData(true, false, RobloxDockMaintenanceAction.Repair)]
+    public void MaintenancePolicy_RepairsTrackedStyleDriftWithoutReacquiring(
+        bool hasTrackedSource,
+        bool docked,
+        RobloxDockMaintenanceAction expected)
+    {
+        Assert.Equal(expected, RobloxDockMaintenancePolicy.Resolve(hasTrackedSource, docked));
+    }
+
+    [Fact]
+    public void ActivationPolicy_AllowsTrackedForegroundSourceDuringStyleRepair()
+    {
+        Assert.True(RobloxDockActivationPolicy.CanMaintainDock(
+            ownerActive: false,
+            docked: true,
+            sourceForeground: true,
+            sourceFocusAllowed: true));
+    }
+
     private static bool IsExposed(
         int foreground,
         WindowBounds foregroundBounds,

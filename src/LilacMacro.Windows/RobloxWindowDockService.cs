@@ -33,6 +33,18 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
         }
     }
 
+    public bool HasTrackedSource
+    {
+        get
+        {
+            lock (_gate)
+            {
+                ForgetClosedSourceCore();
+                return _state is not null;
+            }
+        }
+    }
+
     public nint SourceHandle
     {
         get
@@ -85,9 +97,9 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
         lock (_gate)
         {
             WindowBounds screenBounds = new(screenX, screenY, ClientWidth, ClientHeight);
-            if (_state is { } current && current.Source == source && TryIsDocked(current))
+            if (_state is { } current && current.Source == source)
             {
-                UpdateBoundsCore(source.Handle, screenBounds);
+                MaintainDockCore(current, screenBounds);
                 return;
             }
             if (_state is not null && !TryUndockCore(out string error))
@@ -110,21 +122,7 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
                 ReadBounds(handle));
             try
             {
-                NativeWindowProperties.Write(
-                    handle,
-                    NativeMethods.GwlStyle,
-                    new nint(BuildDockedStyle(state.OriginalStyle.ToInt64())));
-                NativeWindowProperties.Write(
-                    handle,
-                    NativeMethods.GwlExStyle,
-                    new nint(BuildDockedExtendedStyle(state.OriginalExtendedStyle.ToInt64())));
-                UpdateBoundsCore(handle, screenBounds, frameChanged: true);
-                PixelSize actual = windows.GetClientBounds(source).Size;
-                if (actual != PixelSize.Create(ClientWidth, ClientHeight))
-                {
-                    throw new InvalidOperationException(
-                        $"Roblox did not accept the required {ClientWidth} x {ClientHeight} client size. Actual: {actual}.");
-                }
+                MaintainDockCore(state, screenBounds, forceFrameChanged: true);
                 _state = state;
             }
             catch
@@ -139,9 +137,9 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
     {
         lock (_gate)
         {
-            if (_state is not { } state || !TryIsDocked(state)) return;
+            if (_state is not { } state || !IsSourceAvailable(state)) return;
             WindowBounds screenBounds = new(screenX, screenY, ClientWidth, ClientHeight);
-            UpdateBoundsCore(state.Source.Handle, screenBounds);
+            MaintainDockCore(state, screenBounds);
         }
     }
 
@@ -260,6 +258,38 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
         catch (InvalidOperationException)
         {
             return false;
+        }
+    }
+
+    private void MaintainDockCore(
+        DockedWindowState state,
+        WindowBounds bounds,
+        bool forceFrameChanged = false)
+    {
+        nint handle = windows.Revalidate(state.Source);
+        nint currentStyle = NativeWindowProperties.Read(handle, NativeMethods.GwlStyle);
+        nint currentExtendedStyle = NativeWindowProperties.Read(handle, NativeMethods.GwlExStyle);
+        long desiredStyle = BuildDockedStyle(state.OriginalStyle.ToInt64());
+        long desiredExtendedStyle = BuildDockedExtendedStyle(state.OriginalExtendedStyle.ToInt64());
+        bool styleChanged = unchecked((uint)currentStyle.ToInt64()) != unchecked((uint)desiredStyle);
+        bool extendedStyleChanged = unchecked((uint)currentExtendedStyle.ToInt64()) !=
+            unchecked((uint)desiredExtendedStyle);
+
+        if (styleChanged)
+        {
+            NativeWindowProperties.Write(handle, NativeMethods.GwlStyle, new nint(desiredStyle));
+        }
+        if (extendedStyleChanged)
+        {
+            NativeWindowProperties.Write(handle, NativeMethods.GwlExStyle, new nint(desiredExtendedStyle));
+        }
+
+        UpdateBoundsCore(handle, bounds, forceFrameChanged || styleChanged || extendedStyleChanged);
+        PixelSize actual = windows.GetClientBounds(state.Source).Size;
+        if (actual != PixelSize.Create(ClientWidth, ClientHeight))
+        {
+            throw new InvalidOperationException(
+                $"Roblox did not accept the required {ClientWidth} x {ClientHeight} client size. Actual: {actual}.");
         }
     }
 

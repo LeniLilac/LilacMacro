@@ -119,7 +119,7 @@ public partial class RobloxDockSurface : UserControl
             {
                 _allowDockedSourceForeground =
                     _owner?.IsActive != true &&
-                    _dock.IsDocked &&
+                    _dock.HasTrackedSource &&
                     _dock.IsSourceForeground;
                 RefreshDock();
             }));
@@ -147,8 +147,14 @@ public partial class RobloxDockSurface : UserControl
             }
 
             bool isDocked = _dock.IsDocked;
-            RobloxWindow? source = isDocked ? null : _windows.FindBest();
-            bool canOwnDock = isDocked
+            nint sourceHandle = _dock.SourceHandle;
+            RobloxDockMaintenanceAction maintenance = RobloxDockMaintenancePolicy.Resolve(
+                sourceHandle != nint.Zero,
+                isDocked);
+            RobloxWindow? source = maintenance == RobloxDockMaintenanceAction.Acquire
+                ? _windows.FindBest()
+                : null;
+            bool canOwnDock = maintenance != RobloxDockMaintenanceAction.Acquire
                 ? RobloxDockActivationPolicy.CanMaintainDock(
                     owner.IsActive,
                     docked: true,
@@ -166,7 +172,6 @@ public partial class RobloxDockSurface : UserControl
             }
 
             nint ownerHandle = new WindowInteropHelper(owner).Handle;
-            nint sourceHandle = _dock.SourceHandle;
             if (sourceHandle == nint.Zero)
             {
                 source ??= _windows.FindBest();
@@ -179,7 +184,7 @@ public partial class RobloxDockSurface : UserControl
                 return;
             }
 
-            if (isDocked)
+            if (maintenance != RobloxDockMaintenanceAction.Acquire)
             {
                 _dock.UpdateBounds(x, y);
             }
