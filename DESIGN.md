@@ -83,7 +83,7 @@ Purpose: task and priority configuration.
 - Present tasks as independent priority candidates, not a consecutive workflow.
 - Match ExpeditionsMacro's compact Plan blocks: grip, global priority, mode, generated task summary, target/progress, and compact row actions. Do not expose separate task names, teams, placement-route inheritance, eligibility, or other Lilac-only metadata.
 - Use the topmost ready task as the visible scheduling rule.
-- Reorder task priority from the leading Lucide grip with the same insertion-line drag behavior used by Setup timelines. Do not show redundant up/down buttons.
+- Reorder task priority from the leading Lucide grip with the same insertion-line drag behavior used by Setup timelines. Drag previews and insertion feedback are removed from their original adorner layer on drop or cancellation, so no row highlight can remain above later overlays. Do not show redundant up/down buttons.
 - Plan row actions match Setup rows: a compact `Edit` button followed by the shared Lucide trash button.
 - Keep plan creation, copy, rename, and deletion in one compact toolbar.
 - Add and edit tasks through one centered modal rather than an anchored popover or permanent editor rail.
@@ -181,7 +181,7 @@ The canonical route, timeline, coordinate, autosave, and playback-boundary contr
 
 Purpose: keybinds, webhooks, Roblox private server links, and other application settings.
 
-- Keep the theme controls as the first fields inside the General / Theme card. Mode is a direct Light/Dark toggle followed by one compact two-row palette grid: ten solid families on the first row and ten gradient families on the second. Each tactile swatch uses the same ink outline and hard offset shadow as other controls, has a distinct Light and Dark definition, updates its preview with the active mode, and shows a check badge when selected; theme names remain available as tooltips rather than consuming row space.
+- Keep the theme controls as the first fields inside the General / Theme card. Mode is a direct Light/Dark toggle followed by one compact two-row palette grid: ten solid families on the first row and ten gradient families on the second. Each tactile swatch uses the same ink outline and ink-colored hard offset shadow as other controls, has a distinct Light and Dark definition, updates its preview with the active mode, and shows a contained check badge when selected; theme names remain available as tooltips rather than consuming row space.
 - Use one Minimize behavior dropdown for Keep visible, Minimize while running, and Minimize on start. Compact layout forces Minimize while running and makes that constraint visible instead of presenting an ineffective choice.
 - Treat the standard Roblox 100% UI scale as a startup invariant. Do not expose a UI-scale selector or an option to skip scale preparation.
 - Treat the documented Roblox UI/input settings allowlist as a plan-start and private-server-reset invariant. Do not expose per-field overrides; normalization occurs only after the owning Windows session closes Roblox.

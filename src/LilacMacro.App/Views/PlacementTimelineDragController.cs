@@ -75,7 +75,9 @@ internal sealed class ListBoxReorderDragController<TItem>
     private ListBoxItem? _draggedContainer;
     private double _draggedOpacity;
     private ListBoxItem? _adornedItem;
+    private AdornerLayer? _insertionAdornerLayer;
     private InsertionAdorner? _insertionAdorner;
+    private AdornerLayer? _previewAdornerLayer;
     private DragPreviewAdorner? _previewAdorner;
     private TItem? _lastTarget;
     private bool _lastInsertAfter;
@@ -249,6 +251,7 @@ internal sealed class ListBoxReorderDragController<TItem>
             topLeft.X + 6,
             hostOrigin.Y - topLeft.Y);
         layer.Add(_previewAdorner);
+        _previewAdornerLayer = layer;
         _previewAdorner.Update(hostOrigin);
     }
 
@@ -387,21 +390,21 @@ internal sealed class ListBoxReorderDragController<TItem>
         _adornedItem = item;
         _insertionAdorner = new InsertionAdorner(item, insertAfter, brush);
         layer.Add(_insertionAdorner);
+        _insertionAdornerLayer = layer;
     }
 
     private void ClearInsertionAdorner()
     {
-        if (_adornedItem is not null && _insertionAdorner is not null)
-        {
-            AdornerLayer.GetAdornerLayer(_adornedItem)?.Remove(_insertionAdorner);
-        }
+        if (_insertionAdorner is not null) _insertionAdornerLayer?.Remove(_insertionAdorner);
         _adornedItem = null;
+        _insertionAdornerLayer = null;
         _insertionAdorner = null;
     }
 
     private void ClearPreviewAdorner()
     {
-        if (_previewAdorner is not null) AdornerLayer.GetAdornerLayer(_previewHost)?.Remove(_previewAdorner);
+        if (_previewAdorner is not null) _previewAdornerLayer?.Remove(_previewAdorner);
+        _previewAdornerLayer = null;
         _previewAdorner = null;
     }
 

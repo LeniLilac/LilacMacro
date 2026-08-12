@@ -91,7 +91,6 @@
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="SwatchFace" Property="BorderThickness" Value="3" />
-                                <Setter TargetName="SwatchShadow" Property="Background" Value="{DynamicResource AccentBrush}" />
                                 <Setter TargetName="SelectedBadge" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
