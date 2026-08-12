@@ -112,17 +112,23 @@ public partial class RobloxDockSurface : UserControl
 
     private void Owner_OnStateChanged(object? sender, EventArgs eventArgs) => RefreshDock();
 
-    private void Owner_OnActivationChanged(object? sender, EventArgs eventArgs) =>
+    private void Owner_OnActivationChanged(object? sender, EventArgs eventArgs)
+    {
+        if (_owner?.IsActive == true)
+        {
+            UpdateSourceFocusAuthorization();
+            RefreshDock();
+            return;
+        }
+
         _ = Dispatcher.BeginInvoke(
             DispatcherPriority.Input,
             new Action(() =>
             {
-                _allowDockedSourceForeground =
-                    _owner?.IsActive != true &&
-                    _dock.HasTrackedSource &&
-                    _dock.IsSourceForeground;
+                UpdateSourceFocusAuthorization();
                 RefreshDock();
             }));
+    }
 
     private void UpdateTargetDipSize()
     {
@@ -199,6 +205,7 @@ public partial class RobloxDockSurface : UserControl
                 _dock.Dock(source.Value, x, y);
             }
 
+            UpdateSourceFocusAuthorization();
             _lastReportedError = null;
             _status = "DOCKED · 1366 x 700";
             PlaceholderPanel.Visibility = Visibility.Collapsed;
@@ -210,6 +217,15 @@ public partial class RobloxDockSurface : UserControl
             SetStatus("DOCK FAILED", "ROBLOX NOT DOCKED");
             ReportError(exception.Message);
         }
+    }
+
+    private void UpdateSourceFocusAuthorization()
+    {
+        _allowDockedSourceForeground = RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
+            _owner?.IsActive == true,
+            _dock.HasTrackedSource,
+            _dock.IsSourceForeground,
+            _allowDockedSourceForeground);
     }
 
     private bool TryGetTargetLocation(Window owner, out int x, out int y)

@@ -5,6 +5,12 @@ namespace LilacMacro.App.Infrastructure;
 
 internal sealed class DiscordWebhookClient
 {
+    private static readonly HashSet<string> OfficialWebhookHosts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "discord.com",
+        "canary.discord.com",
+        "ptb.discord.com",
+    };
     private static readonly HttpClient SharedClient = CreateClient();
     private readonly HttpClient _client;
 
@@ -48,7 +54,7 @@ internal sealed class DiscordWebhookClient
         if (!Uri.TryCreate(value.Trim(), UriKind.Absolute, out Uri? uri)
             || uri.Scheme != Uri.UriSchemeHttps
             || !string.IsNullOrEmpty(uri.UserInfo)
-            || !uri.IdnHost.Equals("discord.com", StringComparison.OrdinalIgnoreCase)
+            || !OfficialWebhookHosts.Contains(uri.IdnHost)
             || !string.IsNullOrEmpty(uri.Fragment))
         {
             throw new InvalidDataException("Enter an official Discord HTTPS webhook URL.");

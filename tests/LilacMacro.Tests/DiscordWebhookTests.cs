@@ -23,9 +23,23 @@ public sealed class DiscordWebhookTests
     }
 
     [Theory]
+    [InlineData("discord.com")]
+    [InlineData("canary.discord.com")]
+    [InlineData("ptb.discord.com")]
+    public void Official_discord_clients_are_accepted(string host)
+    {
+        Uri result = DiscordWebhookClient.Validate(
+            $"https://{host}/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456");
+
+        Assert.Equal(host, result.Host);
+    }
+
+    [Theory]
     [InlineData("")]
     [InlineData("http://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
     [InlineData("https://example.test/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
+    [InlineData("https://canary.discord.com.example.test/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
+    [InlineData("https://ptb-discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
     [InlineData("https://discord.com/channels/123/456")]
     public void Test_delivery_rejects_untrusted_destinations(string value) =>
         Assert.Throws<InvalidDataException>(() => DiscordWebhookClient.Validate(value));

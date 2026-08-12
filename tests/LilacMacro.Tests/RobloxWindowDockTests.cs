@@ -143,6 +143,46 @@ public sealed class RobloxWindowDockTests
             sourceFocusAllowed: true));
     }
 
+    [Fact]
+    public void FocusAuthorization_ArmsWhileOwnerIsActiveAndSurvivesDirectRobloxFocus()
+    {
+        bool authorized = RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
+            ownerActive: true,
+            hasTrackedSource: true,
+            sourceForeground: false,
+            currentlyAuthorized: false);
+
+        authorized = RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
+            ownerActive: false,
+            hasTrackedSource: true,
+            sourceForeground: true,
+            currentlyAuthorized: authorized);
+
+        Assert.True(authorized);
+        Assert.True(RobloxDockActivationPolicy.CanMaintainDock(
+            ownerActive: false,
+            docked: true,
+            sourceForeground: true,
+            sourceFocusAllowed: authorized));
+    }
+
+    [Theory]
+    [InlineData(false, true, false, true)]
+    [InlineData(false, true, true, false)]
+    [InlineData(true, false, false, true)]
+    public void FocusAuthorization_DoesNotAuthorizeAnUntrackedOrIndirectSource(
+        bool ownerActive,
+        bool hasTrackedSource,
+        bool sourceForeground,
+        bool currentlyAuthorized)
+    {
+        Assert.False(RobloxDockActivationPolicy.UpdateSourceFocusAuthorization(
+            ownerActive,
+            hasTrackedSource,
+            sourceForeground,
+            currentlyAuthorized));
+    }
+
     private static bool IsExposed(
         int foreground,
         WindowBounds foregroundBounds,
