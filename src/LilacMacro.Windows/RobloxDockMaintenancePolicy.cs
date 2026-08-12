@@ -9,6 +9,9 @@ public enum RobloxDockMaintenanceAction
 
 public static class RobloxDockMaintenancePolicy
 {
+    public static bool CanAcquire(bool awaitingOwnerExposure, bool ownerActive) =>
+        !awaitingOwnerExposure || ownerActive;
+
     public static RobloxDockMaintenanceAction Resolve(bool hasTrackedSource, bool docked) =>
         !hasTrackedSource
             ? RobloxDockMaintenanceAction.Acquire

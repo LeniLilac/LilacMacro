@@ -127,6 +127,57 @@ public sealed class RobloxWindowService
         }
     }
 
+    public async Task<ClientBounds> EnsureClientVisibleAsync(
+        RobloxWindow window,
+        PixelSize expectedSize,
+        CancellationToken cancellationToken = default)
+    {
+        await _resizeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            nint handle = Revalidate(window);
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                ClientBounds client = GetClientBounds(window);
+                if (client.Size != expectedSize)
+                    throw new InvalidOperationException($"Roblox is {client.Size}; input requires {expectedSize}.");
+
+                ScreenWorkArea workArea = GetMonitorWorkArea(handle);
+                WindowBounds outer = GetWindowBounds(handle);
+                WindowBounds fitted = RobloxClientVisibilityPolicy.FitWindow(client, outer, workArea);
+                if (fitted.X == outer.X && fitted.Y == outer.Y) return client;
+
+                if (!NativeMethods.SetWindowPos(
+                        handle,
+                        nint.Zero,
+                        fitted.X,
+                        fitted.Y,
+                        fitted.Width,
+                        fitted.Height,
+                        NativeMethods.SwpNoZOrder |
+                        NativeMethods.SwpNoActivate |
+                        NativeMethods.SwpShowWindow))
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not bring Roblox fully into view.");
+                }
+
+                await Task.Delay(75, cancellationToken).ConfigureAwait(false);
+                ClientBounds observed = GetClientBounds(window);
+                if (observed.Size == expectedSize &&
+                    RobloxClientVisibilityPolicy.IsFullyVisible(observed, GetMonitorWorkArea(handle)))
+                {
+                    return observed;
+                }
+            }
+            throw new InvalidOperationException("Roblox did not remain fully inside the usable monitor area.");
+        }
+        finally
+        {
+            _resizeGate.Release();
+        }
+    }
+
     internal WindowBounds GetWindowBounds(RobloxWindow window) => GetWindowBounds(Revalidate(window));
 
     internal WindowBounds? GetExtendedFrameBounds(RobloxWindow window)
@@ -190,6 +241,15 @@ public sealed class RobloxWindowService
             ? info.Work.Top
             : Math.Clamp(y, info.Work.Top, info.Work.Bottom - height);
         return (fittedX, fittedY);
+    }
+
+    private static ScreenWorkArea GetMonitorWorkArea(nint handle)
+    {
+        nint monitor = NativeMethods.MonitorFromWindow(handle, NativeMethods.MonitorDefaultToNearest);
+        NativeMethods.MonitorInfo info = new() { Size = (uint)Marshal.SizeOf<NativeMethods.MonitorInfo>() };
+        if (monitor == nint.Zero || !NativeMethods.GetMonitorInfo(monitor, ref info))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not read the Roblox monitor work area.");
+        return new ScreenWorkArea(info.Work.Left, info.Work.Top, info.Work.Right, info.Work.Bottom);
     }
 
     private static bool TryDescribe(nint handle, out RobloxWindow window)

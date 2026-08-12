@@ -243,6 +243,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
             NativeMethods.ShowWindow(handle, NativeMethods.SwRestore);
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
         }
+        _ = await windows.EnsureClientVisibleAsync(window, expectedSize, cancellationToken).ConfigureAwait(false);
         for (int attempt = 0; attempt < 3; attempt++)
         {
             _ = NativeInputMethods.BringWindowToTop(handle);

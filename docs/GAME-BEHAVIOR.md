@@ -10,7 +10,7 @@
 - Normal matching keeps only ASCII `A-Z`, `a-z`, and `0-9`, lowercases letters, removes spacing and symbols, and accepts the normalized alias as a substring.
 - Exact states require normalized equality. Repeated states require separate OCR rectangles.
 - A state must pass before its action. Actions still require fresh OCR-owned target bounds or freshly verified relational anchors even when a preceding check passed through image evidence.
-- Roblox is revalidated immediately before input. Missing or ambiguous evidence blocks input; there are no static-coordinate fallbacks, automatic retries, or unattended loops.
+- Roblox is revalidated immediately before input. The complete client is moved inside the nearest monitor's usable work area and verified before client-relative coordinates are converted, preventing taskbars or off-screen edges from receiving the action. Missing or ambiguous evidence blocks input; there are no static-coordinate fallbacks.
 
 Dataset paths below are relative to `Documents\LilacMacro Datasets`.
 

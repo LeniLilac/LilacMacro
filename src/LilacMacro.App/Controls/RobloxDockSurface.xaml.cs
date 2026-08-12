@@ -17,6 +17,7 @@ public partial class RobloxDockSurface : UserControl
     private bool _requested;
     private bool _dashboardActive = true;
     private bool _releaseForClose;
+    private bool _awaitingOwnerExposure;
     private string _status = "READY · 1366 x 700";
     private string? _lastReportedError;
 
@@ -44,6 +45,7 @@ public partial class RobloxDockSurface : UserControl
         _requested = requested;
         if (!requested)
         {
+            _awaitingOwnerExposure = false;
             if (!_dock.TryUndock(out string error)) ReportError(error);
             SetStatus("READY · 1366 x 700", "ROBLOX NOT DOCKED");
             return;
@@ -55,6 +57,7 @@ public partial class RobloxDockSurface : UserControl
     {
         _dashboardActive = active;
         if (!active && !_dock.TryUndock(out error)) return false;
+        if (!active) _awaitingOwnerExposure = true;
         if (active) RefreshDock();
         error = string.Empty;
         return true;
@@ -131,6 +134,7 @@ public partial class RobloxDockSurface : UserControl
             if (owner is null || owner.WindowState == WindowState.Minimized ||
                 !TryGetTargetLocation(owner, out int x, out int y))
             {
+                _awaitingOwnerExposure = true;
                 _ = _dock.TrySuspend(out _);
                 SetStatus("VIEW TOO SMALL", "MAXIMIZE TO DOCK");
                 return;
@@ -141,6 +145,13 @@ public partial class RobloxDockSurface : UserControl
             RobloxDockMaintenanceAction maintenance = RobloxDockMaintenancePolicy.Resolve(
                 sourceHandle != nint.Zero,
                 isDocked);
+            if (maintenance == RobloxDockMaintenanceAction.Acquire &&
+                !RobloxDockMaintenancePolicy.CanAcquire(_awaitingOwnerExposure, owner.IsActive))
+            {
+                SetStatus("PAUSED", "FOCUS MACRO TO DOCK");
+                return;
+            }
+            if (owner.IsActive) _awaitingOwnerExposure = false;
             RobloxWindow? source = maintenance == RobloxDockMaintenanceAction.Acquire
                 ? _windows.FindBest()
                 : null;
@@ -153,6 +164,7 @@ public partial class RobloxDockSurface : UserControl
             if (!_dock.IsDashboardExposed(ownerHandle, sourceHandle))
             {
                 if (!_dock.TrySuspend(out string error)) ReportError(error);
+                _awaitingOwnerExposure = true;
                 SetStatus("PAUSED", "DASHBOARD COVERED");
                 return;
             }

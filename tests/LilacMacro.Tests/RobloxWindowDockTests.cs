@@ -111,6 +111,19 @@ public sealed class RobloxWindowDockTests
         Assert.True(IsExposed(202, Dashboard));
     }
 
+    [Theory]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, true)]
+    public void CoveredDashboard_ReacquiresOnlyAfterOwnerBecomesActive(
+        bool awaitingOwnerExposure,
+        bool ownerActive,
+        bool expected) =>
+        Assert.Equal(
+            expected,
+            RobloxDockMaintenancePolicy.CanAcquire(awaitingOwnerExposure, ownerActive));
+
     private static bool IsExposed(
         int foreground,
         WindowBounds foregroundBounds,
