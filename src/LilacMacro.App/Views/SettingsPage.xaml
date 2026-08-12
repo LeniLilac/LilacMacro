@@ -66,7 +66,7 @@
                                     CornerRadius="6" />
                             <Border x:Name="SelectedBadge"
                                     Width="17" Height="17"
-                                    Margin="0,-5,-5,0"
+                                    Margin="0,3,3,0"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Top"
                                     Background="{Binding CheckBackdropBrush}"
@@ -176,7 +176,7 @@
                                     <ListBox x:Name="ThemePaletteList"
                                              Grid.Column="1"
                                              Width="500"
-                                             Height="93"
+                                             Height="100"
                                              HorizontalAlignment="Left"
                                              Background="Transparent"
                                              BorderThickness="0"
