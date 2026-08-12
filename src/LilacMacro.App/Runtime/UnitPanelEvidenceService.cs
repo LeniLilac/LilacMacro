@@ -13,7 +13,9 @@ internal sealed class UnitPanelEvidenceService(
     OcrRunner ocr)
 {
     private static readonly TimeSpan PanelTimeout = TimeSpan.FromMilliseconds(1200);
+    private static readonly TimeSpan DismissObservationTimeout = TimeSpan.FromMilliseconds(300);
     private static readonly TimeSpan UpgradeTimeout = TimeSpan.FromMinutes(3);
+    private const int DismissAttempts = 8;
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
     public async Task<UnitPanelLayout> CalibrateAsync(
@@ -128,9 +130,33 @@ internal sealed class UnitPanelEvidenceService(
 
     public async Task<bool> WaitForPanelHiddenAsync(
         UnitPanelLayout layout,
+        CancellationToken cancellationToken) =>
+        await WaitForPanelHiddenAsync(layout, PanelTimeout, cancellationToken);
+
+    public async Task DismissAsync(
+        UnitPanelLayout layout,
+        Action<string>? status,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + PanelTimeout;
+        if (await WaitForPanelHiddenAsync(layout, DismissObservationTimeout, cancellationToken)) return;
+        PixelPoint action = UnitPanelDismissalPolicy.ActionPoint(DebugWorkflowCatalog.ClientSize);
+        for (int attempt = 1; attempt <= DismissAttempts; attempt++)
+        {
+            status?.Invoke($"CLOSING UNIT PANEL {attempt}/{DismissAttempts}");
+            await workspace.ClickRobloxAsync(
+                DebugWorkflowCatalog.ClientSize, action, cancellationToken);
+            if (await WaitForPanelHiddenAsync(layout, DismissObservationTimeout, cancellationToken)) return;
+        }
+        throw new InvalidOperationException(
+            $"The selected-unit panel remained open after {DismissAttempts} safe-corner clicks.");
+    }
+
+    private async Task<bool> WaitForPanelHiddenAsync(
+        UnitPanelLayout layout,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
         int hidden = 0;
         while (DateTimeOffset.UtcNow <= deadline || hidden > 0)
         {

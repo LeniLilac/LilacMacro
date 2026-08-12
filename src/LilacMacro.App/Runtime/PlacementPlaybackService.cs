@@ -68,7 +68,7 @@ internal sealed class PlacementPlaybackService(
             () => layout, value => layout = value, status, cancellationToken);
 
         MatchStartBoundaryDecision boundary = await SatisfyStartBoundaryAsync(
-            layout, device, status, cancellationToken);
+            layout, placements.Values.FirstOrDefault(), device, status, cancellationToken);
         status?.Invoke(boundary == MatchStartBoundaryDecision.AutoStarted
             ? "START GAME AUTO-STARTED; BOUNDARY SATISFIED"
             : "START GAME VERIFIED + CLICKED");
@@ -86,6 +86,7 @@ internal sealed class PlacementPlaybackService(
 
     private async Task<MatchStartBoundaryDecision> SatisfyStartBoundaryAsync(
         UnitPanelLayout? layout,
+        PlacementExecutionState? activePlacement,
         string device,
         Action<string>? status,
         CancellationToken cancellationToken)
@@ -101,8 +102,15 @@ internal sealed class PlacementPlaybackService(
             }
         }
 
-        bool runtimeEvidence = layout is not null &&
-            await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken);
+        bool runtimeEvidence = false;
+        if (layout is not null && activePlacement is not null)
+        {
+            await workspace.ClickRobloxAsync(
+                DebugWorkflowCatalog.ClientSize, activePlacement.LivePoint, cancellationToken);
+            runtimeEvidence = await _panel.WaitForPhysicalSelectionAsync(
+                layout, device, status, cancellationToken);
+            await _panel.DismissAsync(layout, status, cancellationToken);
+        }
         MatchStartBoundaryDecision decision = PlacementPrestartPolicy.DecideBoundary(
             PlacementPrestartPolicy.RequiredStartScreenMisses,
             runtimeEvidence);
@@ -198,6 +206,7 @@ internal sealed class PlacementPlaybackService(
             PlacementExecutionState state = new(step, point.Point);
             placements.Add(step.Id, state);
             await ApplyConfigurationAsync(state, step.TargetingPriority, step.AutoUpgradePriority, keys, cancellationToken);
+            await _panel.DismissAsync(layout, status, cancellationToken);
             await DelayAfterAsync(step, cancellationToken);
         }
     }
@@ -246,6 +255,8 @@ internal sealed class PlacementPlaybackService(
             default:
                 throw new InvalidDataException($"Unsupported playback step {step.Kind}.");
         }
+        if (UnitPanelDismissalPolicy.RequiresDismissal(step.Kind))
+            await _panel.DismissAsync(layout, status, cancellationToken);
         await DelayAfterAsync(step, cancellationToken);
     }
 

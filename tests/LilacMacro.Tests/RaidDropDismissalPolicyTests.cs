@@ -23,5 +23,5 @@ public sealed class RaidDropDismissalPolicyTests
 
     [Fact]
     public void UsesBoundedCanonicalClientPoint() =>
-        Assert.Equal(new PixelPoint(1324, 671), RaidDropDismissalPolicy.ActionPoint);
+        Assert.Equal(new PixelPoint(1341, 675), RaidDropDismissalPolicy.ActionPoint);
 }
