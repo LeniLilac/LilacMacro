@@ -5,6 +5,7 @@ using LilacMacro.App.Diagnostics;
 using LilacMacro.App.DeepDebugViewer;
 using LilacMacro.App.Lifecycle;
 using LilacMacro.App.Infrastructure;
+using LilacMacro.App.Theming;
 using LilacMacro.App.Updates;
 using LilacMacro.Core.Updates;
 using LilacMacro.Windows.LocalSession;
@@ -35,13 +36,23 @@ public partial class App : Application
             eventArgs.Args,
             Environment.ProcessPath);
         await MacroConfigurationMigrator.EnsureOwnerSharedConfigurationAsync();
-        Window startupWindow = launchMode switch
+        Window startupWindow;
+        if (launchMode == AppLaunchMode.Macro)
         {
-            AppLaunchMode.DatasetBuilder => new MainWindow(_deepDebug, Workspace.ToolShellKind.DatasetBuilder),
-            AppLaunchMode.RuntimeLab => new MainWindow(_deepDebug, Workspace.ToolShellKind.RuntimeLab),
-            AppLaunchMode.DeepDebugViewer => new DeepDebugViewerWindow(),
-            _ => new MacroShellWindow(_deepDebug, await Runtime.MacroOwnerState.LoadAsync()),
-        };
+            Runtime.MacroOwnerState ownerState = await Runtime.MacroOwnerState.LoadAsync();
+            AppThemeManager.Apply(ownerState.ThemeMode, ownerState.ColorTheme);
+            startupWindow = new MacroShellWindow(_deepDebug, ownerState);
+        }
+        else
+        {
+            startupWindow = launchMode switch
+            {
+                AppLaunchMode.DatasetBuilder => new MainWindow(_deepDebug, Workspace.ToolShellKind.DatasetBuilder),
+                AppLaunchMode.RuntimeLab => new MainWindow(_deepDebug, Workspace.ToolShellKind.RuntimeLab),
+                AppLaunchMode.DeepDebugViewer => new DeepDebugViewerWindow(),
+                _ => throw new InvalidOperationException($"Unsupported launch mode {launchMode}."),
+            };
+        }
         MainWindow = startupWindow;
         startupWindow.Show();
         if (MacroInstanceContext.Current.IsManagedRunner)

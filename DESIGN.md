@@ -181,7 +181,7 @@ The canonical route, timeline, coordinate, autosave, and playback-boundary contr
 
 Purpose: keybinds, webhooks, Roblox private server links, and other application settings.
 
-- Keep the theme control as the first field inside General / Appearance.
+- Keep the theme controls as the first fields inside General / Appearance. Mode is a direct Light/Dark toggle followed by one compact two-row palette grid: ten solid families on the first row and ten gradient families on the second. Each swatch has a distinct Light and Dark definition, updates its preview with the active mode, and shows an outline plus check badge when selected; theme names remain available as tooltips rather than consuming row space.
 - Use one Minimize behavior dropdown for Keep visible, Minimize while running, and Minimize on start. Compact layout forces Minimize while running and makes that constraint visible instead of presenting an ineffective choice.
 - Treat the standard Roblox 100% UI scale as a startup invariant. Do not expose a UI-scale selector or an option to skip scale preparation.
 - Treat the documented Roblox UI/input settings allowlist as a plan-start and private-server-reset invariant. Do not expose per-field overrides; normalization occurs only after the owning Windows session closes Roblox.
@@ -194,19 +194,19 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 - Discord owns webhook and failure-notification fields.
 - Keybinds uses a compact name, scope, and binding list.
 - Diagnostics owns failure evidence, deep debug, and experimental recording controls.
-- Controls are session-only prototypes unless their current implementation explicitly says otherwise. Theme switching is live; display/update preferences, press-then-key bindings, private-server/webhook values, Discord failure options, Plan state, and local-instance profiles persist atomically across versioned artifacts. Every macro UI runs on its own desktop; there is no run-target selector. Current Story/Raid Play and Unit inventory bindings may be unset to use verified OCR button navigation. Areas exposes the same optional binding contract for its future runner. Webhook delivery and recording effects are not connected; private-server protocol launch, coordinated updates, and deep-debug diagnostics are connected.
+- Controls are session-only prototypes unless their current implementation explicitly says otherwise. Theme mode and color-family selection update live and persist with display/update preferences, press-then-key bindings, private-server/webhook values, Discord failure options, Plan state, and local-instance profiles across versioned artifacts. Every macro UI runs on its own desktop; there is no run-target selector. Current Story/Raid Play and Unit inventory bindings may be unset to use verified OCR button navigation. Areas exposes the same optional binding contract for its future runner. Webhook delivery and recording effects are not connected; private-server protocol launch, coordinated updates, and deep-debug diagnostics are connected.
 
 ## Visual language
 
 - Continue the existing SquareClaim-inspired Lilac theme rather than introducing a second visual system.
 - Use the paper background as the main canvas and the card surface only where a bounded interactive region is necessary.
-- Use ink outlines and hard offset shadows consistently. Do not add soft shadows, glass effects, gradients, or neon styling.
+- Use ink outlines and hard offset shadows consistently. Do not add soft shadows, glass effects, gradient text, or neon styling. The selected gradient theme may tint the application canvas and primary accent fills; bounded card surfaces, text, destructive actions, status colors, and game-state evidence remain solid and semantic.
 - Use pink for the primary action and active working selection, yellow for secondary semantic emphasis, green for confirmed success, and red only for destructive or failed states.
 - Plan state chips use dedicated theme tokens: mint Ready, lavender Waiting, amber Cooldown, and dusty-pink Complete. Each theme supplies separate restrained backgrounds and readable text colors; global success and warning fills are not reused.
 - Use the existing application typography and icon vocabulary.
 - Source every interface icon from Lucide and render it from centralized vector geometry. Do not use font characters as substitute icons.
 - Use one implicit thin scrollbar style everywhere: 10-pixel rails, 6-pixel rounded thumbs, no arrow buttons, and pink hover or drag feedback.
-- Light and dark modes share the same semantic brush keys and SquareClaim structure. Theme brushes are supplied by the active palette and consumed through dynamic resources so switching themes updates every open surface without rebuilding its controls. Repository policy rejects missing palette counterparts and static theme-brush references.
+- Light and dark modes share the same semantic brush keys and SquareClaim structure. Ten solid families and ten gradient families each provide distinct Light and Dark counterparts. Theme brushes are supplied by the active palette and consumed through dynamic resources so switching mode or palette updates every open surface without rebuilding its controls. Repository policy rejects missing palette counterparts and static theme-brush references.
 - Combo boxes use explicit Lilac templates for the closed field and popup items. Native gray fields and system-blue selection are not part of the control vocabulary.
 - Recoverable macro-shell errors use one dismissible bottom-right toast with a Lucide alert icon. Do not add inline corner text or native message boxes for placement validation.
 - Avoid large descriptive headings. Page names, compact section labels, and control labels are sufficient.

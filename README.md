@@ -29,7 +29,7 @@ Optional OCR setup:
 ## Current status
 
 - **Implemented:** dataset storage and validation, timed/manual capture, annotations, OCR trials, bounded agent dataset views, Roblox sizing/capture/input services, deterministic OCR policies, and the generic adaptive visual-anchor builder/matcher/profile foundation.
-- **Prototype:** the four-tab macro shell, Setup placement authoring, light/dark themes, and owner-triggered OCR Debug transitions.
+- **Prototype:** the four-tab macro shell, Setup placement authoring, persistent Light/Dark solid and gradient theme palettes, and owner-triggered OCR Debug transitions.
 - **Prototype:** Runtime Lab and main Macro can run Story, Raid, and reset-aware Challenge rotation through authored placement playback, terminal verification, private-server Lobby reset, and priority reevaluation.
 - **Planned:** Expedition and limited Event runners, webhooks, and dataset/runtime integration for personalized image detection.
 - **Prototype:** persistent plans/settings/secrets, full/compact macro layouts, and an opt-in local instance manager with loopback-only RDP, multiple standard runner accounts, one full macro UI per desktop, shared-or-isolated configuration, first-launch Roblox bootstrap, exact ownership/rollback, and uninstall cleanup. It remains unreleased until the pinned native payload and complete multi-session lifecycle pass disposable-VM certification.

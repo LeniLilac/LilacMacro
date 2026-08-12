@@ -26,6 +26,7 @@ public partial class SettingsPage : UserControl
     private readonly DiscordWebhookClient _discord = new();
     private MacroKeyBinding? _capturingBinding;
     private bool _updatingDisplayControls;
+    private bool _updatingThemeControls;
 
     internal SettingsPage(
         DeepDebugSessionService deepDebug,
@@ -71,20 +72,39 @@ public partial class SettingsPage : UserControl
         RefreshDisplayControls();
         RefreshUpdateOwnership();
         _deepDebug.ArchiveSaved += DeepDebug_OnArchiveSaved;
-        RefreshThemeButton();
+        RefreshThemeControls();
     }
 
     private void ThemeButton_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        AppThemeManager.Toggle();
-        RefreshThemeButton();
+        AppTheme mode = _ownerState.ThemeMode == AppTheme.Light ? AppTheme.Dark : AppTheme.Light;
+        ApplyAppearance(mode, _ownerState.ColorTheme);
     }
 
-    private void RefreshThemeButton()
+    private void ThemePaletteList_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
     {
-        bool isLight = AppThemeManager.Current == AppTheme.Light;
-        ThemeButtonText.Text = isLight ? "DARK MODE" : "LIGHT MODE";
-        ThemeIcon.Data = (Geometry)FindResource(isLight ? "Lucide.Moon" : "Lucide.Sun");
+        if (!_initialized || _updatingThemeControls || ThemePaletteList.SelectedItem is not ThemeSwatchOption option) return;
+        ApplyAppearance(_ownerState.ThemeMode, option.Theme);
+    }
+
+    private void ApplyAppearance(AppTheme mode, AppColorTheme colorTheme)
+    {
+        _ownerState.SetAppearance(mode, colorTheme);
+        AppThemeManager.Apply(mode, colorTheme);
+        RefreshThemeControls();
+        GeneralStatusText.Text = "Appearance saved";
+    }
+
+    private void RefreshThemeControls()
+    {
+        _updatingThemeControls = true;
+        bool isLight = _ownerState.ThemeMode == AppTheme.Light;
+        ThemeButtonText.Text = isLight ? "LIGHT MODE" : "DARK MODE";
+        ThemeIcon.Data = (Geometry)FindResource(isLight ? "Lucide.Sun" : "Lucide.Moon");
+        IReadOnlyList<ThemeSwatchOption> swatches = AppPaletteCatalog.CreateSwatches(_ownerState.ThemeMode);
+        ThemePaletteList.ItemsSource = swatches;
+        ThemePaletteList.SelectedItem = swatches.First(option => option.Theme == _ownerState.ColorTheme);
+        _updatingThemeControls = false;
     }
 
     private void GeneralTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(GeneralTabButton, GeneralPanel);

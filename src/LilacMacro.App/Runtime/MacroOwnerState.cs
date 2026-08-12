@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using LilacMacro.App.Infrastructure;
+using LilacMacro.App.Theming;
 using LilacMacro.App.Views;
 using LilacMacro.Core.LocalSession;
 using LilacMacro.Core.Security;
@@ -46,6 +47,8 @@ internal sealed class MacroOwnerState
         MinimizeBehavior = Enum.IsDefined(settings.MinimizeBehavior)
             ? settings.MinimizeBehavior
             : MacroMinimizeBehavior.WhileRunning;
+        ThemeMode = Enum.IsDefined(settings.ThemeMode) ? settings.ThemeMode : AppTheme.Light;
+        ColorTheme = Enum.IsDefined(settings.ColorTheme) ? settings.ColorTheme : AppColorTheme.Lilac;
         RunnerLayoutProfiles = (settings.RunnerLayoutProfiles ?? [])
             .Where(item => IsRunnerProfileId(item.Key) && Enum.IsDefined(item.Value))
             .ToDictionary(item => item.Key, item => item.Value, StringComparer.Ordinal);
@@ -55,6 +58,8 @@ internal sealed class MacroOwnerState
     public event EventHandler? SelectedPlanChanged;
 
     public event EventHandler? DisplayOptionsChanged;
+
+    public event EventHandler? AppearanceChanged;
 
     public ObservableCollection<PlanPrototype> Plans { get; }
 
@@ -81,6 +86,10 @@ internal sealed class MacroOwnerState
     public MacroLayoutProfile LayoutProfile { get; private set; }
 
     public MacroMinimizeBehavior MinimizeBehavior { get; private set; }
+
+    public AppTheme ThemeMode { get; private set; }
+
+    public AppColorTheme ColorTheme { get; private set; }
 
     public Dictionary<string, MacroLayoutProfile> RunnerLayoutProfiles { get; }
 
@@ -169,6 +178,17 @@ internal sealed class MacroOwnerState
         DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public void SetAppearance(AppTheme mode, AppColorTheme colorTheme)
+    {
+        if (!Enum.IsDefined(mode)) throw new ArgumentOutOfRangeException(nameof(mode));
+        if (!Enum.IsDefined(colorTheme)) throw new ArgumentOutOfRangeException(nameof(colorTheme));
+        if (mode == ThemeMode && colorTheme == ColorTheme) return;
+        ThemeMode = mode;
+        ColorTheme = colorTheme;
+        QueueSave();
+        AppearanceChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public MacroLayoutProfile RunnerLayoutProfile(string profileId) =>
         RunnerLayoutProfiles.GetValueOrDefault(profileId, MacroLayoutProfile.Full1920x1080);
 
@@ -204,6 +224,8 @@ internal sealed class MacroOwnerState
             IncludePrereleaseUpdates = IncludePrereleaseUpdates,
             LayoutProfile = LayoutProfile,
             MinimizeBehavior = MinimizeBehavior,
+            ThemeMode = ThemeMode,
+            ColorTheme = ColorTheme,
             RunnerLayoutProfiles = new Dictionary<string, MacroLayoutProfile>(RunnerLayoutProfiles, StringComparer.Ordinal),
         };
         lock (_saveSync)

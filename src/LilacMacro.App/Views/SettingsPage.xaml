@@ -48,6 +48,54 @@
             <Setter Property="Margin" Value="0,0,0,12" />
             <Setter Property="Padding" Value="15" />
         </Style>
+        <Style x:Key="ThemeSwatchItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Width" Value="43" />
+            <Setter Property="Height" Value="43" />
+            <Setter Property="Margin" Value="0,0,7,7" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid ToolTip="{Binding Name}">
+                            <Border x:Name="SwatchFace"
+                                    Background="{Binding PreviewBrush}"
+                                    BorderBrush="{DynamicResource ChromeBorderBrush}"
+                                    BorderThickness="2"
+                                    CornerRadius="6" />
+                            <Border x:Name="SelectedBadge"
+                                    Width="17" Height="17"
+                                    Margin="0,-5,-5,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Background="{Binding CheckBackdropBrush}"
+                                    BorderBrush="{Binding CheckBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="9"
+                                    Visibility="Collapsed">
+                                <controls:LucideIcon Width="10" Height="10"
+                                                     Foreground="{Binding CheckBrush}"
+                                                     Data="{StaticResource Lucide.Check}" />
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SwatchFace" Property="BorderBrush" Value="{DynamicResource InkBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="SwatchFace" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="SwatchFace" Property="BorderThickness" Value="3" />
+                                <Setter TargetName="SelectedBadge" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="SwatchFace" Property="BorderBrush" Value="{DynamicResource InkBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <DataTemplate x:Key="SettingsKeyBindingTemplate">
             <Grid Margin="0,0,0,7">
                 <Grid.ColumnDefinitions>
@@ -111,13 +159,37 @@
                             <StackPanel Grid.Row="1" Margin="0,16,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="THEME" />
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MODE" />
                                     <Button x:Name="ThemeButton" Grid.Column="1" Width="142" HorizontalAlignment="Left" Style="{StaticResource SettingsButtonStyle}" Click="ThemeButton_OnClick">
                                         <StackPanel Orientation="Horizontal">
                                             <controls:LucideIcon x:Name="ThemeIcon" Width="14" Height="14" Margin="0,0,7,0" />
-                                            <TextBlock x:Name="ThemeButtonText" Text="DARK MODE" />
+                                            <TextBlock x:Name="ThemeButtonText" Text="LIGHT MODE" />
                                         </StackPanel>
                                     </Button>
+                                </Grid>
+                                <Grid Margin="0,13,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="COLOR THEME" />
+                                        <TextBlock Margin="0,3,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" Text="SOLID / GRADIENT" />
+                                    </StackPanel>
+                                    <ListBox x:Name="ThemePaletteList"
+                                             Grid.Column="1"
+                                             Width="500"
+                                             Height="93"
+                                             HorizontalAlignment="Left"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             ItemContainerStyle="{StaticResource ThemeSwatchItemStyle}"
+                                             SelectionChanged="ThemePaletteList_OnSelectionChanged"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="10" />
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                    </ListBox>
                                 </Grid>
                                 <Grid Margin="0,13,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
