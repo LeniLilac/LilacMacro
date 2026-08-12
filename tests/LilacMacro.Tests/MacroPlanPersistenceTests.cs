@@ -175,7 +175,7 @@ public sealed class MacroPlanPersistenceTests
             MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root), protector);
             first.SetPrivateServerLink("https://www.roblox.com/share?code=private-code&type=Server");
             first.SetDiscordWebhook("https://discord.com/api/webhooks/123/private-token");
-            first.SetDiscordFailureOptions("123456789012345678", notifyOnTerminalFailure: false, includeFailureDetails: true);
+            first.SetDiscordFailureOptions("123456789012345678", notifyOnTerminalFailure: false);
             await first.FlushAsync();
 
             string json = await File.ReadAllTextAsync(Path.Combine(root, "macro-settings.json"));
@@ -188,7 +188,6 @@ public sealed class MacroPlanPersistenceTests
             Assert.Equal("https://discord.com/api/webhooks/123/private-token", second.DiscordWebhook);
             Assert.Equal("123456789012345678", second.DiscordUserId);
             Assert.False(second.NotifyOnTerminalFailure);
-            Assert.True(second.IncludeFailureDetails);
         }
         finally
         {

@@ -106,6 +106,20 @@ public sealed class RobloxWindowDockTests
                 sourceFocusAllowed));
     }
 
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(false, false, false)]
+    public void AcquisitionPolicy_AllowsRequestedForegroundRobloxToBeReacquired(
+        bool ownerActive,
+        bool requestedSourceForeground,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            RobloxDockActivationPolicy.CanAcquireDock(ownerActive, requestedSourceForeground));
+    }
+
     private static bool IsExposed(
         int foreground,
         WindowBounds foregroundBounds,

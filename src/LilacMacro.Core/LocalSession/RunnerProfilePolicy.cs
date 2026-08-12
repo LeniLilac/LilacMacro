@@ -31,7 +31,7 @@ public sealed record RunnerProfileFailure
 
 public sealed record RunnerProfilePolicy
 {
-    public const string CurrentVersion = "1.5.0";
+    public const string CurrentVersion = "1.6.0";
 
     public string Version { get; init; } = CurrentVersion;
     public IReadOnlyList<RunnerPackageRule> PackageRules { get; init; } = DefaultPackageRules;
@@ -74,6 +74,8 @@ public sealed record RunnerProfilePolicy
         String(@"Control Panel\Colors", "Background", "0 0 0"),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo", "Enabled", 0),
         Dword(@"Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement", "ScoobeSystemSettingEnabled", 0),
+        Dword(@"Software\Policies\Microsoft\Windows\OOBE", "DisablePrivacyExperience", 1),
+        Dword(@"Software\Policies\Microsoft\Edge", "HideFirstRunExperience", 1),
         Delete(@"Software\Microsoft\Windows\CurrentVersion\Run", "OneDrive"),
         Delete(@"Software\Microsoft\Windows\CurrentVersion\Run", "MSTeams"),
         Delete(@"Software\Microsoft\Windows\CurrentVersion\Run", "com.squirrel.Teams.Teams"),

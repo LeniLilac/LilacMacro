@@ -137,6 +137,7 @@ public sealed class ApplicationUpdateTests
             MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
             first.SetUpdateOptions(checkOnStartup: false, includePrerelease: true);
             first.SetDisplayOptions(MacroLayoutProfile.Compact1366x768, MacroMinimizeBehavior.KeepVisible);
+            first.SetRunnerLayoutProfile("runner-1", MacroLayoutProfile.Compact1366x768);
             await first.FlushAsync();
 
             MacroOwnerState restored = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
@@ -146,6 +147,10 @@ public sealed class ApplicationUpdateTests
             Assert.Equal(MacroMinimizeBehavior.WhileRunning, restored.EffectiveMinimizeBehavior);
             Assert.False(MacroDisplayPolicy.AllowsDock(restored.LayoutProfile));
             Assert.Equal((1366d, 768d), MacroDisplayPolicy.TargetSize(restored.LayoutProfile));
+            Assert.Equal(MacroLayoutProfile.Compact1366x768, restored.RunnerLayoutProfile("runner-1"));
+            Assert.Equal(MacroLayoutProfile.Full1920x1080, restored.RunnerLayoutProfile("runner-2"));
+            Assert.Equal(MacroLayoutProfile.Compact1366x768, MacroDisplayPolicy.ManagedViewportLayout(1366, 768));
+            Assert.Equal(MacroLayoutProfile.Full1920x1080, MacroDisplayPolicy.ManagedViewportLayout(1920, 1080));
         }
         finally
         {

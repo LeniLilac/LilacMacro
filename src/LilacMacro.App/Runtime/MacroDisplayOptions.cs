@@ -15,6 +15,11 @@ internal enum MacroMinimizeBehavior
 
 internal static class MacroDisplayPolicy
 {
+    public static MacroLayoutProfile ManagedViewportLayout(int width, int height) =>
+        width <= 1366 && height <= 768
+            ? MacroLayoutProfile.Compact1366x768
+            : MacroLayoutProfile.Full1920x1080;
+
     public static MacroMinimizeBehavior EffectiveMinimizeBehavior(
         MacroLayoutProfile layout,
         MacroMinimizeBehavior configured) =>

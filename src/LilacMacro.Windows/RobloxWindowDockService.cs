@@ -37,7 +37,11 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
     {
         get
         {
-            lock (_gate) return _state?.Source.Handle ?? nint.Zero;
+            lock (_gate)
+            {
+                ForgetClosedSourceCore();
+                return _state?.Source.Handle ?? nint.Zero;
+            }
         }
     }
 
@@ -50,6 +54,18 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
                 return _state is { } state &&
                     NativeMethods.GetForegroundWindow() == state.Source.Handle;
             }
+        }
+    }
+
+    public bool IsForeground(RobloxWindow source)
+    {
+        try
+        {
+            return windows.Revalidate(source) == NativeMethods.GetForegroundWindow();
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
         }
     }
 
@@ -164,7 +180,7 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
             error = string.Empty;
             return true;
         }
-        if (!NativeMethods.IsWindow(state.Source.Handle))
+        if (!IsSourceAvailable(state))
         {
             _state = null;
             error = string.Empty;
@@ -217,9 +233,9 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
         }
     }
 
-    private static bool TryIsDocked(DockedWindowState? state)
+    private bool TryIsDocked(DockedWindowState? state)
     {
-        if (state is null || !NativeMethods.IsWindow(state.Source.Handle) ||
+        if (state is null || !IsSourceAvailable(state) ||
             !NativeWindowProperties.TryRead(state.Source.Handle, NativeMethods.GwlStyle, out nint style) ||
             !NativeWindowProperties.TryRead(state.Source.Handle, NativeMethods.GwlExStyle, out nint extendedStyle))
         {
@@ -227,6 +243,24 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
         }
         return (style.ToInt64() & NativeMethods.WsChild) == 0 &&
             (extendedStyle.ToInt64() & WsExTopmost) != 0;
+    }
+
+    private void ForgetClosedSourceCore()
+    {
+        if (_state is { } state && !IsSourceAvailable(state)) _state = null;
+    }
+
+    private bool IsSourceAvailable(DockedWindowState state)
+    {
+        try
+        {
+            _ = windows.Revalidate(state.Source);
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     private static void UpdateBoundsCore(nint source, WindowBounds bounds, bool frameChanged = false)

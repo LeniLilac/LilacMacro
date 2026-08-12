@@ -2,7 +2,7 @@ namespace LilacMacro.App.Runtime;
 
 internal sealed record MacroSettings
 {
-    public const int CurrentSchemaVersion = 7;
+    public const int CurrentSchemaVersion = 8;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
@@ -20,8 +20,6 @@ internal sealed record MacroSettings
 
     public bool NotifyOnTerminalFailure { get; init; } = true;
 
-    public bool IncludeFailureDetails { get; init; }
-
     public bool CheckForUpdatesOnStartup { get; init; } = true;
 
     public bool IncludePrereleaseUpdates { get; init; }
@@ -29,4 +27,6 @@ internal sealed record MacroSettings
     public MacroLayoutProfile LayoutProfile { get; init; } = MacroLayoutProfile.Full1920x1080;
 
     public MacroMinimizeBehavior MinimizeBehavior { get; init; } = MacroMinimizeBehavior.WhileRunning;
+
+    public Dictionary<string, MacroLayoutProfile> RunnerLayoutProfiles { get; init; } = [];
 }

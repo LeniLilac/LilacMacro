@@ -15,6 +15,7 @@ public partial class App : Application
 {
     private readonly DeepDebugSessionService _deepDebug = new();
     private UpdateShutdownMonitor? _updateShutdown;
+    private Mutex? _managedInstanceMutex;
 
     public App()
     {
@@ -25,6 +26,11 @@ public partial class App : Application
     {
         base.OnStartup(eventArgs);
         MacroInstanceContext.Initialize(eventArgs.Args);
+        if (MacroInstanceContext.Current.IsManagedRunner && !AcquireManagedInstanceMutex())
+        {
+            Shutdown(0);
+            return;
+        }
         AppLaunchMode launchMode = AppLaunchModePolicy.Resolve(
             eventArgs.Args,
             Environment.ProcessPath);
@@ -72,8 +78,30 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs eventArgs)
     {
         _updateShutdown?.Dispose();
+        if (_managedInstanceMutex is not null)
+        {
+            _managedInstanceMutex.ReleaseMutex();
+            _managedInstanceMutex.Dispose();
+            _managedInstanceMutex = null;
+        }
         base.OnExit(eventArgs);
     }
+
+    private bool AcquireManagedInstanceMutex()
+    {
+        string name = ManagedInstanceMutexName(MacroInstanceContext.Current.Id);
+        Mutex candidate = new(initiallyOwned: true, name, out bool createdNew);
+        if (createdNew)
+        {
+            _managedInstanceMutex = candidate;
+            return true;
+        }
+        candidate.Dispose();
+        return false;
+    }
+
+    internal static string ManagedInstanceMutexName(string profileId) =>
+        $@"Local\LilacMacro.ManagedInstance.{profileId}";
 
     private static async void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs eventArgs)
     {

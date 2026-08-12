@@ -57,8 +57,13 @@ public sealed class RunnerProfilePolicyTests
         Assert.Contains(policy.RegistryRules, rule => rule.DeleteWhenPresent && rule.ValueName == "OneDrive");
         Assert.Contains(policy.RegistryRules, rule => rule.RelativeKey.Contains("Notifications", StringComparison.Ordinal));
         Assert.DoesNotContain(policy.RegistryRules, rule => rule.ValueName == "TaskbarDa");
-        Assert.DoesNotContain(policy.RegistryRules, rule =>
-            rule.RelativeKey.StartsWith(@"Software\Policies", StringComparison.OrdinalIgnoreCase));
+        RunnerRegistryRule[] managedPolicies =
+        [.. policy.RegistryRules.Where(rule => rule.RelativeKey.StartsWith(@"Software\Policies", StringComparison.OrdinalIgnoreCase))];
+        Assert.Equal(2, managedPolicies.Length);
+        Assert.Contains(managedPolicies, rule => rule.RelativeKey == @"Software\Policies\Microsoft\Windows\OOBE"
+            && rule.ValueName == "DisablePrivacyExperience" && rule.EncodedValue == "1");
+        Assert.Contains(managedPolicies, rule => rule.RelativeKey == @"Software\Policies\Microsoft\Edge"
+            && rule.ValueName == "HideFirstRunExperience" && rule.EncodedValue == "1");
         Assert.Contains(policy.RegistryRules, rule => rule.ValueName == "HideIcons" && rule.EncodedValue == "1");
         Assert.Contains(policy.RegistryRules, rule => rule.RelativeKey == @"Control Panel\Colors"
             && rule.ValueName == "Background" && rule.EncodedValue == "0 0 0");

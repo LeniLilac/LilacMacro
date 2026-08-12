@@ -38,7 +38,8 @@
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="170" /><ColumnDefinition Width="170" />
-                                    <ColumnDefinition Width="150" /><ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="150" /><ColumnDefinition Width="165" />
+                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
@@ -47,10 +48,14 @@
                                 </StackPanel>
                                 <TextBlock Grid.Column="1" VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}" Text="{Binding SessionState}" />
                                 <TextBlock Grid.Column="2" VerticalAlignment="Center" FontFamily="{StaticResource MonoFont}" Text="{Binding ConfigurationMode}" />
-                                <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource InkSoftBrush}" Text="{Binding Endpoint}" />
-                                <Button Grid.Column="4" Tag="{Binding Id}" Style="{DynamicResource SettingsButtonStyle}"
+                                <ComboBox Grid.Column="3" Width="150" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                          ItemsSource="{Binding ViewportOptions}" DisplayMemberPath="Label"
+                                          SelectedItem="{Binding SelectedViewport, Mode=OneWay}" Tag="{Binding}"
+                                          SelectionChanged="Viewport_OnSelectionChanged" />
+                                <TextBlock Grid.Column="4" VerticalAlignment="Center" FontSize="10" Foreground="{DynamicResource InkSoftBrush}" Text="{Binding Endpoint}" />
+                                <Button Grid.Column="5" Tag="{Binding Id}" Style="{DynamicResource SettingsButtonStyle}"
                                         Click="Open_OnClick" Content="OPEN" />
-                                <Button Grid.Column="5" Margin="7,0,0,0" Tag="{Binding Id}" Style="{DynamicResource SettingsButtonStyle}"
+                                <Button Grid.Column="6" Margin="7,0,0,0" Tag="{Binding Id}" Style="{DynamicResource SettingsButtonStyle}"
                                         Background="{DynamicResource DangerBrush}" Click="RemoveProfile_OnClick" Content="REMOVE" />
                             </Grid>
                         </Border>

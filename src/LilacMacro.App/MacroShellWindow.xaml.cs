@@ -12,6 +12,7 @@ using LilacMacro.App.Workspace;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Updates;
+using LilacMacro.Windows;
 
 namespace LilacMacro.App;
 
@@ -71,13 +72,17 @@ public partial class MacroShellWindow : Window
 
     private void ApplyDisplayOptions(bool resize)
     {
-        _macroPage.ApplyLayoutProfile(_ownerState.LayoutProfile);
-        ApplyWorkspaceSize(_ownerState.LayoutProfile, resize);
+        MacroLayoutProfile layout = EffectiveLayoutProfile();
+        _macroPage.ApplyLayoutProfile(layout);
+        ApplyWorkspaceSize(layout, resize);
     }
 
     private void MacroPage_OnRunningChanged(bool running)
     {
-        if (running && _ownerState.EffectiveMinimizeBehavior == MacroMinimizeBehavior.WhileRunning)
+        MacroMinimizeBehavior minimize = MacroDisplayPolicy.EffectiveMinimizeBehavior(
+            EffectiveLayoutProfile(),
+            _ownerState.MinimizeBehavior);
+        if (running && minimize == MacroMinimizeBehavior.WhileRunning)
         {
             _minimizedForRun = WindowState != WindowState.Minimized;
             WindowState = WindowState.Minimized;
@@ -88,6 +93,13 @@ public partial class MacroShellWindow : Window
             WindowState = WindowState.Normal;
             Activate();
         }
+    }
+
+    private MacroLayoutProfile EffectiveLayoutProfile()
+    {
+        if (!MacroInstanceContext.Current.IsManagedRunner) return _ownerState.LayoutProfile;
+        (int width, int height) = WindowsDesktopMetrics.PrimaryDisplaySize();
+        return MacroDisplayPolicy.ManagedViewportLayout(width, height);
     }
 
     private void Navigate(MacroShellPage target)

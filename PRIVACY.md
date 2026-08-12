@@ -39,7 +39,7 @@ LilacMacro is a private, local Windows tool. It has no application telemetry or 
 
 ## Secret storage
 
-**Prototype:** Settings displays the Roblox private-server link as editable account-routing configuration and masks the Discord webhook. Both values store only DPAPI ciphertext. Private-server navigation parses the value in memory, launches a reduced `roblox://` target through the registered protocol, and never writes the plaintext link to command output, settings JSON, or diagnostics. Webhook delivery is not implemented. If DPAPI decryption fails, the unusable value is discarded in memory rather than exposed or treated as configured; explicit recovery UX remains Planned.
+**Prototype:** Settings displays the Roblox private-server link as editable account-routing configuration and masks the Discord webhook. Both values store only DPAPI ciphertext. Private-server navigation parses the value in memory, launches a reduced `roblox://` target through the registered protocol, and never writes the plaintext link to command output, settings JSON, or diagnostics. Test Webhook accepts only the official Discord HTTPS execute-webhook shape, disables redirects and mentions, uses a bounded timeout, and never includes the secret URL or response body in surfaced failures. If DPAPI decryption fails, the unusable value is discarded in memory rather than exposed or treated as configured; explicit recovery UX remains Planned.
 
 ## External software
 

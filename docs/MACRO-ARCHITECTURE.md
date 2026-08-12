@@ -127,7 +127,7 @@ OCR, image detection, and timers may suggest a state. None may authorize input w
 
 ## Persistence and secrets
 
-**Prototype:** Plan edits, selection, and Discord failure options autosave through a serialized queue to a schema-versioned atomic settings file; invalid plan payloads fail closed to the built-in defaults without discarding separately valid settings. Private-server and webhook values are masked in Settings and persisted only as current-user DPAPI ciphertext. Validated web/share links are reduced to bounded share/link codes and launched through the registered `roblox://` protocol without a browser intermediary. Persisted secrets remain redacted from diagnostics, logs, tests, and captures. **Planned:** webhook validation/delivery and explicit recovery UX for DPAPI data that cannot be decrypted.
+**Prototype:** Plan edits, selection, and Discord failure options autosave through a serialized queue to a schema-versioned atomic settings file; invalid plan payloads fail closed to the built-in defaults without discarding separately valid settings. Private-server and webhook values are masked in Settings and persisted only as current-user DPAPI ciphertext. Validated web/share links are reduced to bounded share/link codes and launched through the registered `roblox://` protocol without a browser intermediary. Test Webhook performs a bounded, mention-free delivery to the validated Discord endpoint. Terminal failure notifications always include failure details; runtime-triggered delivery remains Planned. Persisted secrets remain redacted from diagnostics, logs, tests, and captures. **Planned:** runtime webhook delivery and explicit recovery UX for DPAPI data that cannot be decrypted.
 
 ## Unresolved design work
 

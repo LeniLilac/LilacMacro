@@ -23,6 +23,7 @@ public partial class SettingsPage : UserControl
     private readonly MacroOwnerState _ownerState;
     private readonly Action<bool> _keyCaptureStateChanged;
     private readonly ApplicationUpdateService _updates;
+    private readonly DiscordWebhookClient _discord = new();
     private MacroKeyBinding? _capturingBinding;
     private bool _updatingDisplayControls;
 
@@ -42,8 +43,16 @@ public partial class SettingsPage : UserControl
         LayoutProfileCombo.ItemsSource = new[] { "1920 x 1080 - full dock", "1366 x 768 - compact" };
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on app start" };
         CaptureIntervalCombo.ItemsSource = new[] { "0.5 sec", "1.0 sec", "2.0 sec" };
-        LayoutProfileCombo.SelectedIndex = ownerState.LayoutProfile == MacroLayoutProfile.Compact1366x768 ? 1 : 0;
-        MinimizeBehaviorCombo.SelectedIndex = (int)ownerState.EffectiveMinimizeBehavior;
+        MacroLayoutProfile effectiveLayout = ownerState.LayoutProfile;
+        if (MacroInstanceContext.Current.IsManagedRunner)
+        {
+            (int width, int height) = WindowsDesktopMetrics.PrimaryDisplaySize();
+            effectiveLayout = MacroDisplayPolicy.ManagedViewportLayout(width, height);
+        }
+        LayoutProfileCombo.SelectedIndex = effectiveLayout == MacroLayoutProfile.Compact1366x768 ? 1 : 0;
+        MinimizeBehaviorCombo.SelectedIndex = (int)MacroDisplayPolicy.EffectiveMinimizeBehavior(
+            effectiveLayout,
+            ownerState.MinimizeBehavior);
         CheckUpdatesOnStartupCheck.IsChecked = ownerState.CheckForUpdatesOnStartup;
         IncludePrereleaseCheck.IsChecked = ownerState.IncludePrereleaseUpdates;
         CaptureIntervalCombo.SelectedIndex = 1;
@@ -53,7 +62,6 @@ public partial class SettingsPage : UserControl
         WebhookPassword.Password = ownerState.DiscordWebhook;
         DiscordUserIdText.Text = ownerState.DiscordUserId;
         NotifyTerminalFailureCheck.IsChecked = ownerState.NotifyOnTerminalFailure;
-        IncludeFailureDetailsCheck.IsChecked = ownerState.IncludeFailureDetails;
         DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
         FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
@@ -200,7 +208,9 @@ public partial class SettingsPage : UserControl
         {
             bool compact = LayoutProfileCombo.SelectedIndex == 1;
             if (compact) MinimizeBehaviorCombo.SelectedIndex = (int)MacroMinimizeBehavior.WhileRunning;
-            MinimizeBehaviorCombo.IsEnabled = !compact;
+            bool managedRunner = MacroInstanceContext.Current.IsManagedRunner;
+            LayoutProfileCombo.IsEnabled = !managedRunner;
+            MinimizeBehaviorCombo.IsEnabled = !managedRunner && !compact;
             CompactLayoutNote.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
         }
         finally { _updatingDisplayControls = false; }
@@ -264,10 +274,33 @@ public partial class SettingsPage : UserControl
         if (!_initialized) return;
         _ownerState.SetDiscordFailureOptions(
             DiscordUserIdText.Text,
-            NotifyTerminalFailureCheck.IsChecked == true,
-            IncludeFailureDetailsCheck.IsChecked == true);
+            NotifyTerminalFailureCheck.IsChecked == true);
     }
-    private void TestWebhook_OnClick(object sender, RoutedEventArgs eventArgs) => WebhookStatusText.Text = "Webhook test is not connected";
+
+    private async void TestWebhook_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        TestWebhookButton.IsEnabled = false;
+        WebhookStatusText.Text = "Sending test...";
+        try
+        {
+            _ownerState.SetDiscordWebhook(WebhookPassword.Password);
+            await _ownerState.FlushAsync();
+            await _discord.SendTestAsync(_ownerState.DiscordWebhook, MacroInstanceContext.Current.DisplayName);
+            WebhookStatusText.Text = "Test delivered";
+        }
+        catch (Exception exception) when (exception is InvalidDataException or IOException or UnauthorizedAccessException
+            or HttpRequestException or TaskCanceledException or System.ComponentModel.Win32Exception
+            or System.Security.Cryptography.CryptographicException)
+        {
+            WebhookStatusText.Text = exception is TaskCanceledException
+                ? "Webhook test timed out"
+                : exception.Message;
+        }
+        finally
+        {
+            TestWebhookButton.IsEnabled = true;
+        }
+    }
 
     private void KeyBindingButton_OnClick(object sender, RoutedEventArgs eventArgs)
     {

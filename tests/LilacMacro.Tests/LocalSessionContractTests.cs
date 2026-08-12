@@ -155,7 +155,7 @@ public sealed class LocalSessionContractTests
     }
 
     [Fact]
-    public void Each_runner_uses_a_distinct_fullscreen_rdp_endpoint_and_ui_task()
+    public void Each_runner_uses_a_distinct_bounded_rdp_endpoint_and_ui_task()
     {
         string rdpRoot = Path.Combine(Path.GetTempPath(), $"lilac-rdp-{Guid.NewGuid():N}");
         LocalRunnerProfile runner2 = LocalRunnerProfileProvisioner.Create(2, RunnerConfigurationMode.Isolated) with
@@ -164,7 +164,10 @@ public sealed class LocalSessionContractTests
         };
         try
         {
-            System.Diagnostics.ProcessStartInfo start = LocalInstanceManagerController.CreateRdpStartInfo(runner2, rdpRoot);
+            System.Diagnostics.ProcessStartInfo start = LocalInstanceManagerController.CreateRdpStartInfo(
+                runner2,
+                rdpRoot,
+                MacroLayoutProfile.Compact1366x768);
             string arguments = RunnerScheduledTaskManager.CreateArguments(runner2, @"C:\ProgramData\LilacMacro\Configurations\runner-2");
             string rdpPath = Path.Combine(rdpRoot, "runner-2.rdp");
             string rdp = File.ReadAllText(rdpPath);
@@ -176,7 +179,12 @@ public sealed class LocalSessionContractTests
             Assert.Contains($"username:s:{Environment.MachineName}\\LilacMacroRunner2", rdp, StringComparison.Ordinal);
             Assert.Contains("authentication level:i:0", rdp, StringComparison.Ordinal);
             Assert.Contains("enablecredsspsupport:i:1", rdp, StringComparison.Ordinal);
+            Assert.Contains("screen mode id:i:1", rdp, StringComparison.Ordinal);
+            Assert.Contains("desktopwidth:i:1366", rdp, StringComparison.Ordinal);
+            Assert.Contains("desktopheight:i:768", rdp, StringComparison.Ordinal);
+            Assert.Contains("dynamic resolution:i:0", rdp, StringComparison.Ordinal);
             Assert.Contains("redirectclipboard:i:0", rdp, StringComparison.Ordinal);
+            Assert.Contains("redirectwebauthn:i:0", rdp, StringComparison.Ordinal);
             Assert.Contains("drivestoredirect:s:", rdp, StringComparison.Ordinal);
             Assert.Contains("--managed-instance runner-2", arguments, StringComparison.Ordinal);
             Assert.Contains("--instance-name \"Runner 2\"", arguments, StringComparison.Ordinal);
@@ -187,6 +195,47 @@ public sealed class LocalSessionContractTests
         {
             if (Directory.Exists(rdpRoot)) Directory.Delete(rdpRoot, recursive: true);
         }
+    }
+
+    [Fact]
+    public void Full_runner_viewport_requests_1920_by_1080()
+    {
+        LocalRunnerProfile profile = LocalRunnerProfileProvisioner.Create(1, RunnerConfigurationMode.Shared);
+
+        string rdp = LocalInstanceManagerController.CreateRdpProfileContent(
+            profile,
+            MacroLayoutProfile.Full1920x1080);
+
+        Assert.Contains("desktopwidth:i:1920", rdp, StringComparison.Ordinal);
+        Assert.Contains("desktopheight:i:1080", rdp, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Managed_instance_mutex_is_scoped_to_the_runner_profile()
+    {
+        Assert.Equal(
+            @"Local\LilacMacro.ManagedInstance.runner-2",
+            global::LilacMacro.App.App.ManagedInstanceMutexName("runner-2"));
+        Assert.NotEqual(
+            global::LilacMacro.App.App.ManagedInstanceMutexName("runner-1"),
+            global::LilacMacro.App.App.ManagedInstanceMutexName("runner-2"));
+    }
+
+    [Fact]
+    public void Failed_profile_mutation_does_not_report_a_stale_instance_count_as_the_error()
+    {
+        LocalInstanceManagerSnapshot snapshot = new(
+            new LocalSessionStatus
+            {
+                State = LocalSessionState.Ready,
+                StatusCode = "instance-manager-ready",
+                Detail = "0 local macro instance(s) configured.",
+            },
+            []);
+
+        string detail = LocalInstanceManagerController.OperationFailureDetail(snapshot);
+
+        Assert.Equal("The local instance operation did not complete. Run Repair and retry it.", detail);
     }
 
     [Fact]

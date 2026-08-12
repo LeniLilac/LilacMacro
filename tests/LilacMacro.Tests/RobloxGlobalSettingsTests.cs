@@ -134,11 +134,9 @@ public sealed class RobloxGlobalSettingsTests
     }
 
     [Fact]
-    public void Lifecycle_repeats_graceful_close_before_tree_termination()
+    public void Lifecycle_uses_only_bounded_process_tree_termination()
     {
-        Assert.Equal(2, RobloxClientLifecycleService.GracefulCloseAttemptCount);
         Assert.Equal(2, RobloxClientLifecycleService.ForcedCloseAttemptCount);
-        Assert.Equal(TimeSpan.FromSeconds(4), RobloxClientLifecycleService.GracefulCloseAttemptTimeout);
         Assert.Equal(TimeSpan.FromSeconds(1), RobloxClientLifecycleService.ForcedRespawnSettleTime);
     }
 

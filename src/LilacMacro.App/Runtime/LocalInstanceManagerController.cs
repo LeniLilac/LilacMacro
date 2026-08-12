@@ -43,6 +43,8 @@ internal sealed class LocalInstanceManagerController
         LocalSessionProvisioningManifest? manifest = await new ProvisioningJournalStore(paths)
             .ReadAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<LocalRunnerProfile> profiles = ProfilesFrom(manifest);
+        if (string.Equals(status.StatusCode, "instance-manager-ready", StringComparison.Ordinal))
+            status = status with { Detail = $"{profiles.Count} local macro instance(s) configured." };
         return new LocalInstanceManagerSnapshot(
             status,
             profiles.Select(profile => new LocalInstanceProfileStatus(
@@ -69,39 +71,55 @@ internal sealed class LocalInstanceManagerController
         CancellationToken cancellationToken = default) =>
         RunHelperAsync(["remove-profile", profileId], cancellationToken);
 
-    public async Task OpenAsync(string profileId, CancellationToken cancellationToken = default)
+    public async Task OpenAsync(
+        string profileId,
+        MacroLayoutProfile layout,
+        CancellationToken cancellationToken = default)
     {
         LocalInstanceManagerSnapshot snapshot = await GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
         if (!snapshot.Status.CanOpenInteractiveSession)
             throw new InvalidOperationException(snapshot.Status.Problems.FirstOrDefault() ?? snapshot.Status.Detail);
         LocalRunnerProfile profile = snapshot.Profiles.SingleOrDefault(item => item.Profile.Id == profileId)?.Profile
             ?? throw new InvalidOperationException("The requested local instance is not configured.");
-        _ = Process.Start(CreateRdpStartInfo(profile))
+        RefreshRdpCredential(profile);
+        _ = Process.Start(CreateRdpStartInfo(profile, layout))
             ?? throw new InvalidOperationException("Windows did not start the local instance viewport.");
     }
 
-    internal static ProcessStartInfo CreateRdpStartInfo(LocalRunnerProfile profile) => new(
-        "mstsc.exe",
-        $"\"{WriteRdpProfile(profile)}\"")
-    {
-        UseShellExecute = true,
-    };
+    internal static ProcessStartInfo CreateRdpStartInfo(
+        LocalRunnerProfile profile,
+        MacroLayoutProfile layout = MacroLayoutProfile.Full1920x1080) => new(
+            "mstsc.exe",
+            $"\"{WriteRdpProfile(profile, layout)}\"")
+        {
+            UseShellExecute = true,
+        };
 
-    internal static ProcessStartInfo CreateRdpStartInfo(LocalRunnerProfile profile, string rdpRoot) => new(
-        "mstsc.exe",
-        $"\"{WriteRdpProfile(profile, rdpRoot)}\"")
-    {
-        UseShellExecute = true,
-    };
+    internal static ProcessStartInfo CreateRdpStartInfo(
+        LocalRunnerProfile profile,
+        string rdpRoot,
+        MacroLayoutProfile layout = MacroLayoutProfile.Full1920x1080) => new(
+            "mstsc.exe",
+            $"\"{WriteRdpProfile(profile, layout, rdpRoot)}\"")
+        {
+            UseShellExecute = true,
+        };
 
-    internal static string CreateRdpProfileContent(LocalRunnerProfile profile)
+    internal static string CreateRdpProfileContent(
+        LocalRunnerProfile profile,
+        MacroLayoutProfile layout = MacroLayoutProfile.Full1920x1080)
     {
         ValidateRdpProfile(profile);
+        (double width, double height) = MacroDisplayPolicy.TargetSize(layout);
         return string.Join(Environment.NewLine,
         [
-            "screen mode id:i:2",
+            "screen mode id:i:1",
             "use multimon:i:0",
             "session bpp:i:32",
+            $"desktopwidth:i:{(int)width}",
+            $"desktopheight:i:{(int)height}",
+            "smart sizing:i:1",
+            "dynamic resolution:i:0",
             $"full address:s:{profile.LoopbackAddress}:{TermServiceConfigurationManager.LocalPort}",
             $"username:s:{Environment.MachineName}\\{profile.AccountName}",
             "authentication level:i:0",
@@ -111,13 +129,17 @@ internal sealed class LocalInstanceManagerController
             "redirectprinters:i:0",
             "redirectcomports:i:0",
             "redirectsmartcards:i:0",
+            "redirectwebauthn:i:0",
             "devicestoredirect:s:",
             "drivestoredirect:s:",
             "audiomode:i:2",
         ]) + Environment.NewLine;
     }
 
-    private static string WriteRdpProfile(LocalRunnerProfile profile, string? rdpRoot = null)
+    private static string WriteRdpProfile(
+        LocalRunnerProfile profile,
+        MacroLayoutProfile layout,
+        string? rdpRoot = null)
     {
         rdpRoot ??= Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -128,7 +150,7 @@ internal sealed class LocalInstanceManagerController
         string temporary = path + $".{Guid.NewGuid():N}.tmp";
         try
         {
-            File.WriteAllText(temporary, CreateRdpProfileContent(profile), Encoding.Unicode);
+            File.WriteAllText(temporary, CreateRdpProfileContent(profile, layout), Encoding.Unicode);
             File.Move(temporary, path, overwrite: true);
         }
         finally
@@ -136,6 +158,24 @@ internal sealed class LocalInstanceManagerController
             if (File.Exists(temporary)) File.Delete(temporary);
         }
         return path;
+    }
+
+    private void RefreshRdpCredential(LocalRunnerProfile profile)
+    {
+        RunnerCredentialManager credentials = new();
+        string password;
+        try
+        {
+            password = credentials.ReadPassword(paths.SecretCredentialTargetFor(profile));
+        }
+        catch (Exception exception) when (
+            exception is System.ComponentModel.Win32Exception or InvalidDataException)
+        {
+            throw new InvalidOperationException($"The saved credential for {profile.DisplayName} is unavailable. Run Repair once.", exception);
+        }
+        string qualifiedRunner = $"{Environment.MachineName}\\{profile.AccountName}";
+        credentials.DeleteRdp(paths.CredentialTargetFor(profile));
+        credentials.WriteRdp(paths.CredentialTargetFor(profile), qualifiedRunner, password);
     }
 
     private static void ValidateRdpProfile(LocalRunnerProfile profile)
@@ -167,9 +207,15 @@ internal sealed class LocalInstanceManagerController
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
         LocalInstanceManagerSnapshot snapshot = await GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
         if (process.ExitCode != 0)
-            throw new InvalidOperationException(snapshot.Status.Problems.FirstOrDefault() ?? snapshot.Status.Detail);
+            throw new InvalidOperationException(OperationFailureDetail(snapshot));
         return snapshot;
     }
+
+    internal static string OperationFailureDetail(LocalInstanceManagerSnapshot snapshot) =>
+        snapshot.Status.Problems.FirstOrDefault()
+        ?? (string.Equals(snapshot.Status.StatusCode, "instance-manager-ready", StringComparison.Ordinal)
+            ? "The local instance operation did not complete. Run Repair and retry it."
+            : snapshot.Status.Detail);
 
     private static string QuoteArgument(string value) => value.All(character => char.IsAsciiLetterOrDigit(character) || character == '-')
         ? value

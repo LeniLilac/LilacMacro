@@ -38,7 +38,6 @@ internal sealed class MacroOwnerState
         _encryptedDiscordWebhook = webhookValid ? encryptedDiscordWebhook : string.Empty;
         DiscordUserId = settings.DiscordUserId?.Trim() ?? string.Empty;
         NotifyOnTerminalFailure = settings.NotifyOnTerminalFailure;
-        IncludeFailureDetails = settings.IncludeFailureDetails;
         CheckForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         LayoutProfile = Enum.IsDefined(settings.LayoutProfile)
@@ -47,6 +46,9 @@ internal sealed class MacroOwnerState
         MinimizeBehavior = Enum.IsDefined(settings.MinimizeBehavior)
             ? settings.MinimizeBehavior
             : MacroMinimizeBehavior.WhileRunning;
+        RunnerLayoutProfiles = (settings.RunnerLayoutProfiles ?? [])
+            .Where(item => IsRunnerProfileId(item.Key) && Enum.IsDefined(item.Value))
+            .ToDictionary(item => item.Key, item => item.Value, StringComparer.Ordinal);
         KeyBindings.Changed += KeyBindings_OnChanged;
     }
 
@@ -72,8 +74,6 @@ internal sealed class MacroOwnerState
 
     public bool NotifyOnTerminalFailure { get; private set; }
 
-    public bool IncludeFailureDetails { get; private set; }
-
     public bool CheckForUpdatesOnStartup { get; private set; }
 
     public bool IncludePrereleaseUpdates { get; private set; }
@@ -81,6 +81,8 @@ internal sealed class MacroOwnerState
     public MacroLayoutProfile LayoutProfile { get; private set; }
 
     public MacroMinimizeBehavior MinimizeBehavior { get; private set; }
+
+    public Dictionary<string, MacroLayoutProfile> RunnerLayoutProfiles { get; }
 
     public MacroMinimizeBehavior EffectiveMinimizeBehavior =>
         MacroDisplayPolicy.EffectiveMinimizeBehavior(LayoutProfile, MinimizeBehavior);
@@ -135,18 +137,16 @@ internal sealed class MacroOwnerState
         QueueSave();
     }
 
-    public void SetDiscordFailureOptions(string userId, bool notifyOnTerminalFailure, bool includeFailureDetails)
+    public void SetDiscordFailureOptions(string userId, bool notifyOnTerminalFailure)
     {
         userId = userId.Trim();
         if (string.Equals(userId, DiscordUserId, StringComparison.Ordinal) &&
-            notifyOnTerminalFailure == NotifyOnTerminalFailure &&
-            includeFailureDetails == IncludeFailureDetails)
+            notifyOnTerminalFailure == NotifyOnTerminalFailure)
         {
             return;
         }
         DiscordUserId = userId;
         NotifyOnTerminalFailure = notifyOnTerminalFailure;
-        IncludeFailureDetails = includeFailureDetails;
         QueueSave();
     }
 
@@ -169,6 +169,18 @@ internal sealed class MacroOwnerState
         DisplayOptionsChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public MacroLayoutProfile RunnerLayoutProfile(string profileId) =>
+        RunnerLayoutProfiles.GetValueOrDefault(profileId, MacroLayoutProfile.Full1920x1080);
+
+    public void SetRunnerLayoutProfile(string profileId, MacroLayoutProfile layout)
+    {
+        if (!IsRunnerProfileId(profileId)) throw new ArgumentException("Runner profile identifier is invalid.", nameof(profileId));
+        if (!Enum.IsDefined(layout)) throw new ArgumentOutOfRangeException(nameof(layout));
+        if (RunnerLayoutProfile(profileId) == layout) return;
+        RunnerLayoutProfiles[profileId] = layout;
+        QueueSave();
+    }
+
     public Task FlushAsync()
     {
         lock (_saveSync) return _pendingSave;
@@ -188,11 +200,11 @@ internal sealed class MacroOwnerState
             EncryptedDiscordWebhook = _encryptedDiscordWebhook,
             DiscordUserId = DiscordUserId,
             NotifyOnTerminalFailure = NotifyOnTerminalFailure,
-            IncludeFailureDetails = IncludeFailureDetails,
             CheckForUpdatesOnStartup = CheckForUpdatesOnStartup,
             IncludePrereleaseUpdates = IncludePrereleaseUpdates,
             LayoutProfile = LayoutProfile,
             MinimizeBehavior = MinimizeBehavior,
+            RunnerLayoutProfiles = new Dictionary<string, MacroLayoutProfile>(RunnerLayoutProfiles, StringComparer.Ordinal),
         };
         lock (_saveSync)
         {
@@ -227,4 +239,8 @@ internal sealed class MacroOwnerState
             return string.Empty;
         }
     }
+
+    private static bool IsRunnerProfileId(string value) =>
+        value.Length is >= 1 and <= 32
+        && value.All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
 }

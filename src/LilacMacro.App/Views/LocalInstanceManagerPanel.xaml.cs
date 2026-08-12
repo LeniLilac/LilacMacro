@@ -53,13 +53,34 @@ public partial class LocalInstanceManagerPanel : UserControl
 
     private async void Open_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        if (_manager is null || sender is not Button { Tag: string profileId }) return;
-        try { await _manager.OpenAsync(profileId); }
+        if (_manager is null || _ownerState is null || sender is not Button { Tag: string profileId }) return;
+        try { await _manager.OpenAsync(profileId, _ownerState.RunnerLayoutProfile(profileId)); }
         catch (Exception exception) when (IsExpected(exception))
         {
             AppToastService.ShowError("LOCAL INSTANCE FAILED", exception.Message);
         }
         await RefreshAsync();
+    }
+
+    private async void Viewport_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
+    {
+        if (_ownerState is null
+            || sender is not ComboBox { Tag: LocalInstanceRow row, SelectedItem: LocalInstanceViewportOption option }
+            || row.SelectedViewport.Profile == option.Profile)
+        {
+            return;
+        }
+        row.SelectedViewport = option;
+        _ownerState.SetRunnerLayoutProfile(row.Id, option.Profile);
+        try
+        {
+            await _ownerState.FlushAsync();
+            ManagerDetailText.Text = $"{row.DisplayName} will open at {option.Label}.";
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            AppToastService.ShowError("LOCAL INSTANCE SAVE FAILED", exception.Message);
+        }
     }
 
     private async Task MutateAsync(Func<LocalInstanceManagerController, Task<LocalInstanceManagerSnapshot>> mutation)
@@ -101,13 +122,16 @@ public partial class LocalInstanceManagerPanel : UserControl
         _rows.Clear();
         foreach (LocalInstanceProfileStatus item in snapshot.Profiles)
         {
+            MacroLayoutProfile layout = _ownerState?.RunnerLayoutProfile(item.Profile.Id)
+                ?? MacroLayoutProfile.Full1920x1080;
             _rows.Add(new LocalInstanceRow(
                 item.Profile.Id,
                 item.Profile.DisplayName,
                 item.Profile.AccountName,
                 item.Session.State.ToString().ToUpperInvariant(),
                 item.Profile.ConfigurationMode == RunnerConfigurationMode.Shared ? "SHARED" : "SEPARATE",
-                $"{item.Profile.LoopbackAddress}:{TermServiceConfigurationManager.LocalPort}"));
+                $"{item.Profile.LoopbackAddress}:{TermServiceConfigurationManager.LocalPort}",
+                ViewportOptions.Single(option => option.Profile == layout)));
         }
         ManagerStateText.Text = snapshot.Status.State.ToString().ToUpperInvariant();
         ManagerDetailText.Text = snapshot.Status.Problems.FirstOrDefault() ?? snapshot.Status.Detail;
@@ -136,11 +160,30 @@ public partial class LocalInstanceManagerPanel : UserControl
         or UnauthorizedAccessException
         or System.ComponentModel.Win32Exception;
 
-    private sealed record LocalInstanceRow(
-        string Id,
-        string DisplayName,
-        string AccountName,
-        string SessionState,
-        string ConfigurationMode,
-        string Endpoint);
+    private static IReadOnlyList<LocalInstanceViewportOption> ViewportOptions { get; } =
+    [
+        new("1920 x 1080", MacroLayoutProfile.Full1920x1080),
+        new("1366 x 768", MacroLayoutProfile.Compact1366x768),
+    ];
+
+    private sealed record LocalInstanceViewportOption(string Label, MacroLayoutProfile Profile);
+
+    private sealed class LocalInstanceRow(
+        string id,
+        string displayName,
+        string accountName,
+        string sessionState,
+        string configurationMode,
+        string endpoint,
+        LocalInstanceViewportOption selectedViewport)
+    {
+        public string Id { get; } = id;
+        public string DisplayName { get; } = displayName;
+        public string AccountName { get; } = accountName;
+        public string SessionState { get; } = sessionState;
+        public string ConfigurationMode { get; } = configurationMode;
+        public string Endpoint { get; } = endpoint;
+        public IReadOnlyList<LocalInstanceViewportOption> ViewportOptions { get; } = LocalInstanceManagerPanel.ViewportOptions;
+        public LocalInstanceViewportOption SelectedViewport { get; set; } = selectedViewport;
+    }
 }

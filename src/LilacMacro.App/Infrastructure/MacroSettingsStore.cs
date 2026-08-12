@@ -37,7 +37,7 @@ internal sealed class MacroSettingsStore
             {
                 MacroSettings.CurrentSchemaVersion => settings,
                 1 or 2 => MigrateLegacySettings(settings),
-                3 or 4 or 5 or 6 => settings with { SchemaVersion = MacroSettings.CurrentSchemaVersion },
+                3 or 4 or 5 or 6 or 7 => settings with { SchemaVersion = MacroSettings.CurrentSchemaVersion },
                 _ => new MacroSettings(),
             };
         }

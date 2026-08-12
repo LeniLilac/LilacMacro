@@ -146,11 +146,18 @@ public partial class RobloxDockSurface : UserControl
                 return;
             }
 
-            if (!RobloxDockActivationPolicy.CanMaintainDock(
+            bool isDocked = _dock.IsDocked;
+            RobloxWindow? source = isDocked ? null : _windows.FindBest();
+            bool canOwnDock = isDocked
+                ? RobloxDockActivationPolicy.CanMaintainDock(
                     owner.IsActive,
-                    _dock.IsDocked,
+                    docked: true,
                     _dock.IsSourceForeground,
-                    _allowDockedSourceForeground))
+                    _allowDockedSourceForeground)
+                : RobloxDockActivationPolicy.CanAcquireDock(
+                    owner.IsActive,
+                    source is { } candidate && _dock.IsForeground(candidate));
+            if (!canOwnDock)
             {
                 _allowDockedSourceForeground = false;
                 if (!_dock.TrySuspend(out string error)) ReportError(error);
@@ -159,11 +166,10 @@ public partial class RobloxDockSurface : UserControl
             }
 
             nint ownerHandle = new WindowInteropHelper(owner).Handle;
-            RobloxWindow? source = null;
             nint sourceHandle = _dock.SourceHandle;
             if (sourceHandle == nint.Zero)
             {
-                source = _windows.FindBest();
+                source ??= _windows.FindBest();
                 sourceHandle = source?.Handle ?? nint.Zero;
             }
             if (!_dock.IsDashboardExposed(ownerHandle, sourceHandle))
@@ -173,7 +179,7 @@ public partial class RobloxDockSurface : UserControl
                 return;
             }
 
-            if (_dock.IsDocked)
+            if (isDocked)
             {
                 _dock.UpdateBounds(x, y);
             }
