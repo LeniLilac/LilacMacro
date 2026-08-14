@@ -3,6 +3,7 @@ using LilacMacro.App.Runtime;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Placements;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Debugging;
 
@@ -11,6 +12,7 @@ internal sealed class StoryMatchRuntimeRunner(
     OcrRunner ocr)
 {
     private readonly PlacementPlaybackService _placements = new(workspace, ocr);
+    private readonly MapPreparationService _mapPreparation = new(workspace);
     private readonly PlacementSetupStore _placementStore = new(ResolvePlacementRoot());
 
     public async Task<StoryWireTestResult> RunAsync(
@@ -37,6 +39,15 @@ internal sealed class StoryMatchRuntimeRunner(
                     StoryWireStageStatus.Running,
                     "CAMERA ALIGNED",
                     ["CAMERA ALIGNED"]));
+                await _mapPreparation.PrepareAsync(
+                    ResolvePlacementMap(options).Id,
+                    options.PlacementKeys.ReservedVirtualKey,
+                    message => progress.Report(new StoryWireProgress(
+                        StoryWireStage.MatchRuntime,
+                        StoryWireStageStatus.Running,
+                        message,
+                        [message])),
+                    cancellationToken);
             }
 
             PlacementMapDefinition map = ResolvePlacementMap(options);
@@ -107,9 +118,12 @@ internal sealed class StoryMatchRuntimeRunner(
 
     private static PlacementMapDefinition ResolvePlacementMap(StoryWireTestOptions options)
     {
-        string id = options.GameMode == WireGameMode.Raid
-            ? $"raid-spirit-city-{RouteId(options.Act)}"
-            : $"story-{Slug(options.Map)}";
+        string id = options.GameMode switch
+        {
+            WireGameMode.Raid => $"raid-spirit-city-{RouteId(options.Act)}",
+            WireGameMode.Event => EventRunPolicy.MapId(options.Map, options.Act),
+            _ => $"story-{Slug(options.Map)}",
+        };
         return PlacementMapCatalog.Definitions.First(candidate => candidate.Id == id);
     }
 

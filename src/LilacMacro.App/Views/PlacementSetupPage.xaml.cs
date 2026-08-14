@@ -59,7 +59,9 @@ public partial class PlacementSetupPage : UserControl
         GalleryStateText.Visibility = Visibility.Visible;
         try
         {
-            IReadOnlyList<PlacementMapReference> references = await _catalog.DiscoverAsync(_datasetRoot);
+            IReadOnlyList<PlacementMapReference> bundled = BundledPlacementMapCatalog.Discover(AppContext.BaseDirectory);
+            IReadOnlyList<PlacementMapReference> local = await DiscoverLocalMapsAsync();
+            IReadOnlyList<PlacementMapReference> references = BundledPlacementMapCatalog.PreferLocal(bundled, local);
             _maps = references.Select(reference => new PlacementMapCardViewModel(reference)).ToArray();
             ShowSelectedMode();
         }
@@ -73,6 +75,19 @@ public partial class PlacementSetupPage : UserControl
         finally
         {
             RefreshButton.IsEnabled = true;
+        }
+    }
+
+    private async Task<IReadOnlyList<PlacementMapReference>> DiscoverLocalMapsAsync()
+    {
+        try
+        {
+            return await _catalog.DiscoverAsync(_datasetRoot);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            AppToastService.ShowError("LOCAL MAPS UNAVAILABLE", exception.Message);
+            return [];
         }
     }
 

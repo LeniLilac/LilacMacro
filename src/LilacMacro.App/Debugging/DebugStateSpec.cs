@@ -22,4 +22,5 @@ internal sealed record DebugStateSpec(
     IReadOnlyList<string>? PoolTargetNames = null,
     int MinimumPoolMatches = 0,
     IReadOnlyList<string>? FuzzyPrefixTargetNames = null,
-    IReadOnlyList<string>? SameRowTargetNames = null);
+    IReadOnlyList<string>? SameRowTargetNames = null,
+    string? RegionLabel = null);

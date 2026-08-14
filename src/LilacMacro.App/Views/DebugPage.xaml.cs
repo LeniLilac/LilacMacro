@@ -18,6 +18,7 @@ public partial class DebugPage : UserControl, IWorkspacePage
     private readonly DebugEvidenceRunService _evidence;
     private readonly DebugKeySequenceCoordinator _debugInput;
     private readonly UiScaleNormalizer _uiScale;
+    private readonly GameSettingsNormalizer _gameSettings;
     private readonly List<string> _events = [];
     private string _device;
     private DebugEvidenceMode _evidenceMode = DebugEvidenceMode.Ocr;
@@ -39,6 +40,7 @@ public partial class DebugPage : UserControl, IWorkspacePage
         _debugInput = debugInput;
         _deepDebug = deepDebug;
         _uiScale = new UiScaleNormalizer(workspace, ocr, deepDebug);
+        _gameSettings = new GameSettingsNormalizer(workspace, deepDebug);
         _device = defaultOcrDevice;
         InitializeComponent();
         KeyChainControl.Initialize(debugInput);
@@ -128,6 +130,13 @@ public partial class DebugPage : UserControl, IWorkspacePage
 
     private void AddEvent(string entry)
     {
+        if (!Dispatcher.CheckAccess())
+        {
+            if (!Dispatcher.HasShutdownStarted)
+                _ = Dispatcher.BeginInvoke(() => AddEvent(entry));
+            return;
+        }
+
         _events.Insert(0, $"{DateTime.Now:HH:mm:ss}  {entry}");
         if (_events.Count > 50) _events.RemoveRange(50, _events.Count - 50);
         EventLog.ItemsSource = null;
@@ -279,6 +288,41 @@ public partial class DebugPage : UserControl, IWorkspacePage
             StatusText.Text = "UI SCALE NORMALIZED";
             StatusBand.SetResourceReference(Border.BackgroundProperty, "SuccessBrush");
             OcrMetaText.Text = $"RENDERED {result.RenderedScale:0.000} | NORMALIZED";
+        }
+        catch (Exception error)
+        {
+            ShowError(error.Message);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private async void NormalizeStartupSettings_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        if (_busy) return;
+        SetBusy(true);
+        try
+        {
+            StatusText.Text = "NORMALIZING STARTUP SETTINGS";
+            StatusBand.SetResourceReference(Border.BackgroundProperty, "YellowBrush");
+            (UiScaleNormalizationResult scale, GameSettingsNormalizationResult settings) =
+                await _deepDebug.RunOperationAsync(
+                    "startup-settings-normalizer",
+                    new DeepDebugOperationContext("runtime-lab", new { Device = _device }),
+                    async token =>
+                    {
+                        UiScaleNormalizationResult scaleResult = await _uiScale.NormalizeAsync(
+                            _device, AddEvent, token);
+                        GameSettingsNormalizationResult settingsResult = await _gameSettings.NormalizeAsync(
+                            AddEvent, token);
+                        return (scaleResult, settingsResult);
+                    },
+                    CancellationToken.None);
+            StatusText.Text = "STARTUP SETTINGS NORMALIZED";
+            StatusBand.SetResourceReference(Border.BackgroundProperty, "SuccessBrush");
+            OcrMetaText.Text = $"RENDERED {scale.RenderedScale:0.000} | {settings.Changed} CHANGED | {settings.Verified} VERIFIED";
         }
         catch (Exception error)
         {

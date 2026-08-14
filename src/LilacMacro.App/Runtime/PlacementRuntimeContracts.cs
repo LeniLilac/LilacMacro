@@ -35,3 +35,7 @@ internal sealed class PlacementExecutionState(
 
     public PlacementAutoUpgradePriority AutoUpgrade { get; set; } = PlacementAutoUpgradePriority.Off;
 }
+
+internal sealed record ExpeditionPlacementSession(
+    IReadOnlyList<PlacementExecutionState> ActivePlacements,
+    UnitPanelLayout? PanelLayout);

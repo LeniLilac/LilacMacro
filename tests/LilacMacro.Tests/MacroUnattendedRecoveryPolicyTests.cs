@@ -45,9 +45,13 @@ public sealed class MacroUnattendedRecoveryPolicyTests
     }
 
     [Fact]
-    public async Task PreflightRejectsUnsupportedTaskBeforeTaskValidation()
+    public async Task PreflightRejectsUnimplementedEventRouteBeforeTaskValidation()
     {
-        PlanTaskPrototype unsupported = new() { Mode = PlanTaskMode.Event };
+        PlanTaskPrototype unsupported = new()
+        {
+            Mode = PlanTaskMode.Event,
+            Route = "Boss Bounty",
+        };
         PlanPrototype plan = new("unsupported", [unsupported]);
         int calls = 0;
 
@@ -64,7 +68,12 @@ public sealed class MacroUnattendedRecoveryPolicyTests
     {
         PlanTaskPrototype story = new() { Mode = PlanTaskMode.Story };
         PlanTaskPrototype raid = new() { Mode = PlanTaskMode.Raid };
-        PlanPrototype plan = new("supported", [story, raid]);
+        PlanTaskPrototype eventTask = new()
+        {
+            Mode = PlanTaskMode.Event,
+            Route = "Villain Invasion · Act 4",
+        };
+        PlanPrototype plan = new("supported", [story, raid, eventTask]);
         List<PlanTaskPrototype> validated = [];
 
         await MacroPlanPreflight.ValidateAsync(
@@ -72,6 +81,6 @@ public sealed class MacroUnattendedRecoveryPolicyTests
             (task, _) => { validated.Add(task); return Task.CompletedTask; },
             CancellationToken.None);
 
-        Assert.Equal([story, raid], validated);
+        Assert.Equal([story, raid, eventTask], validated);
     }
 }

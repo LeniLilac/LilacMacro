@@ -56,6 +56,9 @@ const
   SynchronizeAccess = $00100000;
   WaitTimeout = 258;
   ErrorInvalidParameter = 87;
+  InvalidFileAttributes = $FFFFFFFF;
+  FileAttributeDirectory = $00000010;
+  FileAttributeReparsePoint = $00000400;
 
 type
   TSystemTime = record
@@ -69,6 +72,7 @@ var
   UpdateTargetVersion: String;
   UpdateInstallerSha256: String;
   UpdateStateLoaded: Boolean;
+  RunnerRepairSucceeded: Boolean;
   ParticipantPids: array of Integer;
 
 function OpenProcess(DesiredAccess: LongWord; InheritHandle: Boolean; ProcessId: LongWord): THandle;
@@ -81,6 +85,8 @@ function GetLastError: LongWord;
   external 'GetLastError@kernel32.dll stdcall';
 procedure GetSystemTime(var SystemTime: TSystemTime);
   external 'GetSystemTime@kernel32.dll stdcall';
+function GetFileAttributes(FileName: String): LongWord;
+  external 'GetFileAttributesW@kernel32.dll stdcall';
 
 function IsCoordinatedUpdate: Boolean;
 begin
@@ -132,7 +138,7 @@ begin
   if not StateValue(Lines, 'target_version=', UpdateTargetVersion) then exit;
   if not StateValue(Lines, 'installer_sha256=', UpdateInstallerSha256) or not IsHexDigest(UpdateInstallerSha256) then exit;
   if not StateValue(Lines, 'request_path=', UpdateRequestPath) then exit;
-  if CompareText(ExpandFileName(UpdateRequestPath), ExpandConstant('{commonappdata}\LilacMacro\Session\update-request.txt')) <> 0 then exit;
+  if CompareText(ExpandFileName(UpdateRequestPath), ExpandConstant('{commonappdata}\LilacMacro\UpdateControl\update-request.txt')) <> 0 then exit;
   if UpdateTargetVersion <> '{#AppVersion}' then exit;
   if CompareText(GetSHA256OfFile(ExpandConstant('{srcexe}')), UpdateInstallerSha256) <> 0 then exit;
 
@@ -165,6 +171,13 @@ begin
   GetSystemTime(Value);
   Result := Format('%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.0000000+00:00', [Value.wYear,
     Value.wMonth, Value.wDay, Value.wHour, Value.wMinute, Value.wSecond]);
+end;
+
+function ManualUpdateOperationId: String;
+begin
+  { Manual requests are identified by their fresh timestamp and target version;
+    the operation id only satisfies the shared request schema. }
+  Result := '87c44822-4f2c-45e2-93da-84098d39d1bc';
 end;
 
 function ProcessStillRunning(ProcessId: Integer; var InspectionFailed: Boolean): Boolean;
@@ -209,14 +222,91 @@ begin
   Result := 'LilacMacro did not close every active session within 90 seconds. The update was not installed.';
 end;
 
+function ForceCloseProductImage(const ImageName: String): String;
+var
+  ResultCode: Integer;
+begin
+  Result := '';
+  if not Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /T /IM "' + ImageName + '"', '',
+    SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
+    Result := 'Windows could not start the bounded LilacMacro shutdown fallback.';
+    exit;
+  end;
+  { taskkill returns 128 when no matching process exists. }
+  if (ResultCode <> 0) and (ResultCode <> 128) then
+    Result := 'Windows could not stop ' + ImageName + ' before the upgrade (exit code '
+      + IntToStr(ResultCode) + ').';
+end;
+
+function StopManualUpdateProcesses: String;
+begin
+  Log('Requesting bounded shutdown of any remaining LilacMacro UI processes.');
+  Result := ForceCloseProductImage('LilacMacro.exe');
+  if Result = '' then Result := ForceCloseProductImage('LilacMacro.RuntimeLab.exe');
+  if Result = '' then Result := ForceCloseProductImage('LilacMacro.DatasetBuilder.exe');
+  if Result = '' then Result := ForceCloseProductImage('LilacMacro.DeepDebugViewer.exe');
+  if Result = '' then Sleep(1000);
+end;
+
+function SafeDirectory(const Path: String): Boolean;
+var
+  Attributes: LongWord;
+begin
+  Attributes := GetFileAttributes(Path);
+  Result := (Attributes <> InvalidFileAttributes)
+    and ((Attributes and FileAttributeDirectory) <> 0)
+    and ((Attributes and FileAttributeReparsePoint) = 0);
+end;
+
+function SecureUpdateControlRoot: String;
+var
+  ProductRoot, ControlRoot, Arguments: String;
+  Attributes: LongWord;
+  ResultCode: Integer;
+begin
+  Result := '';
+  ProductRoot := ExpandConstant('{commonappdata}\LilacMacro');
+  ControlRoot := ExtractFileDir(UpdateRequestPath);
+  if not ForceDirectories(ControlRoot) then begin
+    Result := 'The LilacMacro update request directory could not be created.';
+    exit;
+  end;
+  if not SafeDirectory(ProductRoot) or not SafeDirectory(ControlRoot) then begin
+    Result := 'The LilacMacro update request directory is not a safe local directory.';
+    exit;
+  end;
+  Arguments := '"' + ControlRoot + '" /inheritance:r /grant:r '
+    + '"*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" '
+    + '"*S-1-5-32-545:(OI)(CI)RX"';
+  if not Exec(ExpandConstant('{sys}\icacls.exe'), Arguments, '', SW_HIDE,
+    ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then begin
+    Result := 'The LilacMacro update request directory could not be secured.';
+    exit;
+  end;
+  if not SafeDirectory(ProductRoot) or not SafeDirectory(ControlRoot) then begin
+    Result := 'The LilacMacro update request directory changed while it was being secured.';
+    exit;
+  end;
+  Attributes := GetFileAttributes(UpdateRequestPath);
+  if (Attributes <> InvalidFileAttributes)
+    and ((Attributes and FileAttributeReparsePoint) <> 0) then
+    Result := 'The LilacMacro update request file is an unsafe reparse point.';
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   RequestText: String;
 begin
   Result := '';
-  if not IsCoordinatedUpdate then exit;
-  if not ForceDirectories(ExtractFileDir(UpdateRequestPath)) then begin
-    Result := 'The coordinated update request directory could not be created.';
+  if not IsCoordinatedUpdate then begin
+    UpdateRequestPath := ExpandConstant('{commonappdata}\LilacMacro\UpdateControl\update-request.txt');
+    UpdateOperationId := ManualUpdateOperationId;
+    UpdateTargetVersion := '{#AppVersion}';
+  end;
+  Result := SecureUpdateControlRoot;
+  if Result <> '' then exit;
+  if FileExists(UpdateRequestPath) and not DeleteFile(UpdateRequestPath) then begin
+    Result := 'The previous LilacMacro update shutdown request could not be cleared.';
     exit;
   end;
   RequestText := 'schema_version=1' + #13#10
@@ -224,10 +314,18 @@ begin
     + 'target_version=' + UpdateTargetVersion + #13#10
     + 'requested_utc=' + UtcTimestamp + #13#10;
   if not SaveStringToFile(UpdateRequestPath, RequestText, False) then begin
-    Result := 'The coordinated update shutdown request could not be written.';
+    Result := 'The LilacMacro update shutdown request could not be written.';
     exit;
   end;
-  Result := WaitForUpdateParticipants;
+  if IsCoordinatedUpdate then
+    Result := WaitForUpdateParticipants
+  else begin
+    { Give every UI, including runner-session instances, time to flush and close
+      normally before the exact product-name fallback handles legacy, repair, or
+      unresponsive processes that Restart Manager cannot cross-session close. }
+    Sleep(5000);
+    Result := StopManualUpdateProcesses;
+  end;
   if Result <> '' then DeleteFile(UpdateRequestPath);
 end;
 
@@ -248,15 +346,28 @@ begin
   DeleteFile(UpdateRequestPath);
 end;
 
-procedure AttemptRunnerRepair;
+procedure RelaunchConfiguredRunners;
 var
   ResultCode: Integer;
 begin
+  if IsCoordinatedUpdate or not RunnerJournalExists then exit;
+  if not Exec(ExpandConstant('{app}\LilacMacro.SessionSetup.exe'), 'relaunch-runners', '',
+    SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    Log('The configured local runner UIs could not all be relaunched. Reopen their sessions manually.');
+end;
+
+function AttemptRunnerRepair: Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := True;
   if not RunnerJournalExists then
     exit;
   if not Exec(ExpandConstant('{app}\LilacMacro.SessionSetup.exe'), 'repair', '',
-    SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then begin
+    Result := False;
     Log('Optional local runner migration did not complete. The application upgrade will continue with the runner unavailable until Repair succeeds.');
+  end;
 end;
 
 procedure RequireRunnerCleanup;
@@ -274,14 +385,20 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    AttemptRunnerRepair;
-    RelaunchUpdateParticipants;
+    RunnerRepairSucceeded := AttemptRunnerRepair;
+    if RunnerRepairSucceeded then begin
+      RelaunchUpdateParticipants;
+      RelaunchConfiguredRunners;
+    end else begin
+      Log('Configured runner UIs were not relaunched because runner repair failed.');
+      DeleteFile(UpdateRequestPath);
+    end;
   end;
 end;
 
 procedure DeinitializeSetup;
 begin
-  if IsCoordinatedUpdate then DeleteFile(UpdateRequestPath);
+  if UpdateRequestPath <> '' then DeleteFile(UpdateRequestPath);
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

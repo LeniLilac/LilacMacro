@@ -66,7 +66,7 @@ The first shell close request is canceled while queued placement writes flush. A
 `MainWindow` is shared WPF composition behind two dedicated executable launch modes. Each mode constructs only its owned pages:
 
 - Dataset Builder owns Capture, Review, and Datasets: exact client sizing, timed/manual sampling, annotations, OCR trials, and finalized/recoverable dataset discovery.
-- Runtime Lab owns Debug and Wire Test: explicit evidence checks, bounded input transitions, shared startup UI-scale normalization, and Story/Raid/Challenge chains with OCR or image-first evidence plus OCR fallback.
+- Runtime Lab owns Debug, Wire Test, and bounded trial tools: explicit evidence checks, bounded input transitions, owner-triggered startup settings normalization, supported mode chains, and owner-triggered Team Scroll, Team Swap, and Expedition Route Optimizer batches. Route Optimizer reuses the production compact reward OCR and restart transition while preserving explicit cancellation and fresh input ownership.
 
 Both shells reuse `WorkspaceController`, OCR, vision, diagnostics, and Windows services. A cross-process file lease fails closed when a second LilacMacro process attempts Roblox input. Neither tool has an unattended loop. [Game behavior](GAME-BEHAVIOR.md) is the authoritative Debug state/action ledger.
 
@@ -86,9 +86,11 @@ Review OCR is evidence. Debug input adds explicit state thresholds, a live targe
 
 Core owns the exact allowlist and structural XML policy for Roblox's per-profile `UserGameSettings`. Windows owns current-session Roblox process shutdown and the bounded, atomic `GlobalBasicSettings_13.xml` replacement. The file is never edited while a Roblox client in that Windows session remains alive. The policy fails closed on a missing, malformed, duplicated, or type-changed required field, preserves all unrelated XML, keeps a transient sibling rollback file only across replacement verification, and never edits another Windows profile.
 
-At desktop and local-runner plan start and after every terminal private-server reset, Runtime composes shutdown, settings normalization, validated private-server launch, fresh Lobby verification, and rendered UI-scale normalization in that order. Process enumeration is restricted to exact supported Roblox client names in the current Windows session, so the console and isolated runner cannot terminate one another.
+At desktop and local-runner plan start and after every terminal private-server reset, Runtime composes shutdown, Roblox XML normalization, validated private-server launch, and fresh Lobby verification in that order. Once per explicit Macro start, the first verified Lobby additionally receives rendered UI-scale normalization, a close/reopen boundary, and fixed in-game option normalization. Recovery attempts preserve that completed startup state so an operational anomaly does not repeat the in-game passes.
 
 Runtime owns one rendered UI-scale normalizer shared by every desktop Macro instance and Runtime Lab. OCR owns only the semantic Settings/search/UI Scale row structure used to authorize the value-field action. A bounded RGB detector independently measures Settings-panel geometry from the close control and three borders; the displayed scale number is neither parsed nor trusted. Candidate correction uses measured rendered scale, not device assumptions.
+
+Runtime also owns a positional in-game option normalizer for the post-scale canonical panel. It verifies tab selection, green/red toggle surfaces, and the Units scrollbar endpoint before input; it never OCRs the individual option labels or treats static points alone as authority. Runtime Lab exposes the complete sequence explicitly, while production invokes it only at Macro start.
 
 The successful numeric candidate is a disposable performance hint stored at `%LOCALAPPDATA%\LilacMacro\ui-scale-calibration.json`. `%LOCALAPPDATA%` isolates Windows users, and entries are keyed by the current Windows session id so the console and separate RDP sessions cannot silently share a value. Every use remeasures rendered geometry, stale entries fall into the same bounded feedback loop, invalid or unreadable cache data behaves as a miss, and cache-write failure does not weaken runtime verification.
 

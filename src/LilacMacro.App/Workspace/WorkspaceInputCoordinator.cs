@@ -24,6 +24,10 @@ internal sealed class WorkspaceInputCoordinator(
         "click", new { RequiredSize = size, Point = point },
         (window, cancellation) => input.ClickClientAsync(window, size, point, cancellation), token);
 
+    public Task HoverAsync(PixelSize size, PixelPoint point, CancellationToken token) => RunAsync(
+        "hover", new { RequiredSize = size, Point = point },
+        (window, cancellation) => input.HoverClientAsync(window, size, point, cancellation), token);
+
     public Task ScrollAsync(
         PixelSize size,
         PixelPoint point,

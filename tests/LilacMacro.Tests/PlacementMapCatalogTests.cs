@@ -1,6 +1,7 @@
 using LilacMacro.Core.Datasets;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Placements;
+using LilacMacro.App.Views;
 
 namespace LilacMacro.Tests;
 
@@ -9,7 +10,7 @@ public sealed class PlacementMapCatalogTests
     [Fact]
     public void DefinitionsHaveStableUniqueKeys()
     {
-        Assert.Equal(13, PlacementMapCatalog.Definitions.Count);
+        Assert.Equal(17, PlacementMapCatalog.Definitions.Count);
         Assert.Equal(
             PlacementMapCatalog.Definitions.Count,
             PlacementMapCatalog.Definitions.Select(definition => definition.Id).Distinct().Count());
@@ -17,6 +18,62 @@ public sealed class PlacementMapCatalogTests
             PlacementMapCatalog.Definitions.Sum(definition => definition.DatasetNames.Count),
             PlacementMapCatalog.Definitions.SelectMany(definition => definition.DatasetNames).Distinct().Count());
     }
+
+    [Fact]
+    public void BundledCatalogRequiresEveryDeclaredView()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-bundled-maps-{Guid.NewGuid():N}");
+        try
+        {
+            string assets = Path.Combine(root, "Assets", "PlacementMaps");
+            Directory.CreateDirectory(assets);
+            foreach (PlacementMapDefinition definition in PlacementMapCatalog.Definitions)
+            {
+                int viewCount = definition.Id == "story-kings-tomb" ? 4
+                    : definition.Mode == PlacementMapMode.Expedition ? 1
+                    : 2;
+                for (int index = 1; index <= viewCount; index++)
+                    File.WriteAllBytes(Path.Combine(assets, $"{definition.Id}-{index}.jpg"), [0xff, 0xd8, 0xff, 0xd9]);
+            }
+
+            IReadOnlyList<PlacementMapReference> maps = BundledPlacementMapCatalog.Discover(root);
+
+            Assert.Equal(PlacementMapCatalog.Definitions.Count, maps.Count);
+            Assert.Equal(32, maps.Sum(map => map.ImagePaths.Count));
+            Assert.All(maps, map =>
+            {
+                Assert.Empty(map.DatasetDirectories);
+                Assert.Equal(1366, map.ImageWidth);
+                Assert.Equal(700, map.ImageHeight);
+            });
+            File.Delete(maps[0].ImagePaths[0]);
+            Assert.Throws<InvalidDataException>(() => BundledPlacementMapCatalog.Discover(root));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LocalMapOverridesOnlyItsBundledDefinition()
+    {
+        PlacementMapDefinition story = PlacementMapCatalog.Definitions[0];
+        PlacementMapDefinition raid = PlacementMapCatalog.Definitions[6];
+        PlacementMapReference bundledStory = Reference(story, "bundled-story.jpg");
+        PlacementMapReference bundledRaid = Reference(raid, "bundled-raid.jpg");
+        PlacementMapReference localStory = Reference(story, "local-story.png");
+
+        IReadOnlyList<PlacementMapReference> result = BundledPlacementMapCatalog.PreferLocal(
+            [bundledStory, bundledRaid],
+            [localStory]);
+
+        Assert.Same(localStory, result[0]);
+        Assert.Same(bundledRaid, result[1]);
+    }
+
+    private static PlacementMapReference Reference(PlacementMapDefinition definition, string path) =>
+        new(definition, [], [path], 1366, 700);
 
     [Fact]
     public async Task DiscoverIncludesFinalizedEastTownStoryAndExpeditionReferences()

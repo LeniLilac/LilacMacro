@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Views;
 
@@ -22,9 +23,16 @@ public partial class PlanPage : UserControl
     private static readonly string[] EventRoutes =
     [
         "Villain Invasion · Act 1", "Villain Invasion · Act 2", "Villain Invasion · Act 3",
-        "Boss Bounty", "Guess That Unit",
+        "Villain Invasion · Act 4",
     ];
-    private static readonly string[] UtilityRoutes = ["Gold Mine refuel", "Resource Drill refuel", "Gold Mine + Resource Drill"];
+    private static readonly string[] UtilityRoutes =
+    [
+        ResourceRefuelPolicy.GoldMineRoute,
+        ResourceRefuelPolicy.ResourceDrillRoute,
+        ShopPurchasePolicy.GoldRoute,
+        ShopPurchasePolicy.RaidRoute,
+        UtilityTaskPolicy.CalendarClaimRoute,
+    ];
 
     private readonly ObservableCollection<PlanPrototype> _plans;
     private readonly MacroOwnerState _ownerState;
@@ -34,6 +42,7 @@ public partial class PlanPage : UserControl
     private PlanLoopPrototype? _editingLoop;
     private PlanTaskMode _editorMode = PlanTaskMode.Challenge;
     private bool _initialized;
+    private IReadOnlyList<string> _pendingShopSelection = [];
 
     internal PlanPage(MacroOwnerState ownerState)
     {
@@ -44,6 +53,7 @@ public partial class PlanPage : UserControl
         PlanSelector.DisplayMemberPath = nameof(PlanPrototype.Name);
         PlanSelector.ItemsSource = _plans;
         TaskDifficultyCombo.ItemsSource = new[] { "Difficulty 1", "Difficulty 2", "Difficulty 3" };
+        TaskRewardTargetCombo.ItemsSource = new[] { "None", "Fuel Cell", "Equipment Scrap", "Equipment Reroll", "Equipment Lock", "Expedition Coin" };
         _initialized = true;
         PlanSelector.SelectedItem = _selectedPlan;
         _ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
@@ -137,10 +147,12 @@ public partial class PlanPage : UserControl
         TaskDifficultyCombo.SelectedIndex = 0;
         TaskBossNodesText.Text = "1";
         TaskExtractCheck.IsChecked = true;
+        TaskRewardTargetCombo.SelectedIndex = 0;
         TaskHardModeCheck.IsChecked = false;
         TaskTraitCheck.IsChecked = true;
         TaskStatCheck.IsChecked = true;
         TaskSpriteCheck.IsChecked = true;
+        _pendingShopSelection = [];
         ChallengeModeButton.IsChecked = true;
         TaskEditorOverlay.Visibility = Visibility.Visible;
     }
@@ -158,16 +170,21 @@ public partial class PlanPage : UserControl
         TaskDifficultyCombo.SelectedIndex = task.Difficulty - 1;
         TaskBossNodesText.Text = task.BossesBeforeExtract.ToString();
         TaskExtractCheck.IsChecked = task.ExtractAtCheckpoint;
+        TaskRewardTargetCombo.SelectedItem = task.RewardTarget;
         TaskHardModeCheck.IsChecked = task.HardMode;
         TaskTraitCheck.IsChecked = task.RunTrait;
         TaskStatCheck.IsChecked = task.RunStat;
         TaskSpriteCheck.IsChecked = task.RunSprite;
+        _pendingShopSelection = task.ShopItemIds;
+        RefreshShopItemEditor();
         TaskEditorOverlay.Visibility = Visibility.Visible;
     }
 
     private void ApplyTaskEditor_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        if (!int.TryParse(TaskTargetText.Text, out int target) && _editorMode != PlanTaskMode.Challenge)
+        bool fixedReset = _editorMode == PlanTaskMode.Utilities && UtilityTaskPolicy.UsesFixedUtcReset(
+            TaskRouteCombo.SelectedItem as string ?? string.Empty);
+        if (!int.TryParse(TaskTargetText.Text, out int target) && _editorMode != PlanTaskMode.Challenge && !fixedReset)
         {
             AppToastService.ShowError("INVALID TARGET", "Enter a whole-number target.");
             return;
@@ -178,19 +195,30 @@ public partial class PlanPage : UserControl
         PlanTaskPrototype task = _editingTask ?? new PlanTaskPrototype();
         task.Mode = _editorMode;
         task.Route = TaskRouteCombo.SelectedItem as string ?? DefaultRoute(_editorMode);
+        string[] selectedShopItems = TaskShopItemsList.ItemsSource is IEnumerable<ShopItemChoice> choices
+            ? choices.Where(choice => choice.IsSelected).Select(choice => choice.Id).ToArray()
+            : [];
+        if (ShopPurchasePolicy.IsShopRoute(task.Route) && selectedShopItems.Length == 0)
+        {
+            AppToastService.ShowError("ITEM REQUIRED", "Enable at least one shop item.");
+            return;
+        }
         task.Target = _editorMode switch
         {
             PlanTaskMode.Challenge => 1,
+            _ when fixedReset => 1,
             _ => Math.Max(1, target),
         };
         task.DefeatRetries = retries;
         task.Difficulty = TaskDifficultyCombo.SelectedIndex + 1;
         task.BossesBeforeExtract = bosses;
         task.ExtractAtCheckpoint = TaskExtractCheck.IsChecked == true;
+        task.RewardTarget = TaskRewardTargetCombo.SelectedItem as string ?? "None";
         task.HardMode = TaskHardModeCheck.IsChecked == true;
         task.RunTrait = TaskTraitCheck.IsChecked == true;
         task.RunStat = TaskStatCheck.IsChecked == true;
         task.RunSprite = TaskSpriteCheck.IsChecked == true;
+        task.ShopItemIds = selectedShopItems;
 
         ObservableCollection<PlanBlockPrototype> destination = SelectedDestination()?.Children ?? _selectedPlan.Blocks;
         ObservableCollection<PlanBlockPrototype>? current = FindOwnerCollection(task);
@@ -253,6 +281,34 @@ public partial class PlanPage : UserControl
         TaskRouteCombo.ItemsSource = RoutesFor(_editorMode);
         TaskRouteCombo.SelectedIndex = 0;
         if (utility) TaskTargetText.Text = "60";
+        RefreshShopItemEditor();
+    }
+
+    private void TaskRouteCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
+    {
+        if (!_initialized) return;
+        RefreshShopItemEditor();
+    }
+
+    private void RefreshShopItemEditor()
+    {
+        if (TaskRouteCombo is null || TaskShopItemsPanel is null) return;
+        string route = TaskRouteCombo.SelectedItem as string ?? string.Empty;
+        bool shop = _editorMode == PlanTaskMode.Utilities && ShopPurchasePolicy.IsShopRoute(route);
+        TaskShopItemsPanel.Visibility = shop ? Visibility.Visible : Visibility.Collapsed;
+        TaskTargetPanel.Visibility = _editorMode == PlanTaskMode.Utilities && UtilityTaskPolicy.UsesFixedUtcReset(route)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        if (!shop)
+        {
+            TaskShopItemsList.ItemsSource = null;
+            return;
+        }
+        HashSet<string> selected = new(_pendingShopSelection, StringComparer.Ordinal);
+        TaskShopItemsList.ItemsSource = ShopPurchasePolicy.ItemsFor(route)
+            .Select(item => new ShopItemChoice(item.Id, item.DisplayName, selected.Contains(item.Id)))
+            .ToArray();
+        _pendingShopSelection = [];
     }
 
     private void AddLoop_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -464,4 +520,11 @@ public partial class PlanPage : UserControl
             if (node is T match) return match;
         return null;
     }
+}
+
+internal sealed class ShopItemChoice(string id, string displayName, bool isSelected)
+{
+    public string Id { get; } = id;
+    public string DisplayName { get; } = displayName;
+    public bool IsSelected { get; set; } = isSelected;
 }

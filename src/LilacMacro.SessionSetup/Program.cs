@@ -20,6 +20,7 @@ internal static class Program
             else if (args[0] == "add-isolated") new LocalInstanceProfileManager(LocalSessionPaths.CreateDefault(root)).AddAsync(BuildVersion(), RunnerConfigurationMode.Isolated, cancellationToken).GetAwaiter().GetResult();
             else if (args[0] == "remove-profile") new LocalInstanceProfileManager(LocalSessionPaths.CreateDefault(root)).RemoveAsync(args[1], cancellationToken).GetAwaiter().GetResult();
             else if (args[0] == "relaunch-update") new CoordinatedUpdateRelauncher(LocalSessionPaths.CreateDefault(root)).RelaunchAsync(args[1], cancellationToken).GetAwaiter().GetResult();
+            else if (args[0] == "relaunch-runners") new CoordinatedUpdateRelauncher(LocalSessionPaths.CreateDefault(root)).RelaunchConfiguredAsync(cancellationToken).GetAwaiter().GetResult();
             else if (LocalSessionSetupVerbPolicy.IsRemoval(args[0]))
                 provisioner.RemoveAsync(args[0] == "uninstall-cleanup", cancellationToken).GetAwaiter().GetResult();
             else return 64;

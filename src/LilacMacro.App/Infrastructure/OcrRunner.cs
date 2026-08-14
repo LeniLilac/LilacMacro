@@ -98,7 +98,8 @@ public sealed class OcrRunner : IDisposable
     public async Task WarmUpAsync(
         string modelName,
         string device,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int scale = 1)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!KeepLoaded) throw new InvalidOperationException("OCR preload requires Keep Loaded.");
@@ -114,11 +115,13 @@ public sealed class OcrRunner : IDisposable
         PixelRect crop,
         string modelName,
         string device,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int scale = 1)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!SupportedModels.Contains(modelName)) throw new ArgumentOutOfRangeException(nameof(modelName));
         if (!SupportedDevices.Contains(device)) throw new ArgumentOutOfRangeException(nameof(device));
+        if (scale is < 1 or > 4) throw new ArgumentOutOfRangeException(nameof(scale));
         if (!IsDeviceReady(device)) throw new InvalidOperationException($"OCR {device} is not set up yet.");
 
         DeepDebugScope? scope = _deepDebug.IsActive
@@ -135,8 +138,9 @@ public sealed class OcrRunner : IDisposable
         try
         {
             OcrWorkerResult result = KeepLoaded
-                ? await _persistentWorker.RunAsync(imagePath, crop, cropPath, modelName, device, cancellationToken)
-                : await RunOneShotAsync(imagePath, crop, cropPath, outputPath, modelName, device, cancellationToken);
+                ? await RunPersistentWithAccessRecoveryAsync(
+                    imagePath, crop, cropPath, modelName, device, cancellationToken, scale)
+                : await RunOneShotAsync(imagePath, crop, cropPath, outputPath, modelName, device, cancellationToken, scale);
             _deepDebug.RecordPng(await File.ReadAllBytesAsync(cropPath, cancellationToken), "ocr-crop", new
             {
                 Source = imagePath,
@@ -145,7 +149,7 @@ public sealed class OcrRunner : IDisposable
                 Device = device,
                 KeepLoaded,
             });
-            OcrWorkerResult offset = OffsetRegions(result, crop);
+            OcrWorkerResult offset = OffsetRegions(result, crop, scale);
             _deepDebug.RecordEvent("ocr", "inference_completed", new
             {
                 offset.ModelName,
@@ -180,6 +184,43 @@ public sealed class OcrRunner : IDisposable
         }
     }
 
+    private async Task<OcrWorkerResult> RunPersistentWithAccessRecoveryAsync(
+        string imagePath,
+        PixelRect crop,
+        string cropPath,
+        string modelName,
+        string device,
+        CancellationToken cancellationToken,
+        int scale)
+    {
+        const int maximumAttempts = 4;
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await _persistentWorker.RunAsync(
+                    imagePath, crop, cropPath, modelName, device, cancellationToken, scale).ConfigureAwait(false);
+            }
+            catch (Exception error) when (
+                IsTransientWorkerAccessFailure(error) && attempt < maximumAttempts)
+            {
+                _deepDebug.RecordEvent("ocr", "worker_access_retry", new
+                {
+                    Attempt = attempt,
+                    MaximumAttempts = maximumAttempts,
+                    Error = error.Message,
+                });
+                await Task.Delay(TimeSpan.FromMilliseconds(250 * attempt), cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    internal static bool IsTransientWorkerAccessFailure(Exception error) =>
+        error is OcrWorkerResponseAccessException ||
+        (error.Message.Contains("OCR worker failed", StringComparison.OrdinalIgnoreCase) &&
+         (error.Message.Contains("Permission denied", StringComparison.OrdinalIgnoreCase) ||
+          error.Message.Contains("Access is denied", StringComparison.OrdinalIgnoreCase)));
+
     private async Task<OcrWorkerResult> RunOneShotAsync(
         string imagePath,
         PixelRect crop,
@@ -187,7 +228,8 @@ public sealed class OcrRunner : IDisposable
         string outputPath,
         string modelName,
         string device,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int scale)
     {
         ProcessStartInfo startInfo = CreateWorkerStartInfo();
         startInfo.ArgumentList.Add("--input");
@@ -203,6 +245,8 @@ public sealed class OcrRunner : IDisposable
         startInfo.ArgumentList.Add(modelName);
         startInfo.ArgumentList.Add("--device");
         startInfo.ArgumentList.Add(device);
+        startInfo.ArgumentList.Add("--scale");
+        startInfo.ArgumentList.Add(scale.ToString(System.Globalization.CultureInfo.InvariantCulture));
         startInfo.ArgumentList.Add("--output");
         startInfo.ArgumentList.Add(outputPath);
 
@@ -277,12 +321,14 @@ public sealed class OcrRunner : IDisposable
         }
     }
 
-    private static OcrWorkerResult OffsetRegions(OcrWorkerResult result, PixelRect crop) => result with
+    private static OcrWorkerResult OffsetRegions(OcrWorkerResult result, PixelRect crop, int scale) => result with
     {
         Regions = result.Regions.Select(region => region with
         {
-            X = checked(region.X + crop.X),
-            Y = checked(region.Y + crop.Y),
+            X = checked((int)Math.Round(region.X / (double)scale) + crop.X),
+            Y = checked((int)Math.Round(region.Y / (double)scale) + crop.Y),
+            Width = Math.Max(1, checked((int)Math.Round(region.Width / (double)scale))),
+            Height = Math.Max(1, checked((int)Math.Round(region.Height / (double)scale))),
         }).ToArray(),
     };
 

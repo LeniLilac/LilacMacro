@@ -9,7 +9,7 @@ using LilacMacro.App.Workspace;
 
 namespace LilacMacro.App.Views;
 
-public partial class TeamSwapTestPage : UserControl, IWorkspacePage
+public partial class TeamSwapTestPage : UserControl, IStoppableWorkspacePage
 {
     private readonly TeamSwapTestRunner _runner;
     private readonly DeepDebugSessionService _deepDebug;

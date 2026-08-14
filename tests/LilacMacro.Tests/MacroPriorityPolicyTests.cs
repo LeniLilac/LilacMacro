@@ -1,5 +1,6 @@
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Views;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.Tests;
 
@@ -23,7 +24,7 @@ public sealed class MacroPriorityPolicyTests
     }
 
     [Fact]
-    public void UnsupportedHighestPriorityIsNotSilentlySkipped()
+    public void EventParticipatesInPrioritySelection()
     {
         PlanTaskPrototype limitedEvent = Task(PlanTaskMode.Event, 1, 1);
         PlanTaskPrototype story = Task(PlanTaskMode.Story, 2, 1);
@@ -33,7 +34,7 @@ public sealed class MacroPriorityPolicyTests
             MacroPriorityPolicy.Select(plan, new Dictionary<PlanTaskPrototype, int>()));
 
         Assert.Same(limitedEvent, selected);
-        Assert.False(MacroPriorityPolicy.Supported(selected));
+        Assert.True(MacroPriorityPolicy.Supported(selected));
     }
 
     [Fact]
@@ -47,6 +48,21 @@ public sealed class MacroPriorityPolicyTests
         Assert.Same(challenge, MacroPriorityPolicy.Select(plan, victories));
         Assert.Same(story, MacroPriorityPolicy.Select(plan, victories, task => task != challenge));
         Assert.True(MacroPriorityPolicy.Supported(challenge));
+    }
+
+    [Fact]
+    public void UtilityRemainsPendingAndHandsOffWhileTemporarilyIneligible()
+    {
+        PlanTaskPrototype utility = Task(PlanTaskMode.Utilities, 1, 400);
+        utility.Route = ResourceRefuelPolicy.GoldMineRoute;
+        PlanTaskPrototype raid = Task(PlanTaskMode.Raid, 2, 1);
+        PlanPrototype plan = new("test", [utility, raid]);
+        Dictionary<PlanTaskPrototype, int> victories = [];
+
+        Assert.Same(utility, MacroPriorityPolicy.Select(plan, victories));
+        Assert.Same(raid, MacroPriorityPolicy.Select(plan, victories, task => task != utility));
+        Assert.True(MacroPriorityPolicy.IsPending(utility, victories));
+        Assert.True(MacroPriorityPolicy.Supported(utility));
     }
 
     [Theory]

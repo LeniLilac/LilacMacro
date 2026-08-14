@@ -132,6 +132,8 @@
                     <Button x:Name="WireTestNav" Content="Wire Test" Style="{StaticResource NavButtonStyle}" Click="WireTestNav_OnClick" />
                     <Button x:Name="ScrollTestNav" Content="Scroll Test" Style="{StaticResource NavButtonStyle}" Click="ScrollTestNav_OnClick" />
                     <Button x:Name="TeamSwapTestNav" Content="Team Swap Test" Style="{StaticResource NavButtonStyle}" Click="TeamSwapTestNav_OnClick" />
+                    <Button x:Name="RouteOptimizerTestNav" Content="Route Optimizer" Style="{StaticResource NavButtonStyle}" Click="RouteOptimizerTestNav_OnClick" />
+                    <Button x:Name="UtilityTaskTestNav" Content="Utility Tests" Style="{StaticResource NavButtonStyle}" Click="UtilityTaskTestNav_OnClick" />
                 </StackPanel>
             </Grid>
         </Border>

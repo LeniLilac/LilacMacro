@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using LilacMacro.App.Views;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Runtime;
 
@@ -28,6 +29,8 @@ internal sealed record PlanBlockSettingsSnapshot
 
     public bool ExtractAtCheckpoint { get; init; } = true;
 
+    public string RewardTarget { get; init; } = "None";
+
     public bool HardMode { get; init; }
 
     public bool RunTrait { get; init; } = true;
@@ -35,6 +38,8 @@ internal sealed record PlanBlockSettingsSnapshot
     public bool RunStat { get; init; } = true;
 
     public bool RunSprite { get; init; } = true;
+
+    public List<string> ShopItemIds { get; init; } = [];
 
     public string Label { get; init; } = string.Empty;
 
@@ -98,10 +103,12 @@ internal static class PlanPersistence
             Difficulty = task.Difficulty,
             BossesBeforeExtract = task.BossesBeforeExtract,
             ExtractAtCheckpoint = task.ExtractAtCheckpoint,
+            RewardTarget = task.RewardTarget,
             HardMode = task.HardMode,
             RunTrait = task.RunTrait,
             RunStat = task.RunStat,
             RunSprite = task.RunSprite,
+            ShopItemIds = task.ShopItemIds.ToList(),
         },
         PlanLoopPrototype loop => new PlanBlockSettingsSnapshot
         {
@@ -121,7 +128,7 @@ internal static class PlanPersistence
         out PlanBlockPrototype restored)
     {
         restored = null!;
-        if (snapshot is null || snapshot.Children is null || depth > MaximumDepth || ++blockCount > MaximumBlocks)
+        if (snapshot is null || snapshot.Children is null || snapshot.ShopItemIds is null || depth > MaximumDepth || ++blockCount > MaximumBlocks)
             return false;
         if (string.Equals(snapshot.Kind, TaskKind, StringComparison.Ordinal))
         {
@@ -136,6 +143,16 @@ internal static class PlanPersistence
             {
                 return false;
             }
+            if (mode == PlanTaskMode.Expedition)
+            {
+                try { _ = ExpeditionRewardPolicy.ParseResource(snapshot.RewardTarget); }
+                catch (InvalidDataException) { return false; }
+            }
+            if (mode == PlanTaskMode.Utilities)
+            {
+                try { UtilityTaskPolicy.Validate(snapshot.Route, snapshot.ShopItemIds); }
+                catch (Exception error) when (error is InvalidDataException or ArgumentException) { return false; }
+            }
             restored = new PlanTaskPrototype
             {
                 Mode = mode,
@@ -145,10 +162,12 @@ internal static class PlanPersistence
                 Difficulty = snapshot.Difficulty,
                 BossesBeforeExtract = snapshot.BossesBeforeExtract,
                 ExtractAtCheckpoint = snapshot.ExtractAtCheckpoint,
+                RewardTarget = snapshot.RewardTarget,
                 HardMode = snapshot.HardMode,
                 RunTrait = snapshot.RunTrait,
                 RunStat = snapshot.RunStat,
                 RunSprite = snapshot.RunSprite,
+                ShopItemIds = snapshot.ShopItemIds.ToArray(),
             };
             return true;
         }

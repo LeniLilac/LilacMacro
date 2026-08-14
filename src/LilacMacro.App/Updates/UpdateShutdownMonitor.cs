@@ -8,7 +8,7 @@ internal sealed class UpdateShutdownMonitor : IDisposable
     private readonly string requestPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
         "LilacMacro",
-        "Session",
+        "UpdateControl",
         "update-request.txt");
     private readonly DispatcherTimer timer;
     private readonly LilacSemanticVersion currentVersion;

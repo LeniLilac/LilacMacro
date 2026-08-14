@@ -20,6 +20,19 @@ internal static class MacroPlanPreflight
                 throw new InvalidDataException(
                     $"{task.ModeLabel} runtime is not implemented; remove it before starting the plan.");
             }
+            if (task.Mode == PlanTaskMode.Utilities)
+            {
+                LilacMacro.Core.Automation.UtilityTaskPolicy.Validate(task.Route, task.ShopItemIds);
+            }
+            if (task.Mode == PlanTaskMode.Expedition)
+            {
+                _ = LilacMacro.Core.Automation.ExpeditionRewardPolicy.ParseResource(task.RewardTarget);
+            }
+            if (task.Mode == PlanTaskMode.Event)
+            {
+                (string map, LilacMacro.Core.Ocr.StoryAct act) = MacroTaskOptionsFactory.ParseRoute(task.Route);
+                _ = LilacMacro.Core.Automation.EventRunPolicy.MapId(map, act);
+            }
             await validateTask(task, cancellationToken);
         }
     }

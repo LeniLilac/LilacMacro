@@ -80,6 +80,9 @@ internal sealed class RunnerSnapshotBuilder
             PlanTaskMode.Story => RunnerTaskMode.Story,
             PlanTaskMode.Raid => RunnerTaskMode.Raid,
             PlanTaskMode.Challenge => RunnerTaskMode.Challenge,
+            PlanTaskMode.Expedition => RunnerTaskMode.Expedition,
+            PlanTaskMode.Event => RunnerTaskMode.Event,
+            PlanTaskMode.Utilities => RunnerTaskMode.Utilities,
             _ => throw new InvalidOperationException($"Unsupported local runner mode: {task.ModeLabel}."),
         },
         Route = task.Route,
@@ -89,5 +92,10 @@ internal sealed class RunnerSnapshotBuilder
         RunTrait = task.RunTrait,
         RunStat = task.RunStat,
         RunSprite = task.RunSprite,
+        Difficulty = task.Difficulty,
+        BossesBeforeExtract = task.BossesBeforeExtract,
+        ExtractAtCheckpoint = task.ExtractAtCheckpoint,
+        RewardTarget = task.RewardTarget,
+        ShopItemIds = task.ShopItemIds.ToArray(),
     };
 }

@@ -21,10 +21,11 @@ internal static class MacroPriorityPolicy
     public static bool IsPending(
         PlanTaskPrototype task,
         IReadOnlyDictionary<PlanTaskPrototype, int> victories) =>
-        task.Mode == PlanTaskMode.Challenge || victories.GetValueOrDefault(task) < task.Target;
+        task.Mode is PlanTaskMode.Challenge or PlanTaskMode.Utilities ||
+        victories.GetValueOrDefault(task) < task.Target;
 
     public static bool Supported(PlanTaskPrototype task) =>
-        task.Mode is PlanTaskMode.Story or PlanTaskMode.Raid or PlanTaskMode.Challenge;
+        task.Mode is PlanTaskMode.Story or PlanTaskMode.Raid or PlanTaskMode.Challenge or PlanTaskMode.Expedition or PlanTaskMode.Event or PlanTaskMode.Utilities;
 
     private static void Add(PlanBlockPrototype block, ICollection<PlanTaskPrototype> tasks)
     {

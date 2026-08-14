@@ -84,6 +84,65 @@ internal sealed class PlacementPlaybackService(
         return executed;
     }
 
+    public async Task<ExpeditionPlacementSession> RunExpeditionInitialAsync(
+        PlacementSetupDocument document,
+        PlacementRouteSetup route,
+        PlacementRuntimeKeys keys,
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(route);
+        PlacementSetupRules.Validate(document);
+        PlacementPlaybackPlan plan = PlacementPlaybackPlan.Create(route);
+        PlacementStep[] steps = [.. plan.BeforeStart, .. plan.AfterStart];
+        Dictionary<Guid, PlacementExecutionState> placements = [];
+        UnitPanelLayout? layout = null;
+        await RunStepsAsync(
+            steps, document, keys, device, placements,
+            () => layout, value => layout = value, status, cancellationToken);
+        status?.Invoke("EXPEDITION INITIAL PLACEMENT COMPLETE");
+        return new ExpeditionPlacementSession(placements.Values.ToArray(), layout);
+    }
+
+    public async Task ReplayExpeditionAsync(
+        ExpeditionPlacementSession session,
+        PlacementRuntimeKeys keys,
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        if (session.ActivePlacements.Count == 0) return;
+        QuickPlacementPoint[] batch = session.ActivePlacements
+            .Select(state => new QuickPlacementPoint(state.Placement.UnitSlot, state.LivePoint))
+            .ToArray();
+        await workspace.RunQuickPlacementBatchAsync(
+            DebugWorkflowCatalog.ClientSize, keys.QuickPlacement, keys.CancelPlacement, batch, cancellationToken);
+        status?.Invoke($"EXPEDITION REPLAY BATCH {batch.Length}");
+
+        if (session.PanelLayout is null)
+            throw new InvalidOperationException("Expedition replay has no calibrated unit-panel layout.");
+        foreach (PlacementExecutionState saved in session.ActivePlacements)
+        {
+            await workspace.ClickRobloxAsync(
+                DebugWorkflowCatalog.ClientSize, saved.LivePoint, cancellationToken);
+            if (!await _panel.WaitForConfigurableSelectionAsync(
+                    session.PanelLayout, device, status, cancellationToken))
+            {
+                status?.Invoke($"UNIT {saved.Placement.UnitSlot} ALREADY MOVED; REPLAY SKIPPED");
+                continue;
+            }
+
+            PlacementExecutionState replacement = new(saved.Placement, saved.LivePoint);
+            await ApplyConfigurationAsync(
+                replacement, saved.Targeting, saved.AutoUpgrade, keys, cancellationToken);
+            await _panel.DismissAsync(session.PanelLayout, status, cancellationToken);
+            status?.Invoke($"UNIT {saved.Placement.UnitSlot} PHANTOM REPLACED + CONFIGURED");
+        }
+    }
+
     private async Task<MatchStartBoundaryDecision> SatisfyStartBoundaryAsync(
         UnitPanelLayout? layout,
         PlacementExecutionState? activePlacement,

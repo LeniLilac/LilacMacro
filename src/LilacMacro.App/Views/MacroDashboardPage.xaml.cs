@@ -25,11 +25,14 @@ public partial class MacroDashboardPage : UserControl
     private readonly StoryWireTestRunner _runner;
     private readonly PrivateServerRejoinService _rejoin;
     private readonly UiScaleNormalizer _uiScale;
+    private readonly GameSettingsNormalizer _gameSettings;
+    private readonly UtilityTaskService _utilities;
     private readonly MacroTaskOptionsFactory _taskOptions;
     private readonly Stopwatch _runtime = new();
     private readonly Dictionary<PlanTaskPrototype, int> _victories = [];
     private readonly Dictionary<PlanTaskPrototype, int> _defeats = [];
     private readonly Dictionary<PlanTaskPrototype, DateTimeOffset> _blockedUntil = [];
+    private readonly Dictionary<PlanTaskPrototype, DateTimeOffset> _utilityDueAt = [];
     private readonly MacroUnattendedRecoveryRunner _recovery;
     private readonly List<RunStatsPoint> _runStats = [];
     private readonly DispatcherTimer _runtimeTimer;
@@ -53,6 +56,8 @@ public partial class MacroDashboardPage : UserControl
         _runner = new StoryWireTestRunner(_workspace, _ocr, deepDebug);
         _rejoin = new PrivateServerRejoinService(_workspace, _ocr);
         _uiScale = new UiScaleNormalizer(_workspace, _ocr, deepDebug);
+        _gameSettings = new GameSettingsNormalizer(_workspace, deepDebug);
+        _utilities = new UtilityTaskService(_workspace, _ocr);
         PlacementSetupStore placements = new(Path.Combine(
             MacroInstanceContext.Current.ConfigurationRoot,
             "placements"));
@@ -159,6 +164,7 @@ public partial class MacroDashboardPage : UserControl
                     Instance = MacroInstanceContext.Current.DisplayName,
                 }));
             _runtime.Restart();
+            _utilityDueAt.Clear();
             _runtimeTimer.Start();
             _runStats.Clear();
             StatsChart.SetPoints(_runStats);
@@ -171,11 +177,28 @@ public partial class MacroDashboardPage : UserControl
             }
             await MacroPlanPreflight.ValidateAsync(
                 plan,
-                async (task, token) => _ = await _taskOptions.CreateAsync(task, device, token),
+                async (task, token) =>
+                {
+                    if (task.Mode == PlanTaskMode.Utilities)
+                    {
+                        MacroRuntimeKeySnapshot keys = _ownerState.KeyBindings.Snapshot();
+                        if (UtilityTaskPolicy.RequiresAreasMenu(task.Route) && keys.AreasMenu is null)
+                            throw new InvalidDataException("Areas menu must have a key for shop and refuel tasks.");
+                        return;
+                    }
+                    _ = await _taskOptions.CreateAsync(task, device, token);
+                },
                 _runCancellation.Token);
+            bool startupSettingsNormalized = false;
             _runTask = _recovery.RunAsync(
                 plan,
-                (madeProgress, token) => RunPlanAsync(plan, device, madeProgress, token),
+                (madeProgress, token) => RunPlanAsync(
+                    plan,
+                    device,
+                    madeProgress,
+                    () => startupSettingsNormalized,
+                    () => startupSettingsNormalized = true,
+                    token),
                 _runCancellation.Token);
             await _runTask;
             AppendLog("PLAN COMPLETE");
@@ -209,9 +232,13 @@ public partial class MacroDashboardPage : UserControl
         PlanPrototype plan,
         string device,
         Action madeProgress,
+        Func<bool> startupSettingsNormalized,
+        Action markStartupSettingsNormalized,
         CancellationToken cancellationToken)
     {
-        await ResetLobbyAsync(device, cancellationToken);
+        bool normalizeStartupSettings = !startupSettingsNormalized();
+        await ResetLobbyAsync(device, normalizeStartupSettings, cancellationToken);
+        if (normalizeStartupSettings) markStartupSettingsNormalized();
         PlanTaskPrototype? repeatedTask = null;
         while (true)
         {
@@ -221,7 +248,7 @@ public partial class MacroDashboardPage : UserControl
             PlanTaskPrototype? task = repeatedTask ?? MacroPriorityPolicy.Select(
                     plan,
                     _victories,
-                    candidate => !_blockedUntil.TryGetValue(candidate, out DateTimeOffset until) || now >= until);
+                    candidate => now >= EligibleAt(candidate, now));
             repeatedTask = null;
             if (task is null)
             {
@@ -230,7 +257,7 @@ public partial class MacroDashboardPage : UserControl
                     .ToArray();
                 if (pending.Length == 0) return;
                 DateTimeOffset next = pending
-                    .Select(candidate => _blockedUntil.GetValueOrDefault(candidate, now))
+                    .Select(candidate => EligibleAt(candidate, now))
                     .Where(candidate => candidate > now)
                     .DefaultIfEmpty(now.AddSeconds(5))
                     .Min();
@@ -244,6 +271,27 @@ public partial class MacroDashboardPage : UserControl
             _currentTask = task;
             RefreshUpcomingTasks(plan);
             AppendLog($"RUN {task.Name}");
+
+            if (task.Mode == PlanTaskMode.Utilities)
+            {
+                MacroRuntimeKeySnapshot keys = _ownerState.KeyBindings.Snapshot();
+                await _utilities.RunAsync(
+                    task.Route,
+                    task.ShopItemIds,
+                    keys.AreasMenu,
+                    keys.MacroToggle,
+                    device,
+                    AppendLog,
+                    cancellationToken);
+                _utilityDueAt[task] = UtilityTaskPolicy.NextDue(
+                    task.Route, DateTimeOffset.UtcNow, task.Target);
+                _recovery.MarkTaskSucceeded(task);
+                madeProgress();
+                AppendLog($"UTILITY COMPLETE | NEXT {_utilityDueAt[task]:yyyy-MM-dd HH:mm:ss}Z");
+                _currentTask = null;
+                RefreshUpcomingTasks(plan);
+                continue;
+            }
 
             StoryWireTestOptions options = await _taskOptions.CreateAsync(task, device, cancellationToken);
             Progress<StoryWireProgress> progress = new(value =>
@@ -262,7 +310,7 @@ public partial class MacroDashboardPage : UserControl
                 AppendLog(result.Status);
                 _currentTask = null;
                 RefreshUpcomingTasks(plan);
-                await ResetLobbyAsync(device, cancellationToken);
+                await ResetLobbyAsync(device, normalizeStartupSettings: false, cancellationToken);
                 continue;
             }
 
@@ -288,11 +336,10 @@ public partial class MacroDashboardPage : UserControl
             PlanTaskPrototype? nextTask = MacroPriorityPolicy.Select(
                 plan,
                 _victories,
-                candidate => !_blockedUntil.TryGetValue(candidate, out DateTimeOffset until) ||
-                    DateTimeOffset.UtcNow >= until);
+                candidate => DateTimeOffset.UtcNow >= EligibleAt(candidate, DateTimeOffset.UtcNow));
             if (MatchContinuationPolicy.ShouldRepeat(
                     hasVerifiedTerminalOutcome: true,
-                    modeSupportsRepeat: task.Mode is PlanTaskMode.Story or PlanTaskMode.Raid,
+                    modeSupportsRepeat: task.Mode is PlanTaskMode.Story or PlanTaskMode.Raid or PlanTaskMode.Event,
                     sameTaskSelected: ReferenceEquals(task, nextTask)))
             {
                 try
@@ -309,18 +356,23 @@ public partial class MacroDashboardPage : UserControl
             }
 
             _currentTask = null;
-            await ResetLobbyAsync(device, cancellationToken);
+            await ResetLobbyAsync(device, normalizeStartupSettings: false, cancellationToken);
         }
     }
 
-    private async Task ResetLobbyAsync(string device, CancellationToken cancellationToken)
+    private async Task ResetLobbyAsync(
+        string device,
+        bool normalizeStartupSettings,
+        CancellationToken cancellationToken)
     {
         await _rejoin.RejoinAndVerifyLobbyAsync(
             _ownerState.PrivateServerLink,
             device,
             AppendLog,
             cancellationToken);
+        if (!normalizeStartupSettings) return;
         await _uiScale.NormalizeAsync(device, AppendLog, cancellationToken);
+        await _gameSettings.NormalizeAsync(AppendLog, cancellationToken);
     }
 
     private string SelectOcrDevice()
@@ -328,6 +380,14 @@ public partial class MacroDashboardPage : UserControl
         if (_ocr.IsDeviceReady(OcrRunner.GpuDevice)) return OcrRunner.GpuDevice;
         if (_ocr.IsDeviceReady(OcrRunner.CpuDevice)) return OcrRunner.CpuDevice;
         throw new InvalidOperationException("Set up OCR in Dataset Builder before starting the macro.");
+    }
+
+    private DateTimeOffset EligibleAt(PlanTaskPrototype task, DateTimeOffset fallback)
+    {
+        DateTimeOffset eligible = _blockedUntil.GetValueOrDefault(task, fallback);
+        if (_utilityDueAt.TryGetValue(task, out DateTimeOffset utilityDue) && utilityDue > eligible)
+            eligible = utilityDue;
+        return eligible;
     }
 
     private void StopButton_OnClick(object sender, RoutedEventArgs eventArgs) => _runCancellation?.Cancel();
@@ -370,7 +430,7 @@ public partial class MacroDashboardPage : UserControl
                 ReferenceEquals(task, _currentTask)
                     ? $"CURRENT · PRIORITY {task.Priority}"
                     : $"{task.ModeLabel.ToUpperInvariant()} · PRIORITY {task.Priority}",
-                _blockedUntil.TryGetValue(task, out DateTimeOffset until) && until > DateTimeOffset.UtcNow
+                EligibleAt(task, DateTimeOffset.UtcNow) is DateTimeOffset until && until > DateTimeOffset.UtcNow
                     ? $"NEXT {until:MM-dd HH:mm}Z"
                     : task.Mode is PlanTaskMode.Utilities or PlanTaskMode.Challenge
                     ? task.TargetLabel

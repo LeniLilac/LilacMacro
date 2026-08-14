@@ -44,6 +44,10 @@
             <Setter Property="MinHeight" Value="33" />
             <Setter Property="Padding" Value="10,5" />
         </Style>
+        <Style x:Key="SettingsFieldActionButtonStyle" TargetType="Button" BasedOn="{StaticResource SettingsButtonStyle}">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
         <Style x:Key="SettingsCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
             <Setter Property="Margin" Value="0,0,0,12" />
             <Setter Property="Padding" Value="15" />
@@ -270,17 +274,14 @@
                                     <Grid Grid.Column="1">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                         <TextBox x:Name="PrivateServerText"
+                                                 MinHeight="38"
+                                                 Padding="9,7"
                                                  MaxLength="2048"
                                                  VerticalAlignment="Center"
                                                  VerticalContentAlignment="Center"
                                                  TextChanged="PrivateServerText_OnTextChanged" />
-                                        <Button Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource SettingsButtonStyle}" Click="TestPrivateServer_OnClick" Content="TEST LINK" />
+                                        <Button x:Name="TestPrivateServerButton" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SettingsFieldActionButtonStyle}" Click="TestPrivateServer_OnClick" Content="TEST LINK" />
                                     </Grid>
-                                </Grid>
-                                <Grid Margin="0,7,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STATUS" />
-                                    <TextBlock x:Name="PrivateServerStatusText" Grid.Column="1" FontSize="10" Foreground="{DynamicResource InkSoftBrush}" Text="Not stored" />
                                 </Grid>
                             </StackPanel>
                         </Grid>
@@ -305,13 +306,8 @@
                                                      VerticalContentAlignment="Center"
                                                      MaxLength="2048"
                                                      PasswordChanged="WebhookPassword_OnPasswordChanged" />
-                                        <Button x:Name="TestWebhookButton" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Click="TestWebhook_OnClick" Content="TEST WEBHOOK" />
+                                        <Button x:Name="TestWebhookButton" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SettingsFieldActionButtonStyle}" Click="TestWebhook_OnClick" Content="TEST WEBHOOK" />
                                     </Grid>
-                                </Grid>
-                                <Grid Margin="0,7,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STATUS" />
-                                    <TextBlock x:Name="WebhookStatusText" Grid.Column="1" FontSize="10" Foreground="{DynamicResource InkSoftBrush}" Text="No delivery attempted" />
                                 </Grid>
                             </StackPanel>
                         </Grid>

@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using LilacMacro.Core.Automation;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.Core.LocalSession;
 
@@ -137,6 +139,34 @@ public static class LocalSessionValidation
                 errors.Add($"Snapshot task {task.Id} has no route.");
             if (task.Target < 1) errors.Add($"Snapshot task {task.Id} has an invalid target.");
             if (task.DefeatRetries is < 0 or > 20) errors.Add($"Snapshot task {task.Id} has invalid defeat retries.");
+            if (task.Mode == RunnerTaskMode.Expedition && task.Difficulty is < 1 or > 3)
+                errors.Add($"Snapshot task {task.Id} has invalid Expedition difficulty.");
+            if (task.Mode == RunnerTaskMode.Expedition && task.BossesBeforeExtract is < 0 or > 99)
+                errors.Add($"Snapshot task {task.Id} has invalid Expedition extraction target.");
+            if (task.Mode == RunnerTaskMode.Expedition)
+            {
+                try { _ = ExpeditionRewardPolicy.ParseResource(task.RewardTarget); }
+                catch (InvalidDataException error) { errors.Add(error.Message); }
+            }
+            if (task.Mode == RunnerTaskMode.Event)
+            {
+                try
+                {
+                    (string map, StoryAct act) = ParseEventRoute(task.Route);
+                    _ = EventRunPolicy.MapId(map, act);
+                }
+                catch (InvalidDataException error) { errors.Add(error.Message); }
+            }
+            if (task.Mode == RunnerTaskMode.Utilities)
+            {
+                try { UtilityTaskPolicy.Validate(task.Route, task.ShopItemIds); }
+                catch (Exception error) when (error is InvalidDataException or ArgumentException) { errors.Add(error.Message); }
+            }
+        }
+        if (snapshot.Tasks.Any(task => task.Mode == RunnerTaskMode.Utilities && UtilityTaskPolicy.RequiresAreasMenu(task.Route)) &&
+            (!snapshot.KeyBindings.TryGetValue("AreasMenu", out int? areasMenu) || areasMenu is null))
+        {
+            errors.Add("Snapshot shop and refuel tasks require an Areas menu key binding.");
         }
         if (snapshot.PlacementSetups.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
             errors.Add("Snapshot placement setups are missing.");
@@ -194,6 +224,22 @@ public static class LocalSessionValidation
 
     private static LocalSessionValidationResult Result(List<string> errors) =>
         errors.Count == 0 ? LocalSessionValidationResult.Success : new(false, errors);
+
+    private static (string Map, StoryAct Act) ParseEventRoute(string route)
+    {
+        string[] parts = route.Replace("Â·", "·", StringComparison.Ordinal)
+            .Split('·', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        string map = parts.FirstOrDefault() ?? string.Empty;
+        StoryAct act = parts.FirstOrDefault(part => part.StartsWith("Act ", StringComparison.OrdinalIgnoreCase))?.ToLowerInvariant() switch
+        {
+            "act 1" => StoryAct.Act1,
+            "act 2" => StoryAct.Act2,
+            "act 3" => StoryAct.Act3,
+            "act 4" => StoryAct.Act4,
+            _ => throw new InvalidDataException("Event route act is invalid."),
+        };
+        return (map, act);
+    }
 
     private static void ValidateOriginalSystemState(
         IReadOnlyList<OriginalSystemValue> originals,

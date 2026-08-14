@@ -1,5 +1,6 @@
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Ocr;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Debugging;
 
@@ -38,6 +39,34 @@ internal static class DebugWorkflowCatalog
         new("Challenge", "challenge", "reward gamemode", "reward"),
         new("Expedition", "expedition", "special gamemode", "special"),
         new("Tower", "tower", "tower mode"),
+    ];
+
+    public static readonly OcrTargetRule EventSelectStageTarget =
+        new("Select Stage", "select stage");
+
+    public static readonly IReadOnlyList<OcrTargetRule> EventPageConfirmTargets =
+    [
+        new("Event Gamemode", "event gamemode"),
+        new("Battlepass", "battlepass"),
+        new("Quests", "quests"),
+        new("Shop", "shop"),
+        new("Summon", "summon"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> EventActTargets =
+    [
+        EventRunPolicy.TargetFor(StoryAct.Act1),
+        EventRunPolicy.TargetFor(StoryAct.Act2),
+        EventRunPolicy.TargetFor(StoryAct.Act3),
+        EventRunPolicy.TargetFor(StoryAct.Act4),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> EventStagePreviewTargets =
+    [
+        .. EventActTargets,
+        EventSelectStageTarget,
+        new("Enter Matchmaking", "enter matchmaking", "matchmaking"),
+        new("Stage Buffs", "stage buffs"),
     ];
 
     public static readonly IReadOnlyList<OcrTargetRule> UnitInventoryTargets =
@@ -168,6 +197,75 @@ internal static class DebugWorkflowCatalog
         .. ResultSupportTargets,
     ];
 
+    public static readonly IReadOnlyList<OcrTargetRule> ExpeditionHubTargets =
+    [
+        new("Expedition Hub", "expedition hub", "expeditionhub"),
+        new("Expedition Resources", "play and manage all expedition"),
+        new("Buildings", "resources and buildings", "resources and buildin"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> GoldMineRefuelTargets =
+    [
+        new("Add Fuel", "add fuel", "addfuel"),
+        new("Fuel Cell", "fuel cell"),
+        new("Rewards", "rewards"),
+        new("Gold Mine", "start generating gold", "generating gold"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> ResourceDrillRefuelTargets =
+    [
+        new("Add Fuel", "add fuel", "addfuel"),
+        new("Fuel Cell", "fuel cell"),
+        new("Rewards", "rewards"),
+        new("Resource Drill", "start mining for", "orill to start mining"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> AddFuelDialogTargets =
+    [
+        new("Add Fuel", "add fuel", "addfuel"),
+        new("Confirm", "confirm"),
+        new("Cancel", "cancel"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> ShopAreaTargets =
+    [
+        new("Shop Areas", "shop areas"),
+        new("Raid Shop", "raid shop", "raidshop"),
+        new("Gold Shop", "gold shop", "goldshop"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> GoldShopSelectorTargets =
+    [
+        new("Gold Shop", "gold shop"),
+        new("Event Shop", "event shop"),
+        new("Leave", "leave"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> RaidShopSelectorTargets =
+    [
+        new("View Shop", "view shop"),
+        new("Leave", "leave"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> GoldShopTargets =
+    [
+        new("Gold Shop", "gold shop", "goldshop"),
+        new("Cosmetic Shop", "cosmetic shop"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> RaidShopTargets =
+    [
+        new("General", "general"),
+        new("Spirit City", "spirit city"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> ShopPurchaseDialogTargets =
+    [
+        new("Buy Amount", "buy amount"),
+        new("Purchase Question", "how much would you like to buy"),
+        new("Cancel", "cancel"),
+    ];
+
     public static readonly DebugStateSpec Lobby = new(
         "LOBBY",
         Dataset("lobby-20260802-185951"),
@@ -190,6 +288,30 @@ internal static class DebugWorkflowCatalog
         EventSelectionRules.StateTargets,
         DebugMatchMode.ExactTargets);
 
+    public static readonly DebugStateSpec EventPageConfirm = new(
+        "EVENT PAGE CONFIRM",
+        Dataset("villain-invasion-set1-20260812-230831"),
+        [4],
+        3,
+        EventPageConfirmTargets,
+        DebugMatchMode.RequiredFirstTarget,
+        RegionLabel: "Event Page Confirm + Event Gamemode button");
+
+    public static readonly DebugStateSpec EventActPicker = new(
+        "EVENT ACT PICKER",
+        Dataset("villain-invasion-set1-20260812-230831"),
+        [2, 3],
+        1,
+        EventActTargets,
+        RegionLabel: "Act OCR");
+
+    public static readonly DebugStateSpec EventStagePreview = new(
+        "EVENT STAGE PREVIEW",
+        Dataset("villain-invasion-set2-20260812-231832"),
+        [2],
+        3,
+        EventStagePreviewTargets);
+
     public static readonly DebugStateSpec AreasUi = new(
         "AREAS UI",
         Dataset("areas-ui-20260802-231943"),
@@ -197,6 +319,87 @@ internal static class DebugWorkflowCatalog
         3,
         AreaSelectionRules.StateTargets,
         DebugMatchMode.RequiredFirstTarget);
+
+    public static readonly DebugStateSpec ExpeditionHub = new(
+        "EXPEDITION HUB",
+        Dataset("areas-ui-expedition-hub-20260812-184939"),
+        [2],
+        3,
+        ExpeditionHubTargets,
+        DebugMatchMode.RequiredFirstTarget);
+
+    public static readonly DebugStateSpec GoldMineRefuel = new(
+        "GOLD MINE REFUEL",
+        Dataset("gold-mine-fuel-refuel-20260812-184313"),
+        [5],
+        4,
+        GoldMineRefuelTargets,
+        DebugMatchMode.DeclarativeEvidence,
+        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Gold Mine"]);
+
+    public static readonly DebugStateSpec ResourceDrillRefuel = new(
+        "RESOURCE DRILL REFUEL",
+        Dataset("drill-fuel-refuel-20260812-184726"),
+        [1],
+        4,
+        ResourceDrillRefuelTargets,
+        DebugMatchMode.DeclarativeEvidence,
+        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Resource Drill"]);
+
+    public static readonly DebugStateSpec AddFuelDialog = new(
+        "ADD FUEL DIALOG",
+        Dataset("gold-mine-fuel-refuel-20260812-184313"),
+        [6],
+        3,
+        AddFuelDialogTargets,
+        DebugMatchMode.DeclarativeEvidence,
+        RequiredTargetNames: ["Add Fuel", "Confirm", "Cancel"],
+        SameRowTargetNames: ["Confirm", "Cancel"]);
+
+    public static readonly DebugStateSpec ShopAreas = new(
+        "SHOP AREAS",
+        Dataset("shop-areas-nav-for-gold-raid-shop-20260813-210616"),
+        [2],
+        3,
+        ShopAreaTargets);
+
+    public static readonly DebugStateSpec GoldShopSelector = new(
+        "GOLD SHOP SELECTOR",
+        Dataset("gold-shop-buy-part1-20260813-210659"),
+        [3],
+        2,
+        GoldShopSelectorTargets);
+
+    public static readonly DebugStateSpec GoldShop = new(
+        "GOLD SHOP",
+        Dataset("gold-shop-buy-part1-20260813-210659"),
+        [37],
+        2,
+        GoldShopTargets,
+        RegionLabel: "Gold Shop UI Confirm");
+
+    public static readonly DebugStateSpec RaidShopSelector = new(
+        "RAID SHOP SELECTOR",
+        Dataset("raid-shop-buy-part1-20260813-213958"),
+        [2],
+        2,
+        RaidShopSelectorTargets);
+
+    public static readonly DebugStateSpec RaidShop = new(
+        "RAID SHOP",
+        Dataset("raid-shop-buy-part2-20260813-214144"),
+        [3],
+        2,
+        RaidShopTargets);
+
+    public static readonly DebugStateSpec ShopPurchaseDialog = new(
+        "SHOP PURCHASE DIALOG",
+        Dataset("gold-shop-buy-part3-20260813-213107"),
+        [3],
+        3,
+        ShopPurchaseDialogTargets,
+        DebugMatchMode.DeclarativeEvidence,
+        RequiredTargetNames: ["Buy Amount", "Purchase Question", "Cancel"]);
 
     public static readonly DebugStateSpec UnitInventory = new(
         "UNIT INVENTORY",

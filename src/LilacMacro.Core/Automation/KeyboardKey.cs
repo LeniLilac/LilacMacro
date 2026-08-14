@@ -2,6 +2,8 @@ namespace LilacMacro.Core.Automation;
 
 public static class KeyboardKey
 {
+    public const int Escape = 0x1B;
+    public const int Enter = 0x0D;
     public const int LeftShift = 0xA0;
     public const int RightShift = 0xA1;
     public const int LeftControl = 0xA2;
@@ -9,6 +11,7 @@ public static class KeyboardKey
 
     public static bool IsSupportedAutomationKey(int virtualKey) => virtualKey switch
     {
+        Escape => true,
         LeftShift or RightShift or LeftControl or RightControl => true,
         >= 0x21 and <= 0x28 => true,
         _ => IsSupportedGeneralKey(virtualKey),
@@ -25,9 +28,10 @@ public static class KeyboardKey
 
         return virtualKey switch
         {
+            Escape => "Escape",
             0x08 => "Backspace",
             0x09 => "Tab",
-            0x0D => "Enter",
+            Enter => "Enter",
             0x14 => "Caps Lock",
             0x20 => "Space",
             0x21 => "Page Up",

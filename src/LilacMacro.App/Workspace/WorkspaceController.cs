@@ -249,6 +249,12 @@ public sealed class WorkspaceController : IDisposable
         CancellationToken cancellationToken = default) =>
         _input.ClickAsync(requiredSize, point, cancellationToken);
 
+    public Task HoverRobloxAsync(
+        PixelSize requiredSize,
+        PixelPoint point,
+        CancellationToken cancellationToken = default) =>
+        _input.HoverAsync(requiredSize, point, cancellationToken);
+
     public Task ScrollRobloxAsync(
         PixelSize requiredSize,
         PixelPoint point,

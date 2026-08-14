@@ -30,6 +30,10 @@ public sealed class PlacementMapCatalog
         new("expedition-flower-forest", PlacementMapMode.Expedition, "Flower Forest", ["Expedition Flower Forest Map"]),
         new("expedition-rose-kingdom", PlacementMapMode.Expedition, "Rose Kingdom", ["Expedition Rose Kingdom Map"]),
         new("expedition-east-town", PlacementMapMode.Expedition, "East Town", ["Expedition East Town Map Preview"]),
+        new("event-villain-invasion-act-1", PlacementMapMode.Events, "Villain Invasion · Act 1", ["Event Act 1 Map Image"]),
+        new("event-villain-invasion-act-2", PlacementMapMode.Events, "Villain Invasion · Act 2", ["event act 2 map image"]),
+        new("event-villain-invasion-act-3", PlacementMapMode.Events, "Villain Invasion · Act 3", ["event act 3 map image"]),
+        new("event-villain-invasion-act-4", PlacementMapMode.Events, "Villain Invasion · Act 4", ["event act 4 map img"]),
     ];
 
     public async Task<IReadOnlyList<PlacementMapReference>> DiscoverAsync(

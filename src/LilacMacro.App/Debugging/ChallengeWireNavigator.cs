@@ -33,10 +33,8 @@ internal sealed class ChallengeWireNavigator(
         {
             DateTimeOffset now = DateTimeOffset.UtcNow;
             if (!rotation.CanAttempt(type, now)) continue;
-            if (!await SelectTypeAsync(type, options.Device, progress, cancellationToken))
-                return Failed($"{type.ToString().ToUpperInvariant()} SELECT BLOCKED");
-
-            ChallengeSelection? selection = await WaitForSelectionAsync(options, progress, cancellationToken);
+            ChallengeSelection? selection = await SelectTypeAndWaitAsync(
+                type, options, progress, cancellationToken);
             if (selection is null) return Failed("CHALLENGE STATE TIMEOUT");
             if (selection.Kind == ChallengeSelectionKind.Available)
             {
@@ -94,36 +92,49 @@ internal sealed class ChallengeWireNavigator(
         return report.Succeeded;
     }
 
-    private async Task<ChallengeSelection?> WaitForSelectionAsync(
+    private async Task<ChallengeSelection?> SelectTypeAndWaitAsync(
+        RegularChallengeType type,
         StoryWireTestOptions options,
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken)
     {
-        using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(StateTimeout);
-        try
+        ObservedStateTransitionBudget budget = new();
+        int actionAttempts = 0;
+        int indeterminate = 0;
+        while (true)
         {
-            while (true)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Both expected destinations are checked before the failed/source state.
+            ChallengeSelection? selection = await TryStateAsync(
+                ChallengeSelectionKind.Available,
+                DebugWorkflowCatalog.ChallengeAvailable,
+                options,
+                cancellationToken);
+            selection ??= await TryStateAsync(
+                ChallengeSelectionKind.Cooldown,
+                DebugWorkflowCatalog.ChallengeCooldown,
+                options,
+                cancellationToken);
+            if (selection is not null) return selection;
+
+            DebugRunReport source = await _debug.CheckChallengeTypesAsync(
+                options.Device, cancellationToken);
+            if (source.Succeeded)
             {
-                Report(progress, StoryWireStage.ChallengeState, StoryWireStageStatus.Running,
-                    "CHECK AVAILABLE / COOLDOWN", [], []);
-                ChallengeSelection? selection = await TryStateAsync(
-                    ChallengeSelectionKind.Available,
-                    DebugWorkflowCatalog.ChallengeAvailable,
-                    options,
-                    timeout.Token);
-                selection ??= await TryStateAsync(
-                    ChallengeSelectionKind.Cooldown,
-                    DebugWorkflowCatalog.ChallengeCooldown,
-                    options,
-                    timeout.Token);
-                if (selection is not null) return selection;
-                await Task.Delay(PollDelay, timeout.Token);
+                if (actionAttempts >= budget.MaximumActionAttempts) return null;
+                actionAttempts++;
+                indeterminate = 0;
+                if (!await SelectTypeAsync(type, options.Device, progress, cancellationToken)) return null;
+                await Task.Delay(PollDelay, cancellationToken);
+                continue;
             }
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return null;
+
+            if (indeterminate >= budget.MaximumIndeterminateObservations) return null;
+            await Task.Delay(
+                ObservedStateTransitionPolicy.ObservationDelay(indeterminate, budget),
+                cancellationToken);
+            indeterminate++;
         }
     }
 

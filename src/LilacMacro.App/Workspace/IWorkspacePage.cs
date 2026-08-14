@@ -4,3 +4,8 @@ public interface IWorkspacePage
 {
     Task RefreshAsync();
 }
+
+public interface IStoppableWorkspacePage : IWorkspacePage
+{
+    Task StopAsync();
+}

@@ -9,6 +9,7 @@ public sealed class AutomationKeySequenceTests
     [Theory]
     [InlineData(0x57, "W")]
     [InlineData(KeyboardKey.LeftShift, "Left Shift")]
+    [InlineData(KeyboardKey.Escape, "Escape")]
     [InlineData(0x70, "F1")]
     [InlineData(0x6B, "Num +")]
     public void KeyPress_CreateAcceptsReferenceKeySet(int virtualKey, string displayName)
@@ -19,7 +20,7 @@ public sealed class AutomationKeySequenceTests
     }
 
     [Theory]
-    [InlineData(0x1B, 1000)]
+    [InlineData(0x10, 1000)]
     [InlineData(F6VirtualKey, 1000)]
     [InlineData(0x57, 0)]
     [InlineData(0x57, 120001)]

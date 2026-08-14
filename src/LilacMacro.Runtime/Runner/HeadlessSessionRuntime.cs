@@ -43,8 +43,53 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         ArgumentNullException.ThrowIfNull(progress);
         PrivateServerRejoinService.Validate(request.PrivateServerLink);
 
+        int failures = 0;
+        StartupNormalizationState startup = new();
+        while (true)
+        {
+            try
+            {
+                await RunPlanAttemptAsync(snapshot, request, progress, startup, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (InvalidDataException)
+            {
+                throw;
+            }
+            catch (Exception error)
+            {
+                failures++;
+                TimeSpan delay = failures switch
+                {
+                    1 => TimeSpan.FromSeconds(2),
+                    2 => TimeSpan.FromSeconds(5),
+                    3 => TimeSpan.FromSeconds(15),
+                    _ => TimeSpan.FromSeconds(30),
+                };
+                progress.Report(new SessionRuntimeProgress
+                {
+                    Stage = "runtime-recovery",
+                    Detail = $"RECOVERABLE ANOMALY | {error.Message} | RESTART + REJOIN IN {delay.TotalSeconds:N0}S",
+                });
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task RunPlanAttemptAsync(
+        RunnerRuntimeSnapshot snapshot,
+        SessionStartRequest request,
+        IProgress<SessionRuntimeProgress> progress,
+        StartupNormalizationState startup,
+        CancellationToken cancellationToken)
+    {
+
         string revisionRoot = await MaterializeAsync(snapshot, cancellationToken).ConfigureAwait(false);
-        ApplyRuntimeEnvironment(revisionRoot);
+        ApplyRuntimeEnvironment(revisionRoot, paths.RuntimeRoot);
         DeepDebugSessionService deepDebug = new(paths.RuntimeRoot);
         using WorkspaceController workspace = new(deepDebug);
         using OcrRunner ocr = new(deepDebug, paths.OcrRoot) { KeepLoaded = true };
@@ -53,43 +98,72 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
 
         StoryWireTestRunner runner = new(workspace, ocr, deepDebug);
         UiScaleNormalizer uiScale = new(workspace, ocr, deepDebug);
+        GameSettingsNormalizer gameSettings = new(workspace, deepDebug);
         PrivateServerRejoinService rejoin = new(workspace, ocr);
+        UtilityTaskService utilities = new(workspace, ocr);
         PlacementSetupStore placements = new(Path.Combine(revisionRoot, PlacementDirectoryName));
         ChallengePlacementResolver challengePlacements = new(placements);
         Dictionary<string, int> wins = snapshot.Tasks.ToDictionary(task => task.Id, _ => 0, StringComparer.Ordinal);
         Dictionary<string, int> losses = snapshot.Tasks.ToDictionary(task => task.Id, _ => 0, StringComparer.Ordinal);
         Dictionary<string, DateTimeOffset> blockedUntil = new(StringComparer.Ordinal);
+        Dictionary<string, DateTimeOffset> utilityDueAt = new(StringComparer.Ordinal);
         string device = SelectDevice(ocr, snapshot.PreferGpu);
 
         await ResetLobbyAsync(
             rejoin,
             uiScale,
+            gameSettings,
             request.PrivateServerLink,
             device,
+            normalizeStartupSettings: !startup.Completed,
             detail => progress.Report(new SessionRuntimeProgress
             {
                 Stage = "startup-normalization",
                 Detail = detail,
             }),
             cancellationToken).ConfigureAwait(false);
+        startup.Completed = true;
 
         RunnerTaskSnapshot? repeatedTask = null;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
             bool repeatedEntry = repeatedTask is not null;
-            RunnerTaskSnapshot? task = repeatedTask ?? SelectTask(snapshot.Tasks, wins, blockedUntil);
+            RunnerTaskSnapshot? task = repeatedTask ?? SelectTask(snapshot.Tasks, wins, blockedUntil, utilityDueAt);
             repeatedTask = null;
             if (task is null)
             {
-                if (snapshot.Tasks.All(candidate => candidate.Mode == RunnerTaskMode.Challenge || wins[candidate.Id] >= candidate.Target))
+                if (snapshot.Tasks.All(candidate =>
+                        candidate.Mode is not RunnerTaskMode.Challenge and not RunnerTaskMode.Utilities &&
+                        wins[candidate.Id] >= candidate.Target))
                     return;
-                DateTimeOffset next = blockedUntil.Values.DefaultIfEmpty(DateTimeOffset.UtcNow.AddSeconds(5)).Min();
+                DateTimeOffset now = DateTimeOffset.UtcNow;
+                DateTimeOffset next = snapshot.Tasks
+                    .Select(candidate => EligibleAt(candidate.Id, blockedUntil, utilityDueAt, now))
+                    .Where(candidate => candidate > now)
+                    .DefaultIfEmpty(now.AddSeconds(5))
+                    .Min();
                 await Task.Delay(Max(TimeSpan.Zero, next - DateTimeOffset.UtcNow), cancellationToken).ConfigureAwait(false);
                 continue;
             }
 
             Report(progress, task, "task-started", wins, losses, $"RUN {task.Mode} {task.Route}".Trim());
+            if (task.Mode == RunnerTaskMode.Utilities)
+            {
+                await utilities.RunAsync(
+                    task.Route,
+                    task.ShopItemIds,
+                    OptionalKey(snapshot.KeyBindings, "AreasMenu"),
+                    RequiredKey(snapshot.KeyBindings, "MacroToggle"),
+                    device,
+                    detail => Report(progress, task, "refuel", wins, losses, detail),
+                    cancellationToken).ConfigureAwait(false);
+                utilityDueAt[task.Id] = UtilityTaskPolicy.NextDue(
+                    task.Route, DateTimeOffset.UtcNow, task.Target);
+                Report(progress, task, "utility-complete", wins, losses,
+                    $"NEXT {utilityDueAt[task.Id]:yyyy-MM-dd HH:mm:ss}Z");
+                continue;
+            }
             StoryWireTestOptions options = await CreateOptionsAsync(
                 task,
                 snapshot.KeyBindings,
@@ -116,8 +190,10 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                 await ResetLobbyAsync(
                     rejoin,
                     uiScale,
+                    gameSettings,
                     request.PrivateServerLink,
                     device,
+                    normalizeStartupSettings: false,
                     detail => Report(progress, task, "lobby-reset", wins, losses, detail),
                     cancellationToken).ConfigureAwait(false);
                 continue;
@@ -138,10 +214,10 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                     throw new InvalidOperationException($"{task.Id} exceeded its defeat retry limit.");
             }
 
-            RunnerTaskSnapshot? nextTask = SelectTask(snapshot.Tasks, wins, blockedUntil);
+            RunnerTaskSnapshot? nextTask = SelectTask(snapshot.Tasks, wins, blockedUntil, utilityDueAt);
             if (MatchContinuationPolicy.ShouldRepeat(
                     hasVerifiedTerminalOutcome: true,
-                    modeSupportsRepeat: task.Mode is RunnerTaskMode.Story or RunnerTaskMode.Raid,
+                    modeSupportsRepeat: task.Mode is RunnerTaskMode.Story or RunnerTaskMode.Raid or RunnerTaskMode.Event,
                     sameTaskSelected: string.Equals(task.Id, nextTask?.Id, StringComparison.Ordinal)))
             {
                 try
@@ -165,8 +241,10 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             await ResetLobbyAsync(
                 rejoin,
                 uiScale,
+                gameSettings,
                 request.PrivateServerLink,
                 device,
+                normalizeStartupSettings: false,
                 detail => Report(progress, task, "lobby-reset", wins, losses, detail),
                 cancellationToken).ConfigureAwait(false);
         }
@@ -175,8 +253,10 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
     private static async Task ResetLobbyAsync(
         PrivateServerRejoinService rejoin,
         UiScaleNormalizer uiScale,
+        GameSettingsNormalizer gameSettings,
         string privateServerLink,
         string device,
+        bool normalizeStartupSettings,
         Action<string> status,
         CancellationToken cancellationToken)
     {
@@ -185,7 +265,9 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             device,
             status,
             cancellationToken).ConfigureAwait(false);
+        if (!normalizeStartupSettings) return;
         await uiScale.NormalizeAsync(device, status, cancellationToken).ConfigureAwait(false);
+        await gameSettings.NormalizeAsync(status, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<string> MaterializeAsync(RunnerRuntimeSnapshot snapshot, CancellationToken cancellationToken)
@@ -211,11 +293,11 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         return revisionRoot;
     }
 
-    private static void ApplyRuntimeEnvironment(string revisionRoot)
+    private static void ApplyRuntimeEnvironment(string revisionRoot, string runtimeRoot)
     {
         Environment.SetEnvironmentVariable("LILACMACRO_RUNNER_STATE_CONTEXTS", Path.Combine(revisionRoot, ContextFileName));
         Environment.SetEnvironmentVariable("LILACMACRO_RUNNER_PLACEMENTS", Path.Combine(revisionRoot, PlacementDirectoryName));
-        Environment.SetEnvironmentVariable("LILACMACRO_RUNNER_VISUAL_PROFILES", Path.Combine(revisionRoot, ProfileDirectoryName));
+        Environment.SetEnvironmentVariable("LILACMACRO_RUNNER_VISUAL_PROFILES", Path.Combine(runtimeRoot, ProfileDirectoryName));
         Environment.SetEnvironmentVariable("LILACMACRO_RUNNER_CHALLENGE_ROTATION", Path.Combine(revisionRoot, ChallengeFileName));
     }
 
@@ -238,14 +320,28 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
     private static RunnerTaskSnapshot? SelectTask(
         IReadOnlyList<RunnerTaskSnapshot> tasks,
         IReadOnlyDictionary<string, int> wins,
-        IReadOnlyDictionary<string, DateTimeOffset> blockedUntil)
+        IReadOnlyDictionary<string, DateTimeOffset> blockedUntil,
+        IReadOnlyDictionary<string, DateTimeOffset> utilityDueAt)
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
         return tasks
             .OrderBy(task => task.Priority)
             .FirstOrDefault(task =>
-                (task.Mode == RunnerTaskMode.Challenge || wins[task.Id] < task.Target) &&
-                (!blockedUntil.TryGetValue(task.Id, out DateTimeOffset until) || now >= until));
+                (task.Mode is RunnerTaskMode.Challenge or RunnerTaskMode.Utilities || wins[task.Id] < task.Target) &&
+                now >= EligibleAt(task.Id, blockedUntil, utilityDueAt, now));
+    }
+
+    private static DateTimeOffset EligibleAt(
+        string taskId,
+        IReadOnlyDictionary<string, DateTimeOffset> blockedUntil,
+        IReadOnlyDictionary<string, DateTimeOffset> utilityDueAt,
+        DateTimeOffset fallback)
+    {
+        DateTimeOffset eligible = blockedUntil.TryGetValue(taskId, out DateTimeOffset blocked)
+            ? blocked
+            : fallback;
+        if (utilityDueAt.TryGetValue(taskId, out DateTimeOffset due) && due > eligible) eligible = due;
+        return eligible;
     }
 
     private static async Task<StoryWireTestOptions> CreateOptionsAsync(
@@ -260,6 +356,8 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         {
             RunnerTaskMode.Raid => WireGameMode.Raid,
             RunnerTaskMode.Challenge => WireGameMode.Challenge,
+            RunnerTaskMode.Expedition => WireGameMode.Expedition,
+            RunnerTaskMode.Event => WireGameMode.Event,
             _ => WireGameMode.Story,
         };
         (string map, StoryAct act) = gameMode == WireGameMode.Challenge ? ("AUTO", StoryAct.Act1) : ParseRoute(task.Route);
@@ -287,7 +385,11 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             RequiredKey(keys, "ShiftLock"),
             device,
             RunMatchRuntime: true,
-            RepeatStage: false);
+            RepeatStage: false,
+            ExpeditionDifficulty: task.Difficulty,
+            BossesBeforeExtract: task.BossesBeforeExtract,
+            ExtractAtCheckpoint: task.ExtractAtCheckpoint,
+            ExpeditionRewardTarget: task.RewardTarget);
     }
 
     private static async Task<int> ResolveTeamAsync(
@@ -297,7 +399,13 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         PlacementSetupStore placements,
         CancellationToken cancellationToken)
     {
-        string mapId = mode == WireGameMode.Raid ? $"raid-spirit-city-{RouteId(act)}" : $"story-{Slug(map)}";
+        string mapId = mode switch
+        {
+            WireGameMode.Raid => $"raid-spirit-city-{RouteId(act)}",
+            WireGameMode.Expedition => $"expedition-{Slug(map)}",
+            WireGameMode.Event => EventRunPolicy.MapId(map, act),
+            _ => $"story-{Slug(map)}",
+        };
         PlacementMapDefinition definition = PlacementMapCatalog.Definitions.First(candidate => candidate.Id == mapId);
         PlacementSetupDocument document = await placements.LoadAsync(mapId, cancellationToken).ConfigureAwait(false);
         PlacementRouteDefinition routeDefinition = PlacementRouteCatalog.For(definition)
@@ -402,5 +510,10 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
     private sealed class InlineProgress<T>(Action<T> callback) : IProgress<T>
     {
         public void Report(T value) => callback(value);
+    }
+
+    private sealed class StartupNormalizationState
+    {
+        public bool Completed { get; set; }
     }
 }

@@ -1,10 +1,10 @@
 # Macro architecture
 
-**Status: Prototype.** The Story/Raid/Challenge scheduler, shared placement/terminal path, verified private-server Lobby reset, persistent Plan authoring, and DPAPI secret persistence are Prototype. Expedition and limited Event acts remain Planned.
+**Status: Prototype.** The Story/Raid/Challenge/Expedition scheduler, Villain Invasion Acts 1-4, shared placement/terminal path, verified private-server Lobby reset, persistent Plan authoring, and DPAPI secret persistence are Prototype.
 
 ## Root model
 
-Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story/Raid selection may continue through Repeat Stage; any task, act, or mode change returns through verified Lobby.
+Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story/Raid/Villain Invasion selection may continue through Repeat Stage; any task, act, or mode change returns through verified Lobby.
 
 ```mermaid
 flowchart TD
@@ -57,7 +57,7 @@ Recovery is an indefinitely available scheduler-level escalation made from indiv
 4. quarantine the failing task with an inspectable reason, continue with the next eligible task, and periodically reconsider quarantined work under a bounded backoff policy;
 5. when no task is currently safe or eligible, wait without holding input and repeat recovery until cancellation or configuration changes.
 
-The current Prototype preflights every configured task and placement route before runtime input begins. After that boundary, an operational exception returns to the scheduler instead of ending the Macro: retries wait 2, 5, 15, then at most 30 seconds; the reset path restarts Roblox, reapplies normalization, rejoins the private server, and verifies Lobby. Three consecutive failures attributed to one task quarantine it for 5 minutes, allowing another eligible task to run; an otherwise idle plan waits and periodically reconsiders that task. Each recovery and quarantine is written to the run log and deep-debug events. Owner live acceptance and broader anomaly classification remain required before this objective can be promoted beyond Prototype.
+The current Prototype preflights every configured task and placement route before runtime input begins. After that boundary, an operational exception returns to the scheduler instead of ending the Macro: retries wait 2, 5, 15, then at most 30 seconds; the reset path restarts Roblox, reapplies normalization, rejoins the private server, and verifies Lobby. Three consecutive failures attributed to one task quarantine it for 5 minutes, allowing another eligible task to run; an otherwise idle plan waits and periodically reconsiders that task. Managed-session execution uses the same capped 2/5/15/30-second operational retry ladder around a fresh full-plan reset, while invalid serialized configuration remains terminal. Each recovery and quarantine is written to the run log and deep-debug events. Owner live acceptance and broader anomaly classification remain required before this objective can be promoted beyond Prototype.
 
 “Indefinitely available” never means infinite clicking, an unbounded wait inside one state owner, stale evidence, or bypassing a safety gate. Each observation window, input attempt, transition, restart, and cleanup remains capped. Fresh evidence must authorize every input, cancellation must interrupt every layer, and held keys/buttons must be released before any retry, restart, quarantine, or wait. Recovery history, task quarantine, and the active escalation level must remain visible in diagnostics.
 
@@ -102,11 +102,15 @@ The random Challenge map is recognized after type selection and selects the corr
 
 ### Expedition — Planned
 
-Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Expedition map and difficulty -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> private-server rejoin -> Lobby.
+Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Expedition map and difficulty -> Match Preview -> route-reward inspect/reroll -> Match Prestart -> current-node loop -> Checkpoint extraction or terminal result -> private-server rejoin -> Lobby.
 
-### Event — Planned
+The node loop locates and hovers only the current marker. A stable tooltip title owns semantic calibration, while the color learned from that observation is a per-environment hot path with hover-OCR fallback and refresh. Future-node lookahead is not required. Defense and Elite may replay placement/configuration after clearing phantom placements; Assault and Boss wait; Encounter uses a map-specific verified interaction flow; Checkpoint applies extraction policy. The detailed field contract and unresolved behavior are in [Expedition runtime](EXPEDITION-RUNTIME.md).
 
-Lobby -> Unit Inventory -> Teams -> change team -> Events -> Villain Invasion -> act -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> private-server rejoin -> Lobby.
+### Event — Prototype
+
+Lobby -> Unit Inventory -> Teams -> change team -> Events -> Villain Invasion -> OCR-owned Act 1-4 card -> Select Stage -> Match Preview -> Match Prestart -> camera alignment -> first-load map preparation -> placements -> Start Game -> Victory/Defeat -> exact same task: Repeat Stage with retained team/camera/player position; otherwise private-server rejoin -> Lobby.
+
+Map preparation is a shared map-identity policy rather than Event-specific orchestration, so future maps can register bounded key sequences without duplicating the match runner. Repeat Stage always bypasses preparation.
 
 The updated Event sidebar also exposes Boss Bounty and Guess That Unit through the same live-OCR destination selector. Their downstream flows remain unspecified, so only owner-triggered Debug selection is implemented; neither is treated as a runnable Event task yet.
 
@@ -114,7 +118,7 @@ The updated Event sidebar also exposes Boss Bounty and Guess That Unit through t
 
 - Story, Raid, Challenge, and Expedition are permanent game modes. Their runners own only mode-specific navigation and reuse the shared team, match-start, placement, terminal, and Lobby-reset modules.
 - Event acts are limited content. Each event definition must keep its identity, OCR aliases, routes, availability, and runner adapter behind one removable registration boundary instead of adding branches throughout the scheduler and UI.
-- Utilities are scheduler tasks, not game modes. They use the same priority contract but remain separate from mode navigation.
+- Utilities are scheduler tasks, not game modes. They use the same priority contract but remain separate from mode navigation. Mine and Drill retain configured minute intervals; Gold Shop and Calendar use the next UTC midnight, while Raid Shop uses the next seven-day boundary from its field-supplied beacon. Shop task snapshots carry only stable enabled-item IDs, never screen positions; the runtime rediscovers catalog rows and availability from fresh evidence.
 - Removing limited content must delete its registration and focused tests without changing shared capture, OCR, input, placement, terminal, or scheduler services. Persisted plan modes use exact stable names and reject unknown values rather than silently deserializing as another mode; an unavailable-content state is still required before a persisted limited Event task can outlive its registration.
 
 ## State-transition safety
@@ -128,6 +132,8 @@ Every runner must:
 5. revalidate Roblox after delays and external navigation;
 6. return a typed success, cooldown, defeat, retryable failure, or fatal failure;
 7. release input on cancellation and every exception path.
+
+Every ordinary input transition also follows one shared temporal contract. The owner observes the expected destination first. If it is present, the transition completes without checking the previous state. If it is absent, the owner observes the source: a retained source authorizes reacquiring its live action and one bounded retry; neither state authorizes only an expanding bounded observation delay, never input. A local episode eventually returns success or a typed retryable failure, while the scheduler owns indefinite recovery. Multi-destination branches check every valid expected state before the source. Any exception must document why a destination cannot be independently owned and what bounded evidence replaces it.
 
 OCR, image detection, and timers may suggest a state. None may authorize input without the state's complete evidence contract.
 

@@ -171,6 +171,72 @@ public sealed class UiScaleNormalizationTests
         Assert.Equal(new PixelPoint(618, 213), row!.ValuePoint);
     }
 
+    [Theory]
+    [InlineData(110, 205, 45, "On")]
+    [InlineData(180, 35, 30, "Off")]
+    [InlineData(85, 85, 85, "Unknown")]
+    public void GameSettingsToggleClassifierRequiresDominantButtonColor(
+        byte red,
+        byte green,
+        byte blue,
+        string expected)
+    {
+        RgbImage image = BlankImage();
+        PixelPoint point = new(735, 270);
+        Fill(image, new PixelRect(point.X - 18, point.Y - 18, 37, 37), red, green, blue);
+
+        Assert.Equal(expected, GameSettingsNormalizationPolicy.Classify(image, point).ToString());
+    }
+
+    [Fact]
+    public void GameSettingsPlanContainsOnlyRequiredOptions()
+    {
+        GameSettingsToggleTarget[] targets = GameSettingsNormalizationPolicy.Tabs
+            .SelectMany(tab => tab.InitialTargets.Concat(tab.ScrolledTargets ?? []))
+            .ToArray();
+
+        Assert.Equal(36, targets.Length);
+        Assert.DoesNotContain(targets, target => target.Name.Contains("Max Range", StringComparison.Ordinal));
+        Assert.Contains(targets, target => target.Name == "Low Detail Mode" && target.DesiredOn);
+        Assert.Contains(targets, target => target.Name == "Auto Sprint" && target.DesiredOn);
+        Assert.Contains(targets, target => target.Name == "Lock Farms on Placement" && !target.DesiredOn);
+    }
+
+    [Fact]
+    public void SuppliedGameSettingsDatasetMatchesCatalogAndToggleColors()
+    {
+        string? root = Environment.GetEnvironmentVariable("LILACMACRO_SETTINGS_OPTION_DATASET");
+        if (string.IsNullOrWhiteSpace(root)) return;
+
+        string imageRoot = Path.Combine(Path.GetFullPath(root), "images");
+        string[] files = Directory.GetFiles(imageRoot, "frame-*.png")
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(6, files.Length);
+        int[] frameForTab = [0, 1, 2, 4, 5];
+        for (int tabIndex = 0; tabIndex < GameSettingsNormalizationPolicy.Tabs.Count; tabIndex++)
+        {
+            GameSettingsTabPlan tab = GameSettingsNormalizationPolicy.Tabs[tabIndex];
+            RgbImage image = LoadPng(files[frameForTab[tabIndex]]);
+            foreach (GameSettingsToggleTarget target in tab.InitialTargets)
+            {
+                GameSettingsToggleState expected = target.DesiredOn
+                    ? GameSettingsToggleState.On
+                    : GameSettingsToggleState.Off;
+                Assert.Equal(expected, GameSettingsNormalizationPolicy.Classify(image, target.Point));
+            }
+        }
+
+        RgbImage unitsBottom = LoadPng(files[3]);
+        foreach (GameSettingsToggleTarget target in GameSettingsNormalizationPolicy.Tabs[2].ScrolledTargets!)
+        {
+            GameSettingsToggleState expected = target.DesiredOn
+                ? GameSettingsToggleState.On
+                : GameSettingsToggleState.Off;
+            Assert.Equal(expected, GameSettingsNormalizationPolicy.Classify(unitsBottom, target.Point));
+        }
+    }
+
     [Fact]
     public void SuppliedScaleDataset_AllPanelsAreStableAndMonotonic()
     {

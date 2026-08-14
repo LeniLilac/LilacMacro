@@ -37,6 +37,7 @@
                         <ComboBoxItem Content="STORY" Tag="Story" />
                         <ComboBoxItem Content="RAID" Tag="Raid" />
                         <ComboBoxItem Content="CHALLENGE" Tag="Challenge" />
+                        <ComboBoxItem Content="EVENT" Tag="Event" />
                     </ComboBox>
                     <TextBlock Text="WIRE MODE" Style="{StaticResource FieldLabelStyle}" Margin="0,12,0,5" />
                     <ComboBox x:Name="WireModeBox" SelectedIndex="0">

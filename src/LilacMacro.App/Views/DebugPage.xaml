@@ -77,6 +77,10 @@
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Margin="0,2,0,0"
                                 Click="NormalizeUiScale_OnClick" />
+                        <Button Content="NORMALIZE STARTUP SETTINGS"
+                                Style="{StaticResource ButtonStyle}"
+                                Margin="0,8,0,0"
+                                Click="NormalizeStartupSettings_OnClick" />
 
                         <Border Height="2" Background="{DynamicResource InkBrush}" Margin="0,18" />
                         <Grid>

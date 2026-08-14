@@ -81,7 +81,7 @@ public sealed class ApplicationUpdateTests
             Guid.NewGuid(),
             new LilacSemanticVersion(1, 0, 71),
             new string('B', 64),
-            @"C:\ProgramData\LilacMacro\Session\update-request.txt",
+            @"C:\ProgramData\LilacMacro\UpdateControl\update-request.txt",
             [15, 8, 15],
             ["runner-2", "runner-1"]);
 

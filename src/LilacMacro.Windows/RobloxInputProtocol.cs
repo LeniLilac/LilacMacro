@@ -6,6 +6,10 @@ internal static class RobloxInputProtocol
 {
     public const int ClickPositionSettleMilliseconds = 75;
     public const int ClickHoldMilliseconds = 20;
+    public const int ClickCursorAcquisitionCycleCount = 3;
+    public const int ClickCursorAcquisitionRetryMilliseconds = 50;
+    public const int CursorPositionAttemptCount = 12;
+    public const int CursorPositionRetryMilliseconds = 25;
     public const int CursorParkingInsetPixels = 24;
     public const int HoverClearPulseCount = 4;
     public const int HoverClearPulseIntervalMilliseconds = 100;

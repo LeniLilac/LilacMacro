@@ -12,6 +12,7 @@ TestResults/
 /datasets/
 *.png
 *.jpg
+!/src/LilacMacro.App/Assets/PlacementMaps/*.jpg
 *.jpeg
 *.webp
 *.log

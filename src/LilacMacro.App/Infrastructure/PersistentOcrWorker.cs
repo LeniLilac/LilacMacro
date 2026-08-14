@@ -17,7 +17,8 @@ internal sealed class PersistentOcrWorker(Func<ProcessStartInfo> createStartInfo
     public async Task WarmUpAsync(
         string modelName,
         string device,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int scale = 1)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         await _gate.WaitAsync(cancellationToken);
@@ -44,7 +45,8 @@ internal sealed class PersistentOcrWorker(Func<ProcessStartInfo> createStartInfo
         string cropPath,
         string modelName,
         string device,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int scale = 1)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         await _gate.WaitAsync(cancellationToken);
@@ -63,6 +65,7 @@ internal sealed class PersistentOcrWorker(Func<ProcessStartInfo> createStartInfo
                 crop_output = cropPath,
                 model = modelName,
                 device,
+                scale,
             });
             await File.WriteAllTextAsync(
                 temporaryRequest,
@@ -75,10 +78,8 @@ internal sealed class PersistentOcrWorker(Func<ProcessStartInfo> createStartInfo
             try
             {
                 await WaitForFileAsync(process, responsePath, timeout.Token);
-                FileInfo resultFile = new(responsePath);
-                if (resultFile.Length > 1024 * 1024)
-                    throw new InvalidDataException("OCR result exceeded the safe size limit.");
-                string json = await File.ReadAllTextAsync(responsePath, timeout.Token);
+                string json = await OcrWorkerResponseReader.ReadAsync(responsePath, timeout.Token)
+                    .ConfigureAwait(false);
                 using JsonDocument document = JsonDocument.Parse(json);
                 if (document.RootElement.TryGetProperty("error", out JsonElement error))
                     throw new InvalidOperationException($"OCR worker failed: {error.GetString()}");

@@ -15,6 +15,20 @@ $ocrRoot = if ([string]::IsNullOrWhiteSpace($InstallRoot)) {
 $venvRoot = Join-Path $ocrRoot 'venv'
 $venvPython = Join-Path $venvRoot 'Scripts\python.exe'
 $runtimeMarker = Join-Path $ocrRoot 'runtime-device.txt'
+$profileMarker = Join-Path $ocrRoot 'runtime-profile.json'
+$gpuPolicy = Join-Path $PSScriptRoot 'OcrGpuRuntime.ps1'
+
+if (-not (Test-Path -LiteralPath $gpuPolicy)) {
+    throw 'LilacMacro could not locate the OCR GPU runtime policy.'
+}
+. $gpuPolicy
+
+$gpu = $null
+$runtime = $null
+if ($Device -eq 'gpu') {
+    $gpu = Get-LilacNvidiaGpu
+    $runtime = Resolve-LilacNvidiaOcrRuntime -Name $gpu.Name -ComputeCapability $gpu.ComputeCapability
+}
 
 if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
     throw 'Python Launcher is not installed. Install Python 3.12, then run this script again.'
@@ -29,6 +43,9 @@ New-Item -ItemType Directory -Path $ocrRoot -Force | Out-Null
 if (Test-Path -LiteralPath $runtimeMarker) {
     Remove-Item -LiteralPath $runtimeMarker -Force
 }
+if (Test-Path -LiteralPath $profileMarker) {
+    Remove-Item -LiteralPath $profileMarker -Force
+}
 if (-not (Test-Path -LiteralPath $venvPython)) {
     & $python312 -m venv $venvRoot
     if ($LASTEXITCODE -ne 0) { throw 'Could not create the LilacMacro OCR environment.' }
@@ -40,14 +57,11 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not update pip in the LilacMacro OCR env
 & $venvPython -m pip uninstall --disable-pip-version-check -y paddlepaddle paddlepaddle-gpu
 
 if ($Device -eq 'gpu') {
-    if (-not (Get-Command nvidia-smi -ErrorAction SilentlyContinue)) {
-        throw 'NVIDIA driver tools were not found.'
-    }
-    & $venvPython -m pip install --disable-pip-version-check 'paddlepaddle-gpu==3.2.0' -i 'https://www.paddlepaddle.org.cn/packages/stable/cu126/'
-    if ($LASTEXITCODE -ne 0) { throw 'Could not install the PaddlePaddle CUDA 12.6 runtime.' }
+    & $venvPython -m pip install --disable-pip-version-check "paddlepaddle-gpu==$($runtime.PaddleVersion)" -i $runtime.PackageIndex
+    if ($LASTEXITCODE -ne 0) { throw "Could not install the PaddlePaddle $($runtime.CudaFeed) runtime for $($runtime.Generation)." }
 }
 else {
-    & $venvPython -m pip install --disable-pip-version-check 'paddlepaddle==3.2.0' -i 'https://www.paddlepaddle.org.cn/packages/stable/cpu/'
+    & $venvPython -m pip install --disable-pip-version-check 'paddlepaddle==3.3.0' -i 'https://www.paddlepaddle.org.cn/packages/stable/cpu/'
     if ($LASTEXITCODE -ne 0) { throw 'Could not install the PaddlePaddle CPU runtime.' }
 }
 
@@ -57,4 +71,22 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not install PaddleOCR.' }
 & $venvPython -c "import paddle, paddleocr; assert '$Device' != 'gpu' or (paddle.device.is_compiled_with_cuda() and paddle.device.cuda.device_count() > 0); print(f'OCR ready: PaddlePaddle {paddle.__version__}, PaddleOCR {paddleocr.__version__}')"
 if ($LASTEXITCODE -ne 0) { throw 'The OCR environment was installed but failed its import check.' }
 
+$profile = [ordered]@{
+    SchemaVersion = 1
+    Device = $Device
+    PaddleVersion = '3.3.0'
+    PaddleOcrVersion = '3.7.0'
+}
+if ($Device -eq 'gpu') {
+    $profile['GpuIndex'] = $gpu.Index
+    $profile['GpuName'] = $gpu.Name
+    $profile['GpuGeneration'] = $runtime.Generation
+    $profile['ComputeCapability'] = $gpu.ComputeCapability
+    $profile['DriverVersion'] = $gpu.DriverVersion
+    $profile['CudaFeed'] = $runtime.CudaFeed
+}
+[IO.File]::WriteAllText(
+    $profileMarker,
+    ($profile | ConvertTo-Json),
+    [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText($runtimeMarker, $Device, [Text.UTF8Encoding]::new($false))

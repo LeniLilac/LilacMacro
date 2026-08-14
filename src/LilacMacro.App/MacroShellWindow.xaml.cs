@@ -38,7 +38,7 @@ public partial class MacroShellWindow : Window
         InitializeWindowSizing();
         _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
         _toastTimer.Tick += ToastTimer_OnTick;
-        AppToastService.ErrorRaised += AppToastService_OnErrorRaised;
+        AppToastService.Raised += AppToastService_OnRaised;
         _ownerState = ownerState;
         _macroPage = new MacroDashboardPage(deepDebug, _ownerState);
         _macroPage.RunningChanged += MacroPage_OnRunningChanged;
@@ -202,7 +202,7 @@ public partial class MacroShellWindow : Window
         }
     }
 
-    private void AppToastService_OnErrorRaised(object? sender, AppErrorToast toast)
+    private void AppToastService_OnRaised(object? sender, AppToast toast)
     {
         if (!Dispatcher.CheckAccess())
         {
@@ -212,10 +212,15 @@ public partial class MacroShellWindow : Window
         ShowToast(toast);
     }
 
-    private void ShowToast(AppErrorToast toast)
+    private void ShowToast(AppToast toast)
     {
         ErrorToastTitle.Text = toast.Title.ToUpperInvariant();
         ErrorToastMessage.Text = toast.Message;
+        ErrorToast.SetResourceReference(
+            Border.BackgroundProperty,
+            toast.Tone == AppToastTone.Success ? "SuccessBrush" : "DangerBrush");
+        ErrorToastIcon.Data = (Geometry)FindResource(
+            toast.Tone == AppToastTone.Success ? "Lucide.CircleCheck" : "Lucide.TriangleAlert");
         ErrorToast.Visibility = Visibility.Visible;
         _toastTimer.Stop();
         _toastTimer.Start();
@@ -239,6 +244,6 @@ public partial class MacroShellWindow : Window
         _ownerState.DisplayOptionsChanged -= OwnerState_OnDisplayOptionsChanged;
         _updates.Dispose();
         _toastTimer.Stop();
-        AppToastService.ErrorRaised -= AppToastService_OnErrorRaised;
+        AppToastService.Raised -= AppToastService_OnRaised;
     }
 }

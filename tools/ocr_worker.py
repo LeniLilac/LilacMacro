@@ -26,6 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input")
     parser.add_argument("--crop", nargs=4, type=int, metavar=("X", "Y", "WIDTH", "HEIGHT"))
     parser.add_argument("--crop-output")
+    parser.add_argument("--scale", type=int, choices=(1, 2, 3, 4), default=1)
     parser.add_argument("--model", choices=sorted(MODEL_PAIRS))
     parser.add_argument("--device", choices=sorted(SUPPORTED_DEVICES), default="cpu")
     parser.add_argument("--output")
@@ -59,6 +60,7 @@ def run_ocr(
     cache: dict[tuple[str, str], Any],
     crop: list[int] | tuple[int, int, int, int] | None = None,
     crop_output: str | None = None,
+    scale: int = 1,
 ) -> dict[str, Any]:
     from paddleocr import __version__ as paddleocr_version
 
@@ -67,7 +69,7 @@ def run_ocr(
     if device not in SUPPORTED_DEVICES:
         raise ValueError(f"Unsupported OCR device: {device}")
     input_path = Path(input_value).resolve(strict=True)
-    inference_path = prepare_crop(input_path, crop, crop_output)
+    inference_path = prepare_crop(input_path, crop, crop_output, scale)
     cache_key = (model_name, device)
     cached = cache_key in cache
     load_ms = 0
@@ -131,6 +133,7 @@ def prepare_crop(
     input_path: Path,
     crop: list[int] | tuple[int, int, int, int] | None,
     crop_output: str | None,
+    scale: int = 1,
 ) -> Path:
     if crop is None:
         return input_path
@@ -146,7 +149,13 @@ def prepare_crop(
     with Image.open(input_path) as source:
         if x + width > source.width or y + height > source.height:
             raise ValueError("crop is outside the input image")
-        source.crop((x, y, x + width, y + height)).save(output_path, format="PNG")
+        cropped = source.crop((x, y, x + width, y + height))
+        if scale > 1:
+            cropped = cropped.resize(
+                (cropped.width * scale, cropped.height * scale),
+                Image.Resampling.LANCZOS,
+            )
+        cropped.save(output_path, format="PNG")
     return output_path
 
 
@@ -156,6 +165,18 @@ def write_result(path_value: str, payload: dict[str, Any]) -> None:
     temporary = output_path.with_suffix(output_path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     temporary.replace(output_path)
+
+
+def read_request(path: Path, attempts: int = 8) -> dict[str, Any]:
+    """Read an atomically published request through transient Windows access races."""
+    for attempt in range(attempts):
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (PermissionError, OSError):
+            if attempt + 1 == attempts:
+                raise
+            sleep(0.025 * (attempt + 1))
+    raise RuntimeError("unreachable request retry state")
 
 
 def serve(
@@ -179,7 +200,7 @@ def serve(
         for request_path in requests:
             request_id = request_path.stem.removeprefix("request-")
             try:
-                request = json.loads(request_path.read_text(encoding="utf-8"))
+                request = read_request(request_path)
                 payload = run_ocr(
                     str(request["input"]),
                     str(request["model"]),
@@ -187,6 +208,7 @@ def serve(
                     cache,
                     request.get("crop"),
                     request.get("crop_output"),
+                    int(request.get("scale", 1)),
                 )
                 payload["request_id"] = str(request.get("request_id", request_id))
             except Exception as error:  # The caller needs a bounded protocol error, not a hung worker.
@@ -214,6 +236,7 @@ def main() -> int:
         {},
         args.crop,
         args.crop_output,
+        args.scale,
     )
     write_result(str(args.output), payload)
     return 0

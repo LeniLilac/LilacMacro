@@ -10,6 +10,10 @@ public sealed class RobloxInputProtocolTests
     {
         Assert.Equal(75, RobloxInputProtocol.ClickPositionSettleMilliseconds);
         Assert.Equal(20, RobloxInputProtocol.ClickHoldMilliseconds);
+        Assert.Equal(3, RobloxInputProtocol.ClickCursorAcquisitionCycleCount);
+        Assert.Equal(50, RobloxInputProtocol.ClickCursorAcquisitionRetryMilliseconds);
+        Assert.Equal(12, RobloxInputProtocol.CursorPositionAttemptCount);
+        Assert.Equal(25, RobloxInputProtocol.CursorPositionRetryMilliseconds);
         Assert.Equal(4, RobloxInputProtocol.HoverClearPulseCount);
         Assert.Equal(100, RobloxInputProtocol.HoverClearPulseIntervalMilliseconds);
         Assert.Equal(100, RobloxInputProtocol.HoverRenderSettleMilliseconds);
@@ -83,6 +87,54 @@ public sealed class RobloxInputProtocolTests
     {
         Assert.Equal((1, -1), RobloxInputProtocol.RegisteredMotionDeltas(200, 1366));
         Assert.Equal((-1, 1), RobloxInputProtocol.RegisteredMotionDeltas(1365, 1366));
+    }
+
+    [Fact]
+    public async Task ClickCursorAcquisition_RetriesOnlyBeforeAcquisitionCompletes()
+    {
+        ClientBounds initial = new(0, 0, 1366, 700);
+        ClientBounds refreshed = new(10, 20, 1366, 700);
+        int acquisitions = 0;
+        int preparations = 0;
+
+        ClientBounds result = await RobloxClickCursorAcquirer.AcquireAsync(
+            initial,
+            () =>
+            {
+                preparations++;
+                return Task.FromResult(refreshed);
+            },
+            bounds =>
+            {
+                acquisitions++;
+                if (acquisitions < 3)
+                    throw new RobloxPointerAcquisitionException("race", new InvalidOperationException());
+                Assert.Equal(refreshed, bounds);
+            },
+            CancellationToken.None);
+
+        Assert.Equal(refreshed, result);
+        Assert.Equal(3, acquisitions);
+        Assert.Equal(2, preparations);
+    }
+
+    [Fact]
+    public async Task ClickCursorAcquisition_DoesNotRetryUnrelatedInputFailure()
+    {
+        int preparations = 0;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            RobloxClickCursorAcquirer.AcquireAsync(
+                new ClientBounds(0, 0, 1366, 700),
+                () =>
+                {
+                    preparations++;
+                    return Task.FromResult(new ClientBounds(0, 0, 1366, 700));
+                },
+                _ => throw new InvalidOperationException("unrelated"),
+                CancellationToken.None));
+
+        Assert.Equal(0, preparations);
     }
 
     [Fact]

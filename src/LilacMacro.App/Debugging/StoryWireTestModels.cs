@@ -35,6 +35,8 @@ internal enum WireGameMode
     Story,
     Raid,
     Challenge,
+    Expedition,
+    Event,
 }
 
 internal sealed record StoryWireNavigationKeys(
@@ -55,7 +57,11 @@ internal sealed record StoryWireTestOptions(
     int ShiftLockVirtualKey,
     string Device,
     bool RunMatchRuntime,
-    bool RepeatStage);
+    bool RepeatStage,
+    int ExpeditionDifficulty = 1,
+    int BossesBeforeExtract = 1,
+    bool ExtractAtCheckpoint = true,
+    string ExpeditionRewardTarget = "None");
 
 internal sealed record StoryWireProgress(
     StoryWireStage Stage,

@@ -13,5 +13,6 @@
   <ItemGroup>
     <None Include="..\..\tools\ocr_worker.py" Link="tools\ocr_worker.py" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\scripts\Setup-Ocr.ps1" Link="scripts\Setup-Ocr.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\scripts\OcrGpuRuntime.ps1" Link="scripts\OcrGpuRuntime.ps1" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

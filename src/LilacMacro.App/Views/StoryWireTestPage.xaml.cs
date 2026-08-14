@@ -11,15 +11,13 @@ using LilacMacro.App.Workspace;
 using LilacMacro.Core.Automation;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Vision;
-using LilacMacro.Runtime.Normalization;
 
 namespace LilacMacro.App.Views;
 
-public partial class StoryWireTestPage : UserControl, IWorkspacePage
+public partial class StoryWireTestPage : UserControl, IStoppableWorkspacePage
 {
     private readonly OcrRunner _ocr;
     private readonly StoryWireTestRunner _runner;
-    private readonly UiScaleNormalizer _uiScale;
     private readonly DeepDebugSessionService _deepDebug;
     private readonly ObservableCollection<StoryWireStageItem> _stages;
     private readonly ObservableCollection<string> _events = [];
@@ -37,7 +35,6 @@ public partial class StoryWireTestPage : UserControl, IWorkspacePage
         _deepDebug = deepDebug;
         _device = defaultOcrDevice;
         _runner = new StoryWireTestRunner(workspace, ocr, deepDebug);
-        _uiScale = new UiScaleNormalizer(workspace, ocr, deepDebug);
         _stages = [];
         InitializeComponent();
         StageList.ItemsSource = _stages;
@@ -84,29 +81,10 @@ public partial class StoryWireTestPage : UserControl, IWorkspacePage
             StoryWireTestResult result = await _deepDebug.RunOperationAsync(
                 "story-wire-test",
                 new DeepDebugOperationContext("dataset-builder", options),
-                async token =>
-                {
-                    IProgress<StoryWireProgress> wireProgress = new Progress<StoryWireProgress>(ShowProgress);
-                    wireProgress.Report(new StoryWireProgress(
-                        StoryWireStage.Startup,
-                        StoryWireStageStatus.Running,
-                        "NORMALIZING UI SCALE",
-                        []));
-                    await _uiScale.NormalizeAsync(
-                        options.Device,
-                        detail => wireProgress.Report(new StoryWireProgress(
-                            StoryWireStage.Startup,
-                            StoryWireStageStatus.Running,
-                            detail,
-                            [detail])),
-                        token);
-                    wireProgress.Report(new StoryWireProgress(
-                        StoryWireStage.Startup,
-                        StoryWireStageStatus.Passed,
-                        "UI SCALE NORMALIZED | LOBBY VERIFIED",
-                        ["UI SCALE NORMALIZED | LOBBY VERIFIED"]));
-                    return await _runner.RunAsync(options, wireProgress, token);
-                },
+                token => _runner.RunAsync(
+                    options,
+                    new Progress<StoryWireProgress>(ShowProgress),
+                    token),
                 _runCancellation.Token);
             SetStatus(result.Succeeded ? "PASSED" : "BLOCKED", result.Succeeded ? "SuccessBrush" : "DangerBrush");
             AddEvent(result.Status);
@@ -309,6 +287,13 @@ public partial class StoryWireTestPage : UserControl, IWorkspacePage
             string[] labels = ["Act 4", "Act 5", "Infinite", "Mastery"];
             for (int index = ActBox.Items.Count; index < 7; index++)
                 ActBox.Items.Add(new ComboBoxItem { Content = labels[index - 3], Tag = tags[index - 3] });
+        }
+        else if (mode == WireGameMode.Event)
+        {
+            MapBox.Items.Add(new ComboBoxItem { Content = "Villain Invasion" });
+            while (ActBox.Items.Count > 4) ActBox.Items.RemoveAt(ActBox.Items.Count - 1);
+            if (ActBox.Items.Count < 4)
+                ActBox.Items.Add(new ComboBoxItem { Content = "Act 4", Tag = "Act4" });
         }
         else
         {

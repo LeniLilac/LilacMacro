@@ -11,6 +11,7 @@ internal sealed class MatchTerminalService(
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
     private readonly DebugResultRunner _results = new(workspace, ocr);
+    private readonly ObservedStateTransitionRunner _transitions = new(workspace, ocr);
 
     public async Task<MatchTerminalOutcome> WaitAsync(
         string device,
@@ -56,6 +57,18 @@ internal sealed class MatchTerminalService(
         }
     }
 
+    public async Task<MatchTerminalOutcome?> TryObserveAsync(
+        string device,
+        CancellationToken cancellationToken)
+    {
+        DebugOcrSnapshot snapshot = await _states.RunAsync(
+            DebugWorkflowCatalog.Victory, device, cancellationToken).ConfigureAwait(false);
+        if (snapshot.Evaluation.IsMatch) return MatchTerminalOutcome.Victory;
+        return DebugOcrStateRunner.Evaluate(DebugWorkflowCatalog.Defeat, snapshot.Regions).IsMatch
+            ? MatchTerminalOutcome.Defeat
+            : null;
+    }
+
     public async Task RepeatAsync(
         MatchTerminalOutcome outcome,
         string device,
@@ -64,7 +77,18 @@ internal sealed class MatchTerminalService(
         DebugStateSpec state = outcome == MatchTerminalOutcome.Victory
             ? DebugWorkflowCatalog.Victory
             : DebugWorkflowCatalog.Defeat;
-        DebugRunReport report = await _results.RepeatAsync(state, device, cancellationToken);
-        if (!report.Succeeded) throw new InvalidOperationException(report.Status);
+        ObservedStateTransitionRunResult transition = await _transitions.RunAsync(
+            state,
+            DebugWorkflowCatalog.MatchPrestart,
+            device,
+            async token => ObservedStateTransitionActionResult.From(
+                await _results.RepeatAsync(state, device, token).ConfigureAwait(false)),
+            cancellationToken).ConfigureAwait(false);
+        if (!transition.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Repeat Stage did not reach Match Prestart after {transition.ActionAttempts} action attempt(s) " +
+                $"({transition.Observation.Outcome}).");
+        }
     }
 }

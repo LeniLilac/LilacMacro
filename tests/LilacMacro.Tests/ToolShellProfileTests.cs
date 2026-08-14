@@ -24,7 +24,14 @@ public sealed class ToolShellProfileTests
 
         Assert.Equal(PageKind.Debug, profile.StartPage);
         Assert.Equal(
-            [PageKind.Debug, PageKind.WireTest, PageKind.ScrollTest, PageKind.TeamSwapTest],
+            [
+                PageKind.Debug,
+                PageKind.WireTest,
+                PageKind.ScrollTest,
+                PageKind.TeamSwapTest,
+                PageKind.RouteOptimizerTest,
+                PageKind.UtilityTaskTest,
+            ],
             profile.Pages);
         Assert.Equal("gpu:0", profile.OcrDevice);
         Assert.True(profile.KeepOcrLoaded);

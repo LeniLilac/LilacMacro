@@ -35,21 +35,7 @@ internal sealed class UiScaleNormalizer(
         await _debug.PrepareAsync(cancellationToken).ConfigureAwait(false);
         await WaitForLobbyAsync(device, "before opening Settings", cancellationToken).ConfigureAwait(false);
 
-        UiScalePanelMatch? alreadyOpen = await DetectAlreadyOpenPanelAsync(cancellationToken).ConfigureAwait(false);
-        UiScalePanelMatch panel;
-        if (alreadyOpen is UiScalePanelMatch openPanel)
-        {
-            panel = openPanel;
-            Record("settings_already_open", new { panel.RenderedScale, panel.ClosePoint });
-        }
-        else
-        {
-            PixelPoint gear = await DetectGearAsync(cancellationToken).ConfigureAwait(false)
-                ?? throw new InvalidOperationException("The verified Lobby did not expose the fixed Settings gear.");
-            Record("gear_verified", new { Point = gear });
-            await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, gear, cancellationToken).ConfigureAwait(false);
-            panel = await WaitForPanelAsync(requireCanonical: false, cancellationToken).ConfigureAwait(false);
-        }
+        UiScalePanelMatch panel = await OpenPanelAsync(cancellationToken).ConfigureAwait(false);
 
         SettingsSearchEvidence search = await ObserveSettingsSearchAsync(panel, device, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("Settings opened, but fresh OCR could not verify its search field and navigation rail.");
@@ -145,11 +131,7 @@ internal sealed class UiScaleNormalizer(
             closeEvidence.ClosePoint,
             Applied = true,
         });
-        await workspace.ClickRobloxAsync(
-            DebugWorkflowCatalog.ClientSize,
-            closeEvidence.ClosePoint,
-            cancellationToken).ConfigureAwait(false);
-        await WaitForLobbyAsync(device, "after closing Settings", cancellationToken).ConfigureAwait(false);
+        await CloseToLobbyAsync(device, cancellationToken).ConfigureAwait(false);
         await SaveCalibrationBestEffortAsync(candidate, cancellationToken).ConfigureAwait(false);
         Report("UI SCALE NORMALIZED | LOBBY VERIFIED", report);
         return new UiScaleNormalizationResult(true, closeEvidence.RenderedScale);
@@ -172,24 +154,73 @@ internal sealed class UiScaleNormalizer(
         }
     }
 
-    private async Task<PixelPoint?> DetectGearAsync(CancellationToken cancellationToken)
+    private async Task<UiScalePanelMatch> OpenPanelAsync(CancellationToken cancellationToken)
     {
-        RgbImage image = await CaptureRgbAsync(cancellationToken).ConfigureAwait(false);
-        return UiScalePanelDetector.DetectSettingsGear(image);
+        UiScalePanelMatch previous = default;
+        int stable = 0;
+        int actions = 0;
+        for (int observation = 0; observation < 18; observation++)
+        {
+            RgbImage image = await CaptureRgbAsync(cancellationToken).ConfigureAwait(false);
+            UiScalePanelMatch panel = UiScalePanelDetector.DetectPanel(image);
+            bool acceptable = panel.Visible && panel.Settled;
+            stable = acceptable && previous.Visible &&
+                     Math.Abs(panel.RenderedScale - previous.RenderedScale) <= 0.006
+                ? stable + 1
+                : acceptable ? 1 : 0;
+            if (stable >= 2)
+            {
+                if (actions == 0) Record("settings_already_open", new { panel.RenderedScale, panel.ClosePoint });
+                return panel;
+            }
+
+            PixelPoint? gear = panel.Visible ? null : UiScalePanelDetector.DetectSettingsGear(image);
+            if (gear is PixelPoint point && actions < 4)
+            {
+                Record("gear_verified", new { Point = point, Attempt = actions + 1 });
+                await workspace.ClickRobloxAsync(
+                    DebugWorkflowCatalog.ClientSize, point, cancellationToken).ConfigureAwait(false);
+                actions++;
+            }
+            previous = panel;
+            await Task.Delay(ObservationDelay(observation), cancellationToken).ConfigureAwait(false);
+        }
+        throw new InvalidOperationException($"Settings did not open as a stable, structurally verified panel after {actions} bounded attempts.");
     }
 
-    private async Task<UiScalePanelMatch?> DetectAlreadyOpenPanelAsync(CancellationToken cancellationToken)
+    private async Task CloseToLobbyAsync(string device, CancellationToken cancellationToken)
     {
-        UiScalePanelMatch first = await CapturePanelAsync(cancellationToken).ConfigureAwait(false);
-        if (!first.Visible || !first.Settled) return null;
+        int actions = 0;
+        int lobby = 0;
+        for (int observation = 0; observation < 18; observation++)
+        {
+            DebugRunReport destination = await _debug.CheckLobbyAsync(device, cancellationToken).ConfigureAwait(false);
+            lobby = destination.Succeeded ? lobby + 1 : 0;
+            Record("lobby_observed", new
+            {
+                Phase = "after closing Settings",
+                Observation = observation + 1,
+                destination.Succeeded,
+                destination.Status,
+                Consecutive = lobby,
+            });
+            if (lobby >= 2) return;
 
-        await Task.Delay(PollDelay, cancellationToken).ConfigureAwait(false);
-        UiScalePanelMatch second = await CapturePanelAsync(cancellationToken).ConfigureAwait(false);
-        return second.Visible && second.Settled &&
-               Math.Abs(second.RenderedScale - first.RenderedScale) <= 0.006
-            ? second
-            : null;
+            UiScalePanelMatch source = await CapturePanelAsync(cancellationToken).ConfigureAwait(false);
+            if (source.Visible && source.Settled &&
+                UiScalePanelDetector.IsCanonicalRenderedScale(source.RenderedScale) && actions < 4)
+            {
+                await workspace.ClickRobloxAsync(
+                    DebugWorkflowCatalog.ClientSize, source.ClosePoint, cancellationToken).ConfigureAwait(false);
+                actions++;
+            }
+            await Task.Delay(ObservationDelay(observation), cancellationToken).ConfigureAwait(false);
+        }
+        throw new InvalidOperationException($"Fresh Lobby evidence was not stable after closing Settings with {actions} bounded close attempts.");
     }
+
+    private static TimeSpan ObservationDelay(int observation) => TimeSpan.FromMilliseconds(
+        Math.Min(1600, 400 * (1 << Math.Min(2, observation / 2))));
 
     private async Task<UiScalePanelMatch> CapturePanelAsync(CancellationToken cancellationToken)
     {

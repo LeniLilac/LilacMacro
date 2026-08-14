@@ -18,6 +18,7 @@
     <Compile Remove="Infrastructure\AppSettings.cs" />
     <Compile Remove="Infrastructure\AppSettingsStore.cs" />
     <Compile Remove="Infrastructure\OcrRunner.cs" />
+    <Compile Remove="Infrastructure\OcrWorkerResponseReader.cs" />
     <Compile Remove="Infrastructure\OcrWorkerResult.cs" />
     <Compile Remove="Infrastructure\PersistentOcrWorker.cs" />
     <Compile Remove="Workspace\CaptureProgress.cs" />
@@ -31,16 +32,34 @@
     <Compile Include="Debugging\TeamSwapTestRunner.cs" />
     <Compile Remove="Runtime\ChallengePlacementResolver.cs" />
     <Compile Remove="Runtime\ChallengeRotationStore.cs" />
+    <Compile Remove="Runtime\ExpeditionCheckpointService.cs" />
+    <Compile Remove="Runtime\ExpeditionColorProfileStore.cs" />
+    <Compile Remove="Runtime\ExpeditionEncounterService.cs" />
+    <Compile Remove="Runtime\ExpeditionNodeEvidenceService.cs" />
+    <Compile Remove="Runtime\ExpeditionOcrService.cs" />
+    <Compile Remove="Runtime\ExpeditionRewardPoolService.cs" />
+    <Compile Remove="Runtime\ExpeditionRewardProfileStore.cs" />
+    <Compile Remove="Runtime\ExpeditionSettingsService.cs" />
     <Compile Remove="Runtime\MatchTerminalService.cs" />
+    <Compile Remove="Runtime\MapPreparationService.cs" />
     <Compile Remove="Runtime\PlacementPlaybackService.cs" />
     <Compile Remove="Runtime\PlacementRuntimeContracts.cs" />
     <Compile Remove="Runtime\PrivateServerRejoinService.cs" />
     <Compile Remove="Runtime\RaidDropDismissalPolicy.cs" />
+    <Compile Remove="Runtime\ResourceRefuelService.cs" />
+    <Compile Remove="Runtime\CalendarClaimService.cs" />
+    <Compile Remove="Runtime\ShopPurchaseService.cs" />
+    <Compile Remove="Runtime\UtilityTaskService.cs" />
+    <Compile Remove="Runtime\UtilityRespawnService.cs" />
     <Compile Remove="Runtime\UnitPanelEvidenceService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\tools\ocr_worker.py" Link="tools\ocr_worker.py" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\scripts\Setup-Ocr.ps1" Link="scripts\Setup-Ocr.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\scripts\OcrGpuRuntime.ps1" Link="scripts\OcrGpuRuntime.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\PlacementMaps\*.jpg"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <Target Name="CreateToolLaunchers"
           AfterTargets="Build"

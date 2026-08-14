@@ -12,6 +12,7 @@ public static class LocalSessionSetupVerbPolicy
         "add-isolated",
         "remove-profile",
         "relaunch-update",
+        "relaunch-runners",
     };
 
     public static bool IsAllowed(string? verb) => verb is not null && Allowed.Contains(verb);

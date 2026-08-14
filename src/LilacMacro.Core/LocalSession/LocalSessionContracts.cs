@@ -154,6 +154,9 @@ public enum RunnerTaskMode
     Story,
     Raid,
     Challenge,
+    Expedition,
+    Event,
+    Utilities,
 }
 
 public sealed record RunnerTaskSnapshot
@@ -168,6 +171,11 @@ public sealed record RunnerTaskSnapshot
     public bool RunTrait { get; init; } = true;
     public bool RunStat { get; init; } = true;
     public bool RunSprite { get; init; } = true;
+    public int Difficulty { get; init; } = 1;
+    public int BossesBeforeExtract { get; init; } = 1;
+    public bool ExtractAtCheckpoint { get; init; } = true;
+    public string RewardTarget { get; init; } = "None";
+    public IReadOnlyList<string> ShopItemIds { get; init; } = [];
 }
 
 public sealed record RunnerVisualAnchorSnapshot(

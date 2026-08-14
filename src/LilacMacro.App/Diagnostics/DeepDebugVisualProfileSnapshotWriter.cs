@@ -39,6 +39,11 @@ internal static class DeepDebugVisualProfileSnapshotWriter
 
             long profileBytes = files.Sum(file => file.Length);
             FileInfo? locator = SafeLocator(reference.LocatorPath);
+            if (locator is null)
+            {
+                session.WriterFailure ??= new InvalidDataException(
+                    $"Visual locator was unavailable for profile {reference.ProfileId}.");
+            }
             if (locator is not null) profileBytes = checked(profileBytes + locator.Length);
             if (profileBytes > MaximumProfileBytes || totalBytes + profileBytes > MaximumTotalBytes)
                 continue;

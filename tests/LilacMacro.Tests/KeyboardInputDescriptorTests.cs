@@ -25,10 +25,13 @@ public sealed class KeyboardInputDescriptorTests
     }
 
     [Fact]
-    public void UnsupportedKey_IsRejectedBeforeNativeMapping()
+    public void EscapeKey_IsAvailableForOwnedSystemSequences()
     {
-        Assert.False(KeyboardKey.IsSupportedAutomationKey(0x1B));
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => KeyboardInputDescriptor.FromAutomationVirtualKey(0x1B));
+        Assert.True(KeyboardKey.IsSupportedAutomationKey(KeyboardKey.Escape));
+
+        KeyboardInputDescriptor key = KeyboardInputDescriptor.FromAutomationVirtualKey(KeyboardKey.Escape);
+
+        Assert.True(key.ScanCode > 0);
+        Assert.False(key.Extended);
     }
 }

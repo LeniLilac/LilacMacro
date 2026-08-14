@@ -31,6 +31,7 @@
 | [Architecture](ARCHITECTURE.md) | Current project layers, owners, and integration boundaries |
 | [Game behavior](GAME-BEHAVIOR.md) | Field-observed Debug OCR state and action ledger |
 | [OCR and vision](OCR-AND-VISION.md) | Current PaddleOCR pipeline and planned hybrid detection |
+| [Expedition runtime](EXPEDITION-RUNTIME.md) | Planned personalized current-node sensing, reroll, and encounter behavior |
 | [Expedition reward optimization](EXPEDITION-REWARD-OPTIMIZATION.md) | Reward-pool OCR evidence, provisional reroll thresholds, and validation plan |
 | [Placement authoring](PLACEMENT-AUTHORING.md) | Current Setup data model and authoring/playback boundary |
 | [Macro architecture](MACRO-ARCHITECTURE.md) | Planned priority scheduler, Lobby reset, modules, and mode flows |

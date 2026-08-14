@@ -9,4 +9,6 @@ public enum PageKind
     WireTest,
     ScrollTest,
     TeamSwapTest,
+    RouteOptimizerTest,
+    UtilityTaskTest,
 }

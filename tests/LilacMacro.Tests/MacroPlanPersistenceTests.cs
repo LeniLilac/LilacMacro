@@ -27,6 +27,7 @@ public sealed class MacroPlanPersistenceTests
                 Difficulty = 3,
                 BossesBeforeExtract = 6,
                 ExtractAtCheckpoint = false,
+                RewardTarget = "Equipment Lock",
             });
             PlanLoopPrototype loop = new() { Label = "Night loop", Forever = false, RepeatCount = 9 };
             loop.Children.Add(new PlanTaskPrototype
@@ -39,6 +40,14 @@ public sealed class MacroPlanPersistenceTests
                 RunSprite = true,
             });
             plan.Blocks.Add(loop);
+            plan.Blocks.Add(new PlanTaskPrototype
+            {
+                Priority = 3,
+                Mode = PlanTaskMode.Utilities,
+                Route = LilacMacro.Core.Automation.ShopPurchasePolicy.GoldRoute,
+                Target = 1,
+                ShopItemIds = ["trait-crystal", "equipment-lock"],
+            });
             first.SelectPlan(first.Plans[1]);
             first.NotifyPlansChanged();
             await first.FlushAsync();
@@ -58,6 +67,7 @@ public sealed class MacroPlanPersistenceTests
             Assert.Equal(3, expedition.Difficulty);
             Assert.Equal(6, expedition.BossesBeforeExtract);
             Assert.False(expedition.ExtractAtCheckpoint);
+            Assert.Equal("Equipment Lock", expedition.RewardTarget);
             PlanLoopPrototype restoredLoop = Assert.IsType<PlanLoopPrototype>(restored.Blocks[1]);
             Assert.Equal("Night loop", restoredLoop.Label);
             Assert.False(restoredLoop.Forever);
@@ -67,6 +77,8 @@ public sealed class MacroPlanPersistenceTests
             Assert.True(challenge.RunTrait);
             Assert.False(challenge.RunStat);
             Assert.True(challenge.RunSprite);
+            PlanTaskPrototype shop = Assert.IsType<PlanTaskPrototype>(restored.Blocks[2]);
+            Assert.Equal(["trait-crystal", "equipment-lock"], shop.ShopItemIds);
         }
         finally
         {

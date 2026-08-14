@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Views;
 
@@ -50,10 +51,12 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
     private int _difficulty = 1;
     private int _bossesBeforeExtract = 1;
     private bool _extractAtCheckpoint = true;
+    private string _rewardTarget = "None";
     private bool _hardMode;
     private bool _runTrait = true;
     private bool _runStat = true;
     private bool _runSprite = true;
+    private IReadOnlyList<string> _shopItemIds = [];
 
     public int Priority { get => _priority; set => Set(ref _priority, value); }
     public PlanTaskMode Mode { get => _mode; set { if (Set(ref _mode, value)) NotifySummary(); } }
@@ -63,10 +66,16 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
     public int Difficulty { get => _difficulty; set { if (Set(ref _difficulty, Math.Clamp(value, 1, 3))) NotifySummary(); } }
     public int BossesBeforeExtract { get => _bossesBeforeExtract; set => Set(ref _bossesBeforeExtract, Math.Clamp(value, 0, 99)); }
     public bool ExtractAtCheckpoint { get => _extractAtCheckpoint; set => Set(ref _extractAtCheckpoint, value); }
+    public string RewardTarget { get => _rewardTarget; set => Set(ref _rewardTarget, value); }
     public bool HardMode { get => _hardMode; set { if (Set(ref _hardMode, value)) NotifySummary(); } }
     public bool RunTrait { get => _runTrait; set { if (Set(ref _runTrait, value)) NotifySummary(); } }
     public bool RunStat { get => _runStat; set { if (Set(ref _runStat, value)) NotifySummary(); } }
     public bool RunSprite { get => _runSprite; set { if (Set(ref _runSprite, value)) NotifySummary(); } }
+    public IReadOnlyList<string> ShopItemIds
+    {
+        get => _shopItemIds;
+        set => Set(ref _shopItemIds, value?.Distinct(StringComparer.Ordinal).ToArray() ?? []);
+    }
 
     public string ModeLabel => Mode switch
     {
@@ -87,7 +96,7 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
 
     public string TargetLabel => Mode switch
     {
-        PlanTaskMode.Utilities => $"Every {Target} min",
+        PlanTaskMode.Utilities => UtilityTaskPolicy.ScheduleLabel(Route, Target),
         PlanTaskMode.Challenge => "Every reset",
         _ => $"{Target} victories",
     };
@@ -104,10 +113,12 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
         Difficulty = Difficulty,
         BossesBeforeExtract = BossesBeforeExtract,
         ExtractAtCheckpoint = ExtractAtCheckpoint,
+        RewardTarget = RewardTarget,
         HardMode = HardMode,
         RunTrait = RunTrait,
         RunStat = RunStat,
         RunSprite = RunSprite,
+        ShopItemIds = ShopItemIds.ToArray(),
     };
 
     private void NotifySummary()
@@ -160,10 +171,11 @@ public static class PlanPrototypeFactory
     [
         new("Daily rotation",
         [
-            Task(PlanTaskMode.Utilities, "Gold Mine + Resource Drill", 400),
+            Task(PlanTaskMode.Utilities, "Gold Mine refuel", 400),
+            Task(PlanTaskMode.Utilities, "Resource Drill refuel", 400),
             Loop("Loop 1",
             [
-                Task(PlanTaskMode.Event, "Villain Invasion · Act 1 · Angle 2", 150),
+                Task(PlanTaskMode.Event, "Villain Invasion · Act 1", 150),
                 Task(PlanTaskMode.Expedition, "School Grounds", 15),
             ]),
         ]),

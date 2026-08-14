@@ -13,7 +13,7 @@
 - Settings exposes `OPEN DEBUG FOLDER`.
 - Open `LilacMacro.DeepDebugViewer.exe`, choose `OPEN ARCHIVE`, or drop a ZIP onto the window. The viewer does not initialize OCR or Roblox.
 
-The main Macro records its scheduler lifecycle, state and input evidence, terminal result, and private-server reset status without recording the private link. Dataset Builder records timed capture, an entire manual-capture session, and standalone OCR trials. Runtime Lab records Debug actions, complete Story/Raid/Challenge Wire Tests, and randomized Team Swap Test batches with their seed, target team, elapsed time, terminal status, OCR, scrollbar, click, and transition evidence.
+The main Macro records its scheduler lifecycle, state and input evidence, terminal result, and private-server reset status without recording the private link. Dataset Builder records timed capture, an entire manual-capture session, and standalone OCR trials. Runtime Lab records Debug actions, complete Wire Tests, randomized Team Swap Test batches, and Route Optimizer batches with their selected resource, threshold, compact OCR text, decision, elapsed time, click, and transition evidence.
 
 ## Archive contract
 
@@ -31,6 +31,8 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 | `latest-crash-sanitized.txt` | Latest crash log when one exists and can be read |
 
 Events include window discovery and observed client size, resize results, capture ownership, dataset frame identity, OCR model/device/cache and timing fields, OCR text and boxes, state evaluations, visual-profile scores and coordinates, requested Windows input, cancellation, exceptions, and terminal outcome.
+
+An OCR-owned visual-profile refresh records `vision/profile_refresh_failed` with the exception type and sanitized message when persistence or comparison fails. A registered profile whose locator is unavailable marks the archive manifest's writer failure instead of silently omitting the locator from the snapshot.
 
 Visual-profile snapshots are usage-scoped rather than a copy of the user's profile library. A session retains at most 64 referenced revisions, 32 files and 8 MiB per revision, and 32 MiB total. JSON paths are redacted; PGM assets remain exact so another machine can reproduce the recorded matcher input.
 

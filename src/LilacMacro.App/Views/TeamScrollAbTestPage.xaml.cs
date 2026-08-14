@@ -9,7 +9,7 @@ using LilacMacro.App.Workspace;
 
 namespace LilacMacro.App.Views;
 
-public partial class TeamScrollAbTestPage : UserControl, IWorkspacePage
+public partial class TeamScrollAbTestPage : UserControl, IStoppableWorkspacePage
 {
     private readonly TeamScrollAbTestRunner _runner;
     private readonly ObservableCollection<TrialRow> _trials = [];

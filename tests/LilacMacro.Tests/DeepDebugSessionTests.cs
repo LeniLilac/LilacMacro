@@ -148,6 +148,29 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.Contains("\"visualProfiles\": 1", manifest, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task MissingRegisteredLocatorIsReportedInManifest()
+    {
+        string revision = Path.Combine(_root, "profiles", "wire-test", "revisions", "revision");
+        Directory.CreateDirectory(revision);
+        await File.WriteAllTextAsync(Path.Combine(revision, "profile.json"), "{}");
+
+        DeepDebugSessionService service = new(_root);
+        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "missing locator",
+            new DeepDebugOperationContext("test"));
+        service.RecordVisualProfileRevision(
+            "wire-test",
+            revision,
+            Path.Combine(_root, "profiles", "wire-test", "locator.json"));
+        await scope!.CompleteAsync("success");
+
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
+        string manifest = await ReadAsync(archive, "manifest.json");
+        Assert.Contains("Visual locator was unavailable for profile wire-test", manifest, StringComparison.Ordinal);
+    }
+
     private static async Task<string> ReadAsync(ZipArchive archive, string name)
     {
         ZipArchiveEntry entry = Assert.Single(archive.Entries, candidate => candidate.FullName == name);

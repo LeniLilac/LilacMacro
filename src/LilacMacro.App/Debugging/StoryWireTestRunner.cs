@@ -13,13 +13,14 @@ internal sealed class StoryWireTestRunner(
     OcrRunner ocr,
     DeepDebugSessionService deepDebug)
 {
-    private static readonly TimeSpan StateTimeout = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan PollDelay = TimeSpan.FromMilliseconds(400);
     private readonly DebugOcrController _debug = new(workspace, ocr);
     private readonly DebugLobbyRunner _lobby = new(workspace, ocr);
     private readonly ChallengeWireNavigator _challenge = new(workspace, ocr, deepDebug);
-    private readonly WireHybridEvidenceService _hybrid = new(workspace, deepDebug);
+    private readonly EventWireNavigator _event = new(workspace, ocr);
+    private readonly WireStateService _state = new(workspace, deepDebug);
+    private readonly WireTransitionService _transitions = new(workspace, ocr, deepDebug);
     private readonly StoryMatchRuntimeRunner _matchRuntime = new(workspace, ocr);
+    private readonly ExpeditionMatchRuntimeRunner _expeditionRuntime = new(workspace, ocr);
 
     public async Task<StoryWireTestResult> RunAsync(
         StoryWireTestOptions options,
@@ -36,27 +37,67 @@ internal sealed class StoryWireTestRunner(
                 StoryWireStage.Units,
                 options.NavigationKeys.UnitInventory,
                 token => _lobby.OpenUnitsAsync(options.Device, token),
+                DebugWorkflowCatalog.Lobby,
                 DebugWorkflowCatalog.UnitInventory,
-                _debug.CheckUnitInventoryAsync,
                 options,
                 progress,
                 cancellationToken))
             return Failed(StoryWireStage.Units);
-        if (!await ActAsync(StoryWireStage.Teams, token => _debug.OpenTeamsAsync(options.Device, token), progress, cancellationToken) ||
-            !await CheckAsync(StoryWireStage.Teams, DebugWorkflowCatalog.TeamSwap, _debug.CheckTeamSwapAsync, options, progress, cancellationToken))
-            return Failed(StoryWireStage.Teams);
-        if (!await LoadTeamAsync(options, progress, cancellationToken))
-            return Failed(StoryWireStage.LoadTeam);
-        if (!await OpenNavigationAsync(
-                StoryWireStage.Play,
-                options.NavigationKeys.PlayMenu,
-                token => _debug.OpenPlayAsync(options.Device, token),
-                DebugWorkflowCatalog.PlayUi,
-                _debug.CheckPlayUiAsync,
+        if (!await TransitionAsync(
+                StoryWireStage.Teams,
+                DebugWorkflowCatalog.UnitInventory,
+                DebugWorkflowCatalog.TeamSwap,
+                token => _debug.OpenTeamsAsync(options.Device, token),
                 options,
                 progress,
                 cancellationToken))
-            return Failed(StoryWireStage.Play);
+            return Failed(StoryWireStage.Teams);
+        if (!await LoadTeamAsync(options, progress, cancellationToken))
+            return Failed(StoryWireStage.LoadTeam);
+        if (options.GameMode == WireGameMode.Event)
+        {
+            if (!await OpenNavigationAsync(
+                    StoryWireStage.Play,
+                    null,
+                    token => _debug.OpenEventsAsync(options.Device, token),
+                    DebugWorkflowCatalog.Lobby,
+                    DebugWorkflowCatalog.EventSelect,
+                    options,
+                    progress,
+                    cancellationToken) ||
+                !await TransitionAsync(
+                    StoryWireStage.StoryMap,
+                    DebugWorkflowCatalog.EventSelect,
+                    DebugWorkflowCatalog.EventPageConfirm,
+                    token => _debug.SelectEventAsync(EventDestination.VillainInvasion, options.Device, token),
+                    options, progress, cancellationToken) ||
+                !await TransitionAsync(
+                    StoryWireStage.StoryAct,
+                    DebugWorkflowCatalog.EventPageConfirm,
+                    DebugWorkflowCatalog.EventActPicker,
+                    token => _event.OpenVillainActsAsync(options.Device, token),
+                    options, progress, cancellationToken) ||
+                !await TransitionAsync(
+                    StoryWireStage.MatchPreview,
+                    DebugWorkflowCatalog.EventActPicker,
+                    DebugWorkflowCatalog.MatchPreview,
+                    token => _event.SelectActAndStageAsync(options.Act, options.Device, token),
+                    options, progress, cancellationToken))
+                return Failed(StoryWireStage.MatchPreview);
+        }
+        else
+        {
+            if (!await OpenNavigationAsync(
+                    StoryWireStage.Play,
+                    options.NavigationKeys.PlayMenu,
+                    token => _debug.OpenPlayAsync(options.Device, token),
+                    DebugWorkflowCatalog.Lobby,
+                    DebugWorkflowCatalog.PlayUi,
+                    options,
+                    progress,
+                    cancellationToken))
+                return Failed(StoryWireStage.Play);
+        }
         if (options.GameMode == WireGameMode.Challenge)
         {
             ChallengeNavigationResult challenge = await NavigateChallengeAsync(options, progress, cancellationToken);
@@ -69,27 +110,74 @@ internal sealed class StoryWireTestRunner(
                     _debug.CheckMatchPreviewAsync, options, progress, cancellationToken))
                 return Failed(StoryWireStage.MatchPreview);
         }
-        else
+        else if (options.GameMode == WireGameMode.Expedition)
         {
-            if (!await ActAsync(StoryWireStage.StoryMap,
-                    token => _debug.SelectModeAsync(options.GameMode.ToString(), options.Device, token), progress, cancellationToken) ||
-                !await CheckModeMapAsync(options, progress, cancellationToken))
+            if (!await TransitionAsync(
+                    StoryWireStage.StoryMap,
+                    DebugWorkflowCatalog.PlayUi,
+                    DebugWorkflowCatalog.ExpeditionMap,
+                    token => _debug.SelectModeAsync("Expedition", options.Device, token),
+                    options, progress, cancellationToken) ||
+                !await TransitionAsync(
+                    StoryWireStage.MatchPreview,
+                    DebugWorkflowCatalog.ExpeditionMap,
+                    DebugWorkflowCatalog.MatchPreview,
+                    token => _debug.SelectExpeditionMapAsync(options.Map, options.ExpeditionDifficulty, options.Device, token),
+                    options, progress, cancellationToken))
+                return Failed(StoryWireStage.MatchPreview);
+        }
+        else if (options.GameMode is WireGameMode.Story or WireGameMode.Raid)
+        {
+            DebugStateSpec modeMap = options.GameMode == WireGameMode.Story
+                ? DebugWorkflowCatalog.StoryMap
+                : DebugWorkflowCatalog.RaidMap;
+            if (!await TransitionAsync(
+                    StoryWireStage.StoryMap,
+                    DebugWorkflowCatalog.PlayUi,
+                    modeMap,
+                    token => _debug.SelectModeAsync(options.GameMode.ToString(), options.Device, token),
+                    options, progress, cancellationToken))
                 return Failed(StoryWireStage.StoryMap);
             if (!await SelectAndCheckActAsync(options, progress, cancellationToken))
                 return Failed(StoryWireStage.StoryAct);
-            if (!await ActAsync(StoryWireStage.MatchPreview, token => SelectActAsync(options, token), progress, cancellationToken) ||
-                !await CheckAsync(StoryWireStage.MatchPreview, DebugWorkflowCatalog.MatchPreview,
-                    _debug.CheckMatchPreviewAsync, options, progress, cancellationToken))
+            DebugStateSpec actPicker = options.GameMode == WireGameMode.Story
+                ? DebugWorkflowCatalog.StoryActPicker
+                : DebugWorkflowCatalog.RaidActPicker;
+            if (!await TransitionAsync(
+                    StoryWireStage.MatchPreview,
+                    actPicker,
+                    DebugWorkflowCatalog.MatchPreview,
+                    token => SelectActAsync(options, token),
+                    options, progress, cancellationToken))
                 return Failed(StoryWireStage.MatchPreview);
         }
-        if (!await ActAsync(StoryWireStage.MatchPrestart, token => _debug.StartMatchAsync(options.Device, token), progress, cancellationToken) ||
-            !await CheckAsync(StoryWireStage.MatchPrestart, DebugWorkflowCatalog.MatchPrestart, _debug.CheckMatchPrestartAsync, options, progress, cancellationToken))
+        if (options.GameMode == WireGameMode.Expedition)
+        {
+            if (!await ActAsync(
+                    StoryWireStage.MatchPrestart,
+                    token => _debug.StartMatchAsync(options.Device, token),
+                    progress,
+                    cancellationToken))
+                return Failed(StoryWireStage.MatchPrestart);
+        }
+        else if (!await TransitionAsync(
+                     StoryWireStage.MatchPrestart,
+                     DebugWorkflowCatalog.MatchPreview,
+                     DebugWorkflowCatalog.MatchPrestart,
+                     token => _debug.StartMatchAsync(options.Device, token),
+                     options,
+                     progress,
+                     cancellationToken))
+        {
             return Failed(StoryWireStage.MatchPrestart);
+        }
 
         if (!options.RunMatchRuntime)
             return new StoryWireTestResult(true, StoryWireStage.MatchPrestart, "MATCH PRESTART VERIFIED");
 
-        return await _matchRuntime.RunAsync(options, progress, alignCamera: true, cancellationToken);
+        return options.GameMode == WireGameMode.Expedition
+            ? await _expeditionRuntime.RunAsync(options, progress, alignCamera: true, cancellationToken)
+            : await _matchRuntime.RunAsync(options, progress, alignCamera: true, cancellationToken);
     }
 
     public async Task<StoryWireTestResult> RunRepeatedAsync(
@@ -99,8 +187,8 @@ internal sealed class StoryWireTestRunner(
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(progress);
-        if (options.GameMode == WireGameMode.Challenge)
-            throw new InvalidOperationException("Challenge cannot continue through Repeat Stage.");
+        if (options.GameMode is WireGameMode.Challenge or WireGameMode.Expedition)
+            throw new InvalidOperationException($"{options.GameMode} cannot continue through Repeat Stage.");
 
         await _debug.PrepareAsync(cancellationToken);
         if (!await CheckAsync(
@@ -130,20 +218,15 @@ internal sealed class StoryWireTestRunner(
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken)
     {
-        if (!await ActAsync(StoryWireStage.ChallengeType,
-                token => _debug.SelectModeAsync("Challenge", options.Device, token), progress, cancellationToken) ||
-            !await CheckAsync(StoryWireStage.ChallengeType, DebugWorkflowCatalog.ChallengeTypePicker,
-                _debug.CheckChallengeTypesAsync, options, progress, cancellationToken))
+        if (!await TransitionAsync(
+                StoryWireStage.ChallengeType,
+                DebugWorkflowCatalog.PlayUi,
+                DebugWorkflowCatalog.ChallengeTypePicker,
+                token => _debug.SelectModeAsync("Challenge", options.Device, token),
+                options, progress, cancellationToken))
             return new ChallengeNavigationResult(false, "CHALLENGE TYPE BLOCKED", null, null, null, false);
         return await _challenge.NavigateAsync(options, progress, cancellationToken);
     }
-
-    private Task<bool> CheckModeMapAsync(
-        StoryWireTestOptions options,
-        IProgress<StoryWireProgress> progress,
-        CancellationToken cancellationToken) => options.GameMode == WireGameMode.Story
-        ? CheckAsync(StoryWireStage.StoryMap, DebugWorkflowCatalog.StoryMap, _debug.CheckMapsAsync, options, progress, cancellationToken)
-        : CheckAsync(StoryWireStage.StoryMap, DebugWorkflowCatalog.RaidMap, _debug.CheckRaidMapsAsync, options, progress, cancellationToken);
 
     private async Task<bool> SelectAndCheckActAsync(
         StoryWireTestOptions options,
@@ -153,10 +236,20 @@ internal sealed class StoryWireTestRunner(
         Func<CancellationToken, Task<DebugRunReport>> select = options.GameMode == WireGameMode.Story
             ? token => _debug.SelectMapAsync(options.Map, options.Device, token)
             : token => _debug.SelectRaidMapAsync(options.Map, options.Device, token);
-        if (!await ActAsync(StoryWireStage.StoryAct, select, progress, cancellationToken)) return false;
-        return options.GameMode == WireGameMode.Story
-            ? await CheckAsync(StoryWireStage.StoryAct, DebugWorkflowCatalog.StoryActPicker, _debug.CheckActsAsync, options, progress, cancellationToken)
-            : await CheckAsync(StoryWireStage.StoryAct, DebugWorkflowCatalog.RaidActPicker, _debug.CheckRaidActsAsync, options, progress, cancellationToken);
+        DebugStateSpec source = options.GameMode == WireGameMode.Story
+            ? DebugWorkflowCatalog.StoryMap
+            : DebugWorkflowCatalog.RaidMap;
+        DebugStateSpec destination = options.GameMode == WireGameMode.Story
+            ? DebugWorkflowCatalog.StoryActPicker
+            : DebugWorkflowCatalog.RaidActPicker;
+        return await TransitionAsync(
+            StoryWireStage.StoryAct,
+            source,
+            destination,
+            select,
+            options,
+            progress,
+            cancellationToken);
     }
 
     private Task<DebugRunReport> SelectActAsync(StoryWireTestOptions options, CancellationToken cancellationToken) =>
@@ -182,53 +275,97 @@ internal sealed class StoryWireTestRunner(
                 progress,
                 cancellationToken)) return false;
 
-        if (options.NavigationKeys.UnitInventory is int unitInventoryKey)
-        {
-            if (!await ActKeyAsync(
+        return options.NavigationKeys.UnitInventory is int unitInventoryKey
+            ? await TransitionAsync(
+                StoryWireStage.LoadTeam,
+                DebugWorkflowCatalog.TeamSwap,
+                DebugWorkflowCatalog.Lobby,
+                token => PressNavigationKeyAsync(
                     StoryWireStage.LoadTeam,
                     unitInventoryKey,
                     options.PlacementKeys.ReservedVirtualKey,
                     progress,
-                    cancellationToken))
-                return false;
-        }
-        else if (!await ActAsync(
-                     StoryWireStage.LoadTeam,
-                     token => _lobby.CloseUnitsViaButtonAsync(options.Device, token),
-                     progress,
-                     cancellationToken))
-        {
-            return false;
-        }
-        return await CheckAsync(
-            StoryWireStage.LoadTeam,
-            DebugWorkflowCatalog.Lobby,
-            _debug.CheckLobbyAsync,
-            options,
-            progress,
-            cancellationToken);
+                    token),
+                options,
+                progress,
+                cancellationToken)
+            : await TransitionAsync(
+                StoryWireStage.LoadTeam,
+                DebugWorkflowCatalog.TeamSwap,
+                DebugWorkflowCatalog.Lobby,
+                token => _lobby.CloseUnitsViaButtonAsync(options.Device, token),
+                options,
+                progress,
+                cancellationToken);
     }
 
     private async Task<bool> OpenNavigationAsync(
         StoryWireStage stage,
         int? virtualKey,
         Func<CancellationToken, Task<DebugRunReport>> clickFallback,
+        DebugStateSpec source,
         DebugStateSpec destination,
-        Func<string, CancellationToken, Task<DebugRunReport>> check,
         StoryWireTestOptions options,
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken)
     {
-        bool acted = virtualKey is int key
-            ? await ActKeyAsync(
-                stage,
-                key,
-                options.PlacementKeys.ReservedVirtualKey,
-                progress,
-                cancellationToken)
-            : await ActAsync(stage, clickFallback, progress, cancellationToken);
-        return acted && await CheckAsync(stage, destination, check, options, progress, cancellationToken);
+        Func<CancellationToken, Task<ObservedStateTransitionActionResult>> action = virtualKey is int key
+            ? token => PressNavigationKeyAsync(
+                stage, key, options.PlacementKeys.ReservedVirtualKey, progress, token)
+            : async token => ObservedStateTransitionActionResult.From(await clickFallback(token));
+        return await TransitionAsync(
+            stage, source, destination, action, options, progress, cancellationToken);
     }
+
+    private async Task<ObservedStateTransitionActionResult> PressNavigationKeyAsync(
+        StoryWireStage stage,
+        int virtualKey,
+        int reservedVirtualKey,
+        IProgress<StoryWireProgress> progress,
+        CancellationToken cancellationToken)
+    {
+        bool succeeded = await ActKeyAsync(
+            stage, virtualKey, reservedVirtualKey, progress, cancellationToken);
+        string keyName = KeyboardKey.GetDisplayName(virtualKey).ToUpperInvariant();
+        return new ObservedStateTransitionActionResult(
+            succeeded,
+            succeeded ? $"KEY {keyName} SENT" : $"KEY {keyName} BLOCKED",
+            [$"KEY {keyName}"]);
+    }
+
+    private Task<bool> TransitionAsync(
+        StoryWireStage stage,
+        DebugStateSpec source,
+        DebugStateSpec destination,
+        Func<CancellationToken, Task<DebugRunReport>> sourceAction,
+        StoryWireTestOptions options,
+        IProgress<StoryWireProgress> progress,
+        CancellationToken cancellationToken) =>
+        _transitions.RunAsync(
+            stage,
+            source,
+            destination,
+            options.Device,
+            sourceAction,
+            progress,
+            cancellationToken);
+
+    private Task<bool> TransitionAsync(
+        StoryWireStage stage,
+        DebugStateSpec source,
+        DebugStateSpec destination,
+        Func<CancellationToken, Task<ObservedStateTransitionActionResult>> sourceAction,
+        StoryWireTestOptions options,
+        IProgress<StoryWireProgress> progress,
+        CancellationToken cancellationToken) =>
+        _transitions.RunAsync(
+            stage,
+            source,
+            destination,
+            options.Device,
+            sourceAction,
+            progress,
+            cancellationToken);
 
     private async Task<bool> ActKeyAsync(
         StoryWireStage stage,
@@ -257,161 +394,14 @@ internal sealed class StoryWireTestRunner(
         StoryWireTestOptions options,
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken) =>
-        WaitAsync(stage, state, token => check(options.Device, token), options.Mode, progress, cancellationToken);
+        _state.WaitAsync(stage, state, token => check(options.Device, token), options.Mode, progress, cancellationToken);
 
-    private async Task<bool> ActAsync(
+    private Task<bool> ActAsync(
         StoryWireStage stage,
         Func<CancellationToken, Task<DebugRunReport>> action,
         IProgress<StoryWireProgress> progress,
-        CancellationToken cancellationToken)
-    {
-        progress.Report(new StoryWireProgress(stage, StoryWireStageStatus.Running, "RUNNING", []));
-        deepDebug.RecordEvent("wire", "action_started", new { Stage = Format(stage) });
-        DebugRunReport report = await action(cancellationToken);
-        deepDebug.RecordEvent("wire", "action_completed", new
-        {
-            Stage = Format(stage),
-            report.Succeeded,
-            report.Status,
-            report.Events,
-            Snapshot = WireDebugEvidence.Snapshot(report.Snapshot),
-        });
-        progress.Report(new StoryWireProgress(
-            stage,
-            report.Succeeded ? StoryWireStageStatus.Passed : StoryWireStageStatus.Failed,
-            report.Status,
-            report.Events));
-        return report.Succeeded;
-    }
-
-    private async Task<bool> WaitAsync(
-        StoryWireStage stage,
-        DebugStateSpec state,
-        Func<CancellationToken, Task<DebugRunReport>> check,
-        DebugEvidenceMode mode,
-        IProgress<StoryWireProgress> progress,
-        CancellationToken cancellationToken)
-    {
-        using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(StateTimeout);
-        DebugRunReport? last = null;
-        WireImageStateResult? lastImage = null;
-        try
-        {
-            while (true)
-            {
-                deepDebug.RecordEvent("wire", "state_poll_started", new
-                {
-                    Stage = Format(stage),
-                    State = state.Name,
-                    Mode = mode.ToString(),
-                });
-                if (mode == DebugEvidenceMode.ImageWithOcrFallback)
-                {
-                    try
-                    {
-                        lastImage = await _hybrid.TryVerifyAsync(state, timeout.Token);
-                        WireDebugEvidence.RecordComparisons(deepDebug, lastImage.Comparisons);
-                        deepDebug.RecordEvent("vision", "image_state_evaluated", new
-                        {
-                            Stage = Format(stage),
-                            State = state.Name,
-                            lastImage.IsMatch,
-                            lastImage.Status,
-                            lastImage.Events,
-                            lastImage.Comparisons,
-                        });
-                        if (lastImage.IsMatch)
-                        {
-                            progress.Report(new StoryWireProgress(
-                                stage,
-                                StoryWireStageStatus.Passed,
-                                lastImage.Status,
-                                lastImage.Events,
-                                lastImage.Comparisons));
-                            return true;
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception error)
-                    {
-                        lastImage = new WireImageStateResult(
-                            false,
-                            "IMAGE ERROR",
-                            [$"IMAGE FALLBACK ERROR {error.Message}"],
-                            []);
-                    }
-                }
-
-                last = await check(timeout.Token);
-                deepDebug.RecordEvent("ocr", "state_evaluated", new
-                {
-                    Stage = Format(stage),
-                    last.Succeeded,
-                    last.Status,
-                    last.Events,
-                    Snapshot = WireDebugEvidence.Snapshot(last.Snapshot),
-                });
-                if (last.Succeeded)
-                {
-                    IReadOnlyList<WireVisualComparison> comparisons = [];
-                    string? imageError = null;
-                    if (mode == DebugEvidenceMode.ImageWithOcrFallback)
-                    {
-                        try
-                        {
-                            comparisons = await _hybrid.CompareAsync(last, timeout.Token);
-                            WireDebugEvidence.RecordComparisons(deepDebug, comparisons);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            throw;
-                        }
-                        catch (Exception error)
-                        {
-                            imageError = error.Message;
-                        }
-                    }
-                    string detail = mode == DebugEvidenceMode.Ocr
-                        ? $"{last.Status} | OCR"
-                        : comparisons.Count == 0
-                            ? $"{last.Status} | OCR FALLBACK | IMG {(imageError is null ? "0" : "ERROR")}"
-                            : $"{last.Status} | OCR FALLBACK | IMG {comparisons.Count(candidate => candidate.Agrees)}/{comparisons.Count}";
-                    List<string> events = [.. lastImage?.Events ?? [], .. last.Events];
-                    if (mode == DebugEvidenceMode.Ocr)
-                    {
-                        events.Add("OCR PRIMARY MATCH");
-                    }
-                    else
-                    {
-                        events.Add(imageError is null
-                            ? $"OCR FALLBACK | IMAGE REFRESH {comparisons.Count(candidate => candidate.Agrees)}/{comparisons.Count} AGREE"
-                            : $"OCR FALLBACK | IMAGE ERROR {imageError}");
-                    }
-                    progress.Report(new StoryWireProgress(
-                        stage,
-                        StoryWireStageStatus.Passed,
-                        detail,
-                        events,
-                        comparisons));
-                    return true;
-                }
-                await Task.Delay(PollDelay, timeout.Token);
-            }
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            progress.Report(new StoryWireProgress(
-                stage,
-                StoryWireStageStatus.Failed,
-                last?.Status ?? "STATE TIMEOUT",
-                [.. lastImage?.Events ?? [], .. last?.Events ?? []]));
-            return false;
-        }
-    }
+        CancellationToken cancellationToken) =>
+        _state.ActAsync(stage, action, progress, cancellationToken);
 
     private static StoryWireTestResult Failed(StoryWireStage stage) =>
         new(false, stage, $"{Format(stage)} BLOCKED");

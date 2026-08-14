@@ -1,0 +1,252 @@
+using System.Diagnostics;
+using LilacMacro.App.Infrastructure;
+using LilacMacro.App.Runtime;
+using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
+using LilacMacro.Core.Geometry;
+using LilacMacro.Core.Placements;
+
+namespace LilacMacro.App.Debugging;
+
+internal sealed class ExpeditionMatchRuntimeRunner(
+    WorkspaceController workspace,
+    OcrRunner ocr)
+{
+    private static readonly PixelPoint IdleRewardPoint = new(1009, 345);
+    private readonly PlacementPlaybackService _placements = new(workspace, ocr);
+    private readonly PlacementSetupStore _placementStore = new(ResolvePlacementRoot());
+    private readonly ExpeditionNodeEvidenceService _nodes = new(workspace, ocr);
+    private readonly ExpeditionCheckpointService _checkpoint = new(workspace, ocr);
+    private readonly ExpeditionEncounterService _encounter = new(workspace, ocr);
+    private readonly ExpeditionRewardPoolService _rewards = new(workspace, ocr);
+    private readonly ExpeditionRewardProfileStore _rewardProfiles = new();
+    private readonly ExpeditionSettingsService _settings = new(workspace, ocr);
+    private readonly MatchTerminalService _terminal = new(workspace, ocr);
+    private readonly DebugOcrController _debug = new(workspace, ocr);
+
+    public async Task<StoryWireTestResult> RunAsync(
+        StoryWireTestOptions options,
+        IProgress<StoryWireProgress> progress,
+        bool alignCamera,
+        CancellationToken cancellationToken)
+    {
+        Action<string> report = message => progress.Report(new StoryWireProgress(
+            StoryWireStage.MatchRuntime, StoryWireStageStatus.Running, message, [message]));
+        try
+        {
+            if (alignCamera)
+            {
+                await workspace.AlignCameraAsync(
+                    DebugWorkflowCatalog.ClientSize,
+                    options.ShiftLockVirtualKey,
+                    cancellationToken).ConfigureAwait(false);
+                report("CAMERA ALIGNED");
+            }
+
+            (PlacementSetupDocument document, PlacementRouteSetup route) = await LoadPlacementAsync(
+                options.Map, cancellationToken).ConfigureAwait(false);
+            await OptimizeRouteAsync(options, report, cancellationToken).ConfigureAwait(false);
+            ExpeditionPlacementSession placement = await _placements.RunExpeditionInitialAsync(
+                document, route, options.PlacementKeys, options.Device, report, cancellationToken)
+                .ConfigureAwait(false);
+            await _checkpoint.ContinueAsync(options.Device, report, cancellationToken).ConfigureAwait(false);
+
+            ExpeditionRunTracker tracker = new(options.ExtractAtCheckpoint, options.BossesBeforeExtract);
+            ExpeditionNodeType? candidate = null;
+            int stable = 0;
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                MatchTerminalOutcome? terminal = await _terminal.TryObserveAsync(
+                    options.Device, cancellationToken).ConfigureAwait(false);
+                if (terminal is MatchTerminalOutcome outcome) return Passed(outcome, progress);
+
+                ExpeditionNodeType? observed = await _nodes.ObserveAsync(
+                    options.Device, report, cancellationToken).ConfigureAwait(false);
+                if (observed is null)
+                {
+                    candidate = null;
+                    stable = 0;
+                }
+                else if (candidate == observed)
+                {
+                    stable++;
+                }
+                else
+                {
+                    candidate = observed;
+                    stable = 1;
+                }
+
+                if (candidate is ExpeditionNodeType node && stable >= 2)
+                {
+                    ExpeditionNodeAction action = tracker.Observe(node);
+                    stable = 0;
+                    await RunActionAsync(action, placement, options, report, cancellationToken)
+                        .ConfigureAwait(false);
+                    if (action == ExpeditionNodeAction.Extract)
+                    {
+                        MatchTerminalOutcome extractionOutcome = await WaitTerminalWithIdleRewardAsync(
+                            options.Device, report, cancellationToken).ConfigureAwait(false);
+                        return Passed(extractionOutcome, progress);
+                    }
+                }
+
+                await workspace.ClickRobloxAsync(
+                    DebugWorkflowCatalog.ClientSize, IdleRewardPoint, cancellationToken).ConfigureAwait(false);
+                report("EXPEDITION IDLE REWARD CLICK");
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or TimeoutException)
+        {
+            progress.Report(new StoryWireProgress(
+                StoryWireStage.MatchRuntime,
+                StoryWireStageStatus.Failed,
+                error.Message,
+                [error.Message]));
+            return new StoryWireTestResult(false, StoryWireStage.MatchRuntime, "EXPEDITION RUNTIME BLOCKED");
+        }
+    }
+
+    private async Task OptimizeRouteAsync(
+        StoryWireTestOptions options,
+        Action<string> report,
+        CancellationToken cancellationToken)
+    {
+        ExpeditionRewardResource target = ExpeditionRewardPolicy.ParseResource(
+            options.ExpeditionRewardTarget);
+        if (target == ExpeditionRewardResource.None)
+        {
+            await _rewards.StartGameForRouteAsync(options.Device, cancellationToken).ConfigureAwait(false);
+            report("EXPEDITION STARTED");
+            return;
+        }
+
+        int rerolls = 0;
+        bool routeOpen = false;
+        Stopwatch? reroll = null;
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!routeOpen)
+                await _rewards.OpenAsync(options.Device, cancellationToken).ConfigureAwait(false);
+            routeOpen = false;
+            ExpeditionRewardObservation observation = await _rewards.ObserveAsync(
+                target, options.Device, cancellationToken).ConfigureAwait(false);
+            if (reroll is not null)
+            {
+                reroll.Stop();
+                await _rewardProfiles.RecordRerollAsync(
+                    options.Device, reroll.Elapsed, cancellationToken).ConfigureAwait(false);
+            }
+            await _rewardProfiles.RecordPoolAsync(
+                options.ExpeditionDifficulty, observation.Pool, cancellationToken).ConfigureAwait(false);
+            ExpeditionRewardOptimization optimization = await _rewardProfiles.OptimizeAsync(
+                options.ExpeditionDifficulty, target, options.Device, cancellationToken).ConfigureAwait(false)
+                ?? throw new InvalidDataException(
+                    $"Difficulty {options.ExpeditionDifficulty} reward optimization needs " +
+                    $"{ExpeditionRewardPolicy.MinimumOptimizationSamples} Runtime Lab pools.");
+            int quantity = observation.Pool.Quantity(target);
+            bool accepted = quantity >= optimization.Threshold;
+            report($"EXPEDITION REWARD {target.ToString().ToUpperInvariant()} {quantity}/{optimization.Threshold} | " +
+                (accepted ? "ACCEPT" : $"REROLL {rerolls + 1}"));
+            if (!accepted) reroll = Stopwatch.StartNew();
+            await _rewards.BackToPrestartAsync(
+                observation, options.Device, cancellationToken).ConfigureAwait(false);
+
+            if (accepted)
+            {
+                await _rewards.StartGameForRouteAsync(options.Device, cancellationToken).ConfigureAwait(false);
+                report("EXPEDITION STARTED");
+                return;
+            }
+            await _rewards.StartGameForRouteAsync(options.Device, cancellationToken).ConfigureAwait(false);
+            await _settings.RestartForRouteRerollAsync(
+                options.Device, report, cancellationToken).ConfigureAwait(false);
+            await _rewards.OpenAfterRestartAsync(options.Device, cancellationToken).ConfigureAwait(false);
+            routeOpen = true;
+            rerolls++;
+        }
+    }
+
+    private async Task RunActionAsync(
+        ExpeditionNodeAction action,
+        ExpeditionPlacementSession placement,
+        StoryWireTestOptions options,
+        Action<string> report,
+        CancellationToken cancellationToken)
+    {
+        switch (action)
+        {
+            case ExpeditionNodeAction.ReplayPlacementsAndStart:
+                await _placements.ReplayExpeditionAsync(
+                    placement, options.PlacementKeys, options.Device, report, cancellationToken).ConfigureAwait(false);
+                DebugRunReport start = await _debug.StartGameAsync(options.Device, cancellationToken).ConfigureAwait(false);
+                report(start.Succeeded ? "EXPEDITION START GAME CLICKED" : "EXPEDITION START AUTO-STARTED");
+                break;
+            case ExpeditionNodeAction.RunEncounter:
+                _ = await _encounter.RunAsync(
+                    options.Map, options.PlacementKeys.ReservedVirtualKey, options.Device, report, cancellationToken)
+                    .ConfigureAwait(false);
+                break;
+            case ExpeditionNodeAction.Continue:
+                await _checkpoint.ContinueAsync(options.Device, report, cancellationToken).ConfigureAwait(false);
+                break;
+            case ExpeditionNodeAction.Extract:
+                await _checkpoint.ExtractAsync(options.Device, report, cancellationToken).ConfigureAwait(false);
+                break;
+        }
+    }
+
+    private async Task<MatchTerminalOutcome> WaitTerminalWithIdleRewardAsync(
+        string device,
+        Action<string> report,
+        CancellationToken cancellationToken)
+    {
+        for (int observation = 0; observation < 300; observation++)
+        {
+            MatchTerminalOutcome? terminal = await _terminal.TryObserveAsync(device, cancellationToken)
+                .ConfigureAwait(false);
+            if (terminal is MatchTerminalOutcome outcome) return outcome;
+            await workspace.ClickRobloxAsync(
+                DebugWorkflowCatalog.ClientSize, IdleRewardPoint, cancellationToken).ConfigureAwait(false);
+            report("EXPEDITION IDLE REWARD CLICK");
+            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+        }
+        throw new TimeoutException("Expedition extraction did not reach Victory or Defeat within five minutes.");
+    }
+
+    private async Task<(PlacementSetupDocument, PlacementRouteSetup)> LoadPlacementAsync(
+        string mapName,
+        CancellationToken cancellationToken)
+    {
+        PlacementMapDefinition map = PlacementMapCatalog.Definitions.First(candidate =>
+            candidate.Id == $"expedition-{Slug(mapName)}");
+        PlacementSetupDocument document = await _placementStore.LoadAsync(map.Id, cancellationToken)
+            .ConfigureAwait(false);
+        PlacementRouteDefinition route = PlacementRouteCatalog.For(map).First(candidate => candidate.IsShared);
+        return (document, PlacementRouteCatalog.EffectiveRoute(document, route));
+    }
+
+    private static StoryWireTestResult Passed(
+        MatchTerminalOutcome outcome,
+        IProgress<StoryWireProgress> progress)
+    {
+        string status = $"{outcome.ToString().ToUpperInvariant()} VERIFIED";
+        progress.Report(new StoryWireProgress(
+            StoryWireStage.MatchRuntime, StoryWireStageStatus.Passed, status, [status]));
+        return new StoryWireTestResult(true, StoryWireStage.MatchRuntime, status, Outcome: outcome);
+    }
+
+    private static string Slug(string value) =>
+        value.ToLowerInvariant().Replace("'", string.Empty).Replace(' ', '-');
+
+    private static string ResolvePlacementRoot() =>
+        Environment.GetEnvironmentVariable("LILACMACRO_RUNNER_PLACEMENTS") is { Length: > 0 } value
+            ? Path.GetFullPath(value)
+            : Path.Combine(
+                Environment.GetEnvironmentVariable("LILACMACRO_CONFIGURATION_ROOT")
+                    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LilacMacro"),
+                "placements");
+}

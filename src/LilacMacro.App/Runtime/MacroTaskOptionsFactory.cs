@@ -2,6 +2,7 @@ using LilacMacro.App.Debugging;
 using LilacMacro.App.Views;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Placements;
+using System.Text.RegularExpressions;
 
 namespace LilacMacro.App.Runtime;
 
@@ -20,6 +21,8 @@ internal sealed class MacroTaskOptionsFactory(
         {
             PlanTaskMode.Raid => WireGameMode.Raid,
             PlanTaskMode.Challenge => WireGameMode.Challenge,
+            PlanTaskMode.Expedition => WireGameMode.Expedition,
+            PlanTaskMode.Event => WireGameMode.Event,
             _ => WireGameMode.Story,
         };
         (string mapName, StoryAct act) = gameMode == WireGameMode.Challenge
@@ -45,7 +48,11 @@ internal sealed class MacroTaskOptionsFactory(
             keys.ShiftLock,
             device,
             RunMatchRuntime: true,
-            RepeatStage: false);
+            RepeatStage: false,
+            ExpeditionDifficulty: task.Difficulty,
+            BossesBeforeExtract: task.BossesBeforeExtract,
+            ExtractAtCheckpoint: task.ExtractAtCheckpoint,
+            ExpeditionRewardTarget: task.RewardTarget);
     }
 
     private async Task<int> ResolveTeamAsync(
@@ -54,9 +61,13 @@ internal sealed class MacroTaskOptionsFactory(
         StoryAct act,
         CancellationToken cancellationToken)
     {
-        string mapId = gameMode == WireGameMode.Raid
-            ? $"raid-spirit-city-{RouteId(act)}"
-            : $"story-{Slug(mapName)}";
+        string mapId = gameMode switch
+        {
+            WireGameMode.Raid => $"raid-spirit-city-{RouteId(act)}",
+            WireGameMode.Expedition => $"expedition-{Slug(mapName)}",
+            WireGameMode.Event => LilacMacro.Core.Automation.EventRunPolicy.MapId(mapName, act),
+            _ => $"story-{Slug(mapName)}",
+        };
         PlacementMapDefinition map = PlacementMapCatalog.Definitions.First(candidate => candidate.Id == mapId);
         PlacementSetupDocument document = await placements.LoadAsync(map.Id, cancellationToken);
         PlacementRouteDefinition definition = PlacementRouteCatalog.For(map)
@@ -75,8 +86,33 @@ internal sealed class MacroTaskOptionsFactory(
         return [.. types];
     }
 
-    private static (string Map, StoryAct Act) ParseRoute(string route)
+    internal static (string Map, StoryAct Act) ParseRoute(string route)
     {
+        if (!string.IsNullOrWhiteSpace(route))
+        {
+            Match routeMatch = Regex.Match(
+                route,
+                @"\b(Act\s+[1-5]|Infinite|Mastery)\b",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (routeMatch.Success)
+            {
+                string parsedMap = route[..routeMatch.Index].Trim().TrimEnd('·', 'Â', '-', '|', '/').Trim();
+                if (parsedMap.Length == 0) throw new InvalidDataException("Task route has no map.");
+                string parsedAct = Regex.Replace(routeMatch.Value, @"\s+", " ").ToLowerInvariant();
+                StoryAct parsedStoryAct = parsedAct switch
+                {
+                    "act 1" => StoryAct.Act1,
+                    "act 2" => StoryAct.Act2,
+                    "act 3" => StoryAct.Act3,
+                    "act 4" => StoryAct.Act4,
+                    "act 5" => StoryAct.Act5,
+                    "infinite" => StoryAct.Infinite,
+                    "mastery" => StoryAct.Mastery,
+                    _ => throw new InvalidDataException("Task route act is invalid."),
+                };
+                return (parsedMap, parsedStoryAct);
+            }
+        }
         string[] parts = route.Split('·', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             .Select(part => part.Trim().TrimEnd('Â').Trim())
             .ToArray();

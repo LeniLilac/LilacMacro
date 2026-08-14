@@ -28,6 +28,22 @@ public sealed class CoordinatedUpdateRelauncher(LocalSessionPaths paths)
             tasks.Run(runnerId);
     }
 
+    public async Task RelaunchConfiguredAsync(CancellationToken cancellationToken)
+    {
+        LocalSessionProvisioningManifest? manifest = await new ProvisioningJournalStore(paths)
+            .ReadAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<LocalRunnerProfile> profiles = LocalSessionProfileCompatibility.ResolveProfiles(manifest);
+        RunnerScheduledTaskManager tasks = new();
+        List<Exception> failures = [];
+        foreach (LocalRunnerProfile profile in profiles)
+        {
+            try { tasks.Run(profile.Id); }
+            catch (Exception error) { failures.Add(error); }
+        }
+        if (failures.Count > 0)
+            throw new AggregateException("One or more configured runner UIs could not be relaunched.", failures);
+    }
+
     internal static string ValidateStatePath(string statePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(statePath);

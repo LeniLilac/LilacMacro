@@ -26,7 +26,8 @@ public sealed record LocalSessionPaths(
     public string ProfileReceiptPath => Path.Combine(RunnerRoot, "runner-profile-receipt.json");
     public string ProfileFailurePath => Path.Combine(RunnerRoot, "runner-profile-failure.json");
     public string CompatibilityCachePath => Path.Combine(SessionRoot, "compatibility-cache.json");
-    public string UpdateRequestPath => Path.Combine(SessionRoot, "update-request.txt");
+    public string UpdateControlRoot => Path.Combine(ProgramDataRoot, "UpdateControl");
+    public string UpdateRequestPath => Path.Combine(UpdateControlRoot, "update-request.txt");
     public string CredentialTarget => $"TERMSRV/{FirewallIsolationManager.AuthorizedLoopbackAddress}";
     public string SecretCredentialTarget => "LilacMacro/LocalSessionRunnerSecret";
     public string PortCredentialTarget => $"TERMSRV/{FirewallIsolationManager.AuthorizedLoopbackAddress}:{TermServiceConfigurationManager.LocalPort}";

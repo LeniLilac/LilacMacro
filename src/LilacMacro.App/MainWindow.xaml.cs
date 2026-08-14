@@ -24,7 +24,6 @@ public partial class MainWindow : Window
     private readonly Dictionary<PageKind, IWorkspacePage> _pages;
     private readonly CapturePage? _capturePage;
     private readonly StoryWireTestPage? _wireTestPage;
-    private readonly TeamScrollAbTestPage? _scrollTestPage;
     private readonly TeamSwapTestPage? _teamSwapTestPage;
     private readonly DebugKeySequenceCoordinator? _debugInput;
     private GlobalHotkeyRegistration? _timedCaptureHotkey;
@@ -51,7 +50,6 @@ public partial class MainWindow : Window
         {
             _capturePage = new CapturePage(_workspace, NavigateAsync, deepDebug);
             _wireTestPage = null;
-            _scrollTestPage = null;
             _teamSwapTestPage = null;
             _debugInput = null;
             _pages[PageKind.Capture] = _capturePage;
@@ -64,7 +62,6 @@ public partial class MainWindow : Window
             _capturePage = null;
             _debugInput = new DebugKeySequenceCoordinator(_workspace);
             _wireTestPage = new StoryWireTestPage(_workspace, _ocr, deepDebug, _profile.OcrDevice);
-            _scrollTestPage = new TeamScrollAbTestPage(_workspace, _ocr, _profile.OcrDevice);
             _teamSwapTestPage = new TeamSwapTestPage(_workspace, _ocr, deepDebug, _profile.OcrDevice);
             _pages[PageKind.Debug] = new DebugPage(
                 _workspace,
@@ -73,8 +70,10 @@ public partial class MainWindow : Window
                 deepDebug,
                 _profile.OcrDevice);
             _pages[PageKind.WireTest] = _wireTestPage;
-            _pages[PageKind.ScrollTest] = _scrollTestPage;
+            _pages[PageKind.ScrollTest] = new TeamScrollAbTestPage(_workspace, _ocr, _profile.OcrDevice);
             _pages[PageKind.TeamSwapTest] = _teamSwapTestPage;
+            _pages[PageKind.RouteOptimizerTest] = new RouteOptimizerTestPage(_workspace, _ocr, deepDebug, _profile.OcrDevice);
+            _pages[PageKind.UtilityTaskTest] = new UtilityTaskTestPage(_workspace, _ocr, deepDebug, _profile.OcrDevice);
             _debugInput.Changed += DebugInput_OnChanged;
             _teamSwapTestPage.RunningChanged += TeamSwapTestPage_OnRunningChanged;
         }
@@ -95,6 +94,8 @@ public partial class MainWindow : Window
         WireTestNav.Visibility = _profile.Includes(PageKind.WireTest) ? Visibility.Visible : Visibility.Collapsed;
         ScrollTestNav.Visibility = _profile.Includes(PageKind.ScrollTest) ? Visibility.Visible : Visibility.Collapsed;
         TeamSwapTestNav.Visibility = _profile.Includes(PageKind.TeamSwapTest) ? Visibility.Visible : Visibility.Collapsed;
+        RouteOptimizerTestNav.Visibility = _profile.Includes(PageKind.RouteOptimizerTest) ? Visibility.Visible : Visibility.Collapsed;
+        UtilityTaskTestNav.Visibility = _profile.Includes(PageKind.UtilityTaskTest) ? Visibility.Visible : Visibility.Collapsed;
         DatasetPill.Visibility = _profile.Kind == ToolShellKind.DatasetBuilder
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -391,12 +392,8 @@ public partial class MainWindow : Window
         }
         if (target != _currentPage)
         {
-            if (_currentPage == PageKind.WireTest && _wireTestPage is not null)
-                await _wireTestPage.StopAsync();
-            if (_currentPage == PageKind.ScrollTest && _scrollTestPage is not null)
-                await _scrollTestPage.StopAsync();
-            if (_currentPage == PageKind.TeamSwapTest && _teamSwapTestPage is not null)
-                await _teamSwapTestPage.StopAsync();
+            if (_pages.GetValueOrDefault(_currentPage) is IStoppableWorkspacePage stoppable)
+                await stoppable.StopAsync();
         }
         if (_currentPage == PageKind.Review && _pages[PageKind.Review] is ReviewPage review)
         {
@@ -460,6 +457,8 @@ public partial class MainWindow : Window
         WireTestNav.Style = (Style)FindResource(active == PageKind.WireTest ? "NavButtonActiveStyle" : "NavButtonStyle");
         ScrollTestNav.Style = (Style)FindResource(active == PageKind.ScrollTest ? "NavButtonActiveStyle" : "NavButtonStyle");
         TeamSwapTestNav.Style = (Style)FindResource(active == PageKind.TeamSwapTest ? "NavButtonActiveStyle" : "NavButtonStyle");
+        RouteOptimizerTestNav.Style = (Style)FindResource(active == PageKind.RouteOptimizerTest ? "NavButtonActiveStyle" : "NavButtonStyle");
+        UtilityTaskTestNav.Style = (Style)FindResource(active == PageKind.UtilityTaskTest ? "NavButtonActiveStyle" : "NavButtonStyle");
     }
 
     private async void MainWindow_OnClosing(object? sender, CancelEventArgs eventArgs)
@@ -471,9 +470,8 @@ public partial class MainWindow : Window
             if (_pages.TryGetValue(PageKind.Review, out IWorkspacePage? page) && page is ReviewPage review)
                 await review.FlushPendingAsync();
             if (_capturePage is not null) await _capturePage.CompleteForCloseAsync();
-            if (_wireTestPage is not null) await _wireTestPage.StopAsync();
-            if (_scrollTestPage is not null) await _scrollTestPage.StopAsync();
-            if (_teamSwapTestPage is not null) await _teamSwapTestPage.StopAsync();
+            foreach (IStoppableWorkspacePage stoppable in _pages.Values.OfType<IStoppableWorkspacePage>())
+                await stoppable.StopAsync();
             if (_debugInput is not null) await _debugInput.StopAsync();
         }
         finally
@@ -516,6 +514,9 @@ public partial class MainWindow : Window
     private async void ScrollTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.ScrollTest);
 
     private async void TeamSwapTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.TeamSwapTest);
+
+    private async void RouteOptimizerTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.RouteOptimizerTest);
+    private async void UtilityTaskTestNav_OnClick(object sender, RoutedEventArgs eventArgs) => await NavigateAsync(PageKind.UtilityTaskTest);
 
     private void Minimize_OnClick(object sender, RoutedEventArgs eventArgs) => WindowState = WindowState.Minimized;
 

@@ -258,7 +258,8 @@
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="ROUTE" />
-                                        <ComboBox x:Name="TaskRouteCombo" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right" />
+                                        <ComboBox x:Name="TaskRouteCombo" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right"
+                                                  SelectionChanged="TaskRouteCombo_OnSelectionChanged" />
                                     </Grid>
                                 </Border>
                                 <Border x:Name="TaskTargetPanel" Style="{StaticResource PlanTaskOptionSectionStyle}">
@@ -269,6 +270,25 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock x:Name="TaskTargetLabel" Style="{StaticResource PlanTaskOptionLabelStyle}" Text="VICTORIES" />
                                         <TextBox x:Name="TaskTargetText" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right" Text="15" />
+                                    </Grid>
+                                </Border>
+                                <Border x:Name="TaskShopItemsPanel" Style="{StaticResource PlanTaskOptionSectionStyle}" Visibility="Collapsed">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="ITEMS" />
+                                        <ItemsControl x:Name="TaskShopItemsList" Grid.Column="1" Margin="24,0,0,0" HorizontalAlignment="Right">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><WrapPanel Width="440" /></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox Width="210" Margin="0,3,10,3" Content="{Binding DisplayName}" IsChecked="{Binding IsSelected}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                     </Grid>
                                 </Border>
                             </StackPanel>
@@ -326,6 +346,16 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="BOSS NODES FIRST" />
                                             <TextBox x:Name="TaskBossNodesText" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right" Text="1" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Style="{StaticResource PlanTaskOptionSectionStyle}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="OPTIMIZE REWARD" />
+                                            <ComboBox x:Name="TaskRewardTargetCombo" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right" />
                                         </Grid>
                                     </Border>
                                 </StackPanel>

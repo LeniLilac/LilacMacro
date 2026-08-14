@@ -42,6 +42,13 @@ $nativeDecoder = Require-File 'third_party/termwrap/v0.6/x64/Zydis.dll'
 
 Require-Text $installer 'DefaultDirName=\{autopf\}\\LilacMacro' 'Installer must target Program Files.'
 Require-Text $installer 'PrivilegesRequired=admin' 'Installer must require elevation for lifecycle cleanup.'
+Require-Text $installer 'CloseApplications=no' 'Installer must not let Restart Manager stop Remote Desktop Services for the install-once TermWrap payload.'
+Reject-Text $installer 'RegisterExtraCloseApplicationsResource' 'Installer shutdown must remain product-bounded instead of registering the full install tree with Restart Manager.'
+Require-Text $installer 'taskkill\.exe' 'Manual upgrades must have a bounded cross-session shutdown fallback.'
+Require-Text $installer '/F /T /IM' 'Manual upgrade shutdown must terminate only explicit LilacMacro process images.'
+Require-Text $installer 'relaunch-runners' 'Manual upgrades must relaunch configured runner UIs.'
+Require-Text $installer 'RunnerRepairSucceeded := AttemptRunnerRepair' 'Runner relaunch must observe the repair result.'
+Require-Text $installer 'if RunnerRepairSucceeded then' 'Runner relaunch must fail closed when repair fails.'
 Require-Text $installer 'LilacMacro\.SessionSetup\.exe' 'Installer must include the elevated setup helper.'
 Require-Text $installer "'repair'" 'Installer upgrade must invoke the repair verb.'
 Require-Text $installer 'UPDATESTATE' 'Installer must accept a bounded coordinated-update state.'
@@ -49,6 +56,12 @@ Require-Text $installer 'relaunch-update' 'Installer must relaunch previously ac
 Require-Text $installer 'GetSHA256OfFile' 'Installer must rehash itself before coordinated shutdown.'
 Require-Text $installer 'WaitForUpdateParticipants' 'Installer must wait for active LilacMacro processes to flush and exit.'
 Require-Text $installer 'runner unavailable until Repair succeeds' 'Optional runner migration failure must leave the application upgrade usable.'
+Require-Text $installer 'UpdateControl\\update-request\.txt' 'Update shutdown requests must use the dedicated control directory.'
+Require-Text $installer 'FileAttributeReparsePoint' 'Update shutdown requests must reject reparse points.'
+Require-Text $installer 'icacls\.exe' 'Update shutdown requests must apply an explicit machine ACL.'
+Require-Text $installer '\*S-1-5-18:\(OI\)\(CI\)F' 'Update shutdown requests must retain SYSTEM ownership access.'
+Require-Text $installer '\*S-1-5-32-544:\(OI\)\(CI\)F' 'Update shutdown requests must retain administrator access.'
+Require-Text $installer '\*S-1-5-32-545:\(OI\)\(CI\)RX' 'Update shutdown requests must be read-only to ordinary users.'
 Reject-Text $installer 'existing local runner could not be migrated' 'Optional runner migration must not abort the application upgrade.'
 Require-Text $installer "'uninstall-cleanup'" 'Installer uninstall must invoke cleanup before deleting binaries.'
 Require-Text $installer 'third_party\\termwrap\\v0\.6' 'Installer must bundle the pinned TermWrap payload.'
@@ -70,7 +83,7 @@ Require-Text $builder 'LICENSE\.md' 'Installer build must create the release lic
 Require-Text $builder 'NOTICE\.md' 'Installer build must create the release notice asset.'
 Require-Text $builder 'https://timestamp\.digicert\.com' 'Code signing must use an HTTPS timestamp service.'
 
-foreach ($verb in @('install', 'repair', 'remove', 'uninstall-cleanup', 'relaunch-update')) {
+foreach ($verb in @('install', 'repair', 'remove', 'uninstall-cleanup', 'relaunch-update', 'relaunch-runners')) {
     Require-Text $verbPolicy ('"' + [Regex]::Escape($verb) + '"') "Setup helper allowlist is missing verb: $verb"
 }
 Require-Text $setupProject '<OutputType>WinExe</OutputType>' 'Session setup must be a windowless executable.'

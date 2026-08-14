@@ -66,8 +66,6 @@ public partial class SettingsPage : UserControl
         DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
         FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
-        PrivateServerStatusText.Text = ownerState.PrivateServerLink.Length == 0 ? "Not configured" : "Stored securely";
-        WebhookStatusText.Text = ownerState.DiscordWebhook.Length == 0 ? "Not configured" : "Stored securely";
         _initialized = true;
         RefreshDisplayControls();
         RefreshUpdateOwnership();
@@ -247,15 +245,20 @@ public partial class SettingsPage : UserControl
     private void LocalPath_OnClick(object sender, RoutedEventArgs eventArgs) => GeneralStatusText.Text = "Folder opening is not connected";
     private async void TestPrivateServer_OnClick(object sender, RoutedEventArgs eventArgs)
     {
+        TestPrivateServerButton.IsEnabled = false;
         try
         {
             RobloxPrivateServerLaunchTarget target = RobloxPrivateServerLaunchTarget.Parse(PrivateServerText.Text);
             await new RobloxProtocolLauncher().LaunchAsync(target.LaunchUri, CancellationToken.None);
-            PrivateServerStatusText.Text = "Roblox launch requested";
+            AppToastService.ShowSuccess("PRIVATE SERVER READY", "Roblox launch requested.");
         }
         catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException or ArgumentException)
         {
-            PrivateServerStatusText.Text = exception.Message;
+            AppToastService.ShowError("PRIVATE SERVER TEST FAILED", exception.Message);
+        }
+        finally
+        {
+            TestPrivateServerButton.IsEnabled = true;
         }
     }
 
@@ -267,7 +270,6 @@ public partial class SettingsPage : UserControl
         try
         {
             _ownerState.SetPrivateServerLink(PrivateServerText.Text);
-            PrivateServerStatusText.Text = _ownerState.PrivateServerLink.Length == 0 ? "Not configured" : "Stored securely";
         }
         catch (System.ComponentModel.Win32Exception exception)
         {
@@ -281,7 +283,6 @@ public partial class SettingsPage : UserControl
         try
         {
             _ownerState.SetDiscordWebhook(WebhookPassword.Password);
-            WebhookStatusText.Text = _ownerState.DiscordWebhook.Length == 0 ? "Not configured" : "Stored securely";
         }
         catch (System.ComponentModel.Win32Exception exception)
         {
@@ -300,21 +301,21 @@ public partial class SettingsPage : UserControl
     private async void TestWebhook_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         TestWebhookButton.IsEnabled = false;
-        WebhookStatusText.Text = "Sending test...";
         try
         {
             _ownerState.SetDiscordWebhook(WebhookPassword.Password);
             await _ownerState.FlushAsync();
             await _discord.SendTestAsync(_ownerState.DiscordWebhook, MacroInstanceContext.Current.DisplayName);
-            WebhookStatusText.Text = "Test delivered";
+            AppToastService.ShowSuccess("WEBHOOK READY", "Test delivered.");
         }
         catch (Exception exception) when (exception is InvalidDataException or IOException or UnauthorizedAccessException
             or HttpRequestException or TaskCanceledException or System.ComponentModel.Win32Exception
             or System.Security.Cryptography.CryptographicException)
         {
-            WebhookStatusText.Text = exception is TaskCanceledException
+            string message = exception is TaskCanceledException
                 ? "Webhook test timed out"
                 : exception.Message;
+            AppToastService.ShowError("WEBHOOK TEST FAILED", message);
         }
         finally
         {

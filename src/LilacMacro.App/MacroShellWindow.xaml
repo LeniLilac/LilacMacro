@@ -249,7 +249,7 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <controls:LucideIcon Width="19" Height="19" Margin="0,1,11,0"
+                <controls:LucideIcon x:Name="ErrorToastIcon" Width="19" Height="19" Margin="0,1,11,0"
                                      Foreground="{DynamicResource OnAccentBrush}"
                                      Data="{StaticResource Lucide.TriangleAlert}" />
                 <StackPanel Grid.Column="1">

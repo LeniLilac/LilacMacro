@@ -16,14 +16,11 @@ internal sealed class WireHybridEvidenceService(
 {
     private const int BurstSamples = 5;
     private static readonly TimeSpan BurstDelay = TimeSpan.FromMilliseconds(100);
-    private static readonly JsonSerializerOptions LocatorJson = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true,
-    };
     private readonly VisualFingerprintBuilder _builder = new();
     private readonly VisualAnchorRegionMatcher _matcher = new();
     private readonly VisualProfileStore _profiles = new();
     private readonly DebugStateDatasetContextLoader _contexts = new();
+    private readonly WireVisualLocatorStore _locators = new();
     private readonly string _profileRoot = ResolveProfileRoot();
 
     private static string ResolveProfileRoot() =>
@@ -75,7 +72,8 @@ internal sealed class WireHybridEvidenceService(
                 _profileRoot,
                 profile,
                 cancellationToken);
-            await SaveLocatorAsync(
+            string locatorPath = await _locators.SaveAsync(
+                _profileRoot,
                 new WireVisualLocator(
                     1,
                     definition.Id,
@@ -86,7 +84,7 @@ internal sealed class WireHybridEvidenceService(
             deepDebug.RecordVisualProfileRevision(
                 definition.Id,
                 revisionDirectory,
-                LocatorPath(definition.Id));
+                locatorPath);
             PixelRect search = VisualAnchorRegionMatcher.GetCaptureBounds(
                 DebugWorkflowCatalog.ClientSize,
                 anchor.Region.Bounds);
@@ -156,7 +154,10 @@ internal sealed class WireHybridEvidenceService(
                     id,
                     loaded.RevisionDirectory,
                     LocatorPath(id));
-                WireVisualLocator locator = await LoadLocatorAsync(id, cancellationToken);
+                WireVisualLocator locator = await _locators.LoadAsync(
+                    _profileRoot,
+                    id,
+                    cancellationToken);
                 if (locator.Version != 1 || locator.ProfileId != id || locator.State != state.Name ||
                     !locator.Bounds.IsInside(DebugWorkflowCatalog.ClientSize))
                 {
@@ -171,7 +172,7 @@ internal sealed class WireHybridEvidenceService(
             {
                 throw;
             }
-            catch (Exception error) when (error is IOException or JsonException or InvalidDataException or UnauthorizedAccessException)
+            catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException)
             {
                 events.Add($"IMAGE FALLBACK {DisplayLabel(intent)} {ShortError(error)}");
             }
@@ -331,44 +332,7 @@ internal sealed class WireHybridEvidenceService(
     private static string Format(PixelRect bounds) =>
         $"[{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}]";
 
-    private async Task SaveLocatorAsync(
-        WireVisualLocator locator,
-        CancellationToken cancellationToken)
-    {
-        string path = LocatorPath(locator.ProfileId);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        string temporary = path + $".{Guid.NewGuid():N}.tmp";
-        try
-        {
-            await using FileStream stream = new(
-                temporary,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None,
-                16 * 1024,
-                true);
-            await JsonSerializer.SerializeAsync(stream, locator, LocatorJson, cancellationToken);
-            await stream.FlushAsync(cancellationToken);
-            File.Move(temporary, path, overwrite: true);
-        }
-        finally
-        {
-            if (File.Exists(temporary)) File.Delete(temporary);
-        }
-    }
-
-    private async Task<WireVisualLocator> LoadLocatorAsync(
-        string profileId,
-        CancellationToken cancellationToken)
-    {
-        await using FileStream stream = File.OpenRead(LocatorPath(profileId));
-        return await JsonSerializer.DeserializeAsync<WireVisualLocator>(
-            stream,
-            LocatorJson,
-            cancellationToken) ?? throw new InvalidDataException("Visual locator is empty.");
-    }
-
-    private string LocatorPath(string profileId) => Path.Combine(_profileRoot, profileId, "locator.json");
+    private string LocatorPath(string profileId) => _locators.PathFor(_profileRoot, profileId);
 
     private static WireImageStateResult Unavailable(DebugStateSpec state, string reason) => new(
         false,
@@ -398,10 +362,4 @@ internal sealed class WireHybridEvidenceService(
         PixelRect ExpectedBounds,
         PixelRect SearchBounds);
 
-    private sealed record WireVisualLocator(
-        int Version,
-        string ProfileId,
-        string State,
-        string Label,
-        PixelRect Bounds);
 }

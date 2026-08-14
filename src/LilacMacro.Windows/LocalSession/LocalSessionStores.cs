@@ -30,8 +30,16 @@ public sealed class LocalSessionStatusStore(LocalSessionPaths paths)
 
 public sealed class ProvisioningJournalStore(LocalSessionPaths paths)
 {
-    public Task<LocalSessionProvisioningManifest?> ReadAsync(CancellationToken cancellationToken = default) =>
-        AtomicJsonFile.ReadAsync<LocalSessionProvisioningManifest>(paths.JournalPath, cancellationToken);
+    public async Task<LocalSessionProvisioningManifest?> ReadAsync(CancellationToken cancellationToken = default)
+    {
+        LocalSessionProvisioningManifest? manifest = await AtomicJsonFile
+            .ReadAsync<LocalSessionProvisioningManifest>(paths.JournalPath, cancellationToken)
+            .ConfigureAwait(false);
+        if (manifest is null) return null;
+        LocalSessionValidationResult validation = LocalSessionValidation.Validate(manifest);
+        if (!validation.IsValid) throw new InvalidDataException(string.Join(" ", validation.Errors));
+        return manifest;
+    }
 
     public Task WriteAsync(LocalSessionProvisioningManifest manifest, CancellationToken cancellationToken = default)
     {

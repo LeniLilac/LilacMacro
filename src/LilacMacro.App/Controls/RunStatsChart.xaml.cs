@@ -7,6 +7,8 @@ namespace LilacMacro.App.Controls;
 
 public sealed record RunStatsPoint(TimeSpan Elapsed, bool IsWin);
 
+internal sealed record RunStatsCumulativePoint(int Wins, int Losses);
+
 public partial class RunStatsChart : UserControl
 {
     private IReadOnlyList<RunStatsPoint> _points = [];
@@ -40,41 +42,65 @@ public partial class RunStatsChart : UserControl
         const int bucketCount = 10;
         double maximumSeconds = Math.Max(1, _points.Max(point => point.Elapsed.TotalSeconds));
         double baseline = height - inset;
-        int[] winsByBucket = new int[bucketCount];
-        int[] lossesByBucket = new int[bucketCount];
-        foreach (RunStatsPoint point in _points)
-        {
-            int bucket = Math.Min(
-                bucketCount - 1,
-                (int)Math.Floor((point.Elapsed.TotalSeconds / maximumSeconds) * bucketCount));
-            if (point.IsWin) winsByBucket[bucket]++;
-            else lossesByBucket[bucket]++;
-        }
-
-        int maximumRuns = Enumerable.Range(0, bucketCount)
-            .Max(index => winsByBucket[index] + lossesByBucket[index]);
-        List<Point> totalPoints = [];
+        IReadOnlyList<RunStatsCumulativePoint> cumulative = BuildCumulativeSeries(
+            _points,
+            bucketCount,
+            maximumSeconds);
+        int maximumRuns = Math.Max(1, cumulative.Max(point => Math.Max(point.Wins, point.Losses)));
+        List<Point> winPoints = [];
         List<Point> lossPoints = [];
         for (int index = 0; index < bucketCount; index++)
         {
             double xRatio = index / (double)(bucketCount - 1);
             double x = inset + ((width - (inset * 2)) * xRatio);
-            double totalRatio = (winsByBucket[index] + lossesByBucket[index]) / (double)maximumRuns;
-            double lossRatio = lossesByBucket[index] / (double)maximumRuns;
-            double totalY = baseline - ((height - (inset * 2)) * totalRatio);
+            double winRatio = cumulative[index].Wins / (double)maximumRuns;
+            double lossRatio = cumulative[index].Losses / (double)maximumRuns;
+            double winY = baseline - ((height - (inset * 2)) * winRatio);
             double lossY = baseline - ((height - (inset * 2)) * lossRatio);
-            totalPoints.Add(new Point(x, totalY));
+            winPoints.Add(new Point(x, winY));
             lossPoints.Add(new Point(x, lossY));
         }
 
         AddArea(
             [new Point(lossPoints[0].X, baseline), .. lossPoints, new Point(lossPoints[^1].X, baseline)],
             "DangerBrush");
-        AddArea([.. lossPoints, .. totalPoints.AsEnumerable().Reverse()], "SuccessBrush");
+        AddArea(
+            [new Point(winPoints[0].X, baseline), .. winPoints, new Point(winPoints[^1].X, baseline)],
+            "SuccessBrush");
         AddLine(lossPoints, "DangerBrush");
-        AddLine(totalPoints, "SuccessBrush");
+        AddLine(winPoints, "SuccessBrush");
         AddPoint(lossPoints[^1].X, lossPoints[^1].Y, "DangerBrush");
-        AddPoint(totalPoints[^1].X, totalPoints[^1].Y, "SuccessBrush");
+        AddPoint(winPoints[^1].X, winPoints[^1].Y, "SuccessBrush");
+    }
+
+    internal static IReadOnlyList<RunStatsCumulativePoint> BuildCumulativeSeries(
+        IReadOnlyList<RunStatsPoint> points,
+        int bucketCount,
+        double maximumSeconds)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(bucketCount, 2);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maximumSeconds, 0);
+        int[] winsByBucket = new int[bucketCount];
+        int[] lossesByBucket = new int[bucketCount];
+        foreach (RunStatsPoint point in points)
+        {
+            int bucket = Math.Min(
+                bucketCount - 1,
+                (int)Math.Floor((Math.Max(0, point.Elapsed.TotalSeconds) / maximumSeconds) * bucketCount));
+            if (point.IsWin) winsByBucket[bucket]++;
+            else lossesByBucket[bucket]++;
+        }
+
+        int wins = 0;
+        int losses = 0;
+        RunStatsCumulativePoint[] cumulative = new RunStatsCumulativePoint[bucketCount];
+        for (int index = 0; index < bucketCount; index++)
+        {
+            wins += winsByBucket[index];
+            losses += lossesByBucket[index];
+            cumulative[index] = new RunStatsCumulativePoint(wins, losses);
+        }
+        return cumulative;
     }
 
     private void AddGuide(double x1, double y1, double x2, double y2)

@@ -68,7 +68,7 @@ Run Dataset Builder, which contains Capture, Review + OCR, and Datasets, with:
 dotnet run --project src/LilacMacro.App/LilacMacro.App.csproj -- --dataset-builder
 ```
 
-Run Runtime Lab, which contains Debug, Wire Test, the temporary Scroll Test, and Team Swap Test, with:
+Run Runtime Lab, which contains Debug, Wire Test, the temporary Scroll Test, Team Swap Test, Route Optimizer Test, and production-backed utility task tests, with:
 
 ```powershell
 dotnet run --project src/LilacMacro.App/LilacMacro.App.csproj -- --runtime-lab

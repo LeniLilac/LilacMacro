@@ -51,7 +51,7 @@ OCR lives under `%LOCALAPPDATA%\LilacMacro\ocr`; it does not use the global Pyth
 
 ## GPU setup fails
 
-- Confirm `nvidia-smi` is available and the driver supports the CUDA 12.6 Paddle package.
+- Confirm `nvidia-smi` is available and reports compute capability 6.0 or newer. LilacMacro selects CUDA 11.8 for Pascal/GTX 10 and Volta, CUDA 12.6 for Turing through Ada, and CUDA 12.9 for Hopper or Blackwell.
 - Run `./scripts/Setup-Ocr.ps1 -Device gpu` and read the final import/device check.
 - Setup installs either CPU or GPU PaddlePaddle, not both. Rerun CPU setup to return to the CPU runtime.
 - A UI device toggle selects a requested runtime; it cannot make an uninstalled runtime available.

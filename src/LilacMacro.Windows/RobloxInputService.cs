@@ -24,8 +24,17 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         CancellationToken cancellationToken = default)
     {
         ClientBounds client = await PrepareAsync(window, expectedSize, point, cancellationToken).ConfigureAwait(false);
-        MoveCursorWithRegisteredMotion(client, point);
+        client = await RobloxClickCursorAcquirer.AcquireAsync(
+            client,
+            () => PrepareAsync(window, expectedSize, point, cancellationToken),
+            current => MoveCursorWithRegisteredMotion(current, point),
+            cancellationToken).ConfigureAwait(false);
         await Task.Delay(RobloxInputProtocol.ClickPositionSettleMilliseconds, cancellationToken).ConfigureAwait(false);
+        client = await RobloxClickCursorAcquirer.AcquireAsync(
+            client,
+            () => PrepareAsync(window, expectedSize, point, cancellationToken),
+            current => MoveCursorWithRegisteredMotion(current, point),
+            cancellationToken).ConfigureAwait(false);
         NativeInputMethods.mouse_event(NativeInputMethods.MouseLeftDown, 0, 0, 0, 0);
         try
         {
@@ -37,6 +46,18 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         }
         await ParkCursorWithAcknowledgedMotionAsync(client, cancellationToken).ConfigureAwait(false);
         await Task.Delay(RobloxInputProtocol.HoverRenderSettleMilliseconds, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task HoverClientAsync(
+        RobloxWindow window,
+        PixelSize expectedSize,
+        PixelPoint point,
+        CancellationToken cancellationToken = default)
+    {
+        ClientBounds client = await PrepareAsync(window, expectedSize, point, cancellationToken).ConfigureAwait(false);
+        MoveCursorWithRegisteredMotion(client, point);
+        await Task.Delay(RobloxInputProtocol.HoverRenderSettleMilliseconds, cancellationToken).ConfigureAwait(false);
+        VerifyClientSize(window, expectedSize, "hover");
     }
 
     public async Task ScrollClientAsync(
@@ -415,31 +436,12 @@ public sealed class RobloxInputService(RobloxWindowService windows)
     private static void MoveCursorWithRegisteredMotion(ClientBounds client, PixelPoint point)
     {
         (int first, int second) = RobloxInputProtocol.RegisteredMotionDeltas(point.X, client.Width);
-        SetCursorAndPulse(checked(client.X + point.X), checked(client.Y + point.Y), first, second);
+        RobloxCursorMotion.SetAndPulse(
+            checked(client.X + point.X), checked(client.Y + point.Y), first, second);
     }
 
     private static void MoveScreenCursorWithRegisteredMotion(int screenX, int screenY) =>
-        SetCursorAndPulse(screenX, screenY, 1, -1);
-
-    private static void SetCursorAndPulse(int screenX, int screenY, int first, int second)
-    {
-        if (!NativeInputMethods.SetCursorPos(screenX, screenY) ||
-            !NativeInputMethods.GetCursorPos(out NativeMethods.Point observed) ||
-            observed.X != screenX ||
-            observed.Y != screenY)
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not position the pointer in Roblox.");
-        }
-        NativeInputMethods.mouse_event(NativeInputMethods.MouseMove, first, 0, 0, 0);
-        NativeInputMethods.mouse_event(NativeInputMethods.MouseMove, second, 0, 0, 0);
-        if (!NativeInputMethods.SetCursorPos(screenX, screenY) ||
-            !NativeInputMethods.GetCursorPos(out observed) ||
-            observed.X != screenX ||
-            observed.Y != screenY)
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not finish positioning the pointer.");
-        }
-    }
+        RobloxCursorMotion.SetAndPulse(screenX, screenY, 1, -1);
 
     private static async Task ParkCursorWithAcknowledgedMotionAsync(
         ClientBounds client,
@@ -448,10 +450,8 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         PixelPoint parking = RobloxInputProtocol.ParkingPoint(client.Size);
         int parkingX = client.X + parking.X;
         int parkingY = client.Y + parking.Y;
-        if (!NativeInputMethods.SetCursorPos(parkingX, parkingY))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not park the pointer in Roblox.");
-        }
+        RobloxCursorMotion.PositionWithRetry(
+            parkingX, parkingY, "Windows could not park the pointer in Roblox.");
 
         for (int pulse = 0; pulse < RobloxInputProtocol.HoverClearPulseCount; pulse++)
         {

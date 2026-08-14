@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
+using LilacMacro.Core.Automation;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.LocalSession;
 using LilacMacro.Windows;
@@ -39,6 +40,7 @@ public sealed class LocalSessionContractTests
     [InlineData("add-isolated")]
     [InlineData("remove-profile")]
     [InlineData("relaunch-update")]
+    [InlineData("relaunch-runners")]
     public void Setup_helper_accepts_only_owned_verbs(string verb)
     {
         Assert.True(LocalSessionSetupVerbPolicy.IsAllowed(verb));
@@ -63,6 +65,8 @@ public sealed class LocalSessionContractTests
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["add-shared", "runner-2"]));
         Assert.True(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-update", @"C:\Users\owner\AppData\Local\LilacMacro\updates\id\update-state.txt"]));
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-update", "bad\npath"]));
+        Assert.True(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-runners"]));
+        Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-runners", "runner-2"]));
     }
 
     [Fact]
@@ -88,6 +92,69 @@ public sealed class LocalSessionContractTests
             "1.0.30");
 
         Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Refuel_snapshot_requires_known_route_and_areas_key()
+    {
+        RunnerTaskSnapshot utility = new()
+        {
+            Id = "task-refuel",
+            Mode = RunnerTaskMode.Utilities,
+            Route = ResourceRefuelPolicy.GoldMineRoute,
+            Target = 400,
+        };
+        RunnerRuntimeSnapshot missingKey = ValidSnapshot() with { Tasks = [utility] };
+        LocalSessionValidationResult rejected = LocalSessionValidation.Validate(
+            missingKey,
+            "S-1-5-21-100",
+            "1.0.30");
+
+        Assert.False(rejected.IsValid);
+        Assert.Contains(rejected.Errors, error => error.Contains("Areas menu", StringComparison.OrdinalIgnoreCase));
+
+        RunnerRuntimeSnapshot valid = missingKey with
+        {
+            KeyBindings = new Dictionary<string, int?> { ["AreasMenu"] = 'A' },
+        };
+        Assert.True(LocalSessionValidation.Validate(valid, "S-1-5-21-100", "1.0.30").IsValid);
+        Assert.False(LocalSessionValidation.Validate(
+            valid with { Tasks = [utility with { Route = "unknown" }] },
+            "S-1-5-21-100",
+            "1.0.30").IsValid);
+    }
+
+    [Fact]
+    public void Shop_snapshot_requires_selection_while_calendar_needs_no_areas_key()
+    {
+        RunnerRuntimeSnapshot shop = ValidSnapshot() with
+        {
+            Tasks =
+            [
+                new RunnerTaskSnapshot
+                {
+                    Id = "task-shop",
+                    Mode = RunnerTaskMode.Utilities,
+                    Route = ShopPurchasePolicy.GoldRoute,
+                    Target = 1,
+                },
+            ],
+        };
+        Assert.False(LocalSessionValidation.Validate(shop, "S-1-5-21-100", "1.0.30").IsValid);
+        RunnerRuntimeSnapshot calendar = shop with
+        {
+            Tasks =
+            [
+                new RunnerTaskSnapshot
+                {
+                    Id = "task-calendar",
+                    Mode = RunnerTaskMode.Utilities,
+                    Route = UtilityTaskPolicy.CalendarClaimRoute,
+                    Target = 1,
+                },
+            ],
+        };
+        Assert.True(LocalSessionValidation.Validate(calendar, "S-1-5-21-100", "1.0.30").IsValid);
     }
 
     [Fact]
@@ -489,6 +556,9 @@ public sealed class LocalSessionContractTests
 
         Assert.Equal(Path.Combine(paths.SessionRoot, "provisioning.json"), paths.JournalPath);
         Assert.Equal(Path.Combine(paths.RunnerRoot, "status.json"), paths.StatusPath);
+        Assert.Equal(
+            Path.Combine(paths.ProgramDataRoot, "UpdateControl", "update-request.txt"),
+            paths.UpdateRequestPath);
     }
 
     [Fact]

@@ -4,14 +4,16 @@
 
 ## Current OCR pipeline
 
-LilacMacro installs OCR into an isolated Python 3.12 environment at `%LOCALAPPDATA%\LilacMacro\ocr`. The setup script pins PaddlePaddle 3.2.0 and PaddleOCR 3.7.0. It installs one runtime at a time:
+LilacMacro installs OCR into an isolated Python 3.12 environment at `%LOCALAPPDATA%\LilacMacro\ocr`. The setup script pins PaddlePaddle 3.3.0 and PaddleOCR 3.7.0. It installs one runtime at a time:
 
 ```powershell
 ./scripts/Setup-Ocr.ps1 -Device cpu
 ./scripts/Setup-Ocr.ps1 -Device gpu
 ```
 
-GPU setup uses the official CUDA 12.6 package and verifies that Paddle sees a CUDA device. Running setup for one device removes the other Paddle runtime, so the device marker and installed package remain consistent.
+GPU setup queries NVIDIA GPU 0 through `nvidia-smi`, rejects hardware older than compute capability 6.0, and selects the official package by architecture: CUDA 11.8 for Pascal and Volta; CUDA 12.6 for Turing, Ampere, and Ada; CUDA 12.9 for Hopper and Blackwell. Setup verifies that Paddle sees a CUDA device and records the detected model, generation, capability, driver, and package feed in `runtime-profile.json`. Running setup for one device removes the other Paddle runtime, so the device marker, profile, and installed package remain consistent. AMD and Intel graphics use CPU OCR.
+
+The 3.3.0 GPU runtime has completed tensor and PP-OCRv6 small inference smoke tests on a hosted GTX 1080 Ti (Pascal, compute capability 6.1), a hosted Titan RTX (Turing), a Windows RTX 3070 (Ampere), a hosted RTX 4060 (Ada), and a hosted RTX 5060 (Blackwell). The Pascal qualification used the official CUDA 11.8 package path and recognized the synthetic `LILAC GPU OCR 12345` probe correctly. Each installed machine still performs the same setup-time device and import verification before its GPU runtime is accepted; untested GTX 10 models remain guarded by that device-local probe.
 
 The allowlisted model pairs are:
 
@@ -82,9 +84,13 @@ Review can show the source image beside a clean OCR map or expand the map with `
 
 ## Expedition reward-strip evidence
 
-**Planned runtime:** the Expedition optimizer must use one scale-derived compact reward-strip ROI rather than full-client OCR. A 414-frame standard-scale sample supports provisional resource thresholds, while a one-frame small-UI spot check showed that four-times enlargement recovered all ten quantities and enough fuzzy label evidence to resolve the five optimization resources. Raw full-client detection missed most small labels, so it is not an accepted production path.
+**Prototype runtime:** the Expedition optimizer uses one scale-derived compact reward-strip ROI rather than full-client OCR. The audited three-difficulty corpus contains 2,924 independent pool frames. Four-times enlargement, spacing-derived card ownership, and bounded fuzzy labels recover the five optimization resources without letting neighboring-card text authorize a value. Raw full-client detection missed most small labels, so it is not an accepted production path.
 
-Quantity correction is resource- and card-contextual. For example, the small frame read `2x` as `Zx`, while other samples can produce similar glyphs for different values; no global text replacement is safe. The complete evidence, parser contract, economics, and blocked validation work are in [Expedition reward optimization](EXPEDITION-REWARD-OPTIMIZATION.md).
+Quantity correction is resource- and card-contextual. The stylized `1x` glyph was consistently read as `bx` for Equipment Lock/Reroll, while the same family is ambiguous for other resources. Corrections are therefore resource-scoped, and a detected card with an unresolved quantity is retried rather than recorded as zero. The complete evidence, parser contract, economics, and blocked validation work are in [Expedition reward optimization](EXPEDITION-REWARD-OPTIMIZATION.md).
+
+## Expedition current-node evidence
+
+**Planned runtime:** locate and hover only the current progress marker, require stable tooltip structure, and OCR its revealed semantic title. Use that verified title to learn a per-desktop or per-runner color profile from multiple fresh bar samples. Color is the hot path only when one learned profile wins with a safe margin across consecutive captures; any miss, ambiguity, environment mismatch, or OCR contradiction falls back to hover OCR and refreshes calibration. Future-node lookahead and global node-color constants are not part of the design. The dataset evidence, cache scope, and required negative coverage are in [Expedition runtime](EXPEDITION-RUNTIME.md).
 
 ## Adaptive visual-anchor foundation
 
@@ -113,7 +119,7 @@ HDR capture is normalized before either OCR or visual matching. The active DXGI 
 
 Runtime Lab Debug and Wire Test expose `OCR` and `IMAGE + OCR FALLBACK` modes through the same evidence service. Pure OCR mode skips image profiling. Fallback mode first loads the profiles and atomic last-OCR-verified locators for the dataset's current `IMAGE` selections, captures their compact search regions in one GPU atlas, and evaluates only reliable matches with the same state rule used by OCR. Missing optional elements are tolerated when the state rule is already complete; missing required evidence, invalid profiles, weak or ambiguous matches, incomplete state composition, or spatial disagreement runs OCR instead.
 
-After a successful OCR fallback, the shared service takes five compact GPU-region samples over 400 ms at the OCR-owned live bounds, persists immutable profiles and refreshed locators under `%LOCALAPPDATA%\LilacMacro\visual-profiles\wire`, then matches one fresh bounded region. The diagnostic tables show whether image or OCR fallback owned the check, cached/OCR and image bounds, OCR inference time, image-match time, profile-build time, score, strategy, and agreement. Wire Test additionally exposes the median profile, reliability mask, and exact live grayscale crop used for a selected comparison. Deep debug stores those same three compact images as linked evidence. Raw full-client screenshots are not retained by this path.
+After a successful OCR fallback, the shared service takes five compact GPU-region samples over 400 ms at the OCR-owned live bounds, persists immutable profiles and a round-trip-tested refreshed locator under `%LOCALAPPDATA%\LilacMacro\visual-profiles\wire`, then matches one fresh bounded region. A missing or invalid locator keeps image evidence unavailable and falls back to OCR; it never silently substitutes static coordinates. The diagnostic tables show whether image or OCR fallback owned the check, cached/OCR and image bounds, OCR inference time, image-match time, profile-build time, score, strategy, and agreement. Wire Test additionally exposes the median profile, reliability mask, and exact live grayscale crop used for a selected comparison. Deep debug stores those same three compact images as linked evidence. Raw full-client screenshots are not retained by this path.
 
 This diagnostic integration does not authorize clicks, evaluate negative cross-state coverage, or accept profiles for unattended use. Even after an image-first check passes, the following action performs a fresh OCR-owned verification before input. Profile refresh occurs only after an explicit Runtime Lab Debug or Wire Test check reaches a passing OCR fallback.
 
