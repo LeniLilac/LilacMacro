@@ -13,13 +13,21 @@ internal sealed class ExpeditionNodeEvidenceService(
     WorkspaceController workspace,
     OcrRunner ocr)
 {
-    internal static readonly PixelRect BarBand = new(330, 52, 700, 62);
-    private static readonly PixelRect TooltipBand = new(390, 70, 590, 170);
+    internal static readonly PixelRect BarBand =
+        RuntimeSearchRegionEvidenceCatalog.ExpeditionNodeBar.Bounds;
+    internal static readonly PixelRect HoverLine =
+        RuntimeSearchRegionEvidenceCatalog.ExpeditionNodeHoverLine.Bounds;
+    internal static readonly PixelRect TooltipTitleBand =
+        RuntimeSearchRegionEvidenceCatalog.ExpeditionNodeTooltip.Bounds;
+    private const int InitialHoverSweepStep = 8;
+    private const int LocalHoverSweepRadius = 32;
+    private const int LocalHoverSweepStep = 4;
     private readonly ExpeditionOcrService _ocr = new(workspace, ocr);
     private readonly ExpeditionColorProfileStore _profiles = new();
     private ExpeditionNodeColorProfile? _profile;
     private ExpeditionNodeType? _hotCandidate;
     private int _hotStable;
+    private int? _learnedMarkerToHoverOffsetX;
 
     public async Task<ExpeditionNodeType?> ObserveAsync(
         string device,
@@ -52,16 +60,15 @@ internal sealed class ExpeditionNodeEvidenceService(
         }
 
         PixelPoint clientMarker = new(BarBand.X + marker.Value.X, BarBand.Y + marker.Value.Y);
-        await workspace.HoverRobloxAsync(
-            DebugWorkflowCatalog.ClientSize, clientMarker, cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<OcrTextRegion> regions = await _ocr.ObserveAsync(
-            TooltipBand, device, cancellationToken).ConfigureAwait(false);
-        ExpeditionNodeType? semantic = ParseNode(regions.Select(region => region.Text));
+        (ExpeditionNodeType Node, PixelPoint Hover)? calibrated =
+            await ObserveTooltipAsync(clientMarker, device, cancellationToken).ConfigureAwait(false);
+        ExpeditionNodeType? semantic = calibrated?.Node;
         if (semantic is null)
         {
-            status?.Invoke("EXPEDITION NODE TOOLTIP OCR AMBIGUOUS");
+            status?.Invoke("EXPEDITION NODE TOOLTIP HOVER SEARCH MISS");
             return null;
         }
+        _learnedMarkerToHoverOffsetX = calibrated!.Value.Hover.X - clientMarker.X;
         if (hue is double learnedHue)
         {
             _profile.Learn(semantic.Value, learnedHue);
@@ -69,8 +76,54 @@ internal sealed class ExpeditionNodeEvidenceService(
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
         }
-        status?.Invoke($"EXPEDITION NODE {semantic.Value.ToString().ToUpperInvariant()} | HOVER OCR");
+        status?.Invoke(
+            $"EXPEDITION NODE {semantic.Value.ToString().ToUpperInvariant()} | HOVER OCR | " +
+            $"OFFSET {_learnedMarkerToHoverOffsetX:+#;-#;0}");
         return semantic;
+    }
+
+    private async Task<(ExpeditionNodeType Node, PixelPoint Hover)?> ObserveTooltipAsync(
+        PixelPoint marker,
+        string device,
+        CancellationToken cancellationToken)
+    {
+        foreach (PixelPoint probe in HoverProbePoints(marker, _learnedMarkerToHoverOffsetX))
+        {
+            await workspace.HoverRobloxAsync(
+                DebugWorkflowCatalog.ClientSize, probe, cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<OcrTextRegion> regions = await _ocr.ObserveAsync(
+                TooltipTitleBand, device, cancellationToken).ConfigureAwait(false);
+            ExpeditionNodeType? semantic = ParseNode(regions.Select(region => region.Text));
+            if (semantic is ExpeditionNodeType node) return (node, probe);
+        }
+        return null;
+    }
+
+    internal static IReadOnlyList<PixelPoint> HoverProbePoints(PixelPoint marker, int? learnedOffsetX)
+    {
+        int y = HoverLine.Y + HoverLine.Height / 2;
+        if (learnedOffsetX is int cached)
+        {
+            int center = Math.Clamp(marker.X + cached, HoverLine.X, HoverLine.Right - 1);
+            List<PixelPoint> local = [new(center, y)];
+            for (int distance = LocalHoverSweepStep;
+                 distance <= LocalHoverSweepRadius;
+                 distance += LocalHoverSweepStep)
+            {
+                int right = Math.Min(HoverLine.Right - 1, center + distance);
+                int left = Math.Max(HoverLine.X, center - distance);
+                if (right != center && !local.Any(point => point.X == right)) local.Add(new(right, y));
+                if (left != center && !local.Any(point => point.X == left)) local.Add(new(left, y));
+            }
+            return local;
+        }
+
+        int last = Math.Min(HoverLine.Right - 1, marker.X + LocalHoverSweepRadius);
+        List<PixelPoint> initial = [];
+        for (int x = HoverLine.X; x <= last; x += InitialHoverSweepStep)
+            initial.Add(new(x, y));
+        if (initial.Count == 0 || initial[^1].X != last) initial.Add(new(last, y));
+        return initial;
     }
 
     internal static ExpeditionNodeType? ParseNode(IEnumerable<string> text)

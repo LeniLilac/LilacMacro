@@ -42,6 +42,7 @@
     <Compile Remove="Runtime\ExpeditionSettingsService.cs" />
     <Compile Remove="Runtime\MatchTerminalService.cs" />
     <Compile Remove="Runtime\MapPreparationService.cs" />
+    <Compile Remove="Runtime\ModalActionLocator.cs" />
     <Compile Remove="Runtime\PlacementPlaybackService.cs" />
     <Compile Remove="Runtime\PlacementRuntimeContracts.cs" />
     <Compile Remove="Runtime\PrivateServerRejoinService.cs" />
@@ -58,6 +59,9 @@
     <None Include="..\..\scripts\Setup-Ocr.ps1" Link="scripts\Setup-Ocr.ps1" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\scripts\OcrGpuRuntime.ps1" Link="scripts\OcrGpuRuntime.ps1" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\PlacementMaps\*.jpg"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\RuntimeEvidence\**\*"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

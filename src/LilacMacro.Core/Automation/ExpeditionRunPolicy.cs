@@ -18,6 +18,20 @@ public enum ExpeditionNodeAction
     Extract,
 }
 
+public static class ExpeditionDefenseStartPolicy
+{
+    public const int ArrivalMaximumObservations = 240;
+    public const int ArrivalRetryMilliseconds = 500;
+    public const int PostReplayStartAttempts = 20;
+    public const int PostReplayRetryMilliseconds = 250;
+}
+
+public static class ExpeditionNodeArrivalPolicy
+{
+    public const int MaximumObservations = 240;
+    public const int RetryMilliseconds = 500;
+}
+
 public sealed class ExpeditionRunTracker(bool extractAtCheckpoint, int bossesBeforeExtract)
 {
     private ExpeditionNodeType? _previous;

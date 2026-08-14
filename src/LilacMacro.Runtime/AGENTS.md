@@ -9,6 +9,7 @@ These rules apply to the shared headless workflow runtime.
 - Preserve one Roblox-input owner, cancellation awareness, bounded waits, fresh evidence, and guaranteed input release on every exit path.
 - Materialized runner files belong below the app-owned ProgramData runtime root. Use atomic replacement and revision-specific directories.
 - Unsupported task modes, missing placements, missing bindings, stale contexts, or unavailable OCR must fail visibly before input.
+- Runtime search areas must consume explicit bundled dataset ownership rather than hard-coded or guessed crops. Follow [`../../docs/RUNTIME-EVIDENCE.md`](../../docs/RUNTIME-EVIDENCE.md), and ask the owner when annotation intent is unclear.
 - Keep scheduler behavior rooted at verified Lobby and reevaluate priority after every terminal match.
 - Agents must not drive LilacMacro or Roblox through computer-control tooling. Live visual and Roblox acceptance belongs to the owner.
 - Follow the repository validation loop in [`../../docs/TESTING.md`](../../docs/TESTING.md).

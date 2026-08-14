@@ -1,0 +1,132 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "d811c72b-0c42-439c-bc8b-ab8beb6aeb23",
+    "name":  "expedition route reward diff ui scales",
+    "notes":  "frame 1 = standard\r\nframe 2 = large\r\nframe 3 = small\r\n\r\nBundled runtime evidence slice. Original dataset: expedition-route-reward-diff-ui-scales-20260810-011410. Source frames: 1, 2, 3.",
+    "created_at_utc":  "2026-08-10T01:14:10.5180781+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  4640,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-10T01:14:11.5765469+00:00",
+                       "sha256":  "87245ffd297d4021fb4e1803e8b9117ff92c13e287e0cc5b0201a7547baa8597",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "a2e5471c-3339-4b5f-bcc7-d7f414c9a45b",
+                                               "global_group_id":  "8c9e1ea7-61b9-49f5-9b80-0ba08c9eed09",
+                                               "bounds":  {
+                                                              "x":  23,
+                                                              "y":  581,
+                                                              "width":  223,
+                                                              "height":  84
+                                                          },
+                                               "label":  "Route Reward Back Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-10T01:14:15.9672608+00:00",
+                       "sha256":  "86f3c25f6d95f357913297b028ae22870c038432e6103b20410451071137ce30",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "888d2c77-163c-4032-8ebb-780a6741b928",
+                                               "global_group_id":  "8c9e1ea7-61b9-49f5-9b80-0ba08c9eed09",
+                                               "bounds":  {
+                                                              "x":  23,
+                                                              "y":  581,
+                                                              "width":  223,
+                                                              "height":  84
+                                                          },
+                                               "label":  "Route Reward Back Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Back",
+                                                                      "confidence":  0.9999817609786987,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  31,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-12T22:38:15.8073816+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  115,
+                                                                                                         "y":  601,
+                                                                                                         "width":  50,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Back",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999817609786987,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required",
+                                                                                          "spatial_selector":  "leftmost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-10T01:14:21.082194+00:00",
+                       "sha256":  "eccd1b38a7c25ab78e7dc2ddea631f088dbf365b03a9290f27d6eaf6feaf96b9",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "47bfac51-a843-43d6-918e-d40f58733988",
+                                               "global_group_id":  "8c9e1ea7-61b9-49f5-9b80-0ba08c9eed09",
+                                               "bounds":  {
+                                                              "x":  23,
+                                                              "y":  581,
+                                                              "width":  223,
+                                                              "height":  84
+                                                          },
+                                               "label":  "Route Reward Back Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

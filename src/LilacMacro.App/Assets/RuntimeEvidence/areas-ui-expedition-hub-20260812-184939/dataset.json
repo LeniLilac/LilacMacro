@@ -1,0 +1,103 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "d33de34e-8f89-4f32-85b1-df14af4cc9a0",
+    "name":  "areas ui expedition hub",
+    "notes":  "Exisiting areas ui dataset: \"<local-user-root>\\Documents\\LilacMacro Datasets\\areas-ui-20260802-231943\"\r\n\r\nFrom that click expeditions then click the expedition hub button then wait like 5s then start the blind nav flow\r\n\r\nBundled runtime evidence slice. Original dataset: areas-ui-expedition-hub-20260812-184939. Source frames: 2.",
+    "created_at_utc":  "2026-08-12T18:49:39.3979944+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  30328,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-12T18:49:50.7050436+00:00",
+                       "sha256":  "a3800ffcd5fec29acc12ca247596857f31b84fff73da4566d8339657e0259932",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "2696587a-aae1-4d54-9ebc-5665d24f7f03",
+                                               "global_group_id":  "bf089675-6c23-4baf-bcd4-e67ec106dc8e",
+                                               "bounds":  {
+                                                              "x":  383,
+                                                              "y":  205,
+                                                              "width":  296,
+                                                              "height":  112
+                                                          },
+                                               "label":  "Expedition Hub State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "ExpeditionHub\nPlay and Manage all Expedition\nresources and buildings.",
+                                                                      "confidence":  0.9937549034754435,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  111,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-12T18:51:43.3936957+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  401,
+                                                                                                         "y":  227,
+                                                                                                         "width":  147,
+                                                                                                         "height":  21
+                                                                                                     },
+                                                                                          "text":  "ExpeditionHub",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999592304229736,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  400,
+                                                                                                         "y":  249,
+                                                                                                         "width":  209,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "Play and Manage all Expedition",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9866763949394226,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  400,
+                                                                                                         "y":  265,
+                                                                                                         "width":  164,
+                                                                                                         "height":  12
+                                                                                                     },
+                                                                                          "text":  "resources and buildings.",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9946290850639343,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

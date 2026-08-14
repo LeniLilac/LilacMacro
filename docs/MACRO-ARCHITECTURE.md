@@ -78,7 +78,7 @@ The current Prototype preflights every configured task and placement route befor
 
 Modules exchange typed state/outcome contracts rather than clicking through one another. Every handoff requires fresh evidence for the owned state.
 
-Placement routes reserve at most 30000 ms of authored guaranteed delay before their `Start Game` boundary. If Roblox's 60-second timer starts the match while those prestart actions are still running, the placement owner completes them in order. At the boundary, repeated fresh Start-screen absence plus independent selected-unit runtime evidence satisfies the boundary without a click, after which the same route continues into after-start actions. The timer is a state transition fallback, never a cancellation signal.
+Placement routes preserve every authored prestart action in order. The game no longer supplies a timer-driven auto-start fallback, so the `Start Game` boundary requires a fresh verified action before the owner can continue into after-start actions. Individual Delay and post-step values retain their ordinary bounded validation; there is no timer-derived aggregate prestart budget.
 
 ## Mode flows
 
@@ -104,7 +104,7 @@ The random Challenge map is recognized after type selection and selects the corr
 
 Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Expedition map and difficulty -> Match Preview -> route-reward inspect/reroll -> Match Prestart -> current-node loop -> Checkpoint extraction or terminal result -> private-server rejoin -> Lobby.
 
-The node loop locates and hovers only the current marker. A stable tooltip title owns semantic calibration, while the color learned from that observation is a per-environment hot path with hover-OCR fallback and refresh. Future-node lookahead is not required. Defense and Elite may replay placement/configuration after clearing phantom placements; Assault and Boss wait; Encounter uses a map-specific verified interaction flow; Checkpoint applies extraction policy. The detailed field contract and unresolved behavior are in [Expedition runtime](EXPEDITION-RUNTIME.md).
+The node loop locates and hovers only the current marker. A stable tooltip title owns semantic calibration, while the color learned from that observation is a per-environment hot path with hover-OCR fallback and refresh. Future-node lookahead is not required. Defense and Elite wait for Start Game before replaying placement/configuration; Assault and Boss wait; Encounter and non-spawn Checkpoint wait for ship arrival and then use separate verified Continue source/modal states; Checkpoint applies extraction policy. The detailed field contract and unresolved behavior are in [Expedition runtime](EXPEDITION-RUNTIME.md).
 
 ### Event — Prototype
 
@@ -118,7 +118,7 @@ The updated Event sidebar also exposes Boss Bounty and Guess That Unit through t
 
 - Story, Raid, Challenge, and Expedition are permanent game modes. Their runners own only mode-specific navigation and reuse the shared team, match-start, placement, terminal, and Lobby-reset modules.
 - Event acts are limited content. Each event definition must keep its identity, OCR aliases, routes, availability, and runner adapter behind one removable registration boundary instead of adding branches throughout the scheduler and UI.
-- Utilities are scheduler tasks, not game modes. They use the same priority contract but remain separate from mode navigation. Mine and Drill retain configured minute intervals; Gold Shop and Calendar use the next UTC midnight, while Raid Shop uses the next seven-day boundary from its field-supplied beacon. Shop task snapshots carry only stable enabled-item IDs, never screen positions; the runtime rediscovers catalog rows and availability from fresh evidence.
+- Utilities are scheduler tasks, not game modes. They use the same priority contract but remain separate from mode navigation. Mine and Drill retain configured minute intervals; Gold Shop and Calendar use the next UTC midnight, Raid Shop uses the next seven-day boundary from its field-supplied beacon, and Expedition Shop uses a two-day boundary from that beacon. Shop task snapshots carry only stable enabled-item IDs, never screen positions; the runtime rediscovers catalog rows and availability from fresh evidence.
 - Removing limited content must delete its registration and focused tests without changing shared capture, OCR, input, placement, terminal, or scheduler services. Persisted plan modes use exact stable names and reject unknown values rather than silently deserializing as another mode; an unavailable-content state is still required before a persisted limited Event task can outlive its registration.
 
 ## State-transition safety

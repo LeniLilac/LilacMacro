@@ -20,7 +20,7 @@ Do not discard, reset, reformat, rename, stage, or commit unrelated owner work. 
 - Add a focused test for deterministic behavior or a regression whenever practical.
 - Keep new production and script files at or below 500 lines and tests at or below 800 lines. Every `AGENTS.md` must remain at or below 120 lines.
 - Split files by owner, policy, or lifecycle before adding a second responsibility.
-- Do not hand-edit or commit `bin`, `obj`, `artifacts`, `TestResults`, local datasets, agent views, OCR environments, models, logs, or settings.
+- Do not hand-edit or commit `bin`, `obj`, `artifacts`, `TestResults`, local datasets, agent views, OCR environments, models, logs, or settings. Curated runtime-evidence slices are the single exception and must follow [Runtime evidence ownership](docs/RUNTIME-EVIDENCE.md).
 
 ## Documentation contract
 
@@ -32,6 +32,8 @@ Update documentation in the same change when behavior, persistence, architecture
 - **Unresolved:** a decision or design remains open.
 
 Do not copy detailed state rules into the README. Put field-observed rules in [Game behavior](docs/GAME-BEHAVIOR.md), architecture in [Architecture](docs/ARCHITECTURE.md), and current/planned boundaries in [Project status](docs/PROJECT-STATUS.md).
+
+Runtime search-region changes must identify the exact dataset annotation, add only the required evidence slice to `eng/runtime-evidence.json`, regenerate the bundle, and update the evidence catalog. If the dataset notes do not make a box's state, layer, or search/action intent clear, ask the owner before implementation.
 
 ## Validation
 

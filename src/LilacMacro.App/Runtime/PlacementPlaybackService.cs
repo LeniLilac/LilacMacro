@@ -67,16 +67,10 @@ internal sealed class PlacementPlaybackService(
             plan.BeforeStart, document, keys, device, placements,
             () => layout, value => layout = value, status, cancellationToken);
 
-        MatchStartBoundaryDecision boundary = await SatisfyStartBoundaryAsync(
-            layout, placements.Values.FirstOrDefault(), device, status, cancellationToken);
-        status?.Invoke(boundary == MatchStartBoundaryDecision.AutoStarted
-            ? "START GAME AUTO-STARTED; BOUNDARY SATISFIED"
-            : "START GAME VERIFIED + CLICKED");
+        await SatisfyStartBoundaryAsync(device, status, cancellationToken);
+        status?.Invoke("START GAME VERIFIED + CLICKED");
         executed++;
-        if (boundary == MatchStartBoundaryDecision.ClickStart)
-        {
-            await Task.Delay(1000, cancellationToken);
-        }
+        await Task.Delay(1000, cancellationToken);
 
         executed += await RunStepsAsync(
             plan.AfterStart, document, keys, device, placements,
@@ -143,42 +137,41 @@ internal sealed class PlacementPlaybackService(
         }
     }
 
-    private async Task<MatchStartBoundaryDecision> SatisfyStartBoundaryAsync(
-        UnitPanelLayout? layout,
-        PlacementExecutionState? activePlacement,
+    public Task SatisfyExpeditionStartBoundaryAsync(
+        ExpeditionPlacementSession session,
         string device,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
-        for (int attempt = 1; attempt <= PlacementPrestartPolicy.RequiredStartScreenMisses; attempt++)
+        ArgumentNullException.ThrowIfNull(session);
+        return SatisfyStartBoundaryAsync(
+            device,
+            status,
+            cancellationToken,
+            ExpeditionDefenseStartPolicy.PostReplayStartAttempts,
+            ExpeditionDefenseStartPolicy.PostReplayRetryMilliseconds);
+    }
+
+    private async Task SatisfyStartBoundaryAsync(
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken,
+        int startAttempts = 20,
+        int retryMilliseconds = 250)
+    {
+        for (int attempt = 1; attempt <= startAttempts; attempt++)
         {
             DebugRunReport start = await _debug.StartGameAsync(device, cancellationToken);
-            if (start.Succeeded) return MatchStartBoundaryDecision.ClickStart;
-            status?.Invoke($"START SCREEN ABSENT {attempt}/{PlacementPrestartPolicy.RequiredStartScreenMisses}");
-            if (attempt < PlacementPrestartPolicy.RequiredStartScreenMisses)
+            if (start.Succeeded) return;
+            status?.Invoke($"START SCREEN ABSENT {attempt}/{startAttempts}");
+            if (attempt < startAttempts)
             {
-                await Task.Delay(150, cancellationToken);
+                await Task.Delay(retryMilliseconds, cancellationToken);
             }
         }
 
-        bool runtimeEvidence = false;
-        if (layout is not null && activePlacement is not null)
-        {
-            await workspace.ClickRobloxAsync(
-                DebugWorkflowCatalog.ClientSize, activePlacement.LivePoint, cancellationToken);
-            runtimeEvidence = await _panel.WaitForPhysicalSelectionAsync(
-                layout, device, status, cancellationToken);
-            await _panel.DismissAsync(layout, status, cancellationToken);
-        }
-        MatchStartBoundaryDecision decision = PlacementPrestartPolicy.DecideBoundary(
-            PlacementPrestartPolicy.RequiredStartScreenMisses,
-            runtimeEvidence);
-        if (decision == MatchStartBoundaryDecision.Indeterminate)
-        {
-            throw new InvalidOperationException(
-                "Start Game was absent, but live selected-unit evidence could not verify that the match auto-started.");
-        }
-        return decision;
+        throw new InvalidOperationException(
+            $"Start Game did not expose a verified action after {startAttempts} fresh observation(s).");
     }
 
     private async Task<int> RunStepsAsync(

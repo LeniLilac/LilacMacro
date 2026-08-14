@@ -1,45 +1,12 @@
+using LilacMacro.Core.Automation;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Ocr;
-using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Debugging;
 
 internal static class DebugWorkflowCatalog
 {
     public static readonly PixelSize ClientSize = new(1366, 700);
-
-    private static readonly IReadOnlyList<OcrTargetRule> ResultSupportTargets =
-    [
-        new("Repeat Stage", "repeat stage", "repeat"),
-        new("View Party", "view party", "party"),
-        new("Game Stats", "game stats"),
-        new("Gained Rewards", "gained rewards"),
-        new("Clear Time", "clear time"),
-        new("Total Yen", "total yen"),
-        new("Total Kills", "total kills"),
-        new("Total Damage", "total damage"),
-    ];
-
-    public static readonly IReadOnlyList<OcrTargetRule> LobbyTargets =
-    [
-        new("Store", "store"),
-        new("Units", "units"),
-        new("Items", "items"),
-        new("Quests", "quests"),
-        new("Summon", "summon"),
-        new("Areas", "areas"),
-        new("Play", "play"),
-        new("Events", "events"),
-    ];
-
-    public static readonly IReadOnlyList<OcrTargetRule> ModeTargets =
-    [
-        new("Story", "story", "progressive gamemode", "progressive"),
-        new("Raid", "raid", "difficult gamemode", "difficult"),
-        new("Challenge", "challenge", "reward gamemode", "reward"),
-        new("Expedition", "expedition", "special gamemode", "special"),
-        new("Tower", "tower", "tower mode"),
-    ];
 
     public static readonly OcrTargetRule EventSelectStageTarget =
         new("Select Stage", "select stage");
@@ -188,13 +155,13 @@ internal static class DebugWorkflowCatalog
     public static readonly IReadOnlyList<OcrTargetRule> DefeatTargets =
     [
         new("Defeat", "defeat"),
-        .. ResultSupportTargets,
+        .. DebugWorkflowTargets.ResultSupport,
     ];
 
     public static readonly IReadOnlyList<OcrTargetRule> VictoryTargets =
     [
         new("Victory", "victory"),
-        .. ResultSupportTargets,
+        .. DebugWorkflowTargets.ResultSupport,
     ];
 
     public static readonly IReadOnlyList<OcrTargetRule> ExpeditionHubTargets =
@@ -234,51 +201,21 @@ internal static class DebugWorkflowCatalog
         new("Gold Shop", "gold shop", "goldshop"),
     ];
 
-    public static readonly IReadOnlyList<OcrTargetRule> GoldShopSelectorTargets =
-    [
-        new("Gold Shop", "gold shop"),
-        new("Event Shop", "event shop"),
-        new("Leave", "leave"),
-    ];
-
-    public static readonly IReadOnlyList<OcrTargetRule> RaidShopSelectorTargets =
-    [
-        new("View Shop", "view shop"),
-        new("Leave", "leave"),
-    ];
-
-    public static readonly IReadOnlyList<OcrTargetRule> GoldShopTargets =
-    [
-        new("Gold Shop", "gold shop", "goldshop"),
-        new("Cosmetic Shop", "cosmetic shop"),
-    ];
-
-    public static readonly IReadOnlyList<OcrTargetRule> RaidShopTargets =
-    [
-        new("General", "general"),
-        new("Spirit City", "spirit city"),
-    ];
-
-    public static readonly IReadOnlyList<OcrTargetRule> ShopPurchaseDialogTargets =
-    [
-        new("Buy Amount", "buy amount"),
-        new("Purchase Question", "how much would you like to buy"),
-        new("Cancel", "cancel"),
-    ];
-
     public static readonly DebugStateSpec Lobby = new(
         "LOBBY",
         Dataset("lobby-20260802-185951"),
         [1],
         2,
-        LobbyTargets);
+        DebugWorkflowTargets.Lobby,
+        RegionLabel: "Lobby State");
 
     public static readonly DebugStateSpec PlayUi = new(
         "PLAY UI",
         Dataset("play-ui-20260802-191143"),
         [1],
         2,
-        ModeTargets);
+        DebugWorkflowTargets.Modes,
+        RegionLabel: "Play UI State");
 
     public static readonly DebugStateSpec EventSelect = new(
         "EVENT SELECT",
@@ -286,12 +223,13 @@ internal static class DebugWorkflowCatalog
         [1],
         3,
         EventSelectionRules.StateTargets,
-        DebugMatchMode.ExactTargets);
+        DebugMatchMode.ExactTargets,
+        RegionLabel: "Event Select State");
 
     public static readonly DebugStateSpec EventPageConfirm = new(
         "EVENT PAGE CONFIRM",
         Dataset("villain-invasion-set1-20260812-230831"),
-        [4],
+        [3],
         3,
         EventPageConfirmTargets,
         DebugMatchMode.RequiredFirstTarget,
@@ -300,7 +238,7 @@ internal static class DebugWorkflowCatalog
     public static readonly DebugStateSpec EventActPicker = new(
         "EVENT ACT PICKER",
         Dataset("villain-invasion-set1-20260812-230831"),
-        [2, 3],
+        [1, 2],
         1,
         EventActTargets,
         RegionLabel: "Act OCR");
@@ -308,9 +246,10 @@ internal static class DebugWorkflowCatalog
     public static readonly DebugStateSpec EventStagePreview = new(
         "EVENT STAGE PREVIEW",
         Dataset("villain-invasion-set2-20260812-231832"),
-        [2],
+        [1],
         3,
-        EventStagePreviewTargets);
+        EventStagePreviewTargets,
+        RegionLabel: "Event Stage Preview State");
 
     public static readonly DebugStateSpec AreasUi = new(
         "AREAS UI",
@@ -318,24 +257,27 @@ internal static class DebugWorkflowCatalog
         [1],
         3,
         AreaSelectionRules.StateTargets,
-        DebugMatchMode.RequiredFirstTarget);
+        DebugMatchMode.RequiredFirstTarget,
+        RegionLabel: "Areas UI State");
 
     public static readonly DebugStateSpec ExpeditionHub = new(
         "EXPEDITION HUB",
         Dataset("areas-ui-expedition-hub-20260812-184939"),
-        [2],
+        [1],
         3,
         ExpeditionHubTargets,
-        DebugMatchMode.RequiredFirstTarget);
+        DebugMatchMode.RequiredFirstTarget,
+        RegionLabel: "Expedition Hub State");
 
     public static readonly DebugStateSpec GoldMineRefuel = new(
         "GOLD MINE REFUEL",
         Dataset("gold-mine-fuel-refuel-20260812-184313"),
-        [5],
+        [1],
         4,
         GoldMineRefuelTargets,
         DebugMatchMode.DeclarativeEvidence,
-        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Gold Mine"]);
+        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Gold Mine"],
+        RegionLabel: "Gold Mine Refuel State");
 
     public static readonly DebugStateSpec ResourceDrillRefuel = new(
         "RESOURCE DRILL REFUEL",
@@ -344,62 +286,97 @@ internal static class DebugWorkflowCatalog
         4,
         ResourceDrillRefuelTargets,
         DebugMatchMode.DeclarativeEvidence,
-        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Resource Drill"]);
+        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Resource Drill"],
+        RegionLabel: "Resource Drill Refuel State");
 
     public static readonly DebugStateSpec AddFuelDialog = new(
         "ADD FUEL DIALOG",
         Dataset("gold-mine-fuel-refuel-20260812-184313"),
-        [6],
+        [2],
         3,
         AddFuelDialogTargets,
         DebugMatchMode.DeclarativeEvidence,
         RequiredTargetNames: ["Add Fuel", "Confirm", "Cancel"],
-        SameRowTargetNames: ["Confirm", "Cancel"]);
+        SameRowTargetNames: ["Confirm", "Cancel"],
+        RegionLabel: "Add Fuel Dialog State");
 
     public static readonly DebugStateSpec ShopAreas = new(
         "SHOP AREAS",
         Dataset("shop-areas-nav-for-gold-raid-shop-20260813-210616"),
-        [2],
+        [1],
         3,
-        ShopAreaTargets);
+        ShopAreaTargets,
+        RegionLabel: "Shop Areas State");
 
     public static readonly DebugStateSpec GoldShopSelector = new(
         "GOLD SHOP SELECTOR",
         Dataset("gold-shop-buy-part1-20260813-210659"),
-        [3],
+        [1],
         2,
-        GoldShopSelectorTargets);
+        DebugWorkflowTargets.GoldShopSelector,
+        RegionLabel: "Shop Selection Buttons");
 
     public static readonly DebugStateSpec GoldShop = new(
         "GOLD SHOP",
         Dataset("gold-shop-buy-part1-20260813-210659"),
-        [37],
+        [2],
         2,
-        GoldShopTargets,
+        DebugWorkflowTargets.GoldShop,
         RegionLabel: "Gold Shop UI Confirm");
 
     public static readonly DebugStateSpec RaidShopSelector = new(
         "RAID SHOP SELECTOR",
         Dataset("raid-shop-buy-part1-20260813-213958"),
-        [2],
+        [1],
         2,
-        RaidShopSelectorTargets);
+        DebugWorkflowTargets.RaidShopSelector,
+        RegionLabel: "Raid Shop Selector State");
 
     public static readonly DebugStateSpec RaidShop = new(
         "RAID SHOP",
         Dataset("raid-shop-buy-part2-20260813-214144"),
-        [3],
+        [1],
         2,
-        RaidShopTargets);
+        DebugWorkflowTargets.RaidShop,
+        RegionLabel: "Raid Shop UI Confirm");
+
+    public static readonly DebugStateSpec ExpeditionShopSelector = new(
+        "EXPEDITION SHOP SELECTOR",
+        Dataset("expedition-shop-ui-nav-20260814-003616"),
+        [1],
+        1,
+        DebugWorkflowTargets.ExpeditionShopSelector,
+        DebugMatchMode.ExactTargets,
+        RegionLabel: "Expedition Shop Interaction Search");
+
+    public static readonly DebugStateSpec ExpeditionShop = new(
+        "EXPEDITION SHOP",
+        Dataset("expediton-shop-scroll-multi-ui-scale-20260814-083856"),
+        [1, 2, 3],
+        1,
+        DebugWorkflowTargets.ExpeditionShop,
+        DebugMatchMode.ExactTargets,
+        RegionLabel: "Confirm expedition shop is open");
+
+    public static readonly DebugStateSpec ExpeditionShopPurchaseDialog = new(
+        "EXPEDITION SHOP PURCHASE DIALOG",
+        Dataset("expedition-shop-buy-flow-20260814-085142"),
+        [1, 2, 3],
+        3,
+        DebugWorkflowTargets.ShopPurchaseDialog,
+        DebugMatchMode.DeclarativeEvidence,
+        RequiredTargetNames: ["Buy Amount", "Purchase Question", "Cancel"],
+        RegionLabel: "Shop Purchase Dialog State");
 
     public static readonly DebugStateSpec ShopPurchaseDialog = new(
         "SHOP PURCHASE DIALOG",
         Dataset("gold-shop-buy-part3-20260813-213107"),
-        [3],
+        [1],
         3,
-        ShopPurchaseDialogTargets,
+        DebugWorkflowTargets.ShopPurchaseDialog,
         DebugMatchMode.DeclarativeEvidence,
-        RequiredTargetNames: ["Buy Amount", "Purchase Question", "Cancel"]);
+        RequiredTargetNames: ["Buy Amount", "Purchase Question", "Cancel"],
+        RegionLabel: "Shop Purchase Dialog State");
 
     public static readonly DebugStateSpec UnitInventory = new(
         "UNIT INVENTORY",
@@ -407,42 +384,48 @@ internal static class DebugWorkflowCatalog
         [1],
         2,
         UnitInventoryTargets,
-        DebugMatchMode.RequiredFirstTarget);
+        DebugMatchMode.RequiredFirstTarget,
+        RegionLabel: "Unit Inventory State");
 
     public static readonly DebugStateSpec TeamSwap = new(
         "TEAM SWAP",
         Dataset("team-swap-20260802-222627"),
         [1],
         3,
-        TeamSwapTargets);
+        TeamSwapTargets,
+        RegionLabel: "Team Swap State");
 
     public static readonly DebugStateSpec TeamLoadConfirm = new(
         "TEAM LOAD CONFIRM",
         Dataset("team-swap-flow-revised-20260808-054531"),
         [2],
         3,
-        TeamLoadConfirmTargets);
+        TeamLoadConfirmTargets,
+        RegionLabel: "Team Modal State");
 
     public static readonly DebugStateSpec TeamSaveConfirm = new(
         "TEAM SAVE CONFIRM",
         Dataset("team-swap-flow-revised-20260808-054531"),
         [1],
         3,
-        TeamSaveConfirmTargets);
+        TeamSaveConfirmTargets,
+        RegionLabel: "Team Modal State");
 
     public static readonly DebugStateSpec TeamIncludeEquipment = new(
         "TEAM INCLUDE EQUIPMENT",
         Dataset("team-swap-flow-revised-20260808-054531"),
         [3],
         3,
-        TeamIncludeEquipmentTargets);
+        TeamIncludeEquipmentTargets,
+        RegionLabel: "Team Modal State");
 
     public static readonly DebugStateSpec ChallengeTypePicker = new(
         "CHALLENGE TYPE",
         Dataset("challenge-type-picker-20260802-215826"),
         [1],
         3,
-        ChallengeTypeTargets);
+        ChallengeTypeTargets,
+        RegionLabel: "Challenge Type State");
 
     public static readonly DebugStateSpec ChallengeAvailable = new(
         "CHALLENGE AVAILABLE",
@@ -453,7 +436,8 @@ internal static class DebugWorkflowCatalog
         DebugMatchMode.DeclarativeEvidence,
         RequiredTargetNames: ["Challenges", "Back", "Select Stage"],
         PoolTargetNames: MapTargets.Select(target => target.Name).ToArray(),
-        MinimumPoolMatches: 1);
+        MinimumPoolMatches: 1,
+        RegionLabel: "Challenge Available State");
 
     public static readonly DebugStateSpec ChallengeCooldown = new(
         "CHALLENGE COOLDOWN",
@@ -466,42 +450,48 @@ internal static class DebugWorkflowCatalog
         PoolTargetNames: MapTargets.Select(target => target.Name).ToArray(),
         MinimumPoolMatches: 1,
         FuzzyPrefixTargetNames: ["Available In"],
-        SameRowTargetNames: ["Back", "Available In", "Enter Matchmaking"]);
+        SameRowTargetNames: ["Back", "Available In", "Enter Matchmaking"],
+        RegionLabel: "Challenge Cooldown State");
 
     public static readonly DebugStateSpec StoryMap = new(
         "STORY MAP",
         Dataset("story-map-picker-20260802-192129"),
-        [2],
+        [1],
         2,
-        MapTargets);
+        MapTargets,
+        RegionLabel: "Story Map State");
 
     public static readonly DebugStateSpec RaidMap = new(
         "RAID MAP",
         Dataset("raid-map-picker-20260802-215104"),
         [1],
         1,
-        RaidMapTargets);
+        RaidMapTargets,
+        RegionLabel: "Raid Map State");
 
     public static readonly DebugStateSpec ExpeditionMap = new(
         "EXPEDITION MAP",
         Dataset("expedition-map-picker-20260802-220435"),
         [1],
         3,
-        ExpeditionMapTargets);
+        ExpeditionMapTargets,
+        RegionLabel: "Expedition Map State");
 
     public static readonly DebugStateSpec StoryActPicker = new(
         "STORY ACT",
         Dataset("story-map-act-picker-play-ui-20260802-193045"),
         [1],
         3,
-        StoryActPickerTargets);
+        StoryActPickerTargets,
+        RegionLabel: "Story Act State");
 
     public static readonly DebugStateSpec RaidActPicker = new(
         "RAID ACT",
         Dataset("raid-map-act-picker-20260802-215448"),
         [1],
         3,
-        RaidActPickerTargets);
+        RaidActPickerTargets,
+        RegionLabel: "Raid Act State");
 
     public static readonly DebugStateSpec MatchPreview = new(
         "MATCH PREVIEW",
@@ -509,15 +499,17 @@ internal static class DebugWorkflowCatalog
         [1],
         2,
         MatchPreviewTargets,
-        DebugMatchMode.RequiredFirstTarget);
+        DebugMatchMode.RequiredFirstTarget,
+        RegionLabel: "Match Preview State");
 
     public static readonly DebugStateSpec MatchPrestart = new(
         "MATCH PRESTART",
-        Dataset("match-prestart-20260802-212342"),
-        [1],
+        Dataset("new-start-game-button-20260814-082314"),
+        [1, 2, 3],
         2,
         MatchPrestartTargets,
-        DebugMatchMode.RepeatedTarget);
+        DebugMatchMode.RepeatedTarget,
+        RegionLabel: "match prestart");
 
     public static readonly DebugStateSpec Defeat = new(
         "DEFEAT",
@@ -525,7 +517,8 @@ internal static class DebugWorkflowCatalog
         [1],
         3,
         DefeatTargets,
-        DebugMatchMode.RequiredFirstTarget);
+        DebugMatchMode.RequiredFirstTarget,
+        RegionLabel: "Defeat State");
 
     public static readonly DebugStateSpec Victory = new(
         "VICTORY",
@@ -533,14 +526,16 @@ internal static class DebugWorkflowCatalog
         [1],
         3,
         VictoryTargets,
-        DebugMatchMode.RequiredFirstTarget);
+        DebugMatchMode.RequiredFirstTarget,
+        RegionLabel: "Victory State");
 
     public static readonly DebugStateSpec UnitPanel = new(
         "UNIT PANEL",
         Dataset("unit-selection-verification-20260806-180017"),
         [1],
         2,
-        UnitPanelTargets);
+        UnitPanelTargets,
+        RegionLabel: "Unit Panel State");
 
     public static OcrTargetRule ConfirmationFor(StoryAct act) => act switch
     {
@@ -554,8 +549,5 @@ internal static class DebugWorkflowCatalog
         _ => throw new ArgumentOutOfRangeException(nameof(act)),
     };
 
-    private static string Dataset(string directory) => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-        "LilacMacro Datasets",
-        directory);
+    private static string Dataset(string directory) => RuntimeEvidenceDatasetCatalog.Dataset(directory);
 }

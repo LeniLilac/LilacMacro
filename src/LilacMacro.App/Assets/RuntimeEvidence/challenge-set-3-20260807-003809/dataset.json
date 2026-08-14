@@ -1,0 +1,48 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "a5b44c93-6960-4cc6-90c2-7cb904a051c0",
+    "name":  "Challenge Set 3",
+    "notes":  "State: general challenge selected; cooldown.\nRequired: topmost Challenges; Back; OCR prefix Available in; disabled gray Enter Matchmaking.\nMap rule: require 1 pooled map match. Aliases: School Grounds: school | school grounds | grounds | ground; Flower Forest: flower forest | flower; Rose Kingdom: rose | kingdom | rose kingdom; Fairy King Forest: fairy king | fairy king forest | king forest; King\u0027s Tomb: kings tomb | tomb\nModality: Available in is OCR-only because its time is dynamic; Enter Matchmaking is the gray-state visual sample. Runtime matches the stable Available in prefix.\r\n\r\nBundled runtime evidence slice. Original dataset: challenge-set-3-20260807-003809. Source frames: 1.",
+    "created_at_utc":  "2026-08-07T00:38:09.5420634+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  3592,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-07T00:38:11.8251512+00:00",
+                       "sha256":  "41fdad845f0605e9d5b551ba1bfbe0a7fa2e3e88b625cff8402680c8c66514e2",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "90deb5c4-c1a6-4518-b87d-add8a06c07cf",
+                                               "global_group_id":  "b59064f0-e028-4cd3-8acf-2d15902d50ad",
+                                               "bounds":  {
+                                                              "x":  139,
+                                                              "y":  46,
+                                                              "width":  1082,
+                                                              "height":  603
+                                                          },
+                                               "label":  "Challenge Cooldown State",
+                                               "notes":  "State: general challenge selected; cooldown.\nRequired: topmost Challenges; Back; OCR prefix Available in; disabled gray Enter Matchmaking.\nMap rule: require 1 pooled map match. Aliases: School Grounds: school | school grounds | grounds | ground; Flower Forest: flower forest | flower; Rose Kingdom: rose | kingdom | rose kingdom; Fairy King Forest: fairy king | fairy king forest | king forest; King\u0027s Tomb: kings tomb | tomb\nModality: Available in is OCR-only because its time is dynamic; Enter Matchmaking is the gray-state visual sample. Runtime matches the stable Available in prefix.",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

@@ -9,7 +9,7 @@ LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox sc
 - Do not inject into Roblox, inspect or modify its memory, hook it, or bypass anti-cheat systems.
 - Use ordinary Windows window management, Windows Graphics Capture, and Windows input only.
 - Keep the project noncommercial and preserve its license and notices.
-- Never commit credentials, private-server links, webhook URLs, captures, datasets, logs, local models, settings, or generated output.
+- Never commit credentials, private-server links, webhook URLs, logs, local models, settings, generated output, or owner datasets/captures. The only capture exception is the reviewed, allowlisted public runtime-evidence bundle governed by [docs/RUNTIME-EVIDENCE.md](docs/RUNTIME-EVIDENCE.md).
 - Do not drive LilacMacro or Roblox through computer-control tooling for UI or behavior tests. The owner performs live visual and Roblox validation.
 
 ## Read before changing
@@ -22,6 +22,7 @@ LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox sc
 - Placement work: [docs/PLACEMENT-AUTHORING.md](docs/PLACEMENT-AUTHORING.md).
 - Planned scheduler/runtime: [docs/MACRO-ARCHITECTURE.md](docs/MACRO-ARCHITECTURE.md).
 - Dataset work: [docs/DATASET-FORMAT.md](docs/DATASET-FORMAT.md) and [docs/AGENT-DATASET-WORKFLOW.md](docs/AGENT-DATASET-WORKFLOW.md).
+- Runtime search regions or bundled detection evidence: [docs/RUNTIME-EVIDENCE.md](docs/RUNTIME-EVIDENCE.md).
 - Privacy, secrets, or local data: [PRIVACY.md](PRIVACY.md).
 - Deep-debug capture or diagnosis: [docs/DEEP-DEBUG.md](docs/DEEP-DEBUG.md).
 - Installer or optional runner-session work: [docs/LOCAL-SESSION.md](docs/LOCAL-SESSION.md) and [docs/INSTALLER.md](docs/INSTALLER.md).
@@ -32,6 +33,8 @@ LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox sc
 - Coordinates and requested resolutions are Roblox client-area pixels, never desktop or outer-window pixels.
 - Reobserve the live Roblox client after resize, delay, focus change, or external transition before input.
 - Only fresh captures and verified state evidence may authorize Debug input; static coordinates never do.
+- A source control and the modal or destination it opens are separate state owners. Each must use its own dataset-labeled ROI; never merge them into one broad OCR crop or resolve duplicate labels by global screen order.
+- Every semantic runtime search area must trace to one named annotation in the bundled evidence catalog. If a dataset box or note does not unambiguously define its state, layer, or intent, stop and ask the owner rather than guessing.
 - Annotation and OCR rectangles use original-image, half-open coordinates and remain inside their owning image or region.
 - Save manifests, settings, and placement documents atomically; never overwrite an existing finalized dataset directory.
 - Keep input cancellation-aware and release every held key or mouse button on all exit paths.

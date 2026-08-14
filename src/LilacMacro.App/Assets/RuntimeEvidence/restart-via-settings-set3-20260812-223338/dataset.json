@@ -1,0 +1,132 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "e6bc308b-516d-4cbc-b8ff-0f9741326886",
+    "name":  "Restart via settings set3",
+    "notes":  "start from frame 2:\r\n- prestart state\r\n- check route rewards\r\n- click back\r\n- start game\r\n- click settings\r\n- click restart button (use rel pos like with teleport to spawn button)\r\n- click confirm\r\n(settings autocloses)\r\n- prestart state, route rewards rerolled\r\n\r\nBundled runtime evidence slice. Original dataset: restart-via-settings-set3-20260812-223338. Source frames: 2, 3, 4, 5, 6, 7, 8, 9.",
+    "created_at_utc":  "2026-08-12T22:33:38.7209024+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  30328,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-12T22:33:56.617454+00:00",
+                       "sha256":  "6e2f296582f4e2be8cb1446683c83cf7e35b5936ea988c3b18b74c196195e357",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-12T22:33:59.9449016+00:00",
+                       "sha256":  "b82087e426c3765d90abdeb72100932248f41f60bc5e580bd7c9a5ec83c84d31",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0004.png",
+                       "captured_at_utc":  "2026-08-12T22:34:02.9770214+00:00",
+                       "sha256":  "25658e1f96dec5e58a88bd1fd9f76195bda4232e4349b82c914aaf4e33e54d0d",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0005.png",
+                       "captured_at_utc":  "2026-08-12T22:34:08.8223916+00:00",
+                       "sha256":  "456f98cea87d8914bffafe35604b6082c6c7ce8083b99c3d6db461c95bdef01f",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0006.png",
+                       "captured_at_utc":  "2026-08-12T22:34:10.9755842+00:00",
+                       "sha256":  "c86ec3a5d90fe3d0c4cb6f813526e354852f8c145b302da68c5824b7047c3643",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0007.png",
+                       "captured_at_utc":  "2026-08-12T22:34:12.8424495+00:00",
+                       "sha256":  "4cc02bf573c43efd7ff8fdc3edf5cf4eda6d92f7bb0bf0dbf5e488ca3da80775",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "74e6b3a5-f838-45ab-869e-f75699884a37",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  430,
+                                                              "y":  250,
+                                                              "width":  510,
+                                                              "height":  210
+                                                          },
+                                               "label":  "Restart Confirmation Search",
+                                               "notes":  "Bounded Restart/Cancel modal search from the recorded restart-confirmation frame.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0008.png",
+                       "captured_at_utc":  "2026-08-12T22:34:15.8866546+00:00",
+                       "sha256":  "86706f8dbfb74fec7f5fe2526697d6073c70bfe41995eced4fedb931d0a4b5a4",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0009.png",
+                       "captured_at_utc":  "2026-08-12T22:34:18.2547429+00:00",
+                       "sha256":  "c319bcb20c9f9cdc2918b908f5acdf790d04b1e68ad4a06e85b5750182f43a8b",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   }
+               ]
+}

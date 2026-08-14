@@ -15,6 +15,7 @@ try {
     foreach ($relativePath in $sourceFiles) {
         $normalized = $relativePath.Replace('\', '/')
         $fullPath = Join-Path $repositoryRoot $relativePath
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { continue }
         $lineCount = (Get-Content -LiteralPath $fullPath | Measure-Object -Line).Lines
 
         if ($normalized -eq 'AGENTS.md' -or $normalized.EndsWith('/AGENTS.md', [StringComparison]::OrdinalIgnoreCase)) {
@@ -99,3 +100,6 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Output 'Repository policy passed: file limits and live theme-resource rules are satisfied.'
+
+& (Join-Path $PSScriptRoot 'Test-RuntimeEvidence.ps1')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -45,6 +45,10 @@ internal sealed class DebugStateDatasetContextLoader
         {
             throw new InvalidDataException($"{state.Name} has no ROI frames.");
         }
+        if (string.IsNullOrWhiteSpace(state.RegionLabel))
+        {
+            throw new InvalidDataException($"{state.Name} has no explicit ROI annotation label.");
+        }
 
         PixelRect? region = null;
         foreach (int frameNumber in state.RegionFrames)
@@ -54,14 +58,17 @@ internal sealed class DebugStateDatasetContextLoader
             {
                 throw new InvalidDataException($"{state.Name} ROI frame {frameNumber} is missing.");
             }
-            BoxAnnotation? annotation = state.RegionLabel is null
-                ? dataset.Manifest.Frames[index].Annotations.FirstOrDefault()
-                : dataset.Manifest.Frames[index].Annotations.FirstOrDefault(candidate =>
-                    string.Equals(candidate.Label, state.RegionLabel, StringComparison.Ordinal));
-            PixelRect bounds = annotation?.Bounds
-                ?? throw new InvalidDataException(
-                    $"{state.Name} ROI annotation{(state.RegionLabel is null ? string.Empty : $" '{state.RegionLabel}'")} " +
-                    $"is missing on frame {frameNumber}.");
+            BoxAnnotation[] annotations = dataset.Manifest.Frames[index].Annotations
+                .Where(candidate => string.Equals(
+                    candidate.Label, state.RegionLabel, StringComparison.Ordinal))
+                .ToArray();
+            if (annotations.Length != 1)
+            {
+                throw new InvalidDataException(
+                    $"{state.Name} requires exactly one ROI annotation '{state.RegionLabel}' " +
+                    $"on frame {frameNumber}; found {annotations.Length}.");
+            }
+            PixelRect bounds = annotations[0].Bounds;
             region = region is null ? bounds : PixelRect.Union(region.Value, bounds);
         }
 

@@ -200,6 +200,7 @@ public sealed class UiScaleNormalizationTests
         Assert.Contains(targets, target => target.Name == "Low Detail Mode" && target.DesiredOn);
         Assert.Contains(targets, target => target.Name == "Auto Sprint" && target.DesiredOn);
         Assert.Contains(targets, target => target.Name == "Lock Farms on Placement" && !target.DesiredOn);
+        Assert.Contains(targets, target => target.Name == "Auto-Upgrade Placed Units" && !target.DesiredOn);
     }
 
     [Fact]
@@ -227,7 +228,14 @@ public sealed class UiScaleNormalizationTests
             }
         }
 
-        RgbImage unitsBottom = LoadPng(files[3]);
+        string? revisionRoot = Environment.GetEnvironmentVariable("LILACMACRO_SETTINGS_OPTION_REVISION_DATASET");
+        if (string.IsNullOrWhiteSpace(revisionRoot)) return;
+
+        RgbImage unitsBottom = LoadPng(Directory.GetFiles(
+                Path.Combine(Path.GetFullPath(revisionRoot), "images"),
+                "frame-*.png")
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .Single());
         foreach (GameSettingsToggleTarget target in GameSettingsNormalizationPolicy.Tabs[2].ScrolledTargets!)
         {
             GameSettingsToggleState expected = target.DesiredOn

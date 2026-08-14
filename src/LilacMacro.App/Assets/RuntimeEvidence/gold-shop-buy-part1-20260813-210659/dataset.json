@@ -1,0 +1,237 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "eacbd430-dbe0-41d5-ae32-bab7d464b1a8",
+    "name":  "Gold Shop Buy Part1",
+    "notes":  "After clicking gold shop in area, keypress e every second (up to 30s then timeout and assume failure)\r\n\r\ne until see the shop selection buttons\r\n\r\nclick gold shop\r\nthen wait until see the stable gold shop + cosmetic shop buttons\r\n\r\nThen like derrive the position of the safe scroll region from the selection button + shop ui confirm button positions ig\r\n\r\nmove cursor over somewhere in the safe scroll region (safe since if cursor hovers over item icon then it will show on hover popui info ffor that item)\r\n\r\nBundled runtime evidence slice. Original dataset: gold-shop-buy-part1-20260813-210659. Source frames: 3, 37.",
+    "created_at_utc":  "2026-08-13T21:06:59.4161159+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  22968,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-13T21:07:32.5871872+00:00",
+                       "sha256":  "fa015e6e8d19f124e5a5be9aea37402fb470c2283da3f5ae10aa47756771e413",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "7f2d0260-bd52-4f7f-87c2-9efc3d2bff48",
+                                               "global_group_id":  "c74f0635-30c2-49c9-99e0-9ca147cccb27",
+                                               "bounds":  {
+                                                              "x":  362,
+                                                              "y":  538,
+                                                              "width":  618,
+                                                              "height":  100
+                                                          },
+                                               "label":  "Shop Selection Buttons",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "00n\nGold Shop\nEvent Shop\nLeave",
+                                                                      "confidence":  0.8431398943066597,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  286,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-13T21:12:49.974646+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  875,
+                                                                                                         "y":  539,
+                                                                                                         "width":  103,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "00n",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.4383358657360077,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  427,
+                                                                                                         "y":  562,
+                                                                                                         "width":  85,
+                                                                                                         "height":  30
+                                                                                                     },
+                                                                                          "text":  "Gold Shop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9653559923171997,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  635,
+                                                                                                         "y":  565,
+                                                                                                         "width":  93,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Event Shop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9689103364944458,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  868,
+                                                                                                         "y":  566,
+                                                                                                         "width":  54,
+                                                                                                         "height":  23
+                                                                                                     },
+                                                                                          "text":  "Leave",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999573826789856,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "d2ef8a24-a666-4da8-b90a-27f42e38b3f6",
+                                               "global_group_id":  "61325fe5-bbb1-44ff-8b8e-56c813390eee",
+                                               "bounds":  {
+                                                              "x":  209,
+                                                              "y":  121,
+                                                              "width":  292,
+                                                              "height":  150
+                                                          },
+                                               "label":  "Gold Shop UI Confirm",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0037.png",
+                       "captured_at_utc":  "2026-08-13T21:08:27.9268872+00:00",
+                       "sha256":  "3be17586a460d64840e7a956e96924d2d5eec767c7fb23755ff46cda9c3ccfcc",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "814ee7d4-c0f0-4b8b-8837-ddc726c0ac7d",
+                                               "global_group_id":  "c74f0635-30c2-49c9-99e0-9ca147cccb27",
+                                               "bounds":  {
+                                                              "x":  362,
+                                                              "y":  538,
+                                                              "width":  618,
+                                                              "height":  100
+                                                          },
+                                               "label":  "Shop Selection Buttons",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "fc58f295-e6a6-4752-a63f-827acac44c3b",
+                                               "global_group_id":  "61325fe5-bbb1-44ff-8b8e-56c813390eee",
+                                               "bounds":  {
+                                                              "x":  209,
+                                                              "y":  121,
+                                                              "width":  292,
+                                                              "height":  150
+                                                          },
+                                               "label":  "Gold Shop UI Confirm",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Gold Shop\nGoldshop\nCosmetic Shop",
+                                                                      "confidence":  0.9728266596794128,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  49,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-13T21:15:06.2132559+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  366,
+                                                                                                         "y":  158,
+                                                                                                         "width":  82,
+                                                                                                         "height":  26
+                                                                                                     },
+                                                                                          "text":  "Gold Shop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.954639732837677,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  402,
+                                                                                                         "y":  206,
+                                                                                                         "width":  60,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Goldshop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9640281200408936,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required",
+                                                                                          "spatial_selector":  "bottommost"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  393,
+                                                                                                         "y":  242,
+                                                                                                         "width":  81,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Cosmetic Shop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999812126159668,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

@@ -31,6 +31,7 @@
 | [Architecture](ARCHITECTURE.md) | Current project layers, owners, and integration boundaries |
 | [Game behavior](GAME-BEHAVIOR.md) | Field-observed Debug OCR state and action ledger |
 | [OCR and vision](OCR-AND-VISION.md) | Current PaddleOCR pipeline and planned hybrid detection |
+| [Runtime evidence ownership](RUNTIME-EVIDENCE.md) | Search-region-to-dataset traceability, bundled evidence, and ambiguity workflow |
 | [Expedition runtime](EXPEDITION-RUNTIME.md) | Planned personalized current-node sensing, reroll, and encounter behavior |
 | [Expedition reward optimization](EXPEDITION-REWARD-OPTIMIZATION.md) | Reward-pool OCR evidence, provisional reroll thresholds, and validation plan |
 | [Placement authoring](PLACEMENT-AUTHORING.md) | Current Setup data model and authoring/playback boundary |
@@ -42,6 +43,7 @@
 |---|---|
 | [Dataset format](DATASET-FORMAT.md) | Manifest, image, coordinate, annotation, and OCR-trial contract |
 | [Agent dataset workflow](AGENT-DATASET-WORKFLOW.md) | Bounded and privacy-safe dataset inspection |
+| [Runtime evidence ownership](RUNTIME-EVIDENCE.md) | Curated release evidence and machine-enforced runtime ownership |
 | [Dataset schema](../schemas/dataset.schema.json) | Normative machine-readable dataset schema |
 
 ## Agent instructions

@@ -29,5 +29,9 @@ public sealed class MapPreparationPolicyTests
             "event-villain-invasion-act-3",
             [new(0x53, 900), new(0x44, 750)]
         },
+        {
+            MapPreparationPolicy.ExpeditionShop,
+            [new(0x57, 2500), new(0x44, 750), new(0x57, 3300), new(0x44, 500)]
+        },
     };
 }

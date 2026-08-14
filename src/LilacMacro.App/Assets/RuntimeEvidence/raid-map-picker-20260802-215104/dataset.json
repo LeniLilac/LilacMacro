@@ -1,0 +1,125 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "678c7739-11c2-4933-abc8-44a391ef3764",
+    "name":  "raid map picker",
+    "notes":  "Bundled runtime evidence slice. Original dataset: raid-map-picker-20260802-215104. Source frames: 1.",
+    "created_at_utc":  "2026-08-02T21:51:04.2718575+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  36520,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-02T21:51:10.3521834+00:00",
+                       "sha256":  "5a6548eb8f6ce5233da7beb0ff59e8aa4ef3206bf10736e85c453ab6b588deb5",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "676762c2-683f-42f8-b216-dcd33a53d3e5",
+                                               "bounds":  {
+                                                              "x":  0,
+                                                              "y":  9,
+                                                              "width":  627,
+                                                              "height":  691
+                                                          },
+                                               "label":  "Raid Map State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Raid\nSpirit City\nCompletion Progress\n100%\nBack",
+                                                                      "confidence":  0.9989695429801941,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  86,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-05T17:38:16.4454209+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  80,
+                                                                                                         "y":  76,
+                                                                                                         "width":  51,
+                                                                                                         "height":  25
+                                                                                                     },
+                                                                                          "text":  "Raid",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999496936798096,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  201,
+                                                                                                         "y":  328,
+                                                                                                         "width":  124,
+                                                                                                         "height":  40
+                                                                                                     },
+                                                                                          "text":  "Spirit City",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9995224475860596,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  105,
+                                                                                                         "y":  374,
+                                                                                                         "width":  149,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Completion Progress",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9956265687942505,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  384,
+                                                                                                         "y":  373,
+                                                                                                         "width":  40,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "100%",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9997888207435608,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  94,
+                                                                                                         "y":  645,
+                                                                                                         "width":  45,
+                                                                                                         "height":  23
+                                                                                                     },
+                                                                                          "text":  "Back",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.99996018409729,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

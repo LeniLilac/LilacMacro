@@ -22,7 +22,6 @@ internal sealed class ExpeditionMatchRuntimeRunner(
     private readonly ExpeditionRewardProfileStore _rewardProfiles = new();
     private readonly ExpeditionSettingsService _settings = new(workspace, ocr);
     private readonly MatchTerminalService _terminal = new(workspace, ocr);
-    private readonly DebugOcrController _debug = new(workspace, ocr);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
     public async Task<StoryWireTestResult> RunAsync(
@@ -156,16 +155,38 @@ internal sealed class ExpeditionMatchRuntimeRunner(
             if (!routeOpen)
                 await _rewards.OpenAsync(options.Device, cancellationToken).ConfigureAwait(false);
             routeOpen = false;
-            ExpeditionRewardObservation observation = await _rewards.ObserveAsync(
-                target, options.Device, cancellationToken).ConfigureAwait(false);
+            ExpeditionRewardObservation observation;
+            try
+            {
+                observation = await _rewards.ObserveAsync(
+                    target, options.Device, cancellationToken).ConfigureAwait(false);
+            }
+            catch (InvalidOperationException error) when (
+                error.Message.StartsWith("Expedition route reward '", StringComparison.Ordinal))
+            {
+                report("EXPEDITION REWARD READ MISS | IN-MATCH REROLL");
+                await _rewards.BackToPrestartAfterReadFailureAsync(
+                    options.Device, cancellationToken).ConfigureAwait(false);
+                reroll = Stopwatch.StartNew();
+                await _rewards.StartGameForRouteAsync(options.Device, cancellationToken).ConfigureAwait(false);
+                await _settings.RestartForRouteRerollAsync(
+                    options.Device, report, cancellationToken).ConfigureAwait(false);
+                await _rewards.OpenAfterRestartAsync(options.Device, cancellationToken).ConfigureAwait(false);
+                routeOpen = true;
+                rerolls++;
+                continue;
+            }
             if (reroll is not null)
             {
                 reroll.Stop();
                 await _rewardProfiles.RecordRerollAsync(
                     options.Device, reroll.Elapsed, cancellationToken).ConfigureAwait(false);
             }
-            await _rewardProfiles.RecordPoolAsync(
-                options.ExpeditionDifficulty, observation.Pool, cancellationToken).ConfigureAwait(false);
+            if (observation.CompletePool)
+            {
+                await _rewardProfiles.RecordPoolAsync(
+                    options.ExpeditionDifficulty, observation.Pool, cancellationToken).ConfigureAwait(false);
+            }
             ExpeditionRewardOptimization optimization = await _rewardProfiles.OptimizeAsync(
                 options.ExpeditionDifficulty, target, options.Device, cancellationToken).ConfigureAwait(false)
                 ?? throw new InvalidDataException(
@@ -204,23 +225,46 @@ internal sealed class ExpeditionMatchRuntimeRunner(
         switch (action)
         {
             case ExpeditionNodeAction.ReplayPlacementsAndStart:
+                await WaitForDefensePrestartAsync(options.Device, report, cancellationToken)
+                    .ConfigureAwait(false);
                 await _placements.ReplayExpeditionAsync(
                     placement, options.PlacementKeys, options.Device, report, cancellationToken).ConfigureAwait(false);
-                DebugRunReport start = await _debug.StartGameAsync(options.Device, cancellationToken).ConfigureAwait(false);
-                report(start.Succeeded ? "EXPEDITION START GAME CLICKED" : "EXPEDITION START AUTO-STARTED");
+                await _placements.SatisfyExpeditionStartBoundaryAsync(
+                    placement, options.Device, report, cancellationToken).ConfigureAwait(false);
+                report("EXPEDITION START GAME CLICKED");
                 break;
             case ExpeditionNodeAction.RunEncounter:
-                _ = await _encounter.RunAsync(
-                    options.Map, options.PlacementKeys.ReservedVirtualKey, options.Device, report, cancellationToken)
+                await _encounter.RunAsync(options.Device, report, cancellationToken)
                     .ConfigureAwait(false);
                 break;
             case ExpeditionNodeAction.Continue:
-                await _checkpoint.ContinueAsync(options.Device, report, cancellationToken).ConfigureAwait(false);
+                await _checkpoint.ContinueAfterArrivalAsync(
+                    options.Device, report, cancellationToken).ConfigureAwait(false);
                 break;
             case ExpeditionNodeAction.Extract:
                 await _checkpoint.ExtractAsync(options.Device, report, cancellationToken).ConfigureAwait(false);
                 break;
         }
+    }
+
+    private async Task WaitForDefensePrestartAsync(
+        string device,
+        Action<string> report,
+        CancellationToken cancellationToken)
+    {
+        report("WAITING FOR DEFENSE START GAME");
+        DebugOcrSnapshot prestart = await _states.WaitForMatchAsync(
+            DebugWorkflowCatalog.MatchPrestart,
+            device,
+            ExpeditionDefenseStartPolicy.ArrivalMaximumObservations,
+            TimeSpan.FromMilliseconds(ExpeditionDefenseStartPolicy.ArrivalRetryMilliseconds),
+            cancellationToken).ConfigureAwait(false);
+        if (!prestart.Evaluation.IsMatch)
+        {
+            throw new TimeoutException(
+                "Expedition Defense/Elite node did not expose the visible Start Game prompt.");
+        }
+        report("DEFENSE START GAME VERIFIED; REPLAYING PLACEMENTS");
     }
 
     private async Task<MatchTerminalOutcome> WaitTerminalWithIdleRewardAsync(

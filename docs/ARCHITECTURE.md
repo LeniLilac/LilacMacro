@@ -82,6 +82,12 @@ App writes one selected crop to a temporary PNG, invokes an allowlisted detector
 
 Review OCR is evidence. Debug input adds explicit state thresholds, a live target/layout requirement, fresh capture, and immediate Roblox revalidation. See [OCR and vision](OCR-AND-VISION.md).
 
+Transition layers remain separate evidence owners. A source control and the confirmation modal or destination it opens each load their own dataset-labeled ROI and semantic rule; a runtime service must not union those rectangles or choose among duplicate labels by global raster order. Destination evidence is evaluated first. Only a destination miss permits a fresh source observation, and a retained source may retry only through that source state's own live action bounds. This prevents a dimmed background control from impersonating a modal action and makes temporal rollback observable instead of treating modal disappearance as success.
+
+## Runtime evidence boundary
+
+Every semantic runtime search area is traceable to one named annotation in the curated evidence bundle. App owns `DebugStateSpec` annotation selection and `RuntimeSearchRegionEvidenceCatalog`; Runtime consumes the resulting WPF-free rectangles and state contracts. Static search rectangles are centralized and compared against their bundled annotations by policy tests. Dynamic search geometry must start from freshly observed bounds owned by a bundled state. Full-client capture transports pixels but does not itself establish semantic ownership. The bundle allowlist, synchronization process, privacy exception, and ambiguity stop rule are defined in [Runtime evidence ownership](RUNTIME-EVIDENCE.md).
+
 ## Startup normalization boundary
 
 Core owns the exact allowlist and structural XML policy for Roblox's per-profile `UserGameSettings`. Windows owns current-session Roblox process shutdown and the bounded, atomic `GlobalBasicSettings_13.xml` replacement. The file is never edited while a Roblox client in that Windows session remains alive. The policy fails closed on a missing, malformed, duplicated, or type-changed required field, preserves all unrelated XML, keeps a transient sibling rollback file only across replacement verification, and never edits another Windows profile.

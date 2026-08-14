@@ -1,0 +1,483 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "61320e76-4b93-4d75-8466-6e55abfd8b70",
+    "name":  "Unit Selection Verification",
+    "notes":  "Bundled runtime evidence slice. Original dataset: unit-selection-verification-20260806-180017. Source frames: 1.",
+    "created_at_utc":  "2026-08-06T18:00:17.0964059+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  8988,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-06T18:00:21.650437+00:00",
+                       "sha256":  "dcbe0848c1b301ef760c5eb0ad2b567ad42d8d729a9aedd8147dda79e69038a0",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "69b06d7b-188c-483a-b7b4-4c988bcc0ce5",
+                                               "global_group_id":  "eb0e679a-2d69-4eaa-895c-9751b6d4fead",
+                                               "bounds":  {
+                                                              "x":  0,
+                                                              "y":  159,
+                                                              "width":  533,
+                                                              "height":  374
+                                                          },
+                                               "label":  "Unit Panel State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "x\nMagical\nDMG\n384\n444\nX\nSPA\n6.6s\n6.1s\nLegendary Unit\n勾\nRNG\n11.5\nForbidden Teacher\nK\n0%\nW\n100%\nDPS 0/s\n目\n久\n.….\nPriority\nSell\nUpgrade1/5\nK\nFirst\n¥500\n¥1,500",
+                                                                      "confidence":  0.8692072907398487,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  140,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-06T18:02:05.9962758+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  499,
+                                                                                                         "y":  176,
+                                                                                                         "width":  23,
+                                                                                                         "height":  22
+                                                                                                     },
+                                                                                          "text":  "x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.49376800656318665,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  255,
+                                                                                                         "y":  188,
+                                                                                                         "width":  58,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Magical",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998986124992371,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  324,
+                                                                                                         "y":  231,
+                                                                                                         "width":  36,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "DMG",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998844265937805,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact",
+                                                                                          "spatial_selector":  "rightmost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  372,
+                                                                                                         "y":  229,
+                                                                                                         "width":  35,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "384",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999880790710449,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  455,
+                                                                                                         "y":  229,
+                                                                                                         "width":  37,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "444",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999879002571106,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  301,
+                                                                                                         "y":  260,
+                                                                                                         "width":  16,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "X",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.5416695475578308,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  323,
+                                                                                                         "y":  261,
+                                                                                                         "width":  32,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "SPA",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999464154243469,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact",
+                                                                                          "spatial_selector":  "rightmost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  372,
+                                                                                                         "y":  263,
+                                                                                                         "width":  35,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "6.6s",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999203085899353,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  460,
+                                                                                                         "y":  263,
+                                                                                                         "width":  29,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "6.1s",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9988160729408264,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  39,
+                                                                                                         "y":  300,
+                                                                                                         "width":  112,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "Legendary Unit",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9875335693359375,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  300,
+                                                                                                         "y":  292,
+                                                                                                         "width":  20,
+                                                                                                         "height":  21
+                                                                                                     },
+                                                                                          "text":  "勾",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.2993192970752716,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  324,
+                                                                                                         "y":  295,
+                                                                                                         "width":  33,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "RNG",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999628067016602,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact",
+                                                                                          "spatial_selector":  "rightmost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  416,
+                                                                                                         "y":  292,
+                                                                                                         "width":  30,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "11.5",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998568296432495,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  39,
+                                                                                                         "y":  315,
+                                                                                                         "width":  153,
+                                                                                                         "height":  22
+                                                                                                     },
+                                                                                          "text":  "Forbidden Teacher",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9986451268196106,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  304,
+                                                                                                         "y":  329,
+                                                                                                         "width":  14,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "K",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.43455418944358826,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  344,
+                                                                                                         "y":  327,
+                                                                                                         "width":  28,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "0%",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9991402626037598,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  411,
+                                                                                                         "y":  328,
+                                                                                                         "width":  19,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "W",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.8102914094924927,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  450,
+                                                                                                         "y":  327,
+                                                                                                         "width":  40,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "100%",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999728202819824,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  50,
+                                                                                                         "y":  344,
+                                                                                                         "width":  60,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "DPS 0/s",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9972057938575745,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact",
+                                                                                          "spatial_selector":  "rightmost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  118,
+                                                                                                         "y":  383,
+                                                                                                         "width":  18,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "目",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9957882761955261,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  175,
+                                                                                                         "y":  385,
+                                                                                                         "width":  20,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "久",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.24593031406402588,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  233,
+                                                                                                         "y":  388,
+                                                                                                         "width":  20,
+                                                                                                         "height":  12
+                                                                                                     },
+                                                                                          "text":  ".….",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.4260849952697754,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  73,
+                                                                                                         "y":  427,
+                                                                                                         "width":  50,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Priority",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9996940493583679,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required",
+                                                                                          "spatial_selector":  "bottommost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  188,
+                                                                                                         "y":  428,
+                                                                                                         "width":  29,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Sell",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999801754951477,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required",
+                                                                                          "spatial_selector":  "bottommost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  307,
+                                                                                                         "y":  426,
+                                                                                                         "width":  79,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "Upgrade1/5",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9978386163711548,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact",
+                                                                                          "spatial_selector":  "bottommost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  449,
+                                                                                                         "y":  432,
+                                                                                                         "width":  17,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "K",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9992658495903015,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  79,
+                                                                                                         "y":  446,
+                                                                                                         "width":  43,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "First",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999796748161316,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  181,
+                                                                                                         "y":  446,
+                                                                                                         "width":  44,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "¥500",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9856462478637695,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  319,
+                                                                                                         "y":  445,
+                                                                                                         "width":  58,
+                                                                                                         "height":  22
+                                                                                                     },
+                                                                                          "text":  "¥1,500",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9966201782226562,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

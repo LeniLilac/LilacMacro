@@ -13,4 +13,6 @@ This file applies to `src/LilacMacro.App`.
 - Keep Macro, Plan, and Settings prototype controls visibly separate from implemented runtime behavior. In-memory preview interactions must never imply that scheduler, Roblox input, persistence, webhooks, or updates are connected.
 - `MainWindow` serves two focused launch profiles: Dataset Builder owns Capture/Review/Datasets, and Runtime Lab owns Debug/Wire Test. Do not leak pages across those navigation boundaries or duplicate their shared services.
 - Add pure policies to Core and test them there instead of burying deterministic behavior in WPF event handlers.
+- Give every transition source and modal/destination a distinct dataset-owned state and ROI. Check the destination first, inspect the source only after a destination miss, and authorize clicks only from that state's fresh bounds. Never merge overlapping layers into a broad OCR crop or choose duplicate labels by topmost/bottommost screen order.
+- Route every semantic search area through an explicit bundled annotation and the runtime evidence catalog described in [`../../docs/RUNTIME-EVIDENCE.md`](../../docs/RUNTIME-EVIDENCE.md). If annotation intent is unclear, ask the owner before coding.
 - Do not use computer-control tooling to exercise the app or Roblox. Build and test automatically, then give the owner a focused manual visual/behavior checklist.

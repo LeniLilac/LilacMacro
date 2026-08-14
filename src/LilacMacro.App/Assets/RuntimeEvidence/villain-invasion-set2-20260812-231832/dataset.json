@@ -1,0 +1,246 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "feb811b1-c572-45f7-959a-b45b4757e784",
+    "name":  "villain invasion set2",
+    "notes":  "ignore frame 6\r\n\r\nSelect stage then use the general start stage path\r\n\r\nBundled runtime evidence slice. Original dataset: villain-invasion-set2-20260812-231832. Source frames: 2.",
+    "created_at_utc":  "2026-08-12T23:18:32.4589834+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  30328,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-12T23:18:38.215775+00:00",
+                       "sha256":  "e4539ec18fc184cf001c793732667754ad8ee23a69fbab51a339e1ef1794d411",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "73e092a1-97a5-4c1a-adf2-8e2c6021aaa7",
+                                               "global_group_id":  "b0986a8c-6a50-4335-a75e-326a2a970159",
+                                               "bounds":  {
+                                                              "x":  187,
+                                                              "y":  492,
+                                                              "width":  988,
+                                                              "height":  163
+                                                          },
+                                               "label":  "Event Stage Preview State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "3.75%\nEXP\nEXP\n8/20 Pity\n3.75%\nDark Scepter\nCrow Relic\nVillain Coins\nUnit EXP\nPlayer EXP\nSelect Stage\nEnter Matchmaking\nStage Buffs",
+                                                                      "confidence":  0.991279987188486,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  164,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-12T23:20:17.4102473+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  253,
+                                                                                                         "y":  496,
+                                                                                                         "width":  42,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "3.75%",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999282956123352,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  494,
+                                                                                                         "y":  495,
+                                                                                                         "width":  64,
+                                                                                                         "height":  31
+                                                                                                     },
+                                                                                          "text":  "EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999042272567749,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  585,
+                                                                                                         "y":  496,
+                                                                                                         "width":  64,
+                                                                                                         "height":  31
+                                                                                                     },
+                                                                                          "text":  "EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9981352686882019,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  233,
+                                                                                                         "y":  510,
+                                                                                                         "width":  62,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "8/20 Pity",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9938796162605286,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  341,
+                                                                                                         "y":  511,
+                                                                                                         "width":  42,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "3.75%",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999157786369324,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  222,
+                                                                                                         "y":  525,
+                                                                                                         "width":  72,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Dark Scepter",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9611494541168213,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  325,
+                                                                                                         "y":  525,
+                                                                                                         "width":  59,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Crow Relic",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9989300966262817,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  403,
+                                                                                                         "y":  525,
+                                                                                                         "width":  72,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Villain Coins",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.994109034538269,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  513,
+                                                                                                         "y":  524,
+                                                                                                         "width":  50,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Unit EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9788268804550171,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  591,
+                                                                                                         "y":  523,
+                                                                                                         "width":  64,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Player EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9991434812545776,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  299,
+                                                                                                         "y":  596,
+                                                                                                         "width":  108,
+                                                                                                         "height":  28
+                                                                                                     },
+                                                                                          "text":  "Select Stage",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9915730357170105,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  602,
+                                                                                                         "y":  597,
+                                                                                                         "width":  162,
+                                                                                                         "height":  26
+                                                                                                     },
+                                                                                          "text":  "Enter Matchmaking",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9925174713134766,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  963,
+                                                                                                         "y":  596,
+                                                                                                         "width":  101,
+                                                                                                         "height":  28
+                                                                                                     },
+                                                                                          "text":  "Stage Buffs",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9794891476631165,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

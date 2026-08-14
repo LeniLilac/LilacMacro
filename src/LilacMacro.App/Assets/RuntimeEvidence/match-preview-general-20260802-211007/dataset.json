@@ -1,0 +1,149 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "f0177b1f-93ef-4f8f-b45c-bd0172d40423",
+    "name":  "match preview (general)",
+    "notes":  "Bundled runtime evidence slice. Original dataset: match-preview-general-20260802-211007. Source frames: 1.",
+    "created_at_utc":  "2026-08-02T21:10:07.437154+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  36520,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-02T21:10:20.6629186+00:00",
+                       "sha256":  "e65986dadf8d470410f89204efcf2353da8cf0ac876c48d779cb5c558ce8264e",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "f9a35503-d933-4303-9e80-51acdb0a61bb",
+                                               "bounds":  {
+                                                              "x":  566,
+                                                              "y":  415,
+                                                              "width":  800,
+                                                              "height":  285
+                                                          },
+                                               "label":  "Match Preview State",
+                                               "notes":  "",
+                                               "minimum_pool_matches":  1,
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "+\nStart\nChange Map\nDisband\nInvite Players\nLeave Party",
+                                                                      "confidence":  0.9243931174278259,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  91,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-02T21:15:34.6737668+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  877,
+                                                                                                         "y":  437,
+                                                                                                         "width":  24,
+                                                                                                         "height":  25
+                                                                                                     },
+                                                                                          "text":  "+",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.6127139925956726,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  692,
+                                                                                                         "y":  515,
+                                                                                                         "width":  50,
+                                                                                                         "height":  23
+                                                                                                     },
+                                                                                          "text":  "Start",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998494982719421,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  876,
+                                                                                                         "y":  515,
+                                                                                                         "width":  106,
+                                                                                                         "height":  26
+                                                                                                     },
+                                                                                          "text":  "Change Map",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9714465141296387,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1108,
+                                                                                                         "y":  516,
+                                                                                                         "width":  71,
+                                                                                                         "height":  21
+                                                                                                     },
+                                                                                          "text":  "Disband",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999578595161438,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  968,
+                                                                                                         "y":  640,
+                                                                                                         "width":  116,
+                                                                                                         "height":  29
+                                                                                                     },
+                                                                                          "text":  "Invite Players",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9860424995422363,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1186,
+                                                                                                         "y":  642,
+                                                                                                         "width":  104,
+                                                                                                         "height":  27
+                                                                                                     },
+                                                                                          "text":  "Leave Party",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.976348340511322,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ]
+                                           }
+                                       ]
+                   }
+               ]
+}

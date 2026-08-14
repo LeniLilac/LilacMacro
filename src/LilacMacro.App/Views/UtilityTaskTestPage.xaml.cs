@@ -16,6 +16,7 @@ public partial class UtilityTaskTestPage : UserControl, IStoppableWorkspacePage
         UtilityTaskPolicy.CalendarClaimRoute,
         ShopPurchasePolicy.GoldRoute,
         ShopPurchasePolicy.RaidRoute,
+        ShopPurchasePolicy.ExpeditionRoute,
     ];
 
     private readonly UtilityTaskService _utilities;
@@ -161,6 +162,7 @@ public partial class UtilityTaskTestPage : UserControl, IStoppableWorkspacePage
         UtilityTaskPolicy.CalendarClaimRoute => "calendar-claim-test",
         ShopPurchasePolicy.GoldRoute => "gold-shop-test",
         ShopPurchasePolicy.RaidRoute => "raid-shop-test",
+        ShopPurchasePolicy.ExpeditionRoute => "expedition-shop-test",
         _ => "utility-task-test",
     };
 

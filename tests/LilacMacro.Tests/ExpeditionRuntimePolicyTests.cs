@@ -7,6 +7,7 @@ using LilacMacro.Core.Automation;
 using LilacMacro.Core.Datasets;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Imaging;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.Tests;
 
@@ -27,6 +28,17 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
+    public void DefenseWaitsForStartBeforeReplayAndToleratesTransientOverlay()
+    {
+        Assert.True(ExpeditionDefenseStartPolicy.ArrivalMaximumObservations >= 120);
+        Assert.InRange(ExpeditionDefenseStartPolicy.ArrivalRetryMilliseconds, 250, 1000);
+        Assert.True(ExpeditionDefenseStartPolicy.PostReplayStartAttempts >= 10);
+        Assert.True(
+            ExpeditionDefenseStartPolicy.PostReplayStartAttempts *
+            ExpeditionDefenseStartPolicy.PostReplayRetryMilliseconds >= 3000);
+    }
+
+    [Fact]
     public void TrackerCountsOnlyBossFollowedByCheckpoint()
     {
         ExpeditionRunTracker tracker = new(extractAtCheckpoint: true, bossesBeforeExtract: 1);
@@ -41,16 +53,14 @@ public sealed class ExpeditionRuntimePolicyTests
         Assert.Equal(1, tracker.RealBossesCompleted);
     }
 
-    [Theory]
-    [InlineData("School Grounds", 350, 700)]
-    [InlineData("Flower Forest", 350, 700)]
-    [InlineData("Rose Kingdom", 1000, 700)]
-    [InlineData("East Town", 700, 700)]
-    public void EncounterMovementMatchesFieldTiming(string map, int forward, int right)
+    [Fact]
+    public void EncounterAndLaterCheckpointsAllowForShipArrival()
     {
-        ExpeditionEncounterMovement movement = ExpeditionEncounterPolicy.ForMap(map);
-        Assert.Equal(forward, movement.ForwardMilliseconds);
-        Assert.Equal(right, movement.RightMilliseconds);
+        Assert.True(ExpeditionNodeArrivalPolicy.MaximumObservations >= 120);
+        Assert.InRange(ExpeditionNodeArrivalPolicy.RetryMilliseconds, 250, 1000);
+        Assert.True(
+            ExpeditionNodeArrivalPolicy.MaximumObservations *
+            ExpeditionNodeArrivalPolicy.RetryMilliseconds >= 60_000);
     }
 
     [Theory]
@@ -68,6 +78,32 @@ public sealed class ExpeditionRuntimePolicyTests
     {
         Assert.Null(ExpeditionNodeEvidenceService.ParseNode(["Unknown"]));
         Assert.Null(ExpeditionNodeEvidenceService.ParseNode(["Boss", "Checkpoint"]));
+    }
+
+    [Fact]
+    public void FirstNodeCalibrationSweepsDatasetHoverLineFromTheLeft()
+    {
+        PixelPoint marker = new(507, 74);
+        IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(marker, null);
+
+        Assert.Equal(ExpeditionNodeEvidenceService.HoverLine.X, probes[0].X);
+        Assert.All(probes, point => Assert.Equal(74, point.Y));
+        Assert.True(probes[^1].X >= marker.X);
+        Assert.All(probes, point => Assert.InRange(
+            point.X,
+            ExpeditionNodeEvidenceService.HoverLine.X,
+            ExpeditionNodeEvidenceService.HoverLine.Right - 1));
+    }
+
+    [Fact]
+    public void LearnedNodeHoverUsesCachedOffsetThenBoundedLocalSearch()
+    {
+        PixelPoint marker = new(650, 74);
+        IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(marker, 12);
+
+        Assert.Equal(new PixelPoint(662, 74), probes[0]);
+        Assert.All(probes, point => Assert.InRange(point.X, 630, 694));
+        Assert.Equal(probes.Count, probes.Distinct().Count());
     }
 
     [Fact]
@@ -313,6 +349,37 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
+    public void ReliableTargetSurvivesUnrelatedAmbiguousQuantity()
+    {
+        OcrTextRegion[] regions =
+        [
+            Region(233, 601, 23, 16, "15x"),
+            Region(310, 602, 16, 13, "7x"),
+            Region(383, 601, 17, 14, "2x"),
+            Region(459, 601, 44, 13, "23,943x"),
+            Region(533, 601, 22, 14, "2bx"),
+            Region(609, 601, 30, 12, "280x"),
+            Region(682, 601, 15, 14, "bx"),
+            Region(758, 601, 30, 12, "500x"),
+            Region(244, 646, 54, 12, "Equipment"),
+            Region(270, 655, 26, 11, "Scrap"),
+            Region(330, 654, 42, 12, "Fuelcell"),
+            Region(394, 647, 53, 12, "Equipment"),
+            Region(418, 656, 29, 10, "Rerdll"),
+            Region(546, 645, 51, 12, "Expedition"),
+            Region(574, 655, 24, 12, "Coin"),
+        ];
+
+        Assert.True(ExpeditionRewardPoolService.TryTargetPoolFromRegions(
+            regions,
+            ExpeditionRewardResource.EquipmentReroll,
+            out ExpeditionRewardPool pool,
+            out bool completePool));
+        Assert.False(completePool);
+        Assert.Equal(2, pool.Quantity(ExpeditionRewardResource.EquipmentReroll));
+    }
+
+    [Fact]
     public void VerifiedRouteWithoutTargetRewardMeansZeroRatherThanReadFailure()
     {
         ExpeditionRewardPool pool = ExpeditionRewardPoolService.PoolForObservation(
@@ -358,6 +425,142 @@ public sealed class ExpeditionRuntimePolicyTests
             [Region(500, 350, 80, 20, "Restart"), Region(650, 350, 70, 20, "Cancel")]));
         Assert.False(ExpeditionSettingsService.HasRestartConfirmation(
             [Region(500, 350, 80, 20, "Restart")]));
+    }
+
+    [Fact]
+    public void CheckpointSourceAndConfirmationOwnSeparateDatasetRegions()
+    {
+        Assert.Equal("Continue Button", ExpeditionCheckpointStateCatalog.SpawnContinueSource.RegionLabel);
+        Assert.Equal("Button Area", ExpeditionCheckpointStateCatalog.ContinueSource.RegionLabel);
+        Assert.Equal("Continue Confirm", ExpeditionCheckpointStateCatalog.ContinueConfirmation.RegionLabel);
+        Assert.Equal("Button Area", ExpeditionCheckpointStateCatalog.ExtractSource.RegionLabel);
+        Assert.Equal("Confirm Area", ExpeditionCheckpointStateCatalog.ExtractConfirmation.RegionLabel);
+        Assert.NotEqual(
+            ExpeditionCheckpointStateCatalog.ContinueSource.RegionLabel,
+            ExpeditionCheckpointStateCatalog.ContinueConfirmation.RegionLabel);
+        Assert.NotEqual(
+            ExpeditionCheckpointStateCatalog.ExtractSource.RegionLabel,
+            ExpeditionCheckpointStateCatalog.ExtractConfirmation.RegionLabel);
+        Assert.Equal("Continue Button", ExpeditionCheckpointStateCatalog.EncounterContinueSource.RegionLabel);
+        Assert.Equal(
+            "Continue Confirm",
+            ExpeditionCheckpointStateCatalog.EncounterContinueConfirmation.RegionLabel);
+        Assert.NotEqual(
+            ExpeditionCheckpointStateCatalog.EncounterContinueSource.RegionLabel,
+            ExpeditionCheckpointStateCatalog.EncounterContinueConfirmation.RegionLabel);
+    }
+
+    [Fact]
+    public void SpawnCheckpointSourceRequiresOnlyItsImmediateContinueControl()
+    {
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.SpawnContinueSource,
+            [Region(661, 507, 69, 20, "Continue"), Region(674, 557, 36, 21, "850")]).IsMatch);
+        Assert.False(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.ContinueSource,
+            [Region(661, 507, 69, 20, "Continue"), Region(674, 557, 36, 21, "850")]).IsMatch);
+    }
+
+    [Fact]
+    public void ContinueSourceRequiresTheCompleteCheckpointButtonPair()
+    {
+        Assert.False(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.ContinueSource,
+            [Region(733, 508, 41, 19, "Conti")]).IsMatch);
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.ContinueSource,
+            [
+                Region(596, 509, 56, 18, "Extract"),
+                Region(733, 508, 69, 19, "Continue"),
+            ]).IsMatch);
+    }
+
+    [Fact]
+    public void ContinueConfirmationRejectsTheBackgroundContinueControl()
+    {
+        Assert.False(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.ContinueConfirmation,
+            [Region(663, 509, 67, 18, "Continue")]).IsMatch);
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.ContinueConfirmation,
+            [
+                Region(620, 281, 160, 20, "Continue Expedition"),
+                Region(555, 392, 64, 18, "Continue"),
+                Region(753, 391, 53, 21, "Cancel"),
+            ]).IsMatch);
+    }
+
+    [Fact]
+    public void EncounterContinueSourceAndConfirmationRemainSeparateStates()
+    {
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.EncounterContinueSource,
+            [Region(590, 485, 90, 22, "Continue")]).IsMatch);
+        Assert.False(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.EncounterContinueConfirmation,
+            [Region(590, 485, 90, 22, "Continue")]).IsMatch);
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.EncounterContinueConfirmation,
+            [
+                Region(620, 281, 160, 20, "Continue Expedition"),
+                Region(555, 392, 64, 18, "Continue"),
+                Region(753, 391, 53, 21, "Cancel"),
+            ]).IsMatch);
+    }
+
+    [Fact]
+    public void CurrentStartGameEvidenceCoversAllRecordedUiScales()
+    {
+        Assert.EndsWith(
+            "new-start-game-button-20260814-082314",
+            DebugWorkflowCatalog.MatchPrestart.DatasetDirectory,
+            StringComparison.Ordinal);
+        Assert.Equal([1, 2, 3], DebugWorkflowCatalog.MatchPrestart.RegionFrames);
+        Assert.Equal("match prestart", DebugWorkflowCatalog.MatchPrestart.RegionLabel);
+    }
+
+    [Fact]
+    public void RetainedCheckpointSourceIsRetriedOnlyAfterStablePastStateEvidence()
+    {
+        Assert.Equal(
+            CheckpointTransitionDecision.ObserveAgain,
+            CheckpointTransitionPolicy.Decide(false, true, true, 1, 0));
+        Assert.Equal(
+            CheckpointTransitionDecision.OpenConfirmation,
+            CheckpointTransitionPolicy.Decide(false, true, true, 2, 0));
+        Assert.Equal(
+            CheckpointTransitionDecision.Complete,
+            CheckpointTransitionPolicy.Decide(false, false, true, 0, 2));
+    }
+
+    [Fact]
+    public void ModalActionIsPairedWithCancelInsteadOfSelectedByScreenOrder()
+    {
+        OcrTextRegion expected = Region(500, 350, 80, 20, "Restart");
+        OcrTextRegion? actual = ModalActionLocator.FindPairedAction(
+            [
+                Region(510, 275, 120, 20, "Restart Game"),
+                expected,
+                Region(650, 350, 70, 20, "Cancel"),
+                Region(500, 510, 80, 20, "Restart"),
+            ],
+            text => text.Contains("Restart", StringComparison.OrdinalIgnoreCase),
+            text => text.Contains("Cancel", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Same(expected, actual);
+    }
+
+    [Fact]
+    public void DuplicateShopHeadingCannotImpersonateTheStackedSelector()
+    {
+        OcrTextRegion heading = Region(40, 60, 150, 20, "Gold Shop");
+        OcrTextRegion selector = Region(400, 286, 62, 19, "Gold Shop");
+        OcrTextRegion? actual = ModalActionLocator.FindStackedSelector(
+            [heading, selector, Region(393, 342, 81, 19, "Cosmetic Shop")],
+            text => OcrRuleEngine.Normalize(text) is "goldshop",
+            text => OcrRuleEngine.Normalize(text) is "cosmeticshop");
+
+        Assert.Same(selector, actual);
     }
 
     [Fact]

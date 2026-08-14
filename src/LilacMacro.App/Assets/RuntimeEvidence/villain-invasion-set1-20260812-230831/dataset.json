@@ -1,0 +1,556 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "fed8db87-6b88-4dad-a643-1770771a24ef",
+    "name":  "Villain Invasion Set1",
+    "notes":  "Use already existing flow to nav to event\r\n\r\nConfirm Event + Click event game mode button\r\n\r\nfor act 3 + crow dawn (act 4) scroll down burst \r\n\r\nocr and cache the positions of the act, dont use img for the act text\r\n\r\njust cache where to click\r\n\r\nBundled runtime evidence slice. Original dataset: villain-invasion-set1-20260812-230831. Source frames: 2, 3, 4.",
+    "created_at_utc":  "2026-08-12T23:08:31.1405039+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  30328,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-12T23:08:36.6805087+00:00",
+                       "sha256":  "1bed7fdac65412e64fa473e423ec84278efab0af543cc20b71b81538b79db0bf",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "42cc9520-686f-4fff-8860-adabbdd28eb2",
+                                               "global_group_id":  "1685eb67-c3f2-499a-a41a-0806f4018684",
+                                               "bounds":  {
+                                                              "x":  275,
+                                                              "y":  584,
+                                                              "width":  1058,
+                                                              "height":  93
+                                                          },
+                                               "label":  "Event Page Confirm + Event Gamemode button",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "e3f45d84-0c4b-43b5-83bb-f4ff6e57d68a",
+                                               "global_group_id":  "87961a06-e6a7-41b1-bcb7-bdaf61a21e15",
+                                               "bounds":  {
+                                                              "x":  271,
+                                                              "y":  372,
+                                                              "width":  985,
+                                                              "height":  196
+                                                          },
+                                               "label":  "Act OCR",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Act 2-Tartaros\nAct1-Death\nElites and\ngaining\n5 seconds of regeneration.\nElites grant others a\nbuff, removable with Slow effects.\nEnemies\nrespaw",
+                                                                      "confidence":  0.9936497939957513,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  69,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-12T23:15:45.3236456+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  826,
+                                                                                                         "y":  439,
+                                                                                                         "width":  184,
+                                                                                                         "height":  39
+                                                                                                     },
+                                                                                          "text":  "Act 2-Tartaros",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9844041466712952,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "fuzzy_phrase"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  465,
+                                                                                                         "y":  458,
+                                                                                                         "width":  143,
+                                                                                                         "height":  34
+                                                                                                     },
+                                                                                          "text":  "Act1-Death",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999794602394104,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "fuzzy_phrase"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  783,
+                                                                                                         "y":  472,
+                                                                                                         "width":  71,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Elites and",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9995757937431335,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  794,
+                                                                                                         "y":  489,
+                                                                                                         "width":  56,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "gaining",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998735785484314,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  846,
+                                                                                                         "y":  489,
+                                                                                                         "width":  189,
+                                                                                                         "height":  27
+                                                                                                     },
+                                                                                          "text":  "5 seconds of regeneration.",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9809116721153259,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  404,
+                                                                                                         "y":  495,
+                                                                                                         "width":  145,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Elites grant others a",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9908748865127563,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  421,
+                                                                                                         "y":  502,
+                                                                                                         "width":  238,
+                                                                                                         "height":  31
+                                                                                                     },
+                                                                                          "text":  "buff, removable with Slow effects.",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9945465326309204,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1189,
+                                                                                                         "y":  505,
+                                                                                                         "width":  67,
+                                                                                                         "height":  23
+                                                                                                     },
+                                                                                          "text":  "Enemies",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999557733535767,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1207,
+                                                                                                         "y":  524,
+                                                                                                         "width":  49,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "respaw",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.992911159992218,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-12T23:08:39.1575997+00:00",
+                       "sha256":  "ab0a0e1dbbbe48ebb04d58c1e0a36b1263241d936b01f6ad691266c7094f5611",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "991a6760-3dd1-4ef5-a921-0a38c8db53aa",
+                                               "global_group_id":  "1685eb67-c3f2-499a-a41a-0806f4018684",
+                                               "bounds":  {
+                                                              "x":  275,
+                                                              "y":  584,
+                                                              "width":  1058,
+                                                              "height":  93
+                                                          },
+                                               "label":  "Event Page Confirm + Event Gamemode button",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "4bae845c-8d8e-4784-8e14-952f58ca2697",
+                                               "global_group_id":  "87961a06-e6a7-41b1-bcb7-bdaf61a21e15",
+                                               "bounds":  {
+                                                              "x":  271,
+                                                              "y":  372,
+                                                              "width":  985,
+                                                              "height":  196
+                                                          },
+                                               "label":  "Act OCR",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Crow-Dawn\nTartaros\nill nearby enemies,\nAct3-Sword\nSummoners have 1% HP, but gain 3\nonds ofregeneration.\neffect\nshield.\nEnemies\nrespawn at\nbase",
+                                                                      "confidence":  0.993529969995672,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  95,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-12T23:15:38.367227+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1017,
+                                                                                                         "y":  432,
+                                                                                                         "width":  149,
+                                                                                                         "height":  40
+                                                                                                     },
+                                                                                          "text":  "Crow-Dawn",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998072385787964,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "fuzzy_phrase"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  306,
+                                                                                                         "y":  442,
+                                                                                                         "width":  103,
+                                                                                                         "height":  37
+                                                                                                     },
+                                                                                          "text":  "Tartaros",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999638199806213,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  312,
+                                                                                                         "y":  476,
+                                                                                                         "width":  132,
+                                                                                                         "height":  27
+                                                                                                     },
+                                                                                          "text":  "ill nearby enemies,",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9908705353736877,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  635,
+                                                                                                         "y":  467,
+                                                                                                         "width":  154,
+                                                                                                         "height":  35
+                                                                                                     },
+                                                                                          "text":  "Act3-Sword",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9927716255187988,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "fuzzy_phrase"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  964,
+                                                                                                         "y":  479,
+                                                                                                         "width":  250,
+                                                                                                         "height":  31
+                                                                                                     },
+                                                                                          "text":  "Summoners have 1% HP, but gain 3",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9808390140533447,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  288,
+                                                                                                         "y":  491,
+                                                                                                         "width":  145,
+                                                                                                         "height":  25
+                                                                                                     },
+                                                                                          "text":  "onds ofregeneration.",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9681769609451294,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  794,
+                                                                                                         "y":  500,
+                                                                                                         "width":  45,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "effect",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999863505363464,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1062,
+                                                                                                         "y":  498,
+                                                                                                         "width":  50,
+                                                                                                         "height":  21
+                                                                                                     },
+                                                                                          "text":  "shield.",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999731183052063,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  587,
+                                                                                                         "y":  508,
+                                                                                                         "width":  65,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Enemies",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999943733215332,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  605,
+                                                                                                         "y":  522,
+                                                                                                         "width":  83,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "respawn at",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9966124296188354,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  687,
+                                                                                                         "y":  523,
+                                                                                                         "width":  35,
+                                                                                                         "height":  10
+                                                                                                     },
+                                                                                          "text":  "base",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999884843826294,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0004.png",
+                       "captured_at_utc":  "2026-08-12T23:08:57.0804854+00:00",
+                       "sha256":  "ea21bc3640306b252cb92a2f1d90dbee43c998c501ab301a7f0a0a79c6a3b546",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "4ccd7ad8-a9bc-4b4d-8453-f5bd50ed14ce",
+                                               "global_group_id":  "1685eb67-c3f2-499a-a41a-0806f4018684",
+                                               "bounds":  {
+                                                              "x":  275,
+                                                              "y":  584,
+                                                              "width":  1058,
+                                                              "height":  93
+                                                          },
+                                               "label":  "Event Page Confirm + Event Gamemode button",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Battlepass\nQuests\nEvent Gamemode\nShop\nSummon\nendar",
+                                                                      "confidence":  0.9947481652100881,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  139,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-12T23:10:42.1426296+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  458,
+                                                                                                         "y":  609,
+                                                                                                         "width":  94,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Battlepass",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999779462814331,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  648,
+                                                                                                         "y":  608,
+                                                                                                         "width":  64,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Quests",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999539256095886,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  797,
+                                                                                                         "y":  611,
+                                                                                                         "width":  144,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Event Gamemode",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9945783019065857,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1033,
+                                                                                                         "y":  606,
+                                                                                                         "width":  52,
+                                                                                                         "height":  30
+                                                                                                     },
+                                                                                          "text":  "Shop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9741673469543457,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1196,
+                                                                                                         "y":  610,
+                                                                                                         "width":  76,
+                                                                                                         "height":  23
+                                                                                                     },
+                                                                                          "text":  "Summon",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998311400413513,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  275,
+                                                                                                         "y":  645,
+                                                                                                         "width":  46,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "endar",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999803304672241,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "05e780c8-ded0-4478-b613-068cec261b86",
+                                               "global_group_id":  "87961a06-e6a7-41b1-bcb7-bdaf61a21e15",
+                                               "bounds":  {
+                                                              "x":  271,
+                                                              "y":  372,
+                                                              "width":  985,
+                                                              "height":  196
+                                                          },
+                                               "label":  "Act OCR",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

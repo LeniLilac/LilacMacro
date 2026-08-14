@@ -11,6 +11,7 @@ public sealed class ShopPurchasePolicyTests
     {
         Assert.Equal(12, ShopPurchasePolicy.ItemsFor(ShopPurchasePolicy.GoldRoute).Count);
         Assert.Equal(6, ShopPurchasePolicy.ItemsFor(ShopPurchasePolicy.RaidRoute).Count);
+        Assert.Equal(9, ShopPurchasePolicy.ItemsFor(ShopPurchasePolicy.ExpeditionRoute).Count);
         Assert.DoesNotContain(
             ShopPurchasePolicy.ItemsFor(ShopPurchasePolicy.RaidRoute),
             item => item.Id == "cursed-boba");
@@ -26,6 +27,8 @@ public sealed class ShopPurchasePolicyTests
             ShopPurchasePolicy.ValidateSelection(ShopPurchasePolicy.GoldRoute, []));
         Assert.Throws<InvalidDataException>(() =>
             ShopPurchasePolicy.ValidateSelection(ShopPurchasePolicy.RaidRoute, ["cursed-boba"]));
+        Assert.Throws<InvalidDataException>(() =>
+            ShopPurchasePolicy.ValidateSelection(ShopPurchasePolicy.ExpeditionRoute, ["cursed-boba"]));
     }
 
     [Fact]
@@ -47,6 +50,19 @@ public sealed class ShopPurchasePolicyTests
     }
 
     [Fact]
+    public void ExpeditionResetUsesTwoDayBeaconEpoch()
+    {
+        DateTimeOffset beacon = DateTimeOffset.FromUnixTimeSeconds(
+            ShopPurchasePolicy.ExpeditionResetBeaconUnixSeconds);
+        Assert.Equal(beacon, ShopPurchasePolicy.NextDue(
+            ShopPurchasePolicy.ExpeditionRoute, beacon.AddSeconds(-1)));
+        Assert.Equal(beacon.AddDays(2), ShopPurchasePolicy.NextDue(
+            ShopPurchasePolicy.ExpeditionRoute, beacon));
+        Assert.Equal(beacon.AddDays(6), ShopPurchasePolicy.NextDue(
+            ShopPurchasePolicy.ExpeditionRoute, beacon.AddDays(4)));
+    }
+
+    [Fact]
     public void AvailabilityRequiresMeaningfulGreenButtonArea()
     {
         byte[] green = Enumerable.Repeat(new byte[] { 40, 180, 30 }, 120).SelectMany(value => value).ToArray();
@@ -61,6 +77,8 @@ public sealed class ShopPurchasePolicyTests
         Assert.Equal(ShopPurchasePolicy.CatalogRegion.Center, ShopPurchasePolicy.CatalogScrollPoint);
         Assert.Equal(new PixelPoint(650, 383), ShopPurchasePolicy.CatalogScrollPoint);
         Assert.Equal(new PixelPoint(1341, 675), ShopPurchasePolicy.HoverClearPoint);
+        Assert.Equal(new PixelPoint(977, 365),
+            ShopPurchasePolicy.CatalogScrollPointFor(ShopKind.Expedition));
     }
 
     [Theory]
@@ -95,6 +113,30 @@ public sealed class ShopPurchasePolicyTests
             new PixelRect(257, 150, 102, 24),
             new PixelRect(785, 414, 62, 26),
             client,
+            out _));
+    }
+
+    [Fact]
+    public void ExpeditionDialogActionsUseBackAndCancelAsIndependentLiveScaleAnchors()
+    {
+        PixelRect maximum = new(869, 345, 67, 39);
+        PixelRect buy = new(422, 404, 259, 49);
+        Assert.True(ShopPurchasePolicy.TryResolveExpeditionDialogActions(
+            new PixelRect(95, 645, 43, 24),
+            new PixelRect(785, 414, 62, 26),
+            new PixelSize(1366, 700),
+            out ShopPurchaseDialogActions actions));
+        Assert.True(Contains(maximum, actions.Maximum));
+        Assert.True(Contains(buy, actions.Buy));
+    }
+
+    [Fact]
+    public void ExpeditionDialogActionsRejectBackOutsideBottomLeftOwner()
+    {
+        Assert.False(ShopPurchasePolicy.TryResolveExpeditionDialogActions(
+            new PixelRect(600, 300, 43, 24),
+            new PixelRect(785, 414, 62, 26),
+            new PixelSize(1366, 700),
             out _));
     }
 
@@ -136,6 +178,8 @@ public sealed class ShopPurchasePolicyTests
             ResourceRefuelPolicy.GoldMineRoute, completed, 5));
         Assert.Equal("Daily at 00:00 UTC", UtilityTaskPolicy.ScheduleLabel(
             ShopPurchasePolicy.GoldRoute, 1));
+        Assert.Equal("Every 2 days at 00:00 UTC", UtilityTaskPolicy.ScheduleLabel(
+            ShopPurchasePolicy.ExpeditionRoute, 1));
     }
 
     [Fact]

@@ -124,7 +124,6 @@ public static class PlacementSetupRules
             if (step.Kind == PlacementStepKind.Place) priorPlacements.Add(step.Id, step);
         }
         ValidateSpacing(priorPlacements.Values);
-        PlacementPrestartPolicy.ValidateGuaranteedDelay(route);
     }
 
     public static void ValidateStepDelay(int milliseconds)

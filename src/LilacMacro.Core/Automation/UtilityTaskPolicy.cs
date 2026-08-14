@@ -41,6 +41,7 @@ public static class UtilityTaskPolicy
     {
         ShopPurchasePolicy.GoldRoute or CalendarClaimRoute => "Daily at 00:00 UTC",
         ShopPurchasePolicy.RaidRoute => "Weekly at 00:00 UTC",
+        ShopPurchasePolicy.ExpeditionRoute => "Every 2 days at 00:00 UTC",
         _ => $"Every {Math.Max(1, intervalMinutes)} min",
     };
 }

@@ -1,0 +1,840 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "9c67540c-2a24-45fb-888a-b73b3eeb3606",
+    "name":  "victory screen general",
+    "notes":  "Bundled runtime evidence slice. Original dataset: victory-screen-general-20260802-214302. Source frames: 1.",
+    "created_at_utc":  "2026-08-02T21:43:02.9617016+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  36520,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-02T21:43:08.8743537+00:00",
+                       "sha256":  "ef966ab67f65545e5d30f4cbaff13c13bb20d922640f6373db0757a8656baa18",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "fe934a75-fb2c-4eb6-8680-30acfdcbe352",
+                                               "bounds":  {
+                                                              "x":  162,
+                                                              "y":  56,
+                                                              "width":  1044,
+                                                              "height":  594
+                                                          },
+                                               "label":  "Victory State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "cpu",
+                                                                      "text":  "Victory\nx\nLvl 50/50\n0 EXP\nStory\nKing\u0027s Tomb - Act 3\nStone\nAlchemist\nGained 0 EXP!\nNormalMode\nLvl 50/50\n0 EXP\nForbidden\nGameStats\nTeacher\nGained 0 EXP!\nClear Time\n2m, 12s\nTotal Yen\n192,445\nLvl 50/50\n0 EXP\nCursed\nTotal Kills\n300\nTotal Damage\n1,526,443\n(Black Sun)\nmmortal\nGained 0 EXP!\nGained Rewards\nLvl 50/50\n0 EXP\n2x\n300x\n300x\n500x\n345x\n1x\nElf Mage\n(Unleashed\nPLAYER\nGained 0 EXP!\nTrait Crystal\nGem\nGold\nUnit EXP\nPlayer EXP\nMana Flask\nLvl 50/50\n0 EXP\nShadow\n(Divine)\nGained 0 EXP!\nLvl 50/50\n0 EXP\nNext Stage\nRepeat Stage\nViewParty\nined 0 EXP!",
+                                                                      "confidence":  0.980755998690923,
+                                                                      "model_load_milliseconds":  2597,
+                                                                      "inference_milliseconds":  2238,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-02T21:44:07.8369248+00:00",
+                                                                      "model_was_cached":  false,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  167,
+                                                                                                         "y":  56,
+                                                                                                         "width":  92,
+                                                                                                         "height":  31
+                                                                                                     },
+                                                                                          "text":  "Victory",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999265074729919,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1170,
+                                                                                                         "y":  56,
+                                                                                                         "width":  23,
+                                                                                                         "height":  21
+                                                                                                     },
+                                                                                          "text":  "x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.5525186061859131,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  995,
+                                                                                                         "y":  121,
+                                                                                                         "width":  65,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Lvl 50/50",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9917654395103455,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1123,
+                                                                                                         "y":  121,
+                                                                                                         "width":  43,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "0 EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9477497935295105,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  258,
+                                                                                                         "y":  144,
+                                                                                                         "width":  43,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "Story",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.998120129108429,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  256,
+                                                                                                         "y":  164,
+                                                                                                         "width":  212,
+                                                                                                         "height":  27
+                                                                                                     },
+                                                                                          "text":  "King\u0027s Tomb - Act 3",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9706843495368958,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  946,
+                                                                                                         "y":  162,
+                                                                                                         "width":  35,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Stone",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999008178710938,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  923,
+                                                                                                         "y":  174,
+                                                                                                         "width":  58,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Alchemist",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9987516403198242,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1034,
+                                                                                                         "y":  171,
+                                                                                                         "width":  95,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "Gained 0 EXP!",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.960624635219574,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  256,
+                                                                                                         "y":  192,
+                                                                                                         "width":  114,
+                                                                                                         "height":  22
+                                                                                                     },
+                                                                                          "text":  "NormalMode",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998970031738281,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  995,
+                                                                                                         "y":  215,
+                                                                                                         "width":  65,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Lvl 50/50",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.989587128162384,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1124,
+                                                                                                         "y":  216,
+                                                                                                         "width":  41,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "0 EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9473533630371094,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  919,
+                                                                                                         "y":  253,
+                                                                                                         "width":  61,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Forbidden",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999948263168335,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  211,
+                                                                                                         "y":  268,
+                                                                                                         "width":  92,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "GameStats",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999626874923706,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  934,
+                                                                                                         "y":  267,
+                                                                                                         "width":  48,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Teacher",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.994848906993866,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1034,
+                                                                                                         "y":  266,
+                                                                                                         "width":  94,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Gained 0 EXP!",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9779663681983948,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  210,
+                                                                                                         "y":  311,
+                                                                                                         "width":  74,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Clear Time",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9919055104255676,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  466,
+                                                                                                         "y":  310,
+                                                                                                         "width":  51,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "2m, 12s",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9632925391197205,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  563,
+                                                                                                         "y":  309,
+                                                                                                         "width":  65,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Total Yen",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9978504180908203,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  818,
+                                                                                                         "y":  311,
+                                                                                                         "width":  53,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "192,445",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999786019325256,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  995,
+                                                                                                         "y":  308,
+                                                                                                         "width":  65,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Lvl 50/50",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9896168112754822,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1124,
+                                                                                                         "y":  309,
+                                                                                                         "width":  41,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "0 EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9382316470146179,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  937,
+                                                                                                         "y":  334,
+                                                                                                         "width":  45,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "Cursed",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998445510864258,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  208,
+                                                                                                         "y":  351,
+                                                                                                         "width":  70,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Total Kills",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9989602565765381,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  491,
+                                                                                                         "y":  354,
+                                                                                                         "width":  25,
+                                                                                                         "height":  12
+                                                                                                     },
+                                                                                          "text":  "300",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999809265136719,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  563,
+                                                                                                         "y":  350,
+                                                                                                         "width":  96,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Total Damage",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9996092319488525,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  809,
+                                                                                                         "y":  353,
+                                                                                                         "width":  62,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "1,526,443",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999802112579346,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  915,
+                                                                                                         "y":  360,
+                                                                                                         "width":  65,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "(Black Sun)",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9734504222869873,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  933,
+                                                                                                         "y":  351,
+                                                                                                         "width":  45,
+                                                                                                         "height":  11
+                                                                                                     },
+                                                                                          "text":  "mmortal",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9995608925819397,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1035,
+                                                                                                         "y":  359,
+                                                                                                         "width":  93,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Gained 0 EXP!",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9966102838516235,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  210,
+                                                                                                         "y":  391,
+                                                                                                         "width":  130,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "Gained Rewards",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9754326939582825,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  996,
+                                                                                                         "y":  401,
+                                                                                                         "width":  64,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "Lvl 50/50",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9919842481613159,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1123,
+                                                                                                         "y":  401,
+                                                                                                         "width":  43,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "0 EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9664443731307983,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  209,
+                                                                                                         "y":  434,
+                                                                                                         "width":  22,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "2x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9995685815811157,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  301,
+                                                                                                         "y":  434,
+                                                                                                         "width":  37,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "300x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9994667172431946,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  394,
+                                                                                                         "y":  434,
+                                                                                                         "width":  36,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "300x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9991796016693115,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  486,
+                                                                                                         "y":  434,
+                                                                                                         "width":  36,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "500x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998505711555481,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  580,
+                                                                                                         "y":  434,
+                                                                                                         "width":  35,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "345x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998313784599304,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  673,
+                                                                                                         "y":  435,
+                                                                                                         "width":  17,
+                                                                                                         "height":  13
+                                                                                                     },
+                                                                                          "text":  "1x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9966461658477783,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  926,
+                                                                                                         "y":  430,
+                                                                                                         "width":  57,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Elf Mage",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9316859245300293,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  919,
+                                                                                                         "y":  443,
+                                                                                                         "width":  61,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "(Unleashed",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9990914463996887,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  591,
+                                                                                                         "y":  457,
+                                                                                                         "width":  57,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "PLAYER",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9997386932373047,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1034,
+                                                                                                         "y":  453,
+                                                                                                         "width":  94,
+                                                                                                         "height":  13
+                                                                                                     },
+                                                                                          "text":  "Gained 0 EXP!",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9966232776641846,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  220,
+                                                                                                         "y":  499,
+                                                                                                         "width":  65,
+                                                                                                         "height":  10
+                                                                                                     },
+                                                                                          "text":  "Trait Crystal",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9990020394325256,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  348,
+                                                                                                         "y":  495,
+                                                                                                         "width":  32,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Gem",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9993513226509094,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  439,
+                                                                                                         "y":  494,
+                                                                                                         "width":  33,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Gold",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9997177124023438,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  511,
+                                                                                                         "y":  495,
+                                                                                                         "width":  52,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "Unit EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999161958694458,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  593,
+                                                                                                         "y":  495,
+                                                                                                         "width":  62,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "Player EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9974422454833984,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  685,
+                                                                                                         "y":  497,
+                                                                                                         "width":  63,
+                                                                                                         "height":  13
+                                                                                                     },
+                                                                                          "text":  "Mana Flask",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9996247291564941,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  995,
+                                                                                                         "y":  496,
+                                                                                                         "width":  65,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "Lvl 50/50",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9831008911132812,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1123,
+                                                                                                         "y":  495,
+                                                                                                         "width":  43,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "0 EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9707648158073425,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  935,
+                                                                                                         "y":  535,
+                                                                                                         "width":  45,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Shadow",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999061226844788,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  937,
+                                                                                                         "y":  547,
+                                                                                                         "width":  40,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "(Divine)",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9982292056083679,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1033,
+                                                                                                         "y":  543,
+                                                                                                         "width":  96,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Gained 0 EXP!",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9657878875732422,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  995,
+                                                                                                         "y":  588,
+                                                                                                         "width":  65,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Lvl 50/50",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9898180365562439,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1124,
+                                                                                                         "y":  587,
+                                                                                                         "width":  42,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "0 EXP",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9758888483047485,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  227,
+                                                                                                         "y":  597,
+                                                                                                         "width":  97,
+                                                                                                         "height":  26
+                                                                                                     },
+                                                                                          "text":  "Next Stage",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.979853630065918,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  431,
+                                                                                                         "y":  599,
+                                                                                                         "width":  112,
+                                                                                                         "height":  25
+                                                                                                     },
+                                                                                          "text":  "Repeat Stage",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9919158816337585,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  646,
+                                                                                                         "y":  597,
+                                                                                                         "width":  97,
+                                                                                                         "height":  26
+                                                                                                     },
+                                                                                          "text":  "ViewParty",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999746680259705,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1049,
+                                                                                                         "y":  638,
+                                                                                                         "width":  80,
+                                                                                                         "height":  12
+                                                                                                     },
+                                                                                          "text":  "ined 0 EXP!",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9617983102798462,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

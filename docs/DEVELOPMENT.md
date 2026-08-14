@@ -15,6 +15,7 @@
 src/LilacMacro.Core       Platform-independent models and deterministic policies
 src/LilacMacro.Windows    Win32, Windows Graphics Capture, hotkeys, and input
 src/LilacMacro.App        WPF shell, developer workbench, lifecycle, and coordination
+src/LilacMacro.App/Assets/RuntimeEvidence  Curated release evidence slices
 src/LilacMacro.Runtime    WPF-free shared Story/Raid/Challenge scheduler and workflow composition
 src/LilacMacro.SessionSetup  Elevated allowlisted local-session provisioning helper
 src/LilacMacro.SessionWorker Windowless one-shot runner-profile policy bootstrap retained for setup compatibility
@@ -130,6 +131,8 @@ For OCR environment setup, see [OCR and vision](OCR-AND-VISION.md). For all vali
 - Convert a verified client-relative point to desktop coordinates only immediately before Windows input.
 - Never persist desktop coordinates or outer-window bounds as gameplay positions.
 - Detector capture regions use the same client-relative half-open coordinates. Their combined requested area is bounded to one client frame and their atlas coordinates are transient implementation details.
+
+Every semantic detector search area must be owned by a named bundled dataset annotation. Static rectangles are centralized in `RuntimeSearchRegionEvidenceCatalog`; dynamic rectangles derive from freshly verified dataset-owned bounds. See [Runtime evidence ownership](RUNTIME-EVIDENCE.md).
 
 ## Persistence and local state
 

@@ -13,6 +13,8 @@ TestResults/
 *.png
 *.jpg
 !/src/LilacMacro.App/Assets/PlacementMaps/*.jpg
+!/src/LilacMacro.App/Assets/RuntimeEvidence/
+!/src/LilacMacro.App/Assets/RuntimeEvidence/**
 *.jpeg
 *.webp
 *.log

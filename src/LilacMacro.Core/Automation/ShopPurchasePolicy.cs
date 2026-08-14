@@ -8,6 +8,7 @@ public enum ShopKind
 {
     Gold,
     Raid,
+    Expedition,
 }
 
 public sealed record ShopItemDefinition(string Id, string DisplayName, IReadOnlyList<string> OcrAliases);
@@ -21,15 +22,20 @@ public static class ShopPurchasePolicy
     private const double ReferenceMaximumOffsetX = 86d;
     private const double ReferenceMaximumOffsetY = -61d;
     private const double ReferenceBuyOffsetX = -265d;
+    private const double ReferenceBackWidth = 43d;
+    private const double ReferenceCancelWidth = 62d;
     public const string GoldRoute = "Gold Shop";
     public const string RaidRoute = "Raid Shop";
+    public const string ExpeditionRoute = "Expedition Shop";
     public const long RaidResetBeaconUnixSeconds = 1786579200;
+    public const long ExpeditionResetBeaconUnixSeconds = 1786579200;
     public static readonly PixelRect ShopAreaRegion = new(377, 108, 543, 210);
     public static readonly PixelRect GoldSelectorRegion = new(362, 538, 618, 100);
     public static readonly PixelRect GoldHeaderRegion = new(209, 121, 292, 150);
     public static readonly PixelRect RaidSelectorRegion = new(391, 552, 567, 84);
     public static readonly PixelRect RaidHeaderRegion = new(202, 118, 306, 169);
     public static readonly PixelRect CatalogRegion = new(424, 134, 453, 498);
+    public static readonly PixelRect ExpeditionCatalogRegion = new(623, 115, 709, 500);
     public static readonly PixelRect DialogRegion = new(414, 238, 541, 225);
     public static PixelPoint CatalogScrollPoint => CatalogRegion.Center;
     public static readonly PixelPoint HoverClearPoint = new(1341, 675);
@@ -60,14 +66,29 @@ public static class ShopPurchasePolicy
         Item("equipment-lock", "Equipment Lock"),
     ];
 
+    private static readonly ShopItemDefinition[] ExpeditionItems =
+    [
+        Item("gem", "Gem"),
+        Item("gold", "Gold"),
+        Item("stat-lock", "Stat Lock"),
+        Item("stat-reroll", "Stat Reroll"),
+        Item("trait-crystal", "Trait Crystal"),
+        Item("katana", "Katana"),
+        Item("equipment-reroll", "Equipment Reroll"),
+        Item("equipment-lock", "Equipment Lock"),
+        Item("futuristic-payload", "Futuristic Payload"),
+    ];
+
     public static bool IsShopRoute(string route) =>
         string.Equals(route, GoldRoute, StringComparison.Ordinal) ||
-        string.Equals(route, RaidRoute, StringComparison.Ordinal);
+        string.Equals(route, RaidRoute, StringComparison.Ordinal) ||
+        string.Equals(route, ExpeditionRoute, StringComparison.Ordinal);
 
     public static ShopKind KindFor(string route) => route switch
     {
         GoldRoute => ShopKind.Gold,
         RaidRoute => ShopKind.Raid,
+        ExpeditionRoute => ShopKind.Expedition,
         _ => throw new InvalidDataException($"Unknown shop utility route: {route}"),
     };
 
@@ -75,6 +96,7 @@ public static class ShopPurchasePolicy
     {
         ShopKind.Gold => GoldItems,
         ShopKind.Raid => RaidItems,
+        ShopKind.Expedition => ExpeditionItems,
         _ => throw new ArgumentOutOfRangeException(nameof(route)),
     };
 
@@ -100,6 +122,7 @@ public static class ShopPurchasePolicy
     {
         ShopKind.Gold => NextUtcMidnight(completedAtUtc),
         ShopKind.Raid => NextRaidReset(completedAtUtc),
+        ShopKind.Expedition => NextExpeditionReset(completedAtUtc),
         _ => throw new ArgumentOutOfRangeException(nameof(route)),
     };
 
@@ -117,6 +140,14 @@ public static class ShopPurchasePolicy
         long periods = ((utc - beacon).Ticks / TimeSpan.FromDays(7).Ticks) + 1;
         return beacon.AddDays(periods * 7);
     }
+
+    public static DateTimeOffset NextExpeditionReset(DateTimeOffset value) =>
+        NextBeaconReset(value, ExpeditionResetBeaconUnixSeconds, 2);
+
+    public static PixelRect CatalogRegionFor(ShopKind kind) =>
+        kind == ShopKind.Expedition ? ExpeditionCatalogRegion : CatalogRegion;
+
+    public static PixelPoint CatalogScrollPointFor(ShopKind kind) => CatalogRegionFor(kind).Center;
 
     public static bool IsAvailableButton(RgbImage image)
     {
@@ -170,6 +201,43 @@ public static class ShopPurchasePolicy
         if (!IsInside(DialogRegion, maximum) || !IsInside(DialogRegion, buy)) return false;
         actions = new ShopPurchaseDialogActions(maximum, buy);
         return true;
+    }
+
+    public static bool TryResolveExpeditionDialogActions(
+        PixelRect back,
+        PixelRect cancel,
+        PixelSize clientSize,
+        out ShopPurchaseDialogActions actions)
+    {
+        actions = default;
+        if (!back.IsInside(clientSize) || !cancel.IsInside(clientSize)) return false;
+        PixelPoint backCenter = back.Center;
+        PixelPoint cancelCenter = cancel.Center;
+        if (backCenter.X >= 250 || backCenter.Y <= 600 ||
+            cancelCenter.X - backCenter.X is < 450 or > 900 ||
+            back.Width is < 24 or > 70 || cancel.Width is < 34 or > 85)
+            return false;
+
+        double renderedScale = (back.Width / ReferenceBackWidth + cancel.Width / ReferenceCancelWidth) / 2d;
+        if (renderedScale is < 0.55 or > 1.25) return false;
+        PixelPoint maximum = new(
+            cancelCenter.X + (int)Math.Round(ReferenceMaximumOffsetX * renderedScale),
+            cancelCenter.Y + (int)Math.Round(ReferenceMaximumOffsetY * renderedScale));
+        PixelPoint buy = new(
+            cancelCenter.X + (int)Math.Round(ReferenceBuyOffsetX * renderedScale),
+            cancelCenter.Y);
+        if (!IsInside(DialogRegion, maximum) || !IsInside(DialogRegion, buy)) return false;
+        actions = new ShopPurchaseDialogActions(maximum, buy);
+        return true;
+    }
+
+    private static DateTimeOffset NextBeaconReset(DateTimeOffset value, long beaconSeconds, int days)
+    {
+        DateTimeOffset beacon = DateTimeOffset.FromUnixTimeSeconds(beaconSeconds);
+        DateTimeOffset utc = value.ToUniversalTime();
+        if (utc < beacon) return beacon;
+        long periods = ((utc - beacon).Ticks / TimeSpan.FromDays(days).Ticks) + 1;
+        return beacon.AddDays(periods * days);
     }
 
     private static bool IsInside(PixelRect bounds, PixelPoint point) =>

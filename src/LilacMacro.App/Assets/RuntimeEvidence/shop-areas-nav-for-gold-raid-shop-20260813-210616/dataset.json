@@ -1,0 +1,179 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "f5f3e406-f35f-4d65-9333-8d94c7a69e66",
+    "name":  "Shop Areas Nav (for gold + raid shop)",
+    "notes":  "Just copy the exisitng expedition area ui navigation flow\r\n\r\nThis is the same but just different area selection\r\n\r\nLike click shop using the exisiing flow then click gold shop/raid shop based depending on the task\r\n\r\nBundled runtime evidence slice. Original dataset: shop-areas-nav-for-gold-raid-shop-20260813-210616. Source frames: 2.",
+    "created_at_utc":  "2026-08-13T21:06:16.35069+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  22968,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-13T21:06:26.5698257+00:00",
+                       "sha256":  "d69290340ea66516596bbccc5dea6a81917ce6afa73e4c0df307756f87315f4e",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "4ac7116f-b638-46cc-8e03-fb324030618c",
+                                               "global_group_id":  "789a18a1-2285-470c-b753-ab83311459e7",
+                                               "bounds":  {
+                                                              "x":  377,
+                                                              "y":  108,
+                                                              "width":  543,
+                                                              "height":  210
+                                                          },
+                                               "label":  "Shop Areas State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Shop Areas\n电\nRaidShop\nGoldShop\nSpend Raid Tokens on useful\nSpend Gold on usefulitems.\nitems.\n Expedition Aregs",
+                                                                      "confidence":  0.8735075341537595,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  97,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-13T21:09:39.3603641+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  414,
+                                                                                                         "y":  116,
+                                                                                                         "width":  114,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Shop Areas",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9915881156921387,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  656,
+                                                                                                         "y":  155,
+                                                                                                         "width":  192,
+                                                                                                         "height":  45
+                                                                                                     },
+                                                                                          "text":  "电",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.10780970007181168,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  660,
+                                                                                                         "y":  225,
+                                                                                                         "width":  102,
+                                                                                                         "height":  27
+                                                                                                     },
+                                                                                          "text":  "RaidShop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998629093170166,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required",
+                                                                                          "spatial_selector":  "rightmost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  400,
+                                                                                                         "y":  238,
+                                                                                                         "width":  104,
+                                                                                                         "height":  28
+                                                                                                     },
+                                                                                          "text":  "GoldShop",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9997064471244812,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "fuzzy_phrase",
+                                                                                          "evidence_role":  "required",
+                                                                                          "spatial_selector":  "rightmost",
+                                                                                          "spatial_selector_overridden":  true
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  662,
+                                                                                                         "y":  250,
+                                                                                                         "width":  192,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "Spend Raid Tokens on useful",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9959774613380432,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  402,
+                                                                                                         "y":  265,
+                                                                                                         "width":  183,
+                                                                                                         "height":  13
+                                                                                                     },
+                                                                                          "text":  "Spend Gold on usefulitems.",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9678335189819336,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  663,
+                                                                                                         "y":  266,
+                                                                                                         "width":  43,
+                                                                                                         "height":  13
+                                                                                                     },
+                                                                                          "text":  "items.",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998798370361328,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  387,
+                                                                                                         "y":  302,
+                                                                                                         "width":  195,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  " Expedition Aregs",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9254022836685181,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

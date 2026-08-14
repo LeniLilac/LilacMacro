@@ -64,7 +64,7 @@ internal static class GameSettingsNormalizationPolicy
         ScrollDelta: -2400,
         ScrolledTargets:
         [
-            Target("Auto-Upgrade Placed Units", 735, 423, true),
+            Target("Auto-Upgrade Placed Units", 735, 423, false),
             Target("Auto Abilities on Placement", 1069, 423, true),
             Target("Lock Farms on Placement", 735, 482, false),
         ]),

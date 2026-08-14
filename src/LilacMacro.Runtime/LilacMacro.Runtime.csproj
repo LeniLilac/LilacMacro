@@ -62,6 +62,8 @@
              Link="Runtime\MatchTerminalService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MapPreparationService.cs"
              Link="Runtime\MapPreparationService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\ModalActionLocator.cs"
+             Link="Runtime\ModalActionLocator.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\PlacementPlaybackService.cs"
              Link="Runtime\PlacementPlaybackService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\PlacementRuntimeContracts.cs"

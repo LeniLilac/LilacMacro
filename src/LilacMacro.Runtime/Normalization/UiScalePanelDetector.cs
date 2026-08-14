@@ -1,3 +1,4 @@
+using LilacMacro.App.Debugging;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Imaging;
 
@@ -21,9 +22,12 @@ internal static class UiScalePanelDetector
     private const double BaseCloseOffsetY = 237.5;
     private const double BasePanelHalfWidth = 447;
     private const double BasePanelHalfHeight = 253;
-    private static readonly PixelRect CloseSearch = new(980, 32, 256, 162);
-    private static readonly PixelRect GearSearch = new(210, 12, 41, 44);
-    private static readonly PixelRect GearGlyphSearch = new(218, 21, 25, 26);
+    private static readonly PixelRect CloseSearch =
+        RuntimeSearchRegionEvidenceCatalog.SettingsClose.Bounds;
+    private static readonly PixelRect GearSearch =
+        RuntimeSearchRegionEvidenceCatalog.SettingsGear.Bounds;
+    private static readonly PixelRect GearGlyphSearch =
+        RuntimeSearchRegionEvidenceCatalog.SettingsGearGlyph.Bounds;
 
     public static PixelPoint? DetectSettingsGear(RgbImage image)
     {

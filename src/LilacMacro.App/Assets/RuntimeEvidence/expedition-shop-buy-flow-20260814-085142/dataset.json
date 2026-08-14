@@ -1,0 +1,102 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "661c90f3-f5d4-47f6-98a6-78bd53a7c042",
+    "name":  "Expedition Shop Buy Flow",
+    "notes":  "buy flow should be same as gold + raid\r\nclick and confirmation ui\r\n\r\nconfirmation ui should be able to use same logic + roi as gold/raid shop (if not then lmk)\r\n\r\nthen once done buying all configed stuff\r\n\r\ndo the areas ui keypress + respawn flow\r\n\r\nBundled runtime evidence slice. Original dataset: expedition-shop-buy-flow-20260814-085142. Source frames: 2, 4, 6.",
+    "created_at_utc":  "2026-08-14T08:51:42.5231463+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  56284,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-14T08:51:46.4636699+00:00",
+                       "sha256":  "0d2bc68936ef9630043bd1b9fd8706f13aeab9642be850c622e0e3a1d954a738",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "66e18f4a-71e5-4188-a8e4-242c32972495",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  414,
+                                                              "y":  238,
+                                                              "width":  541,
+                                                              "height":  225
+                                                          },
+                                               "label":  "Shop Purchase Dialog State",
+                                               "notes":  "Expedition Shop purchase confirmation reuses the verified Gold/Raid dialog ROI and evidence contract.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0004.png",
+                       "captured_at_utc":  "2026-08-14T08:52:00.1542842+00:00",
+                       "sha256":  "a023f58428786a1a1ddf77246729c705280dd74e8a3c482d14cb17bcd7c52096",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "4d0ebcc6-9a0a-4b1c-984c-5f2724154482",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  414,
+                                                              "y":  238,
+                                                              "width":  541,
+                                                              "height":  225
+                                                          },
+                                               "label":  "Shop Purchase Dialog State",
+                                               "notes":  "Expedition Shop purchase confirmation reuses the verified Gold/Raid dialog ROI and evidence contract.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0006.png",
+                       "captured_at_utc":  "2026-08-14T08:52:09.0005731+00:00",
+                       "sha256":  "dfc3cf3c2a2d814575ffafaf5e97322472dc87b5df9a759d75b9b4884d12265a",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "efdb6e5c-067c-4285-8129-657d730bba6c",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  414,
+                                                              "y":  238,
+                                                              "width":  541,
+                                                              "height":  225
+                                                          },
+                                               "label":  "Shop Purchase Dialog State",
+                                               "notes":  "Expedition Shop purchase confirmation reuses the verified Gold/Raid dialog ROI and evidence contract.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   }
+               ]
+}

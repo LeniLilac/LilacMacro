@@ -14,12 +14,14 @@ internal sealed class ShopPurchaseService(
     OcrRunner ocr,
     UtilityRespawnService respawn)
 {
+    internal static readonly PixelRect ExpeditionCatalogRegion = ShopPurchasePolicy.ExpeditionCatalogRegion;
     private static readonly PixelSize ClientSize = DebugWorkflowCatalog.ClientSize;
     private static readonly TimeSpan ObservationDelay = TimeSpan.FromMilliseconds(350);
     private static readonly TimeSpan TeleportDelay = TimeSpan.FromMilliseconds(5500);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
     private readonly ObservedStateTransitionRunner _transitions = new(workspace, ocr);
     private readonly ExpeditionOcrService _observations = new(workspace, ocr);
+    private readonly MapPreparationService _mapPreparation = new(workspace);
 
     public async Task RunAsync(
         string route,
@@ -52,6 +54,13 @@ internal sealed class ShopPurchaseService(
         CancellationToken cancellationToken)
     {
         status($"{kind.ToString().ToUpperInvariant()} SHOP | OPENING AREAS");
+        if (kind == ShopKind.Expedition)
+        {
+            await OpenExpeditionShopAsync(
+                areasMenuVirtualKey, reservedVirtualKey, device, status, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         ObservedStateTransitionRunResult areas = await _transitions.RunAsync(
             DebugWorkflowCatalog.Lobby,
             DebugWorkflowCatalog.AreasUi,
@@ -89,6 +98,48 @@ internal sealed class ShopPurchaseService(
         status($"{kind.ToString().ToUpperInvariant()} SHOP | VERIFIED");
     }
 
+    private async Task OpenExpeditionShopAsync(
+        int areasMenuVirtualKey,
+        int reservedVirtualKey,
+        string device,
+        Action<string> status,
+        CancellationToken cancellationToken)
+    {
+        ObservedStateTransitionRunResult areas = await _transitions.RunAsync(
+            DebugWorkflowCatalog.Lobby,
+            DebugWorkflowCatalog.AreasUi,
+            device,
+            token => PressActionAsync(areasMenuVirtualKey, reservedVirtualKey, token),
+            cancellationToken).ConfigureAwait(false);
+        RequireTransition(areas, "Lobby to Areas");
+
+        ObservedStateTransitionRunResult hub = await _transitions.RunAsync(
+            DebugWorkflowCatalog.AreasUi,
+            DebugWorkflowCatalog.ExpeditionHub,
+            device,
+            token => ClickExpeditionCategoryAsync(device, token),
+            cancellationToken).ConfigureAwait(false);
+        RequireTransition(hub, "Areas to Expedition Hub");
+        OcrTargetMatch destination = RequiredTarget(hub.Observation.Destination, "Expedition Hub");
+        await workspace.ClickRobloxAsync(ClientSize, destination.Region.Bounds.Center, cancellationToken)
+            .ConfigureAwait(false);
+        await Task.Delay(TeleportDelay, cancellationToken).ConfigureAwait(false);
+        await workspace.FocusRobloxAsync(ClientSize, cancellationToken).ConfigureAwait(false);
+
+        status("EXPEDITION SHOP | WALKING VERIFIED ROUTE");
+        await _mapPreparation.PrepareAsync(
+            MapPreparationPolicy.ExpeditionShop, reservedVirtualKey, status, cancellationToken).ConfigureAwait(false);
+        DebugOcrSnapshot selector = await WaitForExpeditionInteractionAsync(
+            reservedVirtualKey, device, cancellationToken).ConfigureAwait(false);
+        OcrTargetMatch enter = RequiredTarget(selector, "Expedition Shop Description");
+        await workspace.ClickRobloxAsync(ClientSize, enter.Region.Bounds.Center, cancellationToken)
+            .ConfigureAwait(false);
+        DebugOcrSnapshot opened = await _states.WaitForMatchAsync(
+            DebugWorkflowCatalog.ExpeditionShop, device, 16, ObservationDelay, cancellationToken).ConfigureAwait(false);
+        if (!opened.Evaluation.IsMatch) throw new InvalidOperationException("Expedition Shop did not open.");
+        status("EXPEDITION SHOP | VERIFIED");
+    }
+
     private async Task PurchaseSelectedAsync(
         ShopKind kind,
         IReadOnlyList<ShopItemDefinition> selected,
@@ -102,7 +153,7 @@ internal sealed class ShopPurchaseService(
             _ = await RequireShopAsync(kind, device, cancellationToken).ConfigureAwait(false);
             await workspace.ScrollRobloxAsync(
                     ClientSize,
-                    ShopPurchasePolicy.CatalogScrollPoint,
+                    ShopPurchasePolicy.CatalogScrollPointFor(kind),
                     1200,
                     TimeSpan.FromMilliseconds(300),
                     cancellationToken)
@@ -118,7 +169,8 @@ internal sealed class ShopPurchaseService(
         {
             DebugOcrSnapshot shop = await RequireShopAsync(kind, device, cancellationToken).ConfigureAwait(false);
             ShopLayoutAnchors anchors = LayoutAnchors(shop, kind);
-            IReadOnlyList<OcrTextRegion> catalog = await ObserveCatalogAsync(device, cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<OcrTextRegion> catalog = await ObserveCatalogAsync(kind, device, cancellationToken)
+                .ConfigureAwait(false);
             List<CatalogCandidate> candidates = ResolveCandidates(selected, catalog);
             int before = observed.Count;
             foreach (CatalogCandidate candidate in candidates)
@@ -132,7 +184,7 @@ internal sealed class ShopPurchaseService(
             if (pending.Count == 0) break;
             await workspace.ScrollRobloxAsync(
                     ClientSize,
-                    ShopPurchasePolicy.CatalogScrollPoint,
+                    ShopPurchasePolicy.CatalogScrollPointFor(kind),
                     -120,
                     TimeSpan.FromMilliseconds(180),
                     cancellationToken)
@@ -163,7 +215,7 @@ internal sealed class ShopPurchaseService(
         status($"{kind.ToString().ToUpperInvariant()} SHOP | BUYING | {candidate.Item.DisplayName}");
         await workspace.ClickRobloxAsync(ClientSize, candidate.Button.Center, cancellationToken).ConfigureAwait(false);
         DebugOcrSnapshot dialog = await _states.WaitForMatchAsync(
-            DebugWorkflowCatalog.ShopPurchaseDialog, device, 8, ObservationDelay, cancellationToken).ConfigureAwait(false);
+            PurchaseDialog(kind), device, 8, ObservationDelay, cancellationToken).ConfigureAwait(false);
         if (!dialog.Evaluation.IsMatch)
         {
             status($"{kind.ToString().ToUpperInvariant()} SHOP | NO BUY DIALOG | {candidate.Item.DisplayName}");
@@ -171,11 +223,11 @@ internal sealed class ShopPurchaseService(
         }
         await Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken).ConfigureAwait(false);
         ShopPurchaseDialogActions actions = DialogActions(await _states.RunAsync(
-            DebugWorkflowCatalog.ShopPurchaseDialog, device, cancellationToken).ConfigureAwait(false), anchors);
+            PurchaseDialog(kind), device, cancellationToken).ConfigureAwait(false), anchors);
         await workspace.ClickRobloxAsync(ClientSize, actions.Maximum, cancellationToken).ConfigureAwait(false);
         await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
         actions = DialogActions(await _states.RunAsync(
-            DebugWorkflowCatalog.ShopPurchaseDialog, device, cancellationToken).ConfigureAwait(false), anchors);
+            PurchaseDialog(kind), device, cancellationToken).ConfigureAwait(false), anchors);
         await workspace.ClickRobloxAsync(ClientSize, actions.Buy, cancellationToken).ConfigureAwait(false);
         await WaitForDialogCloseAsync(kind, device, cancellationToken).ConfigureAwait(false);
         status($"{kind.ToString().ToUpperInvariant()} SHOP | ATTEMPTED | {candidate.Item.DisplayName}");
@@ -189,7 +241,7 @@ internal sealed class ShopPurchaseService(
         for (int attempt = 0; attempt < 12; attempt++)
         {
             DebugOcrSnapshot dialog = await _states.RunAsync(
-                DebugWorkflowCatalog.ShopPurchaseDialog, device, cancellationToken).ConfigureAwait(false);
+                PurchaseDialog(kind), device, cancellationToken).ConfigureAwait(false);
             if (!dialog.Evaluation.IsMatch)
             {
                 await RequireShopAsync(kind, device, cancellationToken).ConfigureAwait(false);
@@ -216,6 +268,25 @@ internal sealed class ShopPurchaseService(
         throw new InvalidOperationException($"{selector.Name} was not verified before its deadline.");
     }
 
+    private async Task<DebugOcrSnapshot> WaitForExpeditionInteractionAsync(
+        int reservedVirtualKey,
+        string device,
+        CancellationToken cancellationToken)
+    {
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            DebugOcrSnapshot state = await _states.RunAsync(
+                DebugWorkflowCatalog.ExpeditionShopSelector, device, cancellationToken).ConfigureAwait(false);
+            if (state.Evaluation.IsMatch) return state;
+            await PressAsync('E', 80, reservedVirtualKey, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds((attempt + 1) * 2), cancellationToken).ConfigureAwait(false);
+            state = await _states.RunAsync(
+                DebugWorkflowCatalog.ExpeditionShopSelector, device, cancellationToken).ConfigureAwait(false);
+            if (state.Evaluation.IsMatch) return state;
+        }
+        throw new InvalidOperationException("Expedition Shop interaction was not verified after 3 attempts.");
+    }
+
     private async Task<ObservedStateTransitionActionResult> ClickShopCategoryAsync(
         string device,
         CancellationToken cancellationToken)
@@ -227,6 +298,20 @@ internal sealed class ShopPurchaseService(
             ?? throw new InvalidOperationException("Verified Areas UI did not expose Shop.");
         await workspace.ClickRobloxAsync(ClientSize, shop.Region.Bounds.Center, cancellationToken).ConfigureAwait(false);
         return new(true, "SHOP CATEGORY CLICKED", ["SHOP CATEGORY VERIFIED + CLICKED"]);
+    }
+
+    private async Task<ObservedStateTransitionActionResult> ClickExpeditionCategoryAsync(
+        string device,
+        CancellationToken cancellationToken)
+    {
+        DebugOcrSnapshot areas = await _states.RunAsync(
+            DebugWorkflowCatalog.AreasUi, device, cancellationToken).ConfigureAwait(false);
+        if (!areas.Evaluation.IsMatch) return new(false, "AREAS UI NOT VERIFIED", []);
+        OcrTargetMatch expedition = AreaSelectionRules.Find(AreaCategory.Expedition, areas.Regions)
+            ?? throw new InvalidOperationException("Verified Areas UI did not expose Expedition.");
+        await workspace.ClickRobloxAsync(ClientSize, expedition.Region.Bounds.Center, cancellationToken)
+            .ConfigureAwait(false);
+        return new(true, "EXPEDITION CATEGORY CLICKED", ["EXPEDITION CATEGORY VERIFIED + CLICKED"]);
     }
 
     private Task<ObservedStateTransitionActionResult> PressActionAsync(
@@ -244,9 +329,12 @@ internal sealed class ShopPurchaseService(
     }
 
     private Task<IReadOnlyList<OcrTextRegion>> ObserveCatalogAsync(
+        ShopKind kind,
         string device,
         CancellationToken cancellationToken) => _observations.ObserveAsync(
-            ShopPurchasePolicy.CatalogRegion, device, cancellationToken);
+            kind == ShopKind.Expedition ? ExpeditionCatalogRegion : ShopPurchasePolicy.CatalogRegion,
+            device,
+            cancellationToken);
 
     private Task<DebugOcrSnapshot> RequireShopAsync(
         ShopKind kind,
@@ -297,9 +385,16 @@ internal sealed class ShopPurchaseService(
         if (!dialog.Evaluation.IsMatch)
             throw new InvalidOperationException("Shop purchase dialog was not freshly verified.");
         PixelRect cancel = RequiredTarget(dialog, "Cancel").Region.Bounds;
+        if (anchors.Secondary is not PixelRect secondary)
+        {
+            return ShopPurchasePolicy.TryResolveExpeditionDialogActions(
+                anchors.Primary, cancel, ClientSize, out ShopPurchaseDialogActions expeditionActions)
+                ? expeditionActions
+                : throw new InvalidOperationException("The live Expedition Shop dialog was not safe to use.");
+        }
         return ShopPurchasePolicy.TryResolveDialogActions(
             anchors.Primary,
-            anchors.Secondary,
+            secondary,
             cancel,
             ClientSize,
             out ShopPurchaseDialogActions actions)
@@ -311,32 +406,51 @@ internal sealed class ShopPurchaseService(
         workspace.RunKeySequenceAsync(ClientSize, AutomationKeySequence.Create(
             [AutomationKeyPress.Create(key, hold, reserved)]), token);
 
-    private static DebugStateSpec Selector(ShopKind kind) => kind == ShopKind.Gold
-        ? DebugWorkflowCatalog.GoldShopSelector
-        : DebugWorkflowCatalog.RaidShopSelector;
+    private static DebugStateSpec Selector(ShopKind kind) => kind switch
+    {
+        ShopKind.Gold => DebugWorkflowCatalog.GoldShopSelector,
+        ShopKind.Raid => DebugWorkflowCatalog.RaidShopSelector,
+        ShopKind.Expedition => DebugWorkflowCatalog.ExpeditionShopSelector,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+    };
 
-    private static DebugStateSpec Shop(ShopKind kind) => kind == ShopKind.Gold
-        ? DebugWorkflowCatalog.GoldShop
-        : DebugWorkflowCatalog.RaidShop;
+    private static DebugStateSpec Shop(ShopKind kind) => kind switch
+    {
+        ShopKind.Gold => DebugWorkflowCatalog.GoldShop,
+        ShopKind.Raid => DebugWorkflowCatalog.RaidShop,
+        ShopKind.Expedition => DebugWorkflowCatalog.ExpeditionShop,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+    };
+
+    private static DebugStateSpec PurchaseDialog(ShopKind kind) => kind == ShopKind.Expedition
+        ? DebugWorkflowCatalog.ExpeditionShopPurchaseDialog
+        : DebugWorkflowCatalog.ShopPurchaseDialog;
 
     private static ShopLayoutAnchors LayoutAnchors(DebugOcrSnapshot shop, ShopKind kind) => kind switch
     {
         ShopKind.Gold => new(
-            BottommostTarget(shop, new OcrTargetRule("Gold Shop", "gold shop", "goldshop")),
+            StackedSelectorTarget(
+                shop,
+                text => OcrRuleEngine.Normalize(text) is "goldshop",
+                text => OcrRuleEngine.Normalize(text) is "cosmeticshop"),
             RequiredTarget(shop, "Cosmetic Shop").Region.Bounds),
         ShopKind.Raid => new(
-            BottommostTarget(shop, new OcrTargetRule("General", "general")),
+            StackedSelectorTarget(
+                shop,
+                text => OcrRuleEngine.Normalize(text) is "general",
+                text => OcrRuleEngine.Normalize(text) is "spiritcity"),
             RequiredTarget(shop, "Spirit City").Region.Bounds),
+        ShopKind.Expedition => new(RequiredTarget(shop, "Back").Region.Bounds, null),
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 
-    private static PixelRect BottommostTarget(DebugOcrSnapshot state, OcrTargetRule rule) =>
-        OcrRuleEngine.FindAllTargets(rule, state.Regions)
-            .OrderByDescending(match => match.Region.Bounds.Center.Y)
-            .Select(match => match.Region.Bounds)
-            .FirstOrDefault() is { Width: > 0, Height: > 0 } bounds
-                ? bounds
-                : throw new InvalidOperationException($"Verified {state.State} did not expose {rule.Name}.");
+    private static PixelRect StackedSelectorTarget(
+        DebugOcrSnapshot state,
+        Func<string, bool> isPrimary,
+        Func<string, bool> isSecondary) =>
+        ModalActionLocator.FindStackedSelector(state.Regions, isPrimary, isSecondary)?.Bounds
+        ?? throw new InvalidOperationException(
+            $"Verified {state.State} did not expose its paired selector controls.");
 
     private static OcrTargetMatch RequiredTarget(DebugOcrSnapshot state, string name) =>
         state.Evaluation.Matches.FirstOrDefault(match => match.Target == name)
@@ -350,5 +464,5 @@ internal sealed class ShopPurchaseService(
 
     private sealed record CatalogCandidate(ShopItemDefinition Item, PixelRect Button);
 
-    private readonly record struct ShopLayoutAnchors(PixelRect Primary, PixelRect Secondary);
+    private readonly record struct ShopLayoutAnchors(PixelRect Primary, PixelRect? Secondary);
 }

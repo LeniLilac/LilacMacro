@@ -31,6 +31,7 @@ public partial class PlanPage : UserControl
         ResourceRefuelPolicy.ResourceDrillRoute,
         ShopPurchasePolicy.GoldRoute,
         ShopPurchasePolicy.RaidRoute,
+        ShopPurchasePolicy.ExpeditionRoute,
         UtilityTaskPolicy.CalendarClaimRoute,
     ];
 

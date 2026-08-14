@@ -69,6 +69,7 @@ internal sealed class RunnerSnapshotBuilder
         .Select(field => (DebugStateSpec?)field.GetValue(null))
         .Where(state => state is not null)
         .Cast<DebugStateSpec>()
+        .Concat(ExpeditionCheckpointStateCatalog.All())
         .OrderBy(state => state.Name, StringComparer.Ordinal);
 
     private static RunnerTaskSnapshot CreateTask(PlanTaskPrototype task, int index) => new()

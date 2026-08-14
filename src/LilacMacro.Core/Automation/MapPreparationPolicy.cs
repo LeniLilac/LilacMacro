@@ -4,6 +4,8 @@ public readonly record struct MapPreparationStep(int VirtualKey, int HoldMillise
 
 public static class MapPreparationPolicy
 {
+    public const string ExpeditionShop = "utility-expedition-shop";
+
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<MapPreparationStep>> Plans =
         new Dictionary<string, IReadOnlyList<MapPreparationStep>>(StringComparer.OrdinalIgnoreCase)
         {
@@ -23,6 +25,13 @@ public static class MapPreparationPolicy
             [
                 new(0x53, 900),
                 new(0x44, 750),
+            ],
+            [ExpeditionShop] =
+            [
+                new(0x57, 2500),
+                new(0x44, 750),
+                new(0x57, 3300),
+                new(0x44, 500),
             ],
         };
 

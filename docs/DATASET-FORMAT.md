@@ -29,3 +29,7 @@ Draft directories begin with `.draft-`. Finalization validates the dataset name,
 Every manifest declares the `lilacmacro.dataset` format, its schema URL, `images` relative root, and `roblox_client_pixels_half_open` coordinate space. The normative JSON Schema is [schemas/dataset.schema.json](../schemas/dataset.schema.json).
 
 `LilacMacro.DatasetTool` validates image hashes, dimensions, manual rectangles, and nested OCR rectangles, then can generate a bounded agent view containing chronological contact sheets, per-annotation crops, multi-box OCR maps, `frames.jsonl`, `agent-index.json`, and a human-readable `summary.md`. Generated views live under the dataset's ignored `.agent-view` directory unless an explicit empty output directory is supplied. Existing views and dataset content are never overwritten.
+
+## Curated runtime slices
+
+Owner datasets remain local. The release may include only frames and annotations explicitly allowlisted by `eng/runtime-evidence.json` and regenerated into `src/LilacMacro.App/Assets/RuntimeEvidence`. A runtime search owner references an exact annotation label; duplicate or missing matches are invalid. See [Runtime evidence ownership](RUNTIME-EVIDENCE.md) for the synchronization and ambiguity workflow.

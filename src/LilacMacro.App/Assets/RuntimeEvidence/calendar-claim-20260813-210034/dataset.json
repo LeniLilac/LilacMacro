@@ -1,0 +1,746 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "c79dff5d-cb30-46e7-9a45-2e2a061095b1",
+    "name":  "Calendar Claim",
+    "notes":  "Click calendar\r\nUse rel pos to click like somewhere near the middle of the boxes for each day. click from day 7 to 6 .. to 1 (repeat 3x)\r\n\r\nesc -\u003e r -\u003e enter to respawn and remove ui (same flow as drill/mine refuel)\r\n\r\nCalendar new reward every day at midnight utc\r\n\r\nAdd this as an auto claim calendar utility task\r\n\r\nBundled runtime evidence slice. Original dataset: calendar-claim-20260813-210034. Source frames: 1, 2, 3, 4, 5, 6.",
+    "created_at_utc":  "2026-08-13T21:00:34.8225415+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  22968,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-13T21:00:43.0988467+00:00",
+                       "sha256":  "eb2712d6c5d0b021ee9a99033751df81228199d81d309562ddf1f5aa54fdb527",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "faf1983f-9f0c-4c5d-9bba-3507968bed51",
+                                               "global_group_id":  "ee096530-ceab-44e6-9cd9-14ea04724f12",
+                                               "bounds":  {
+                                                              "x":  1247,
+                                                              "y":  350,
+                                                              "width":  119,
+                                                              "height":  190
+                                                          },
+                                               "label":  "Calendar Launcher Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "f55bd637-c35f-42ca-acfa-bf2c57c52d78",
+                                               "global_group_id":  "1e40fc2c-c1c5-411e-8334-fbd973837884",
+                                               "bounds":  {
+                                                              "x":  247,
+                                                              "y":  88,
+                                                              "width":  864,
+                                                              "height":  523
+                                                          },
+                                               "label":  "Calendar Reward Grid",
+                                               "notes":  "",
+                                               "minimum_pool_matches":  3,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-13T21:00:46.7056265+00:00",
+                       "sha256":  "4277ebd7ecde330966ad62a8932004bbd80fd2ceab3a881bf1dc0e575b3412f5",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "aac4735b-de27-4581-96cd-390e71812956",
+                                               "global_group_id":  "ee096530-ceab-44e6-9cd9-14ea04724f12",
+                                               "bounds":  {
+                                                              "x":  1247,
+                                                              "y":  350,
+                                                              "width":  119,
+                                                              "height":  190
+                                                          },
+                                               "label":  "Calendar Launcher Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "4988f9d9-9ae0-4bf9-86be-36db09738001",
+                                               "global_group_id":  "1e40fc2c-c1c5-411e-8334-fbd973837884",
+                                               "bounds":  {
+                                                              "x":  247,
+                                                              "y":  88,
+                                                              "width":  864,
+                                                              "height":  523
+                                                          },
+                                               "label":  "Calendar Reward Grid",
+                                               "notes":  "",
+                                               "minimum_pool_matches":  3,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-13T21:00:52.3364066+00:00",
+                       "sha256":  "c680dc957143a2eb4ca4c6034097e82d723339fef4933adb136f4a9dba3dd5a8",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "f7fe434e-3695-4cab-bd37-e6294de0242f",
+                                               "global_group_id":  "ee096530-ceab-44e6-9cd9-14ea04724f12",
+                                               "bounds":  {
+                                                              "x":  1247,
+                                                              "y":  350,
+                                                              "width":  119,
+                                                              "height":  190
+                                                          },
+                                               "label":  "Calendar Launcher Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Profile\nCalendar",
+                                                                      "confidence":  0.999932736158371,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  71,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-13T21:01:29.1164174+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1287,
+                                                                                                         "y":  416,
+                                                                                                         "width":  57,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Profile",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999025464057922,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1280,
+                                                                                                         "y":  501,
+                                                                                                         "width":  72,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Calendar",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999629259109497,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "d2d93fb9-eacf-4b5e-91b8-c0c0fd041056",
+                                               "global_group_id":  "1e40fc2c-c1c5-411e-8334-fbd973837884",
+                                               "bounds":  {
+                                                              "x":  247,
+                                                              "y":  88,
+                                                              "width":  864,
+                                                              "height":  523
+                                                          },
+                                               "label":  "Calendar Reward Grid",
+                                               "notes":  "",
+                                               "minimum_pool_matches":  3,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0004.png",
+                       "captured_at_utc":  "2026-08-13T21:00:54.0086613+00:00",
+                       "sha256":  "0bf75560e26f66d50cd712603f56a9909f8bb5778ee6777b6975a8fff6674dce",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "567cf2d0-67e0-4da2-b6bd-6e1ee9741c76",
+                                               "global_group_id":  "ee096530-ceab-44e6-9cd9-14ea04724f12",
+                                               "bounds":  {
+                                                              "x":  1247,
+                                                              "y":  350,
+                                                              "width":  119,
+                                                              "height":  190
+                                                          },
+                                               "label":  "Calendar Launcher Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "141f9d8f-ea2c-4897-9d0a-cd022ddf4909",
+                                               "global_group_id":  "1e40fc2c-c1c5-411e-8334-fbd973837884",
+                                               "bounds":  {
+                                                              "x":  247,
+                                                              "y":  88,
+                                                              "width":  864,
+                                                              "height":  523
+                                                          },
+                                               "label":  "Calendar Reward Grid",
+                                               "notes":  "",
+                                               "minimum_pool_matches":  3,
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Reward Calendar\nx\nDaily Calendar\nNext Reward in 2 hours, 58 minutes\nUnlock FREE Rewardsjust bylogging in every day!\nDay 1\nDay 2\nDay 3\nDay 7\nGem\n1,000x\nGem\n1,250x\nGem\n1,500x\nTrait Crystal\n25x\nDay 4\nDay 5\nDay 6\nGem\n1,750x\nGem\n2,000x\nGem\n2,500x",
+                                                                      "confidence":  0.9730083243204997,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  211,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-13T21:01:56.444929+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  298,
+                                                                                                         "y":  101,
+                                                                                                         "width":  192,
+                                                                                                         "height":  28
+                                                                                                     },
+                                                                                          "text":  "Reward Calendar",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9765588641166687,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1069,
+                                                                                                         "y":  102,
+                                                                                                         "width":  24,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.4924223721027374,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  284,
+                                                                                                         "y":  164,
+                                                                                                         "width":  146,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Daily Calendar",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9948843121528625,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  826,
+                                                                                                         "y":  174,
+                                                                                                         "width":  245,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Next Reward in 2 hours, 58 minutes",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9969472289085388,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  285,
+                                                                                                         "y":  185,
+                                                                                                         "width":  329,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Unlock FREE Rewardsjust bylogging in every day!",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9857014417648315,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  293,
+                                                                                                         "y":  222,
+                                                                                                         "width":  43,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Day 1",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.962262749671936,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  492,
+                                                                                                         "y":  222,
+                                                                                                         "width":  44,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Day 2",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.997728705406189,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  689,
+                                                                                                         "y":  223,
+                                                                                                         "width":  43,
+                                                                                                         "height":  15
+                                                                                                     },
+                                                                                          "text":  "Day 3",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9874974489212036,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  885,
+                                                                                                         "y":  222,
+                                                                                                         "width":  46,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Day 7",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9557596445083618,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  294,
+                                                                                                         "y":  250,
+                                                                                                         "width":  40,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Gem",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998705983161926,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  410,
+                                                                                                         "y":  250,
+                                                                                                         "width":  53,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "1,000x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9986671805381775,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  492,
+                                                                                                         "y":  250,
+                                                                                                         "width":  39,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Gem",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9995489120483398,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  613,
+                                                                                                         "y":  251,
+                                                                                                         "width":  46,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "1,250x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999792754650116,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  689,
+                                                                                                         "y":  250,
+                                                                                                         "width":  41,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Gem",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999842643737793,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  809,
+                                                                                                         "y":  251,
+                                                                                                         "width":  49,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "1,500x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998428225517273,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  885,
+                                                                                                         "y":  246,
+                                                                                                         "width":  97,
+                                                                                                         "height":  24
+                                                                                                     },
+                                                                                          "text":  "Trait Crystal",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9994761943817139,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1043,
+                                                                                                         "y":  251,
+                                                                                                         "width":  29,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "25x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9987290501594543,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  293,
+                                                                                                         "y":  411,
+                                                                                                         "width":  46,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Day 4",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9754770398139954,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  490,
+                                                                                                         "y":  411,
+                                                                                                         "width":  45,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "Day 5",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9817036390304565,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  687,
+                                                                                                         "y":  409,
+                                                                                                         "width":  47,
+                                                                                                         "height":  21
+                                                                                                     },
+                                                                                          "text":  "Day 6",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9976016283035278,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "pool"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  294,
+                                                                                                         "y":  440,
+                                                                                                         "width":  40,
+                                                                                                         "height":  19
+                                                                                                     },
+                                                                                          "text":  "Gem",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9998517036437988,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  413,
+                                                                                                         "y":  441,
+                                                                                                         "width":  49,
+                                                                                                         "height":  16
+                                                                                                     },
+                                                                                          "text":  "1,750x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9991948008537292,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  491,
+                                                                                                         "y":  438,
+                                                                                                         "width":  39,
+                                                                                                         "height":  20
+                                                                                                     },
+                                                                                          "text":  "Gem",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9997706413269043,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  605,
+                                                                                                         "y":  440,
+                                                                                                         "width":  56,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "2,000x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9996667504310608,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  688,
+                                                                                                         "y":  438,
+                                                                                                         "width":  41,
+                                                                                                         "height":  21
+                                                                                                     },
+                                                                                          "text":  "Gem",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999681293964386,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  805,
+                                                                                                         "y":  440,
+                                                                                                         "width":  54,
+                                                                                                         "height":  18
+                                                                                                     },
+                                                                                          "text":  "2,500x",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9997360110282898,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0005.png",
+                       "captured_at_utc":  "2026-08-13T21:00:59.4590491+00:00",
+                       "sha256":  "3bd54519baf40aeed1a97a0259cb315e2cc7d51f3993abc4fce43ddc62aa7477",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "6db0bed7-efbf-4fb7-8213-beb1846a04df",
+                                               "global_group_id":  "ee096530-ceab-44e6-9cd9-14ea04724f12",
+                                               "bounds":  {
+                                                              "x":  1247,
+                                                              "y":  350,
+                                                              "width":  119,
+                                                              "height":  190
+                                                          },
+                                               "label":  "Calendar Launcher Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Profile\n福",
+                                                                      "confidence":  0.9534518718719482,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  417,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-13T21:01:26.1760404+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1313,
+                                                                                                         "y":  395,
+                                                                                                         "width":  35,
+                                                                                                         "height":  10
+                                                                                                     },
+                                                                                          "text":  "Profile",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9940868616104126,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  1308,
+                                                                                                         "y":  418,
+                                                                                                         "width":  43,
+                                                                                                         "height":  36
+                                                                                                     },
+                                                                                          "text":  "福",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9128168821334839,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "80c8f1b1-1383-48eb-b8e5-f7111c5cf4ef",
+                                               "global_group_id":  "1e40fc2c-c1c5-411e-8334-fbd973837884",
+                                               "bounds":  {
+                                                              "x":  247,
+                                                              "y":  88,
+                                                              "width":  864,
+                                                              "height":  523
+                                                          },
+                                               "label":  "Calendar Reward Grid",
+                                               "notes":  "",
+                                               "minimum_pool_matches":  3,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0006.png",
+                       "captured_at_utc":  "2026-08-13T21:01:01.7954349+00:00",
+                       "sha256":  "add4dfed61af25a478b2b933d4806d7f6c780799590d397e66b650342f004a3b",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "49a16e31-8835-4724-8675-e63760155b2b",
+                                               "global_group_id":  "ee096530-ceab-44e6-9cd9-14ea04724f12",
+                                               "bounds":  {
+                                                              "x":  1247,
+                                                              "y":  350,
+                                                              "width":  119,
+                                                              "height":  190
+                                                          },
+                                               "label":  "Calendar Launcher Search",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           },
+                                           {
+                                               "id":  "e38e1a50-6eed-4f38-940f-2d48dc9e65dd",
+                                               "global_group_id":  "1e40fc2c-c1c5-411e-8334-fbd973837884",
+                                               "bounds":  {
+                                                              "x":  247,
+                                                              "y":  88,
+                                                              "width":  864,
+                                                              "height":  523
+                                                          },
+                                               "label":  "Calendar Reward Grid",
+                                               "notes":  "",
+                                               "minimum_pool_matches":  3,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   }
+               ]
+}

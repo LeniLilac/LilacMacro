@@ -11,14 +11,16 @@ namespace LilacMacro.App.Runtime;
 internal sealed record ExpeditionRewardObservation(
     ExpeditionRewardPool Pool,
     PixelPoint BackPoint,
-    IReadOnlyList<string> OcrText);
+    IReadOnlyList<string> OcrText,
+    bool CompletePool);
 
 internal sealed class ExpeditionRewardPoolService(
     WorkspaceController workspace,
     OcrRunner ocr)
 {
     private static readonly PixelRect FullClient = new(0, 0, 1366, 700);
-    private static readonly PixelRect RewardStrip = new(0, 545, 820, 155);
+    private static readonly PixelRect RewardStrip =
+        RuntimeSearchRegionEvidenceCatalog.ExpeditionRewards.Bounds;
     private readonly ExpeditionOcrService _ocr = new(workspace, ocr);
     private readonly DebugOcrController _debug = new(workspace, ocr);
     private PixelPoint? _mapPoint;
@@ -73,7 +75,7 @@ internal sealed class ExpeditionRewardPoolService(
         string device,
         CancellationToken cancellationToken)
     {
-        ExpeditionRewardPool? previousPool = null;
+        int? previousTargetQuantity = null;
         int stableObservations = 0;
         for (int attempt = 0; attempt < 8; attempt++)
         {
@@ -81,19 +83,22 @@ internal sealed class ExpeditionRewardPoolService(
                 RewardStrip, device, cancellationToken, scale: 4).ConfigureAwait(false);
             OcrTextRegion? back = regions.FirstOrDefault(region => Normalize(region.Text) == "back");
             bool routeRewards = ContainsPhrase(regions, "routerewards");
-            bool parsed = TryPoolFromRegions(regions, out ExpeditionRewardPool pool);
+            bool parsed = TryTargetPoolFromRegions(
+                regions, target, out ExpeditionRewardPool pool, out bool completePool);
             if (back is not null && routeRewards && HasPopulatedRewardStrip(regions) && parsed)
             {
-                stableObservations = previousPool is not null && PoolsEqual(previousPool, pool)
+                int targetQuantity = pool.Quantity(target);
+                stableObservations = previousTargetQuantity == targetQuantity
                     ? stableObservations + 1
                     : 1;
-                previousPool = pool;
+                previousTargetQuantity = targetQuantity;
                 if (stableObservations >= 2)
                 {
                     return new ExpeditionRewardObservation(
                         pool,
                         back.Bounds.Center,
-                        regions.Select(region => region.Text).ToArray());
+                        regions.Select(region => region.Text).ToArray(),
+                        completePool);
                 }
             }
             await Task.Delay(TimeSpan.FromMilliseconds(350), cancellationToken).ConfigureAwait(false);
@@ -218,13 +223,19 @@ internal sealed class ExpeditionRewardPoolService(
         return complete;
     }
 
+    internal static bool TryTargetPoolFromRegions(
+        IReadOnlyList<OcrTextRegion> regions,
+        ExpeditionRewardResource target,
+        out ExpeditionRewardPool pool,
+        out bool completePool)
+    {
+        completePool = TryPoolFromRegions(regions, out pool);
+        if (completePool) return true;
+        return FindReward(regions, target) is not null;
+    }
+
     internal static bool HasPopulatedRewardStrip(IReadOnlyList<OcrTextRegion> regions) =>
         regions.Count(region => IsQuantity(region.Text)) >= 4;
-
-    private static bool PoolsEqual(ExpeditionRewardPool left, ExpeditionRewardPool right) =>
-        Enum.GetValues<ExpeditionRewardResource>()
-            .Where(resource => resource != ExpeditionRewardResource.None)
-            .All(resource => left.Quantity(resource) == right.Quantity(resource));
 
     internal static IReadOnlyDictionary<ExpeditionRewardResource, OcrTextRegion> AssociateRewardCards(
         IReadOnlyList<OcrTextRegion> regions)

@@ -14,7 +14,8 @@ internal sealed class ExpeditionSettingsService(
     OcrRunner ocr)
 {
     private static readonly PixelRect FullClient = new(0, 0, 1366, 700);
-    private static readonly PixelRect RestartDialog = new(430, 250, 510, 210);
+    private static readonly PixelRect RestartDialog =
+        RuntimeSearchRegionEvidenceCatalog.RestartConfirmation.Bounds;
     private readonly ExpeditionOcrService _ocr = new(workspace, ocr);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
@@ -65,11 +66,10 @@ internal sealed class ExpeditionSettingsService(
 
         IReadOnlyList<OcrTextRegion> dialog = await WaitForRestartDialogAsync(
             device, cancellationToken).ConfigureAwait(false);
-        OcrTextRegion action = dialog
-            .Where(region => Normalize(region.Text).Contains("restart", StringComparison.Ordinal))
-            .OrderByDescending(region => region.Bounds.Center.Y)
-            .ThenBy(region => region.Bounds.Center.X)
-            .FirstOrDefault()
+        OcrTextRegion action = ModalActionLocator.FindPairedAction(
+            dialog,
+            text => Normalize(text).Contains("restart", StringComparison.Ordinal),
+            text => Normalize(text).Contains("cancel", StringComparison.Ordinal))
             ?? throw new InvalidOperationException("Restart confirmation did not expose Restart.");
         if (!dialog.Any(region => Normalize(region.Text).Contains("cancel", StringComparison.Ordinal)))
             throw new InvalidOperationException("Restart confirmation did not expose Cancel.");
@@ -139,11 +139,10 @@ internal sealed class ExpeditionSettingsService(
                 status?.Invoke("RESTART CONFIRMATION CLOSED");
                 return;
             }
-            OcrTextRegion? restart = regions
-                .Where(region => Normalize(region.Text).Contains("restart", StringComparison.Ordinal))
-                .OrderByDescending(region => region.Bounds.Center.Y)
-                .ThenBy(region => region.Bounds.Center.X)
-                .FirstOrDefault();
+            OcrTextRegion? restart = ModalActionLocator.FindPairedAction(
+                regions,
+                text => Normalize(text).Contains("restart", StringComparison.Ordinal),
+                text => Normalize(text).Contains("cancel", StringComparison.Ordinal));
             if (restart is not null)
             {
                 await workspace.ClickRobloxAsync(

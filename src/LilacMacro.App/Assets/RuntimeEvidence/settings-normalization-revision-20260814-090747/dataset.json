@@ -1,0 +1,33 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "8adc03a0-5f20-4a20-8a27-9dbefce3b360",
+    "name":  "Settings Normalization Revision",
+    "notes":  "replaces old frame 4 of the prev dataset\r\n\r\nBundled runtime evidence slice. Original dataset: settings-normalization-revision-20260814-090747. Source frames: 1.",
+    "created_at_utc":  "2026-08-14T09:07:47.5234516+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  56284,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-14T09:07:51.2022789+00:00",
+                       "sha256":  "1d607f354f5c2ca2b0b0f652170d3771d2118f0a2a26afb02d66e0e7b652c101",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+
+                                       ]
+                   }
+               ]
+}

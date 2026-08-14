@@ -1,122 +1,246 @@
 using LilacMacro.App.Debugging;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
-using LilacMacro.Core.Datasets;
-using LilacMacro.Core.Geometry;
+using LilacMacro.Core.Automation;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.App.Runtime;
+
+internal enum CheckpointTransitionDecision
+{
+    ObserveAgain,
+    OpenConfirmation,
+    Confirm,
+    Complete,
+}
+
+internal static class CheckpointTransitionPolicy
+{
+    public static CheckpointTransitionDecision Decide(
+        bool confirmationObserved,
+        bool sourceObserved,
+        bool transitionStarted,
+        int consecutiveSourceObservations,
+        int consecutiveClearObservations)
+    {
+        if (confirmationObserved) return CheckpointTransitionDecision.Confirm;
+        if (sourceObserved)
+        {
+            return !transitionStarted || consecutiveSourceObservations >= 2
+                ? CheckpointTransitionDecision.OpenConfirmation
+                : CheckpointTransitionDecision.ObserveAgain;
+        }
+
+        return transitionStarted && consecutiveClearObservations >= 2
+            ? CheckpointTransitionDecision.Complete
+            : CheckpointTransitionDecision.ObserveAgain;
+    }
+}
 
 internal sealed class ExpeditionCheckpointService(
     WorkspaceController workspace,
     OcrRunner ocr)
 {
-    private static readonly PixelRect Controls = new(360, 170, 650, 440);
-    private readonly ExpeditionOcrService _ocr = new(workspace, ocr);
+    private static readonly TimeSpan ObservationDelay = TimeSpan.FromMilliseconds(300);
+    private const int MaximumActions = 4;
+    private const int MaximumIndeterminateObservations = 12;
+    private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
     public Task ContinueAsync(string device, Action<string>? status, CancellationToken cancellationToken) =>
-        RunAsync("continue", device, status, cancellationToken);
+        RunAsync(
+            "CHECKPOINT",
+            "Continue",
+            ExpeditionCheckpointStateCatalog.SpawnContinueSource,
+            ExpeditionCheckpointStateCatalog.ContinueConfirmation,
+            waitForArrival: false,
+            device,
+            status,
+            cancellationToken);
+
+    public Task ContinueAfterArrivalAsync(
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken) =>
+        RunAsync(
+            "CHECKPOINT",
+            "Continue",
+            ExpeditionCheckpointStateCatalog.ContinueSource,
+            ExpeditionCheckpointStateCatalog.ContinueConfirmation,
+            waitForArrival: true,
+            device,
+            status,
+            cancellationToken);
+
+    public Task ContinueEncounterAsync(
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken) =>
+        RunAsync(
+            "ENCOUNTER",
+            "Continue",
+            ExpeditionCheckpointStateCatalog.EncounterContinueSource,
+            ExpeditionCheckpointStateCatalog.EncounterContinueConfirmation,
+            waitForArrival: true,
+            device,
+            status,
+            cancellationToken);
 
     public Task ExtractAsync(string device, Action<string>? status, CancellationToken cancellationToken) =>
-        RunAsync("extract", device, status, cancellationToken);
+        RunAsync(
+            "CHECKPOINT",
+            "Extract",
+            ExpeditionCheckpointStateCatalog.ExtractSource,
+            ExpeditionCheckpointStateCatalog.ExtractConfirmation,
+            waitForArrival: true,
+            device,
+            status,
+            cancellationToken);
 
     private async Task RunAsync(
-        string action,
+        string workflowName,
+        string actionName,
+        DebugStateSpec sourceState,
+        DebugStateSpec confirmationState,
+        bool waitForArrival,
         string device,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
-        IReadOnlyList<OcrTextRegion> confirmation = await OpenConfirmationAsync(
-            action, device, status, cancellationToken).ConfigureAwait(false);
-        await ConfirmAndWaitForClosedAsync(
-            action, confirmation, device, status, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task<IReadOnlyList<OcrTextRegion>> OpenConfirmationAsync(
-        string action,
-        string device,
-        Action<string>? status,
-        CancellationToken cancellationToken)
-    {
-        int actions = 0;
-        for (int observation = 0; observation < 24; observation++)
+        if (waitForArrival)
         {
-            IReadOnlyList<OcrTextRegion> regions = await ObserveAsync(device, cancellationToken)
+            await WaitForArrivalAsync(
+                workflowName, sourceState, confirmationState, device, status, cancellationToken)
                 .ConfigureAwait(false);
-            bool hasAction = regions.Any(region => Contains(region.Text, action));
-            bool hasCancel = regions.Any(region => Contains(region.Text, "cancel"));
-            if (hasAction && hasCancel) return regions;
-            if (hasAction && actions < 4)
-            {
-                OcrTextRegion first = Select(regions, action, preferRightmost: action == "continue");
-                await workspace.ClickRobloxAsync(
-                    DebugWorkflowCatalog.ClientSize, first.Bounds.Center, cancellationToken).ConfigureAwait(false);
-                actions++;
-                status?.Invoke($"CHECKPOINT {action.ToUpperInvariant()} CLICK {actions}/4");
-            }
-            await Task.Delay(TimeSpan.FromMilliseconds(300), cancellationToken).ConfigureAwait(false);
         }
-        throw new InvalidOperationException($"Checkpoint {action} confirmation was not verified.");
+
+        int actionAttempts = 0;
+        int indeterminateObservations = 0;
+        int consecutiveSourceObservations = 0;
+        int consecutiveClearObservations = 0;
+        bool transitionStarted = false;
+
+        while (actionAttempts < MaximumActions &&
+               indeterminateObservations < MaximumIndeterminateObservations)
+        {
+            DebugOcrSnapshot confirmation = await _states.RunAsync(
+                confirmationState, device, cancellationToken).ConfigureAwait(false);
+            DebugOcrSnapshot? source = null;
+            if (!confirmation.Evaluation.IsMatch)
+            {
+                source = await _states.RunAsync(sourceState, device, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            consecutiveSourceObservations = source?.Evaluation.IsMatch == true
+                ? consecutiveSourceObservations + 1
+                : 0;
+            consecutiveClearObservations = !confirmation.Evaluation.IsMatch &&
+                                           source?.Evaluation.IsMatch != true
+                ? consecutiveClearObservations + 1
+                : 0;
+            CheckpointTransitionDecision decision = CheckpointTransitionPolicy.Decide(
+                confirmation.Evaluation.IsMatch,
+                source?.Evaluation.IsMatch == true,
+                transitionStarted,
+                consecutiveSourceObservations,
+                consecutiveClearObservations);
+
+            switch (decision)
+            {
+                case CheckpointTransitionDecision.Confirm:
+                    await ClickTargetAsync(confirmation, actionName, cancellationToken)
+                        .ConfigureAwait(false);
+                    actionAttempts++;
+                    transitionStarted = true;
+                    indeterminateObservations = 0;
+                    consecutiveSourceObservations = 0;
+                    consecutiveClearObservations = 0;
+                    status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CONFIRM {actionAttempts}/{MaximumActions}");
+                    break;
+                case CheckpointTransitionDecision.OpenConfirmation:
+                    await ClickTargetAsync(source!, actionName, cancellationToken).ConfigureAwait(false);
+                    actionAttempts++;
+                    transitionStarted = true;
+                    indeterminateObservations = 0;
+                    consecutiveSourceObservations = 0;
+                    consecutiveClearObservations = 0;
+                    status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CLICK {actionAttempts}/{MaximumActions}");
+                    break;
+                case CheckpointTransitionDecision.Complete:
+                    status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CONFIRMED");
+                    return;
+                case CheckpointTransitionDecision.ObserveAgain:
+                    indeterminateObservations++;
+                    if (transitionStarted && source?.Evaluation.IsMatch == true)
+                    {
+                        status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} SOURCE RETAINED");
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(decision));
+            }
+
+            await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException(
+            $"{workflowName} {actionName.ToLowerInvariant()} transition was not verified after " +
+            $"{actionAttempts} action attempt(s) and {indeterminateObservations} indeterminate observation(s).");
     }
 
-    private async Task ConfirmAndWaitForClosedAsync(
-        string action,
-        IReadOnlyList<OcrTextRegion> confirmation,
+    private async Task WaitForArrivalAsync(
+        string workflowName,
+        DebugStateSpec sourceState,
+        DebugStateSpec confirmationState,
         string device,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
-        int actions = 0;
-        int closedObservations = 0;
-        IReadOnlyList<OcrTextRegion> current = confirmation;
-        for (int observation = 0; observation < 24; observation++)
+        status?.Invoke($"WAITING FOR {workflowName} ARRIVAL CONTINUE");
+        for (int observation = 1;
+             observation <= ExpeditionNodeArrivalPolicy.MaximumObservations;
+             observation++)
         {
-            bool hasAction = current.Any(region => Contains(region.Text, action));
-            bool hasCancel = current.Any(region => Contains(region.Text, "cancel"));
-            if (!hasAction && !hasCancel)
+            DebugOcrSnapshot confirmation = await _states.RunAsync(
+                confirmationState, device, cancellationToken).ConfigureAwait(false);
+            if (confirmation.Evaluation.IsMatch)
             {
-                closedObservations++;
-                if (closedObservations >= 2)
-                {
-                    status?.Invoke($"CHECKPOINT {action.ToUpperInvariant()} CONFIRMED");
-                    return;
-                }
+                status?.Invoke($"{workflowName} ARRIVAL CONFIRMATION ALREADY OPEN");
+                return;
             }
-            else
+
+            DebugOcrSnapshot source = await _states.RunAsync(
+                sourceState, device, cancellationToken).ConfigureAwait(false);
+            if (source.Evaluation.IsMatch)
             {
-                closedObservations = 0;
+                status?.Invoke($"{workflowName} ARRIVAL CONTINUE VERIFIED");
+                return;
             }
-            if (hasAction && hasCancel && actions < 4)
+
+            if (observation < ExpeditionNodeArrivalPolicy.MaximumObservations)
             {
-                OcrTextRegion confirm = Select(current, action, preferRightmost: false);
-                await workspace.ClickRobloxAsync(
-                    DebugWorkflowCatalog.ClientSize, confirm.Bounds.Center, cancellationToken).ConfigureAwait(false);
-                actions++;
-                status?.Invoke($"CHECKPOINT {action.ToUpperInvariant()} CONFIRM {actions}/4");
+                await Task.Delay(
+                    ExpeditionNodeArrivalPolicy.RetryMilliseconds,
+                    cancellationToken).ConfigureAwait(false);
             }
-            await Task.Delay(TimeSpan.FromMilliseconds(300), cancellationToken).ConfigureAwait(false);
-            current = await ObserveAsync(device, cancellationToken).ConfigureAwait(false);
         }
-        throw new InvalidOperationException($"Checkpoint {action} confirmation did not close.");
+
+        throw new TimeoutException(
+            $"{workflowName} node did not expose its Continue control after ship arrival.");
     }
 
-    private Task<IReadOnlyList<OcrTextRegion>> ObserveAsync(
-        string device,
-        CancellationToken cancellationToken) =>
-        _ocr.ObserveAsync(Controls, device, cancellationToken);
-
-    private static OcrTextRegion Select(
-        IEnumerable<OcrTextRegion> regions,
-        string target,
-        bool preferRightmost)
+    private Task ClickTargetAsync(
+        DebugOcrSnapshot snapshot,
+        string targetName,
+        CancellationToken cancellationToken)
     {
-        OcrTextRegion[] matches = regions.Where(region => Contains(region.Text, target)).ToArray();
-        if (matches.Length == 0) throw new InvalidOperationException($"Checkpoint did not expose {target}.");
-        return preferRightmost
-            ? matches.OrderByDescending(region => region.Bounds.Center.X).First()
-            : matches.OrderByDescending(region => region.Bounds.Center.Y).ThenBy(region => region.Bounds.Center.X).First();
+        OcrTargetMatch target = snapshot.Evaluation.Matches.FirstOrDefault(match =>
+            string.Equals(match.Target, targetName, StringComparison.Ordinal))
+            ?? throw new InvalidOperationException(
+                $"Verified {snapshot.State} did not expose {targetName}.");
+        return workspace.ClickRobloxAsync(
+            DebugWorkflowCatalog.ClientSize,
+            target.Region.Bounds.Center,
+            cancellationToken);
     }
-
-    private static bool Contains(string value, string target) =>
-        new string(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray())
-            .Contains(target, StringComparison.Ordinal);
 }
