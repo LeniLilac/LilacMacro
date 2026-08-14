@@ -23,6 +23,7 @@ internal sealed class ExpeditionMatchRuntimeRunner(
     private readonly ExpeditionSettingsService _settings = new(workspace, ocr);
     private readonly MatchTerminalService _terminal = new(workspace, ocr);
     private readonly DebugOcrController _debug = new(workspace, ocr);
+    private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
     public async Task<StoryWireTestResult> RunAsync(
         StoryWireTestOptions options,
@@ -34,6 +35,9 @@ internal sealed class ExpeditionMatchRuntimeRunner(
             StoryWireStage.MatchRuntime, StoryWireStageStatus.Running, message, [message]));
         try
         {
+            await WaitForMatchArrivalAsync(options.Device, report, cancellationToken)
+                .ConfigureAwait(false);
+
             if (alignCamera)
             {
                 await workspace.AlignCameraAsync(
@@ -107,6 +111,26 @@ internal sealed class ExpeditionMatchRuntimeRunner(
                 [error.Message]));
             return new StoryWireTestResult(false, StoryWireStage.MatchRuntime, "EXPEDITION RUNTIME BLOCKED");
         }
+    }
+
+    private async Task WaitForMatchArrivalAsync(
+        string device,
+        Action<string> report,
+        CancellationToken cancellationToken)
+    {
+        report("WAITING FOR EXPEDITION MATCH ARRIVAL");
+        DebugOcrSnapshot prestart = await _states.WaitForMatchAsync(
+            DebugWorkflowCatalog.MatchPrestart,
+            device,
+            maximumObservations: 120,
+            retryDelay: TimeSpan.FromSeconds(1),
+            cancellationToken).ConfigureAwait(false);
+        if (!prestart.Evaluation.IsMatch)
+        {
+            throw new TimeoutException(
+                "Expedition did not expose the visible Start Game prompt within two minutes.");
+        }
+        report("EXPEDITION MATCH ARRIVAL VERIFIED");
     }
 
     private async Task OptimizeRouteAsync(

@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using LilacMacro.App.Debugging;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.Core.Automation;
@@ -11,6 +12,20 @@ namespace LilacMacro.Tests;
 
 public sealed class ExpeditionRuntimePolicyTests
 {
+    [Fact]
+    public void MatchArrivalRequiresVisibleStartGamePrompt()
+    {
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            DebugWorkflowCatalog.MatchPrestart,
+            [
+                Region(600, 120, 120, 24, "Start Game"),
+                Region(600, 420, 120, 24, "Start Game"),
+            ]).IsMatch);
+        Assert.False(DebugOcrStateRunner.Evaluate(
+            DebugWorkflowCatalog.MatchPrestart,
+            [Region(800, 450, 48, 22, "Start")]).IsMatch);
+    }
+
     [Fact]
     public void TrackerCountsOnlyBossFollowedByCheckpoint()
     {

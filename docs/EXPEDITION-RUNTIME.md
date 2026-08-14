@@ -56,7 +56,7 @@ The older ExpeditionsMacro implementation supports color as an efficient signal:
 
 The implemented owner-observed route optimizer flow is:
 
-1. load the Expedition match and align the camera;
+1. after the Match Preview Start action, wait through the lobby-to-match teleport until the live in-match Start Game prompt is freshly visible, then align the camera;
 2. open Expedition Map and parse Route Rewards;
 3. click Back;
 4. if the pool satisfies the configured optimization requirement, continue into the Expedition;
@@ -83,6 +83,8 @@ Route reward OCR uses the compact lower strip enlarged four times. It associates
 | Checkpoint | Apply the configured extraction policy or continue |
 
 The spawn node is always a Checkpoint. After the route is accepted and Start Game is clicked, the runner executes every authored placement/configuration step as one Expedition phase, then clicks Continue and its confirmation. Each Expedition unit is expected to have one active placement.
+
+The Match Preview Start acknowledgment does not prove that the destination process or scene has loaded. Expedition runtime therefore waits for fresh, visible Start Game evidence for up to two minutes before any camera, route, or placement input. Story, Raid, Event, and Challenge use the ordinary Match Preview-to-Match Prestart transition with the same destination evidence; Repeat Stage re-verifies Match Prestart before resuming runtime.
 
 ## Encounter flow
 
