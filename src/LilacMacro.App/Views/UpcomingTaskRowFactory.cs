@@ -9,6 +9,7 @@ internal static class UpcomingTaskRowFactory
         PlanPrototype plan,
         PlanTaskPrototype? currentTask,
         IReadOnlyDictionary<PlanTaskPrototype, int> victories,
+        IReadOnlyDictionary<PlanLoopPrototype, int> completedLoopRuns,
         DateTimeOffset now,
         Func<PlanTaskPrototype, DateTimeOffset, DateTimeOffset> eligibleAt)
     {
@@ -16,7 +17,7 @@ internal static class UpcomingTaskRowFactory
         ArgumentNullException.ThrowIfNull(victories);
         ArgumentNullException.ThrowIfNull(eligibleAt);
 
-        return MacroPriorityPolicy.Flatten(plan)
+        return MacroPriorityPolicy.Flatten(plan, completedLoopRuns)
             .Where(task => MacroPriorityPolicy.IsPending(task, victories))
             .Select((task, index) => new UpcomingTaskRow(
                 index + 1,

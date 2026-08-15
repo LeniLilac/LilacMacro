@@ -91,6 +91,29 @@ public sealed class PlacementSetupTests
         Assert.Throws<InvalidDataException>(() => PlacementSetupRules.ValidateRoute(route, 1366, 700));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(200)]
+    [InlineData(60_000)]
+    public void BetweenUpgradeAttemptsAcceptsBoundedMatchSetting(int milliseconds)
+    {
+        PlacementRouteSetup route = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
+        route.BetweenUpgradeAttemptsMilliseconds = milliseconds;
+
+        PlacementSetupRules.ValidateRoute(route, 1366, 700);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(60_001)]
+    public void BetweenUpgradeAttemptsRejectsOutOfRangeMatchSetting(int milliseconds)
+    {
+        PlacementRouteSetup route = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
+        route.BetweenUpgradeAttemptsMilliseconds = milliseconds;
+
+        Assert.Throws<InvalidDataException>(() => PlacementSetupRules.ValidateRoute(route, 1366, 700));
+    }
+
     [Fact]
     public void StoryRoutesExposeSharedAndPerActSetups()
     {
@@ -134,7 +157,6 @@ public sealed class PlacementSetupTests
             2,
             200,
             300,
-            900,
             PlacementTargetingPriority.First,
             PlacementAutoUpgradePriority.Priority1);
         shared.Steps.Insert(0, placement);
@@ -163,7 +185,6 @@ public sealed class PlacementSetupTests
             1,
             100,
             100,
-            900,
             PlacementTargetingPriority.First,
             PlacementAutoUpgradePriority.Priority1);
         route.Steps.Insert(0, placement);
@@ -195,6 +216,7 @@ public sealed class PlacementSetupTests
                 700);
             PlacementRouteSetup actFive = PlacementSetupRules.CloneRoute(document.Shared, "act-5");
             actFive.TeamSlot = 5;
+            actFive.BetweenUpgradeAttemptsMilliseconds = 275;
             document.Overrides.Add(actFive.RouteId, actFive);
 
             await store.SaveAsync(document);
@@ -204,6 +226,7 @@ public sealed class PlacementSetupTests
                 700);
 
             Assert.Equal(5, loaded.Overrides["act-5"].TeamSlot);
+            Assert.Equal(275, loaded.Overrides["act-5"].BetweenUpgradeAttemptsMilliseconds);
             Assert.Single(Directory.EnumerateFiles(root, "*.json"));
             Assert.Empty(Directory.EnumerateFiles(root, "*.tmp"));
         }
@@ -317,9 +340,9 @@ public sealed class PlacementSetupTests
             await session.SetRouteDefaultsAsync(
                 8,
                 6,
-                900,
                 PlacementTargetingPriority.Last,
                 PlacementAutoUpgradePriority.Priority2);
+            await session.SetBetweenUpgradeAttemptsAsync(275);
             await session.AddPlacementAsync(200, 200);
             await session.AddDelayAsync();
 
@@ -329,6 +352,7 @@ public sealed class PlacementSetupTests
             Assert.Equal(PlacementStepKind.StartGame, start.Kind);
             Assert.Equal(8, session.CurrentRoute.TeamSlot);
             Assert.Equal(6, session.CurrentRoute.SelectedUnitSlot);
+            Assert.Equal(275, session.CurrentRoute.BetweenUpgradeAttemptsMilliseconds);
             Assert.False(session.CanReset);
         }
         finally

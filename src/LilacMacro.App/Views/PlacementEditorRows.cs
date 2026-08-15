@@ -149,7 +149,7 @@ public sealed class PlacementStepRowViewModel : INotifyPropertyChanged
         PlacementStepKind.Delay => $"{Step.DelayDurationMilliseconds} MS",
         PlacementStepKind.Upgrade => $"{Step.UpgradeCount} PRESSES",
         PlacementStepKind.StartGame => "TIMELINE BOUNDARY",
-        PlacementStepKind.Sell => $"{Step.DelayAfterMilliseconds} MS AFTER",
+        PlacementStepKind.Sell => "SELL SELECTED UNIT",
         _ => string.Empty,
     };
 

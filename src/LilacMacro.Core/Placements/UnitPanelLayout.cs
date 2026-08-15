@@ -11,9 +11,9 @@ public sealed record UnitPanelLayout(
     PixelRect PriorityControl,
     PixelRect SellControl,
     PixelRect UpgradeControl,
-    PixelRect UpgradeMain,
-    PixelRect UpgradeExtension,
-    PixelRect AutoUpgradeControl,
+    PixelRect UpgradeFillPrimary,
+    PixelRect UpgradeFillSecondary,
+    PixelRect UpgradeMaxedReference,
     double Scale)
 {
     public static UnitPanelLayout? TryCreate(IReadOnlyList<OcrTextRegion> regions, PixelSize clientSize)
@@ -35,12 +35,12 @@ public sealed record UnitPanelLayout(
         int controlHeight = bottom - top;
         int priorityLeft = Math.Max(0, priority.Bounds.Center.X - Scaled(unit, 0.58));
         int sellLeft = Math.Max(0, sell.Bounds.Center.X - Scaled(unit, 0.64));
-        int upgradeLeft = sell.Bounds.Center.X + Scaled(unit, 0.36);
-        int upgradeRight = Math.Min(clientSize.Width, sell.Bounds.Center.X + Scaled(unit, 2.12));
-        int extensionWidth = Math.Max(4, Scaled(unit, 0.51));
-        int extensionLeft = Math.Max(upgradeLeft + 1, upgradeRight - extensionWidth);
-
-        PixelRect upgrade = new(upgradeLeft, top, upgradeRight - upgradeLeft, controlHeight);
+        PixelRect upgrade = ScaledRegion(
+            sell.Bounds.Center.X + Scaled(unit, 0.42),
+            priority.Bounds.Y - Scaled(unit, 0.04),
+            Scaled(unit, 2.50),
+            Scaled(unit, 0.61),
+            clientSize);
         return new UnitPanelLayout(
             priority.Bounds,
             sell.Bounds,
@@ -48,9 +48,24 @@ public sealed record UnitPanelLayout(
             new PixelRect(priorityLeft, top, Math.Max(4, Scaled(unit, 0.86)), controlHeight),
             new PixelRect(sellLeft, top, Math.Max(4, Scaled(unit, 0.65)), controlHeight),
             upgrade,
-            new PixelRect(upgradeLeft, top, extensionLeft - upgradeLeft, controlHeight),
-            new PixelRect(extensionLeft, top, upgradeRight - extensionLeft, controlHeight),
-            new PixelRect(extensionLeft, top, upgradeRight - extensionLeft, controlHeight),
+            ScaledRegion(
+                sell.Bounds.Center.X + Scaled(unit, 0.50),
+                priority.Bounds.Y + Scaled(unit, 0.27),
+                Scaled(unit, 0.45),
+                Scaled(unit, 0.18),
+                clientSize),
+            ScaledRegion(
+                sell.Bounds.Center.X + Scaled(unit, 1.98),
+                priority.Bounds.Y + Scaled(unit, 0.08),
+                Scaled(unit, 0.23),
+                Scaled(unit, 0.35),
+                clientSize),
+            ScaledRegion(
+                sell.Bounds.Center.X + Scaled(unit, 2.25),
+                priority.Bounds.Y + Scaled(unit, 0.07),
+                Scaled(unit, 0.65),
+                Scaled(unit, 0.45),
+                clientSize),
             unit / 104.5);
     }
 
@@ -80,6 +95,15 @@ public sealed record UnitPanelLayout(
         .FirstOrDefault();
 
     private static int Scaled(double value, double factor) => Math.Max(1, (int)Math.Round(value * factor));
+
+    private static PixelRect ScaledRegion(int x, int y, int width, int height, PixelSize bounds)
+    {
+        int left = Math.Clamp(x, 0, bounds.Width - 1);
+        int top = Math.Clamp(y, 0, bounds.Height - 1);
+        int right = Math.Clamp(x + width, left + 1, bounds.Width);
+        int bottom = Math.Clamp(y + height, top + 1, bounds.Height);
+        return new PixelRect(left, top, right - left, bottom - top);
+    }
 
     private static bool Close(PixelRect first, PixelRect second, int tolerance) =>
         Math.Abs(first.X - second.X) <= tolerance && Math.Abs(first.Y - second.Y) <= tolerance &&

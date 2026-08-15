@@ -10,10 +10,10 @@ public sealed class PlacementSetupCopyTests
     {
         PlacementRouteSetup source = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
         PlacementStep place = PlacementStep.CreatePlace(
-            4, 100, 200, 725, PlacementTargetingPriority.Last, PlacementAutoUpgradePriority.Priority2);
+            4, 100, 200, PlacementTargetingPriority.Last, PlacementAutoUpgradePriority.Priority2);
         source.TeamSlot = 6;
         source.SelectedUnitSlot = 4;
-        source.DefaultStepDelayMilliseconds = 725;
+        source.BetweenUpgradeAttemptsMilliseconds = 725;
         source.Steps.Insert(0, place);
         source.Steps.Add(new PlacementStep
         {
@@ -21,7 +21,6 @@ public sealed class PlacementSetupCopyTests
             TargetPlacementId = place.Id,
             UnitSlot = 4,
             UpgradeCount = 2,
-            DelayAfterMilliseconds = 725,
         });
 
         PlacementRouteSetup copy = PlacementSetupRules.CopyRouteToSurface(
@@ -32,6 +31,7 @@ public sealed class PlacementSetupCopyTests
         Assert.Equal("act-2", copy.RouteId);
         Assert.Equal(6, copy.TeamSlot);
         Assert.Equal(4, copy.SelectedUnitSlot);
+        Assert.Equal(725, copy.BetweenUpgradeAttemptsMilliseconds);
         Assert.Equal(50, copiedPlace.X);
         Assert.Equal(100, copiedPlace.Y);
         Assert.NotEqual(place.Id, copiedPlace.Id);
@@ -43,7 +43,7 @@ public sealed class PlacementSetupCopyTests
     {
         PlacementRouteSetup source = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
         source.Steps.Insert(0, PlacementStep.CreatePlace(
-            1, 1366, 699, 900, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
+            1, 1366, 699, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
 
         Assert.Throws<InvalidDataException>(() => PlacementSetupRules.CopyRouteToSurface(
             source, "act-2", 1366, 700, 683, 350));
@@ -64,7 +64,7 @@ public sealed class PlacementSetupCopyTests
             PlacementSetupDocument source = PlacementSetupRules.CreateDocument(sourceMap.Id, 1366, 700);
             source.Shared.TeamSlot = 7;
             source.Shared.Steps.Insert(0, PlacementStep.CreatePlace(
-                3, 100, 200, 900, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
+                3, 100, 200, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
             await store.SaveAsync(source);
 
             PlacementMapDefinition targetMap = new(

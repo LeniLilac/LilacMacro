@@ -49,7 +49,6 @@ public partial class PlacementStepEditorDialog : Window
             Kind = _kind,
             TargetPlacementId = selectedPlacement?.Id,
             UnitSlot = selectedPlacement?.UnitSlot ?? route.SelectedUnitSlot,
-            DelayAfterMilliseconds = route.DefaultStepDelayMilliseconds,
             TargetingPriority = route.DefaultTargetingPriority,
             AutoUpgradePriority = route.DefaultAutoUpgradePriority,
             ChangeTargetingPriority = true,
@@ -114,7 +113,6 @@ public partial class PlacementStepEditorDialog : Window
         AutoUpgradeActionCombo.SelectedValue = _original.AutoUpgradeAction;
         DelayDurationText.Text = Number(_original.DelayDurationMilliseconds);
         UpgradeCountText.Text = Number(_original.UpgradeCount);
-        AfterDelayText.Text = Number(_original.DelayAfterMilliseconds);
     }
 
     private void ConfigureFields()
@@ -126,7 +124,6 @@ public partial class PlacementStepEditorDialog : Window
         ReconfigureFields.Visibility = Show(_kind == PlacementStepKind.Reconfigure);
         DelayFields.Visibility = Show(_kind == PlacementStepKind.Delay);
         UpgradeFields.Visibility = Show(_kind == PlacementStepKind.Upgrade);
-        AfterDelayFields.Visibility = Show(_kind != PlacementStepKind.StartGame);
     }
 
     private void Apply_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -145,10 +142,9 @@ public partial class PlacementStepEditorDialog : Window
 
     private PlacementStep ReadStep()
     {
-        int after = Parse(AfterDelayText.Text, "After delay");
         return _kind switch
         {
-            PlacementStepKind.Place => StepBase(PlacementStepKind.Place, after) with
+            PlacementStepKind.Place => StepBase(PlacementStepKind.Place) with
             {
                 UnitSlot = RequiredValue<PlacementNumberOption>(EditUnitCombo, "Unit slot").Value,
                 X = _isAdd ? 0 : Parse(EditXText.Text, "X"),
@@ -156,23 +152,23 @@ public partial class PlacementStepEditorDialog : Window
                 TargetingPriority = RequiredEnum<PlacementTargetingPriority>(EditTargetingCombo, "Targeting"),
                 AutoUpgradePriority = RequiredEnum<PlacementAutoUpgradePriority>(EditAutoUpgradeCombo, "Auto Upgrade"),
             },
-            PlacementStepKind.Reconfigure => StepBase(PlacementStepKind.Reconfigure, after) with
+            PlacementStepKind.Reconfigure => StepBase(PlacementStepKind.Reconfigure) with
             {
                 TargetPlacementId = RequiredReference(),
                 ChangeTargetingPriority = ChangeTargetingCheck.IsChecked == true,
                 TargetingPriority = RequiredEnum<PlacementTargetingPriority>(ReconfigureTargetingCombo, "Targeting"),
                 AutoUpgradeAction = RequiredEnum<PlacementAutoUpgradeAction>(AutoUpgradeActionCombo, "Auto Upgrade"),
             },
-            PlacementStepKind.Delay => StepBase(PlacementStepKind.Delay, after) with
+            PlacementStepKind.Delay => StepBase(PlacementStepKind.Delay) with
             {
                 DelayDurationMilliseconds = Parse(DelayDurationText.Text, "Delay duration"),
             },
-            PlacementStepKind.Upgrade => StepBase(PlacementStepKind.Upgrade, after) with
+            PlacementStepKind.Upgrade => StepBase(PlacementStepKind.Upgrade) with
             {
                 TargetPlacementId = RequiredReference(),
                 UpgradeCount = Parse(UpgradeCountText.Text, "Upgrade count"),
             },
-            PlacementStepKind.Sell => StepBase(PlacementStepKind.Sell, after) with
+            PlacementStepKind.Sell => StepBase(PlacementStepKind.Sell) with
             {
                 TargetPlacementId = RequiredReference(),
             },
@@ -180,9 +176,9 @@ public partial class PlacementStepEditorDialog : Window
         };
     }
 
-    private PlacementStep StepBase(PlacementStepKind kind, int after) => _isAdd
-        ? new PlacementStep { Kind = kind, DelayAfterMilliseconds = after }
-        : _original with { Kind = kind, DelayAfterMilliseconds = after };
+    private PlacementStep StepBase(PlacementStepKind kind) => _isAdd
+        ? new PlacementStep { Kind = kind }
+        : _original with { Kind = kind };
 
     private Guid RequiredReference() =>
         EditReferenceCombo.SelectedValue is Guid id

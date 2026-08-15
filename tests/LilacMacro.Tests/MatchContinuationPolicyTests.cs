@@ -86,7 +86,6 @@ public sealed class MatchContinuationPolicyTests
             slot,
             x,
             y,
-            0,
             PlacementTargetingPriority.First,
             PlacementAutoUpgradePriority.Off),
         new PixelPoint(x, y));

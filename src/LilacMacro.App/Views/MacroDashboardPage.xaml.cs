@@ -31,6 +31,7 @@ public partial class MacroDashboardPage : UserControl
     private readonly Stopwatch _runtime = new();
     private readonly Dictionary<PlanTaskPrototype, int> _victories = [];
     private readonly Dictionary<PlanTaskPrototype, int> _defeats = [];
+    private readonly Dictionary<PlanLoopPrototype, int> _completedLoopRuns = [];
     private readonly Dictionary<PlanTaskPrototype, DateTimeOffset> _blockedUntil = [];
     private readonly Dictionary<PlanTaskPrototype, DateTimeOffset> _utilityDueAt = [];
     private readonly MacroUnattendedRecoveryRunner _recovery;
@@ -273,13 +274,14 @@ public partial class MacroDashboardPage : UserControl
             PlanTaskPrototype? task = repeatedTask ?? MacroPriorityPolicy.SelectEligibleAt(
                     plan,
                     _victories,
+                    _completedLoopRuns,
                     now,
                     EligibleAt,
                     _control.IsTaskEnabled);
             repeatedTask = null;
             if (task is null)
             {
-                PlanTaskPrototype[] pending = MacroPriorityPolicy.Flatten(plan)
+                PlanTaskPrototype[] pending = MacroPriorityPolicy.Flatten(plan, _completedLoopRuns)
                     .Where(candidate => MacroPriorityPolicy.IsPending(candidate, _victories))
                     .ToArray();
                 if (pending.Length == 0) return;
@@ -382,10 +384,15 @@ public partial class MacroDashboardPage : UserControl
             StatsChart.SetPoints(_runStats);
             RefreshUpcomingTasks(plan);
 
+            if (victory && MacroLoopProgressReporter.AdvanceAndReport(
+                    plan, _victories, _completedLoopRuns, _deepDebug, AppendLog))
+                RefreshUpcomingTasks(plan);
+
             DateTimeOffset terminalDecisionAt = DateTimeOffset.UtcNow;
             PlanTaskPrototype? nextTask = MacroPriorityPolicy.SelectEligibleAt(
                 plan,
                 _victories,
+                _completedLoopRuns,
                 terminalDecisionAt,
                 EligibleAt,
                 _control.IsTaskEnabled);
@@ -487,6 +494,7 @@ public partial class MacroDashboardPage : UserControl
             plan,
             _currentTask,
             _victories,
+            _completedLoopRuns,
             DateTimeOffset.UtcNow,
             EligibleAt);
         /* Legacy inline row projection removed after the view model factory extraction.

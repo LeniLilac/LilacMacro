@@ -15,9 +15,12 @@ internal sealed class UnitPanelEvidenceService(
     private static readonly TimeSpan PanelTimeout = TimeSpan.FromMilliseconds(1200);
     private static readonly TimeSpan DismissObservationTimeout = TimeSpan.FromMilliseconds(300);
     private static readonly TimeSpan UpgradeTimeout = TimeSpan.FromMinutes(3);
+    private static readonly TimeSpan MaxedOcrGrace = TimeSpan.FromMilliseconds(750);
+    private static readonly TimeSpan MaxedOcrInterval = TimeSpan.FromSeconds(3);
     private const int DismissAttempts = 8;
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
     private PanelReference? _reference;
+    private RgbImage? _maxedReference;
 
     public async Task<UnitPanelLayout> CalibrateAsync(
         string device,
@@ -43,6 +46,7 @@ internal sealed class UnitPanelEvidenceService(
                     [stable.PriorityControl, stable.SellControl],
                     cancellationToken);
                 _reference = new PanelReference(reference[0].Image, reference[1].Image);
+                _maxedReference = null;
                 status?.Invoke($"UNIT PANEL CALIBRATED {stable.UpgradeControl} {(phantom ? "PHANTOM" : "PHYSICAL")}");
                 return stable;
             }
@@ -105,23 +109,31 @@ internal sealed class UnitPanelEvidenceService(
 
     public async Task<UnitUpgradeState> WaitForUpgradeAsync(
         UnitPanelLayout layout,
+        string device,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
         DateTimeOffset deadline = DateTimeOffset.UtcNow + UpgradeTimeout;
         StableUnitUpgradeTracker tracker = new();
         bool reportedWait = false;
+        DateTimeOffset? graySince = null;
+        DateTimeOffset nextMaxedOcr = DateTimeOffset.MinValue;
         while (DateTimeOffset.UtcNow <= deadline)
         {
             cancellationToken.ThrowIfCancellationRequested();
             IReadOnlyList<CapturedRgbRegion> captures = await workspace.CaptureRgbRegionsAsync(
                 DebugWorkflowCatalog.ClientSize,
-                [layout.UpgradeMain, layout.UpgradeExtension],
+                [
+                    layout.UpgradeFillPrimary,
+                    layout.UpgradeFillSecondary,
+                    layout.UpgradeMaxedReference,
+                    layout.UpgradeControl,
+                ],
                 cancellationToken);
             UnitUpgradeObservation observation = UnitPanelColorClassifier.ClassifyUpgrade(
                 captures[0].Image, captures[1].Image);
             UnitUpgradeState stable = tracker.Observe(observation.State);
-            if (stable is UnitUpgradeState.Affordable or UnitUpgradeState.Maxed) return stable;
+            if (stable == UnitUpgradeState.Affordable) return stable;
             if (observation.State == UnitUpgradeState.Unaffordable && !reportedWait)
             {
                 status?.Invoke("UPGRADE UNAFFORDABLE; WAITING");
@@ -129,6 +141,35 @@ internal sealed class UnitPanelEvidenceService(
             }
             if (observation.State == UnitUpgradeState.Unknown)
                 throw new InvalidOperationException("Upgrade control evidence became ambiguous.");
+            if (observation.State != UnitUpgradeState.Unaffordable)
+            {
+                graySince = null;
+            }
+            else
+            {
+                graySince ??= DateTimeOffset.UtcNow;
+            }
+            if (stable == UnitUpgradeState.Unaffordable &&
+                _maxedReference is not null &&
+                UnitPanelColorClassifier.MatchConfirmedMaxed(_maxedReference, captures[2].Image))
+            {
+                status?.Invoke("UNIT MAXED REFERENCE VERIFIED");
+                return UnitUpgradeState.Maxed;
+            }
+            if (stable == UnitUpgradeState.Unaffordable &&
+                graySince is { } since && DateTimeOffset.UtcNow - since >= MaxedOcrGrace &&
+                DateTimeOffset.UtcNow >= nextMaxedOcr)
+            {
+                OcrWorkerResult result = await RunTinyOcrAsync(captures[3].Image, device, cancellationToken);
+                string text = string.Join(' ', result.Regions.Select(region => region.Text).Prepend(result.Text));
+                if (UnitPanelColorClassifier.IsMaxedText(text))
+                {
+                    _maxedReference = captures[2].Image;
+                    status?.Invoke("UNIT MAXED OCR VERIFIED; REFERENCE SAVED");
+                    return UnitUpgradeState.Maxed;
+                }
+                nextMaxedOcr = DateTimeOffset.UtcNow + MaxedOcrInterval;
+            }
             await Task.Delay(250, cancellationToken);
         }
         throw new TimeoutException("Upgrade did not become affordable within three minutes.");
@@ -214,9 +255,9 @@ internal sealed class UnitPanelEvidenceService(
         string device,
         CancellationToken cancellationToken)
     {
-        string directory = Path.Combine(Path.GetTempPath(), "LilacMacro", $"unit-dps-{Guid.NewGuid():N}");
+        string directory = Path.Combine(Path.GetTempPath(), "LilacMacro", $"unit-panel-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
-        string path = Path.Combine(directory, "dps.png");
+        string path = Path.Combine(directory, "panel.png");
         try
         {
             await File.WriteAllBytesAsync(path, PngEncoder.Encode(image), cancellationToken);

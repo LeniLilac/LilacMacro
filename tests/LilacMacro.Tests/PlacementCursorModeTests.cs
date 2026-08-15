@@ -50,7 +50,6 @@ public sealed class PlacementCursorModeTests
             2,
             200,
             300,
-            900,
             PlacementTargetingPriority.First,
             PlacementAutoUpgradePriority.Priority1));
 
@@ -77,7 +76,6 @@ public sealed class PlacementCursorModeTests
             2,
             200,
             300,
-            900,
             PlacementTargetingPriority.First,
             PlacementAutoUpgradePriority.Priority1));
 
@@ -96,7 +94,7 @@ public sealed class PlacementCursorModeTests
     {
         PlacementRouteSetup route = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
         route.Steps.Insert(0, PlacementStep.CreatePlace(
-            2, 200, 300, 900, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
+            2, 200, 300, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
         PlacementStepRowViewModel marker = PlacementStepRowFactory.Create(
                 route, cursorMode: PlacementCursorMode.Select)
             .Single(row => row.IsPlacement);
@@ -111,7 +109,7 @@ public sealed class PlacementCursorModeTests
     {
         PlacementRouteSetup route = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
         route.Steps.Insert(0, PlacementStep.CreatePlace(
-            2, 200, 300, 900, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
+            2, 200, 300, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
         PlacementStepRowViewModel marker = PlacementStepRowFactory.Create(route).Single(row => row.IsPlacement);
 
         marker.SetZoom(2.5);

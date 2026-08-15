@@ -58,6 +58,13 @@ try {
 
     $eventPath = Join-Path $sessionDirectory 'events.jsonl'
     if (-not (Test-Path -LiteralPath $eventPath)) { throw 'The deep-debug session does not contain events.jsonl.' }
+    $retainedFramePaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $frameDirectory = Join-Path $sessionDirectory 'frames'
+    if (Test-Path -LiteralPath $frameDirectory) {
+        foreach ($retainedFrame in [System.IO.Directory]::EnumerateFiles($frameDirectory, '*.png')) {
+            [void]$retainedFramePaths.Add([System.IO.Path]::GetFullPath($retainedFrame))
+        }
+    }
     $records = [System.Collections.Generic.List[object]]::new()
     $inputs = [System.Collections.Generic.List[object]]::new()
     foreach ($line in [System.IO.File]::ReadLines($eventPath)) {
@@ -80,6 +87,7 @@ try {
         if (-not $path.StartsWith($sessionRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
             throw "Frame path escaped the session: $relative"
         }
+        if (-not $retainedFramePaths.Contains($path)) { continue }
         $records.Add([pscustomobject]@{
             Number = $records.Count + 1
             Sequence = [long]$event.sequence

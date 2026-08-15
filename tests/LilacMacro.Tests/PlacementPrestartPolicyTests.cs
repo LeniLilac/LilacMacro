@@ -12,7 +12,6 @@ public sealed class PlacementSetupTimingTests
             {
                 Kind = PlacementStepKind.Delay,
                 DelayDurationMilliseconds = 120_000,
-                DelayAfterMilliseconds = 60_000,
             },
             PlacementStep.CreateStartGame());
 
@@ -28,7 +27,6 @@ public sealed class PlacementSetupTimingTests
             {
                 Kind = PlacementStepKind.Delay,
                 DelayDurationMilliseconds = 60_000,
-                DelayAfterMilliseconds = 60_000,
             });
 
         PlacementSetupRules.ValidateRoute(route, 1366, 700);

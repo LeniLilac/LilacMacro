@@ -34,21 +34,21 @@ Each route stores:
 
 - team slot 1-8;
 - selected unit slot 1-6;
-- default post-step delay 0-60000 ms;
+- between-upgrade settle delay 0-60000 ms, default 200 ms;
 - targeting priority;
 - Auto Upgrade priority.
 
 While the Setup placement workspace owns keyboard focus, number-row or numpad keys `1` through `6` select the matching Unit Slot. The shortcut uses the same autosaved route-default path as the visible slot buttons and is suppressed while a text field, combo box, or owner dialog owns input.
 
-Defaults initialize new timeline actions; existing actions retain their saved values until edited. Team is a stored header control between route configuration and reference view. The stored floating placement palette defaults to the workarea's top-left corner, can be dragged by its header within that workarea, and contains explicit `Place` and `Select` cursor modes plus Unit Slot 1-6. Cursor mode is session-only and changes only through the mode controls; placing a unit and using a Unit Slot shortcut never switch it. Palette movement is also session-only and never changes placement coordinates. The adjacent Match Settings view fills the available width and mirrors default targeting, default Auto Upgrade, between-unit-check delay, placement attempts, and impossibility threshold from ExpeditionsMacro. Its Advanced Settings dropdown reveals the copied Step Mode delays, placement/reconfigure proof checks, upgrade-readiness check, prestart check, and recording playback delay. These controls are **Prototype UI only**; they are intentionally unwired and do not modify the document.
+Defaults initialize new timeline actions; existing actions retain their saved values until edited. Team is a stored header control between route configuration and reference view. The stored floating placement palette defaults to the workarea's top-left corner, can be dragged by its header within that workarea, and contains explicit `Place` and `Select` cursor modes plus Unit Slot 1-6. Cursor mode is session-only and changes only through the mode controls; placing a unit and using a Unit Slot shortcut never switch it. Palette movement is also session-only and never changes placement coordinates. The adjacent Match Settings view fills the available width and mirrors default targeting, default Auto Upgrade, between-unit-check delay, placement attempts, and impossibility threshold from ExpeditionsMacro. Its Advanced Settings dropdown reveals the copied Step Mode delays, placement/reconfigure proof checks, upgrade-readiness check, prestart check, and recording playback delay. `Between upgrades, ms` is implemented, autosaved per route, and controls the settle before the next Upgrade readiness check; the other Match Settings controls remain **Prototype UI only** and do not modify the document.
 
-`Copy Setup` replaces the active route with a selected source map and route in one validated autosaved edit. It copies the saved team, selected Unit Slot, route defaults, placements, and all other timeline actions with new stable IDs and remapped dependent references. Placement coordinates scale proportionally when source and target image dimensions differ. Views of the same map already share one setup, and the unwired Match Settings prototype controls are not persisted source state.
+`Copy Setup` replaces the active route with a selected source map and route in one validated autosaved edit. It copies the saved team, selected Unit Slot, route defaults, between-upgrade settle, placements, and all other timeline actions with new stable IDs and remapped dependent references. Placement coordinates scale proportionally when source and target image dimensions differ. Views of the same map already share one setup, and the remaining unwired Match Settings prototype controls are not persisted source state.
 
 ## Timeline
 
 Every route contains exactly one movable `Start Game` boundary. Actions above it are authored for prestart; actions below it are authored for after start.
 
-Prestart Delay and post-step values use the same per-step bounds as after-start actions. The retired game auto-start timer no longer imposes a separate aggregate prestart budget. Evidence waits whose duration depends on live game state remain independently bounded by their runtime policy.
+Prestart and after-start Delay actions use the same 1-3600000 ms duration bound. There is no implicit pause after a timeline step. The retired game auto-start timer no longer imposes a separate aggregate prestart budget. Evidence waits whose duration depends on live game state remain independently bounded by their runtime policy.
 
 In `Place` mode, a left-click on the map immediately creates a Place action at the original-image pixel coordinate using the selected Unit Slot and route defaults. Every marker inside the pointer's fixed viewport-space proximity radius hides its label and dims its pin together; markers cannot be dragged or deleted. In `Select` mode, empty-map and marker-body clicks do nothing and never select or scroll the timeline. Hovering near a marker raises it above neighboring markers and turns the complete label into a red delete button. Dragging its exact placement dot previews a new point before atomically saving the final coordinate, while nearby non-dragged markers dim with the same fixed viewport-space proximity rule used during placement. There is no separate delete icon and the label never claims drag ownership. Select mode is never entered automatically after placement.
 
@@ -58,8 +58,8 @@ Each point is rendered as one compact pin with its unit-slot label integrated di
 
 | Action | Stored contract |
 |---|---|
-| Place | Stable ID, unit slot, original-image `x/y`, delay, targeting, and Auto Upgrade priority |
-| Delay | Duration of 1-3600000 ms plus post-step delay |
+| Place | Stable ID, unit slot, original-image `x/y`, targeting, and Auto Upgrade priority |
+| Delay | Duration of 1-3600000 ms |
 | Reconfigure | Earlier placement ID and at least one targeting or Auto Upgrade change |
 | Upgrade | Earlier placement ID and count 1-100 |
 | Sell | Earlier placement ID |
@@ -81,7 +81,7 @@ Placement documents use schema version 1 and store the map ID, image dimensions,
 
 ## Playback boundary
 
-**Prototype:** Setup, Runtime Lab, and the main Macro map authored image points to the verified 1366 by 700 client, batch contiguous Place steps through Quick placement, retry only failed rows, verify configurable phantom or physical panels, execute the Start Game boundary, and support Delay, Reconfigure, Upgrade, and Sell. Quick-placement input uses the ExpeditionsMacro-proven 110 ms unit-key hold, 250 ms selection settle, 75 ms cursor settle, and three-click 50 ms burst. Targeting, Auto Upgrade priority, Reconfigure, and Sell may act on a stable `DPS ???` phantom; Upgrade requires numeric physical DPS evidence. After Place configuration, Reconfigure, or Upgrade, the shared playback service closes the selected-unit panel through bounded bottom-right resting-point clicks and requires fresh hidden-panel proof before advancing; Sell proves closure itself. Setup's owner test begins at Match Prestart, performs camera alignment first, and returns after the authored after-start actions. Runtime Lab and the main Macro may continue to terminal verification. All three stop on ambiguity or cancellation. Owner live acceptance remains required.
+**Prototype:** Setup, Runtime Lab, and the main Macro map authored image points to the verified 1366 by 700 client, batch contiguous Place steps through Quick placement, retry only failed rows, verify configurable phantom or physical panels, execute the Start Game boundary, and support Delay, Reconfigure, Upgrade, and Sell. Quick-placement input uses the ExpeditionsMacro-proven 110 ms unit-key hold, 250 ms selection settle, 75 ms cursor settle, and three-click 50 ms burst. Targeting, Auto Upgrade priority, Reconfigure, and Sell may act on a stable `DPS ???` phantom; Upgrade requires numeric physical DPS evidence. Every requested Upgrade press receives a fresh affordability check; presses after the first wait the route's between-upgrade settle, default 200 ms, before that check. No completed step adds an implicit delay. After Place configuration, Reconfigure, or Upgrade, the shared playback service closes the selected-unit panel through bounded bottom-right resting-point clicks and requires fresh hidden-panel proof before advancing; Sell proves closure itself. Setup's owner test begins at Match Prestart, performs camera alignment first, and returns after the authored after-start actions. Runtime Lab and the main Macro may continue to terminal verification. All three stop on ambiguity or cancellation. Owner live acceptance remains required.
 
 Playback finishes every authored prestart action in order. At the `Start Game` boundary it requires the normal fresh Start-screen action before continuing with authored after-start actions. A missing Start screen remains indeterminate and fails closed; physical selected-unit evidence no longer substitutes for this transition.
 

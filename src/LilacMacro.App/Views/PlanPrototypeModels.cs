@@ -134,6 +134,7 @@ public sealed class PlanLoopPrototype : PlanBlockPrototype
     private string _label = "Loop 1";
     private bool _forever = true;
     private int _repeatCount = 2;
+    private int _completedRuns;
 
     public string Label { get => _label; set => Set(ref _label, value); }
     public bool Forever
@@ -147,9 +148,19 @@ public sealed class PlanLoopPrototype : PlanBlockPrototype
         }
     }
     public int RepeatCount { get => _repeatCount; set { if (Set(ref _repeatCount, Math.Clamp(value, 1, 100000))) OnPropertyChanged(nameof(Status)); } }
+    public int CompletedRuns
+    {
+        get => _completedRuns;
+        internal set
+        {
+            if (Set(ref _completedRuns, Math.Max(0, value))) OnPropertyChanged(nameof(Status));
+        }
+    }
     public ObservableCollection<PlanBlockPrototype> Children { get; } = [];
     public bool CanReorder => !Forever;
-    public string Status => Forever ? "Forever · 0 runs completed." : $"{RepeatCount} runs · 0 runs completed.";
+    public string Status => Forever
+        ? $"Forever · {CompletedRuns} runs completed."
+        : $"{RepeatCount} runs · {CompletedRuns} runs completed.";
 
     public override PlanLoopPrototype Clone()
     {

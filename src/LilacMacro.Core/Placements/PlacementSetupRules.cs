@@ -2,8 +2,8 @@ namespace LilacMacro.Core.Placements;
 
 public static class PlacementSetupRules
 {
-    public const int DefaultStepDelayMilliseconds = 900;
-    public const int MaximumStepDelayMilliseconds = 60_000;
+    public const int DefaultBetweenUpgradeAttemptsMilliseconds = 200;
+    public const int MaximumActionDelayMilliseconds = 60_000;
     public const int MaximumDelayDurationMilliseconds = 3_600_000;
     public const int MaximumUpgradeCount = 100;
     public const int MinimumPlacementSpacingPixels = 7;
@@ -34,7 +34,7 @@ public static class PlacementSetupRules
             RouteId = routeId,
             TeamSlot = source.TeamSlot,
             SelectedUnitSlot = source.SelectedUnitSlot,
-            DefaultStepDelayMilliseconds = source.DefaultStepDelayMilliseconds,
+            BetweenUpgradeAttemptsMilliseconds = source.BetweenUpgradeAttemptsMilliseconds,
             DefaultTargetingPriority = source.DefaultTargetingPriority,
             DefaultAutoUpgradePriority = source.DefaultAutoUpgradePriority,
             Steps = source.Steps.Select(step => step with
@@ -127,7 +127,7 @@ public static class PlacementSetupRules
         {
             throw new InvalidDataException("Team slot must be 1 through 8 and unit slot must be 1 through 6.");
         }
-        ValidateStepDelay(route.DefaultStepDelayMilliseconds);
+        ValidateActionDelay(route.BetweenUpgradeAttemptsMilliseconds);
         if (!Enum.IsDefined(route.DefaultTargetingPriority) || !Enum.IsDefined(route.DefaultAutoUpgradePriority))
         {
             throw new InvalidDataException("Placement route defaults are invalid.");
@@ -151,11 +151,12 @@ public static class PlacementSetupRules
         ValidateSpacing(priorPlacements.Values);
     }
 
-    public static void ValidateStepDelay(int milliseconds)
+    public static void ValidateActionDelay(int milliseconds)
     {
-        if (milliseconds is < 0 or > MaximumStepDelayMilliseconds)
+        if (milliseconds is < 0 or > MaximumActionDelayMilliseconds)
         {
-            throw new InvalidDataException($"Step delay must be 0 through {MaximumStepDelayMilliseconds} ms.");
+            throw new InvalidDataException(
+                $"Action delay must be 0 through {MaximumActionDelayMilliseconds} ms.");
         }
     }
 
@@ -170,7 +171,6 @@ public static class PlacementSetupRules
         {
             throw new InvalidDataException("Placement step options are invalid.");
         }
-        ValidateStepDelay(step.DelayAfterMilliseconds);
         if (step.Kind == PlacementStepKind.Place)
         {
             if (step.UnitSlot is < 1 or > 6 || step.X < 0 || step.X >= imageWidth || step.Y < 0 || step.Y >= imageHeight)
@@ -225,7 +225,7 @@ public static class PlacementSetupRules
         RouteId = source.RouteId,
         TeamSlot = source.TeamSlot,
         SelectedUnitSlot = source.SelectedUnitSlot,
-        DefaultStepDelayMilliseconds = source.DefaultStepDelayMilliseconds,
+        BetweenUpgradeAttemptsMilliseconds = source.BetweenUpgradeAttemptsMilliseconds,
         DefaultTargetingPriority = source.DefaultTargetingPriority,
         DefaultAutoUpgradePriority = source.DefaultAutoUpgradePriority,
         Steps = source.Steps.Select(step => step with { }).ToList(),

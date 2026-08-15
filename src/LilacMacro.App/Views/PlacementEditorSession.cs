@@ -118,7 +118,7 @@ public sealed class PlacementEditorSession
         {
             route.TeamSlot = copy.TeamSlot;
             route.SelectedUnitSlot = copy.SelectedUnitSlot;
-            route.DefaultStepDelayMilliseconds = copy.DefaultStepDelayMilliseconds;
+            route.BetweenUpgradeAttemptsMilliseconds = copy.BetweenUpgradeAttemptsMilliseconds;
             route.DefaultTargetingPriority = copy.DefaultTargetingPriority;
             route.DefaultAutoUpgradePriority = copy.DefaultAutoUpgradePriority;
             route.Steps = copy.Steps;
@@ -128,13 +128,11 @@ public sealed class PlacementEditorSession
     public Task SetRouteDefaultsAsync(
         int teamSlot,
         int selectedUnitSlot,
-        int stepDelayMilliseconds,
         PlacementTargetingPriority targeting,
         PlacementAutoUpgradePriority autoUpgrade) => MutateRouteAsync(route =>
         {
             route.TeamSlot = teamSlot;
             route.SelectedUnitSlot = selectedUnitSlot;
-            route.DefaultStepDelayMilliseconds = stepDelayMilliseconds;
             route.DefaultTargetingPriority = targeting;
             route.DefaultAutoUpgradePriority = autoUpgrade;
         });
@@ -145,7 +143,6 @@ public sealed class PlacementEditorSession
             route.SelectedUnitSlot,
             x,
             y,
-            route.DefaultStepDelayMilliseconds,
             route.DefaultTargetingPriority,
             route.DefaultAutoUpgradePriority);
         if (source.Kind != PlacementStepKind.Place)
@@ -168,7 +165,6 @@ public sealed class PlacementEditorSession
     public Task AddDelayAsync() => MutateRouteAsync(route => route.Steps.Add(new PlacementStep
     {
         Kind = PlacementStepKind.Delay,
-        DelayAfterMilliseconds = route.DefaultStepDelayMilliseconds,
         DelayDurationMilliseconds = 1_000,
     }));
 
@@ -186,11 +182,16 @@ public sealed class PlacementEditorSession
             Kind = kind,
             TargetPlacementId = target.Id,
             UnitSlot = target.UnitSlot,
-            DelayAfterMilliseconds = route.DefaultStepDelayMilliseconds,
             ChangeTargetingPriority = kind == PlacementStepKind.Reconfigure,
             TargetingPriority = PlacementTargetingPriority.Last,
             UpgradeCount = kind == PlacementStepKind.Upgrade ? 1 : 0,
         });
+    });
+
+    public Task SetBetweenUpgradeAttemptsAsync(int milliseconds) => MutateRouteAsync(route =>
+    {
+        PlacementSetupRules.ValidateActionDelay(milliseconds);
+        route.BetweenUpgradeAttemptsMilliseconds = milliseconds;
     });
 
     public Task ReplaceStepAsync(int index, PlacementStep replacement) => MutateRouteAsync(route =>

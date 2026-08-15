@@ -92,6 +92,56 @@ public sealed class MacroPriorityPolicyTests
         Assert.Equal([observedAt, observedAt], observations);
     }
 
+    [Fact]
+    public void ForeverLoopResetsItsTargetsAndSelectsFirstTaskAfterCompleting150And10()
+    {
+        PlanTaskPrototype eventTask = Task(PlanTaskMode.Event, 1, 150);
+        PlanTaskPrototype expedition = Task(PlanTaskMode.Expedition, 2, 10);
+        PlanLoopPrototype loop = new() { Forever = true };
+        loop.Children.Add(eventTask);
+        loop.Children.Add(expedition);
+        PlanPrototype plan = new("test", [loop]);
+        Dictionary<PlanTaskPrototype, int> victories = new()
+        {
+            [eventTask] = 150,
+            [expedition] = 10,
+        };
+        Dictionary<PlanLoopPrototype, int> completedRuns = [];
+
+        IReadOnlyList<PlanLoopPrototype> advanced = MacroLoopProgressPolicy.AdvanceCompletedLoops(
+            plan,
+            victories,
+            completedRuns);
+
+        Assert.Equal([loop], advanced);
+        Assert.Equal(1, completedRuns[loop]);
+        Assert.Equal(1, loop.CompletedRuns);
+        Assert.False(victories.ContainsKey(eventTask));
+        Assert.False(victories.ContainsKey(expedition));
+        Assert.Same(eventTask, MacroPriorityPolicy.Select(plan, victories, completedRuns));
+    }
+
+    [Fact]
+    public void FiniteLoopStopsAfterConfiguredRunsAndHandsOffToNextTask()
+    {
+        PlanTaskPrototype loopTask = Task(PlanTaskMode.Event, 1, 1);
+        PlanLoopPrototype loop = new() { Forever = false, RepeatCount = 2 };
+        loop.Children.Add(loopTask);
+        PlanTaskPrototype nextTask = Task(PlanTaskMode.Story, 2, 1);
+        PlanPrototype plan = new("test", [loop, nextTask]);
+        Dictionary<PlanTaskPrototype, int> victories = new() { [loopTask] = 1 };
+        Dictionary<PlanLoopPrototype, int> completedRuns = [];
+
+        MacroLoopProgressPolicy.AdvanceCompletedLoops(plan, victories, completedRuns);
+        Assert.Same(loopTask, MacroPriorityPolicy.Select(plan, victories, completedRuns));
+
+        victories[loopTask] = 1;
+        MacroLoopProgressPolicy.AdvanceCompletedLoops(plan, victories, completedRuns);
+
+        Assert.Equal(2, loop.CompletedRuns);
+        Assert.Same(nextTask, MacroPriorityPolicy.Select(plan, victories, completedRuns));
+    }
+
     [Theory]
     [InlineData("https://www.roblox.com/share?code=secret&type=Server")]
     [InlineData("https://roblox.com/games/1?privateServerLinkCode=secret")]

@@ -15,8 +15,10 @@ public sealed class UnitPanelLayoutTests
             new PixelSize(1366, 700));
 
         Assert.NotNull(layout);
-        Assert.Equal(new PixelRect(239, 414, 183, 43), layout.UpgradeControl);
-        Assert.Equal(new PixelRect(369, 414, 53, 43), layout.UpgradeExtension);
+        Assert.Equal(new PixelRect(246, 423, 260, 63), layout.UpgradeControl);
+        Assert.Equal(new PixelRect(254, 455, 47, 19), layout.UpgradeFillPrimary);
+        Assert.Equal(new PixelRect(408, 435, 24, 36), layout.UpgradeFillSecondary);
+        Assert.Equal(new PixelRect(436, 434, 68, 47), layout.UpgradeMaxedReference);
         Assert.True(UnitPanelLayout.IsPhysicalDps("DPS 0/s"));
         Assert.True(UnitPanelLayout.IsPhysicalDps("DPS Q/s"));
         Assert.False(UnitPanelLayout.IsPhysicalDps("DPS ???"));
@@ -53,23 +55,55 @@ public sealed class UnitPanelLayoutTests
     }
 
     [Theory]
-    [InlineData(0.66, 0.08, 0.48, UnitUpgradeState.Affordable)]
-    [InlineData(0.00, 0.74, 0.48, UnitUpgradeState.Unaffordable)]
-    [InlineData(0.00, 0.49, 0.61, UnitUpgradeState.Unaffordable)]
-    [InlineData(0.00, 0.44, 0.61, UnitUpgradeState.Unknown)]
-    [InlineData(0.00, 0.76, 0.94, UnitUpgradeState.Maxed)]
-    public void UpgradeClassifierSeparatesDatasetStates(
-        double greenFraction,
-        double mainGrayFraction,
-        double extensionGrayFraction,
+    [InlineData(0.90, 0.00, 0.88, 0.00, UnitUpgradeState.Affordable)]
+    [InlineData(0.00, 0.92, 0.00, 0.90, UnitUpgradeState.Unaffordable)]
+    [InlineData(0.90, 0.00, 0.00, 0.90, UnitUpgradeState.Unknown)]
+    [InlineData(0.00, 0.69, 0.00, 0.90, UnitUpgradeState.Unknown)]
+    public void UpgradeClassifierRequiresTwoIndependentFillRegions(
+        double primaryGreenFraction,
+        double primaryGrayFraction,
+        double secondaryGreenFraction,
+        double secondaryGrayFraction,
         UnitUpgradeState expected)
     {
-        RgbImage main = Synthetic(100, greenFraction, mainGrayFraction);
-        RgbImage extension = Synthetic(100, 0, extensionGrayFraction);
+        RgbImage primary = Synthetic(100, primaryGreenFraction, primaryGrayFraction);
+        RgbImage secondary = Synthetic(100, secondaryGreenFraction, secondaryGrayFraction);
 
-        UnitUpgradeObservation result = UnitPanelColorClassifier.ClassifyUpgrade(main, extension);
+        UnitUpgradeObservation result = UnitPanelColorClassifier.ClassifyUpgrade(primary, secondary);
 
         Assert.Equal(expected, result.State);
+        Assert.NotEqual(UnitUpgradeState.Maxed, result.State);
+    }
+
+    [Theory]
+    [InlineData("Maxed", true)]
+    [InlineData("Upgrade 3/3 MAXED", true)]
+    [InlineData("Upgrade 0/3 ¥1,100", false)]
+    [InlineData("", false)]
+    public void MaxedOcrRequiresExplicitMaxedText(string text, bool expected) =>
+        Assert.Equal(expected, UnitPanelColorClassifier.IsMaxedText(text));
+
+    [Fact]
+    public void ConfirmedMaxedReferenceRequiresStrongSameSizeImageMatch()
+    {
+        RgbImage reference = PanelControl(100, 0, 0, 95, 5);
+        RgbImage close = Alter(reference, 5, (70, 70, 70));
+        RgbImage different = Alter(reference, 60, (180, 20, 20));
+        RgbImage wrongSize = PanelControl(99, 0, 0, 94, 5);
+
+        Assert.True(UnitPanelColorClassifier.MatchConfirmedMaxed(reference, close));
+        Assert.False(UnitPanelColorClassifier.MatchConfirmedMaxed(reference, different));
+        Assert.False(UnitPanelColorClassifier.MatchConfirmedMaxed(reference, wrongSize));
+    }
+
+    [Fact]
+    public void UpgradeAttemptScheduleChecksEveryPressAfterConfiguredSettleDelay()
+    {
+        IReadOnlyList<UnitUpgradeAttempt> attempts = UnitUpgradeAttemptSchedule.Create(6, 200);
+
+        Assert.Equal(Enumerable.Range(1, 6), attempts.Select(attempt => attempt.Number));
+        Assert.Equal([0, 200, 200, 200, 200, 200],
+            attempts.Select(attempt => attempt.DelayBeforeMilliseconds));
     }
 
     [Fact]

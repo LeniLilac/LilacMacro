@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -98,6 +99,11 @@ public partial class PlacementTimelinePanel : UserControl
         if (_session is null || _session.Document is null) return;
         _rows = PlacementStepRowFactory.Create(_session.CurrentRoute);
         TimelineList.ItemsSource = _rows;
+        if (!BetweenUpgradeAttemptsText.IsKeyboardFocusWithin)
+        {
+            BetweenUpgradeAttemptsText.Text = _session.CurrentRoute.BetweenUpgradeAttemptsMilliseconds
+                .ToString(CultureInfo.InvariantCulture);
+        }
         AddStepButton.IsEnabled = _session.CanEdit;
         TimelineList.IsHitTestVisible = _session.CanEdit;
     }
@@ -221,6 +227,34 @@ public partial class PlacementTimelinePanel : UserControl
     {
         if (_session is null || sender is not Button { Tag: PlacementStepRowViewModel row }) return;
         await RunEditAsync(() => _session.DeleteStepAsync(row.Index));
+    }
+
+    private async void BetweenUpgradeAttempts_OnLostKeyboardFocus(
+        object sender,
+        KeyboardFocusChangedEventArgs eventArgs) => await SaveBetweenUpgradeAttemptsAsync();
+
+    private async void BetweenUpgradeAttempts_OnKeyDown(object sender, KeyEventArgs eventArgs)
+    {
+        if (eventArgs.Key != Key.Enter) return;
+        eventArgs.Handled = true;
+        await SaveBetweenUpgradeAttemptsAsync();
+    }
+
+    private async Task SaveBetweenUpgradeAttemptsAsync()
+    {
+        if (_session is null) return;
+        if (!int.TryParse(
+                BetweenUpgradeAttemptsText.Text,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int milliseconds))
+        {
+            ShowError("Between upgrades must be a whole number.");
+            BetweenUpgradeAttemptsText.Text = _session.CurrentRoute.BetweenUpgradeAttemptsMilliseconds
+                .ToString(CultureInfo.InvariantCulture);
+            return;
+        }
+        await RunEditAsync(() => _session.SetBetweenUpgradeAttemptsAsync(milliseconds));
     }
 
     private static void ClearError() { }

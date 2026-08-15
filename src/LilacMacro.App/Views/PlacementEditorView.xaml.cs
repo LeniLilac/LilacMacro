@@ -350,7 +350,6 @@ public partial class PlacementEditorView : UserControl
         await RunEditAsync(() => _session.SetRouteDefaultsAsync(
             teamSlot,
             _unitSelector.SelectedSlot,
-            route.DefaultStepDelayMilliseconds,
             route.DefaultTargetingPriority,
             route.DefaultAutoUpgradePriority));
     }

@@ -64,7 +64,7 @@ internal sealed class PlacementPlaybackService(
         int executed = 0;
 
         executed += await RunStepsAsync(
-            plan.BeforeStart, document, keys, device, placements,
+            plan.BeforeStart, document, route.BetweenUpgradeAttemptsMilliseconds, keys, device, placements,
             () => layout, value => layout = value, status, cancellationToken);
 
         await SatisfyStartBoundaryAsync(device, status, cancellationToken);
@@ -73,7 +73,7 @@ internal sealed class PlacementPlaybackService(
         await Task.Delay(1000, cancellationToken);
 
         executed += await RunStepsAsync(
-            plan.AfterStart, document, keys, device, placements,
+            plan.AfterStart, document, route.BetweenUpgradeAttemptsMilliseconds, keys, device, placements,
             () => layout, value => layout = value, status, cancellationToken);
         return executed;
     }
@@ -94,7 +94,7 @@ internal sealed class PlacementPlaybackService(
         Dictionary<Guid, PlacementExecutionState> placements = [];
         UnitPanelLayout? layout = null;
         await RunStepsAsync(
-            steps, document, keys, device, placements,
+            steps, document, route.BetweenUpgradeAttemptsMilliseconds, keys, device, placements,
             () => layout, value => layout = value, status, cancellationToken);
         status?.Invoke("EXPEDITION INITIAL PLACEMENT COMPLETE");
         return new ExpeditionPlacementSession(placements.Values.ToArray(), layout);
@@ -184,6 +184,7 @@ internal sealed class PlacementPlaybackService(
     private async Task<int> RunStepsAsync(
         IReadOnlyList<PlacementStep> steps,
         PlacementSetupDocument document,
+        int betweenUpgradeAttemptsMilliseconds,
         PlacementRuntimeKeys keys,
         string device,
         Dictionary<Guid, PlacementExecutionState> placements,
@@ -205,7 +206,9 @@ internal sealed class PlacementPlaybackService(
                 continue;
             }
             PlacementStep step = group.Steps[0];
-            await RunActionAsync(step, keys, device, placements, getLayout, status, cancellationToken);
+            await RunActionAsync(
+                step, betweenUpgradeAttemptsMilliseconds, keys, device, placements,
+                getLayout, status, cancellationToken);
             executed++;
         }
         return executed;
@@ -266,12 +269,12 @@ internal sealed class PlacementPlaybackService(
             placements.Add(step.Id, state);
             await ApplyConfigurationAsync(state, step.TargetingPriority, step.AutoUpgradePriority, keys, cancellationToken);
             await _panel.DismissAsync(layout, status, cancellationToken);
-            await DelayAfterAsync(step, cancellationToken);
         }
     }
 
     private async Task RunActionAsync(
         PlacementStep step,
+        int betweenUpgradeAttemptsMilliseconds,
         PlacementRuntimeKeys keys,
         string device,
         Dictionary<Guid, PlacementExecutionState> placements,
@@ -282,7 +285,6 @@ internal sealed class PlacementPlaybackService(
         if (step.Kind == PlacementStepKind.Delay)
         {
             await Task.Delay(step.DelayDurationMilliseconds, cancellationToken);
-            await DelayAfterAsync(step, cancellationToken);
             return;
         }
         UnitPanelLayout layout = getLayout() ?? throw new InvalidOperationException("Unit panel layout was not calibrated.");
@@ -303,7 +305,9 @@ internal sealed class PlacementPlaybackService(
                 await ApplyReconfigureAsync(target, step, keys, cancellationToken);
                 break;
             case PlacementStepKind.Upgrade:
-                await ApplyUpgradesAsync(layout, step.UpgradeCount, keys, status, cancellationToken);
+                await ApplyUpgradesAsync(
+                    layout, step.UpgradeCount, betweenUpgradeAttemptsMilliseconds,
+                    keys, device, status, cancellationToken);
                 break;
             case PlacementStepKind.Sell:
                 await TapAsync(keys.Sell, keys.ReservedVirtualKey, 1, cancellationToken);
@@ -316,26 +320,30 @@ internal sealed class PlacementPlaybackService(
         }
         if (UnitPanelDismissalPolicy.RequiresDismissal(step.Kind))
             await _panel.DismissAsync(layout, status, cancellationToken);
-        await DelayAfterAsync(step, cancellationToken);
     }
 
     private async Task ApplyUpgradesAsync(
         UnitPanelLayout layout,
         int count,
+        int betweenAttemptsMilliseconds,
         PlacementRuntimeKeys keys,
+        string device,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
-        for (int press = 0; press < count; press++)
+        foreach (UnitUpgradeAttempt attempt in UnitUpgradeAttemptSchedule.Create(
+                     count, betweenAttemptsMilliseconds))
         {
-            UnitUpgradeState state = await _panel.WaitForUpgradeAsync(layout, status, cancellationToken);
+            if (attempt.DelayBeforeMilliseconds > 0)
+                await Task.Delay(attempt.DelayBeforeMilliseconds, cancellationToken);
+            UnitUpgradeState state = await _panel.WaitForUpgradeAsync(
+                layout, device, status, cancellationToken);
             if (state == UnitUpgradeState.Maxed)
             {
-                status?.Invoke($"UNIT MAXED; SKIPPED {count - press} UPGRADE PRESS(ES)");
+                status?.Invoke($"UNIT MAXED; SKIPPED {count - attempt.Number + 1} UPGRADE PRESS(ES)");
                 return;
             }
             await TapAsync(keys.Upgrade, keys.ReservedVirtualKey, 1, cancellationToken);
-            if (press + 1 < count) await Task.Delay(150, cancellationToken);
         }
     }
 
@@ -418,6 +426,4 @@ internal sealed class PlacementPlaybackService(
             Math.Clamp((int)Math.Round(step.Y * DebugWorkflowCatalog.ClientSize.Height / (double)document.ImageHeight), 0,
                 DebugWorkflowCatalog.ClientSize.Height - 1)));
 
-    private static Task DelayAfterAsync(PlacementStep step, CancellationToken cancellationToken) =>
-        step.DelayAfterMilliseconds == 0 ? Task.CompletedTask : Task.Delay(step.DelayAfterMilliseconds, cancellationToken);
 }

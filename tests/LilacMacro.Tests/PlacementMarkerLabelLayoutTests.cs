@@ -54,7 +54,6 @@ public sealed class PlacementMarkerLabelLayoutTests
             unitSlot,
             x,
             y,
-            900,
             PlacementTargetingPriority.First,
             PlacementAutoUpgradePriority.Priority1);
 

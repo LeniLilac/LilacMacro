@@ -7,8 +7,8 @@ public sealed class PlacementPlaybackPlanTests
     [Fact]
     public void CreateSplitsTimelineAtStartBoundary()
     {
-        PlacementStep first = PlacementStep.CreatePlace(1, 10, 20, 0, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Off);
-        PlacementStep after = PlacementStep.CreatePlace(2, 30, 40, 0, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Off);
+        PlacementStep first = PlacementStep.CreatePlace(1, 10, 20, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Off);
+        PlacementStep after = PlacementStep.CreatePlace(2, 30, 40, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Off);
         PlacementRouteSetup route = new() { RouteId = "shared", Steps = [first, PlacementStep.CreateStartGame(), after] };
 
         PlacementPlaybackPlan plan = PlacementPlaybackPlan.Create(route);
@@ -36,5 +36,5 @@ public sealed class PlacementPlaybackPlanTests
     }
 
     private static PlacementStep Place(int slot) => PlacementStep.CreatePlace(
-        slot, slot * 10, slot * 20, 0, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Off);
+        slot, slot * 10, slot * 20, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Off);
 }

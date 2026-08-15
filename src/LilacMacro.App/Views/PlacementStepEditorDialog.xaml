@@ -127,10 +127,6 @@
                             <TextBox x:Name="UpgradeCountText" />
                         </StackPanel>
 
-                        <StackPanel x:Name="AfterDelayFields" Margin="0,10,0,0">
-                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="AFTER, MS" />
-                            <TextBox x:Name="AfterDelayText" />
-                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 

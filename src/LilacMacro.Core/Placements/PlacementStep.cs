@@ -14,8 +14,6 @@ public sealed record PlacementStep
 
     public int Y { get; init; }
 
-    public int DelayAfterMilliseconds { get; init; } = PlacementSetupRules.DefaultStepDelayMilliseconds;
-
     public PlacementTargetingPriority TargetingPriority { get; init; } = PlacementTargetingPriority.First;
 
     public PlacementAutoUpgradePriority AutoUpgradePriority { get; init; } = PlacementAutoUpgradePriority.Priority1;
@@ -28,17 +26,12 @@ public sealed record PlacementStep
 
     public int UpgradeCount { get; init; }
 
-    public static PlacementStep CreateStartGame() => new()
-    {
-        Kind = PlacementStepKind.StartGame,
-        DelayAfterMilliseconds = 0,
-    };
+    public static PlacementStep CreateStartGame() => new() { Kind = PlacementStepKind.StartGame };
 
     public static PlacementStep CreatePlace(
         int unitSlot,
         int x,
         int y,
-        int delayAfterMilliseconds,
         PlacementTargetingPriority targetingPriority,
         PlacementAutoUpgradePriority autoUpgradePriority) => new()
         {
@@ -46,7 +39,6 @@ public sealed record PlacementStep
             UnitSlot = unitSlot,
             X = x,
             Y = y,
-            DelayAfterMilliseconds = delayAfterMilliseconds,
             TargetingPriority = targetingPriority,
             AutoUpgradePriority = autoUpgradePriority,
         };

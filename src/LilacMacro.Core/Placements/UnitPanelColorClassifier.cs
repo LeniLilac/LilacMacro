@@ -1,4 +1,5 @@
 using LilacMacro.Core.Imaging;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.Core.Placements;
 
@@ -12,9 +13,10 @@ public enum UnitUpgradeState
 
 public sealed record UnitUpgradeObservation(
     UnitUpgradeState State,
-    double GreenFraction,
-    double MainGrayFraction,
-    double ExtensionGrayFraction);
+    double PrimaryGreenFraction,
+    double SecondaryGreenFraction,
+    double PrimaryGrayFraction,
+    double SecondaryGrayFraction);
 
 public sealed record UnitPanelImageMatch(
     bool IsMatch,
@@ -24,27 +26,36 @@ public sealed record UnitPanelImageMatch(
 public static class UnitPanelColorClassifier
 {
     public const double MinimumReferenceSimilarity = 0.85;
-    public const double MinimumMainGrayFraction = 0.45;
+    public const double MinimumUpgradeFillFraction = 0.70;
+    public const double MinimumMaxedReferenceSimilarity = 0.90;
 
-    public static UnitUpgradeObservation ClassifyUpgrade(RgbImage main, RgbImage extension)
+    public static UnitUpgradeObservation ClassifyUpgrade(RgbImage primary, RgbImage secondary)
     {
-        ArgumentNullException.ThrowIfNull(main);
-        ArgumentNullException.ThrowIfNull(extension);
-        double green = Fraction(main, static (red, green, blue) =>
-            green >= 75 && green - red >= 25 && green - blue >= 25);
-        double mainGray = Fraction(main, IsControlGray);
-        double extensionGray = Fraction(extension, IsControlGray);
-        UnitUpgradeState state = green >= 0.30
+        ArgumentNullException.ThrowIfNull(primary);
+        ArgumentNullException.ThrowIfNull(secondary);
+        double primaryGreen = Fraction(primary, IsUpgradeGreen);
+        double secondaryGreen = Fraction(secondary, IsUpgradeGreen);
+        double primaryGray = Fraction(primary, IsControlGray);
+        double secondaryGray = Fraction(secondary, IsControlGray);
+        UnitUpgradeState state = primaryGreen >= MinimumUpgradeFillFraction &&
+                                 secondaryGreen >= MinimumUpgradeFillFraction
             ? UnitUpgradeState.Affordable
-            : mainGray < MinimumMainGrayFraction
-                ? UnitUpgradeState.Unknown
-                : extensionGray >= 0.75
-                    ? UnitUpgradeState.Maxed
-                    : extensionGray >= 0.25
-                        ? UnitUpgradeState.Unaffordable
-                        : UnitUpgradeState.Unknown;
-        return new UnitUpgradeObservation(state, green, mainGray, extensionGray);
+            : primaryGray >= MinimumUpgradeFillFraction &&
+              secondaryGray >= MinimumUpgradeFillFraction
+                ? UnitUpgradeState.Unaffordable
+                : UnitUpgradeState.Unknown;
+        return new UnitUpgradeObservation(
+            state, primaryGreen, secondaryGreen, primaryGray, secondaryGray);
     }
+
+    public static bool IsMaxedText(string text) =>
+        OcrPhraseMatcher.Normalize(text).Contains("maxed", StringComparison.Ordinal);
+
+    public static bool MatchConfirmedMaxed(RgbImage reference, RgbImage candidate) =>
+        Similarity(reference, candidate) >= MinimumMaxedReferenceSimilarity;
+
+    private static bool IsUpgradeGreen(byte red, byte green, byte blue) =>
+        green >= 75 && green - red >= 25 && green - blue >= 25;
 
     public static bool IsSelectedPanel(RgbImage priority, RgbImage sell)
     {

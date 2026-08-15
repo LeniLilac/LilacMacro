@@ -320,6 +320,14 @@
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="BETWEEN ACTION KEYS, MS" />
                                     <TextBox Grid.Column="1" Width="180" HorizontalAlignment="Left" Text="100" />
                                 </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="BETWEEN UPGRADES, MS" />
+                                    <TextBox x:Name="BetweenUpgradeAttemptsText"
+                                             Grid.Column="1" Width="180" HorizontalAlignment="Left"
+                                             LostKeyboardFocus="BetweenUpgradeAttempts_OnLostKeyboardFocus"
+                                             KeyDown="BetweenUpgradeAttempts_OnKeyDown" />
+                                </Grid>
                                 <Grid Margin="0,14,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="VERIFICATION" />

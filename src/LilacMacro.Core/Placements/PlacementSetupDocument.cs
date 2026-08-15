@@ -8,7 +8,8 @@ public sealed class PlacementRouteSetup
 
     public int SelectedUnitSlot { get; set; } = 1;
 
-    public int DefaultStepDelayMilliseconds { get; set; } = PlacementSetupRules.DefaultStepDelayMilliseconds;
+    public int BetweenUpgradeAttemptsMilliseconds { get; set; } =
+        PlacementSetupRules.DefaultBetweenUpgradeAttemptsMilliseconds;
 
     public PlacementTargetingPriority DefaultTargetingPriority { get; set; } = PlacementTargetingPriority.First;
 
