@@ -89,7 +89,9 @@ $parent = Split-Path -Parent $OutputPath
 if (-not (Test-Path -LiteralPath $parent -PathType Container)) {
     New-Item -ItemType Directory -Path $parent | Out-Null
 }
-$json = $catalog | ConvertTo-Json -Depth 12 -Compress
+$jsonOptions = [System.Text.Json.JsonSerializerOptions]::new()
+$jsonOptions.WriteIndented = $false
+$json = [System.Text.Json.JsonSerializer]::Serialize($catalog, $jsonOptions)
 [IO.File]::WriteAllText(
     [IO.Path]::GetFullPath($OutputPath),
     $json + "`n",
