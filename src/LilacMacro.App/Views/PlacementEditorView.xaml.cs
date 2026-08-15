@@ -98,6 +98,13 @@ public partial class PlacementEditorView : UserControl
     public Task FlushAsync() => _session.FlushAsync();
     public void CancelTest() => _testCancellation?.Cancel();
 
+    public bool TryCancelTest()
+    {
+        if (!IsTestRunning) return false;
+        CancelTest();
+        return true;
+    }
+
     public async Task CompleteForCloseAsync()
     {
         CancelTest();

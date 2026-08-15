@@ -96,6 +96,7 @@ internal sealed class WorkspaceInputCoordinator(
             using IDisposable processLease = _crossProcessGate.Acquire();
             RobloxWindow window = getWindow() ?? windows.FindBest()
                 ?? throw new InvalidOperationException("Start Roblox in windowed mode before sending input.");
+            WindowsRobloxDisplayScale.EnsureOneHundredPercent(window);
             deepDebug.RecordInput($"{action}_started", new
             {
                 window.ProcessId,

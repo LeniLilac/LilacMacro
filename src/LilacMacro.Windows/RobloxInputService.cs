@@ -271,6 +271,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         CancellationToken cancellationToken)
     {
         nint handle = windows.Revalidate(window);
+        WindowsRobloxDisplayScale.EnsureOneHundredPercent(handle);
         ClientBounds client = windows.GetClientBounds(window);
         if (client.Size != expectedSize)
         {

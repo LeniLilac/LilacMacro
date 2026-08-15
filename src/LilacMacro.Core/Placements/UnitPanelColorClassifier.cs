@@ -24,6 +24,7 @@ public sealed record UnitPanelImageMatch(
 public static class UnitPanelColorClassifier
 {
     public const double MinimumReferenceSimilarity = 0.85;
+    public const double MinimumMainGrayFraction = 0.45;
 
     public static UnitUpgradeObservation ClassifyUpgrade(RgbImage main, RgbImage extension)
     {
@@ -35,7 +36,7 @@ public static class UnitPanelColorClassifier
         double extensionGray = Fraction(extension, IsControlGray);
         UnitUpgradeState state = green >= 0.30
             ? UnitUpgradeState.Affordable
-            : mainGray < 0.50
+            : mainGray < MinimumMainGrayFraction
                 ? UnitUpgradeState.Unknown
                 : extensionGray >= 0.75
                     ? UnitUpgradeState.Maxed

@@ -100,7 +100,7 @@
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel x:Name="ReferenceFields">
+                        <StackPanel x:Name="ReferenceFields" Margin="0,12,0,0">
                             <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PLACEMENT" />
                             <ComboBox x:Name="EditReferenceCombo" DisplayMemberPath="Label"
                                       SelectedValuePath="Id" />

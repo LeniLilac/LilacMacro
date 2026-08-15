@@ -29,6 +29,9 @@ public partial class PlacementSetupPage : UserControl
     }
 
     public Task FlushAsync() => PlacementEditor.FlushAsync();
+    public bool IsTestRunning => PlacementEditor.IsTestRunning;
+
+    public bool TryStopTest() => PlacementEditor.TryCancelTest();
 
     public bool TryDeactivate(out string error)
     {

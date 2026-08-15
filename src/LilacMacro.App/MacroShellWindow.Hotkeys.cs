@@ -71,7 +71,14 @@ public partial class MacroShellWindow
     {
         if (_macroHotkey?.Matches(message, parameter) != true) return 0;
         handled = true;
-        _macroPage.ToggleRunFromHotkey();
+        if (MacroHotkeyRoutingPolicy.Resolve(_setupPage.IsTestRunning) == MacroHotkeyTarget.SetupTest)
+        {
+            _setupPage.TryStopTest();
+        }
+        else
+        {
+            _macroPage.ToggleRunFromHotkey();
+        }
         return 0;
     }
 

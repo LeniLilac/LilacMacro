@@ -55,6 +55,8 @@ public sealed class UnitPanelLayoutTests
     [Theory]
     [InlineData(0.66, 0.08, 0.48, UnitUpgradeState.Affordable)]
     [InlineData(0.00, 0.74, 0.48, UnitUpgradeState.Unaffordable)]
+    [InlineData(0.00, 0.49, 0.61, UnitUpgradeState.Unaffordable)]
+    [InlineData(0.00, 0.44, 0.61, UnitUpgradeState.Unknown)]
     [InlineData(0.00, 0.76, 0.94, UnitUpgradeState.Maxed)]
     public void UpgradeClassifierSeparatesDatasetStates(
         double greenFraction,

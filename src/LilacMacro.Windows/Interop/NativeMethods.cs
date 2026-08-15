@@ -18,6 +18,7 @@ internal static class NativeMethods
     internal const int SwShowMinNoActive = 7;
     internal const uint GwOwner = 4;
     internal const uint MonitorDefaultToNearest = 2;
+    internal const int MonitorDpiTypeEffective = 0;
     internal const uint DwmwaExtendedFrameBounds = 9;
     internal const int WmGetMinMaxInfo = 0x0024;
 
@@ -140,6 +141,13 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     internal static extern nint MonitorFromWindow(nint window, uint flags);
+
+    [DllImport("shcore.dll")]
+    internal static extern int GetDpiForMonitor(
+        nint monitor,
+        int dpiType,
+        out uint dpiX,
+        out uint dpiY);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

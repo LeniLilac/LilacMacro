@@ -7,6 +7,7 @@ LilacMacro is a private, Windows-only .NET/WPF tool for building and validating 
 - Windows 10 version 1903 or later, or Windows 11
 - .NET SDK version pinned by [`global.json`](global.json)
 - Roblox running in windowed mode for capture or Runtime Lab work
+- 100% Windows display scale on the monitor containing Roblox
 - Optional: Python 3.12 for local PaddleOCR
 
 ## Quick start

@@ -83,12 +83,21 @@ public partial class PlacementStepEditorDialog : Window
         AutoUpgradeActionCombo.ItemsSource = Enum.GetValues<PlacementAutoUpgradeAction>()
             .Select(value => new PlacementOption<PlacementAutoUpgradeAction>(value, AutoUpgradeActionLabel(value)))
             .ToArray();
+        EditReferenceCombo.ItemsSource = BuildReferenceOptions(allSteps, availablePlacements);
+    }
+
+    internal static PlacementReferenceOption[] BuildReferenceOptions(
+        IReadOnlyList<PlacementStep> allSteps,
+        IEnumerable<PlacementStep> availablePlacements)
+    {
+        ArgumentNullException.ThrowIfNull(allSteps);
+        ArgumentNullException.ThrowIfNull(availablePlacements);
         IReadOnlyDictionary<Guid, string> labels = PlacementReferencePolicy.BuildDisplayLabels(allSteps);
-        EditReferenceCombo.ItemsSource = availablePlacements
+        return availablePlacements
             .Where(step => step.Kind == PlacementStepKind.Place)
             .Select(step => new PlacementReferenceOption(
                 step.Id,
-                $"{labels.GetValueOrDefault(step.Id, step.UnitSlot.ToString())}  UNIT {step.UnitSlot}"))
+                labels.GetValueOrDefault(step.Id, step.UnitSlot.ToString(CultureInfo.InvariantCulture))))
             .ToArray();
     }
 

@@ -5,12 +5,13 @@
 ## Global Debug contract
 
 - Roblox must be a freshly verified `1366 x 700` client area.
+- The monitor containing Roblox must use 100% Windows display scale. Every input episode rechecks its effective DPI and stops with the detected percentage before input when it differs.
 - Every state loads the first annotation from the configured finalized dataset frame as its OCR region of interest (ROI), unless the state names an owner-labeled annotation explicitly.
 - Runtime Lab Debug defaults to OCR. Its `IMAGE + OCR FALLBACK` option first evaluates the state's selected `IMAGE` elements from saved per-user profiles; incomplete image evidence runs `PP-OCRv6_small_rec` with its paired detector inside the dataset ROI.
 - Normal matching keeps only ASCII `A-Z`, `a-z`, and `0-9`, lowercases letters, removes spacing and symbols, and accepts the normalized alias as a substring.
 - Exact states require normalized equality. Repeated states require separate OCR rectangles.
 - A state must pass before its action. Actions still require fresh OCR-owned target bounds or freshly verified relational anchors even when a preceding check passed through image evidence.
-- Roblox is revalidated immediately before input. The complete client is moved inside the nearest monitor's usable work area and verified before client-relative coordinates are converted, preventing taskbars or off-screen edges from receiving the action. Missing or ambiguous evidence blocks input; there are no static-coordinate fallbacks.
+- Roblox is revalidated immediately before input. Its current monitor is required to remain at 100% Windows display scale, and the complete client is moved inside that monitor's usable work area and verified before client-relative coordinates are converted, preventing taskbars or off-screen edges from receiving the action. Missing or ambiguous evidence blocks input; there are no static-coordinate fallbacks.
 
 Dataset paths below are relative to `Documents\LilacMacro Datasets`.
 
@@ -162,7 +163,7 @@ The priority scheduler records the verified terminal outcome and reevaluates pri
 - The first selected placement uses bounded Priority, Sell, and DPS OCR observations to calibrate the selected-unit panel at the current UI scale. Three consistent configurable layouts are required.
 - `DPS ???` identifies a phantom placement whose Targeting, Auto Upgrade priority, and Sell controls remain actionable. Place configuration, Reconfigure, and Sell may proceed after stable phantom-panel proof. Upgrade remains forbidden until numeric DPS ending in `/s` proves a physical unit. Later rows capture only the compact derived panel regions and use tiny DPS OCR for physical-versus-phantom ownership.
 - After every successful Place configuration, Reconfigure, or Upgrade, playback clicks the shared bottom-right resting point, at a 24-pixel inset from the canonical client edge, up to eight times until two fresh compact observations prove the selected-unit panel is hidden. Stable Priority, Sell, and DPS OCR calibrates per-run compact Priority/Sell reference images; later panel checks require both multi-pixel image matches with the blue/red control colors only as corroboration. A map background cannot own panel visibility merely by containing similar colors. Sell retains its own verified panel-closure path and Delay adds no click.
-- Upgrade readiness is classified from two compact RGB regions derived from the live Priority/Sell geometry: green main control means affordable, gray main plus the normal-width gray extension means unaffordable, and gray main plus an expanded gray extension means maxed.
+- Upgrade readiness is classified from two compact RGB regions derived from the live Priority/Sell geometry: green main control means affordable, gray main plus the normal-width gray extension means unaffordable, and gray main plus an expanded gray extension means maxed. The main gray requirement allows the field-observed keyboard hint, title, price text, and one-pixel raster variation while still rejecting a crop with less than 45% control-gray structure.
 - Unaffordable waits are bounded. Unknown color evidence fails closed. Maxed stops remaining Upgrade presses for that action.
 - Runtime Lab Debug and Wire Test expose `OCR` and `IMAGE + OCR FALLBACK`. `OCR` verifies every check through OCR and does not build or run image profiles.
 - `IMAGE + OCR FALLBACK` first evaluates the state's currently selected `IMAGE` elements from saved per-user profiles and their last OCR-verified bounds. Only reliable, unambiguous matches count, and their labels must satisfy the same required or N-of state rule; missing optional elements do not block an otherwise complete state. Incomplete image evidence immediately falls back to OCR.
