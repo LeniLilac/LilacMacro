@@ -89,7 +89,7 @@ $parent = Split-Path -Parent $OutputPath
 if (-not (Test-Path -LiteralPath $parent -PathType Container)) {
     New-Item -ItemType Directory -Path $parent | Out-Null
 }
-$json = $catalog | ConvertTo-Json -Depth 12
+$json = ($catalog | ConvertTo-Json -Depth 12) -replace "`r`n", "`n"
 [IO.File]::WriteAllText(
     [IO.Path]::GetFullPath($OutputPath),
     $json + "`n",
