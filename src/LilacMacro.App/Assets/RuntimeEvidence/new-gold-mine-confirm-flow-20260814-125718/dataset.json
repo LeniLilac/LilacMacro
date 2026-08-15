@@ -1,0 +1,173 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "e62a26f0-0d21-4adf-8480-c21a25af3165",
+    "name":  "New gold mine confirm flow",
+    "notes":  "derrive the mix/max button position from the stable confirm + cancel + add fuel elements as anchors\r\n\r\nclick min/max area\r\n\r\nclick confirm\r\n\r\nensure confirm + cancle no longer shows, reattempt click if it does x3\r\n\r\narea ui key + respawn flow\r\n\r\nBundled runtime evidence slice. Original dataset: new-gold-mine-confirm-flow-20260814-125718. Source frames: 1, 2, 3.",
+    "created_at_utc":  "2026-08-14T12:57:18.2544276+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  15088,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-14T12:57:28.2109335+00:00",
+                       "sha256":  "001e8e78e564ef514163de067781289340c76a6c1fa40661690f59241fdf2386",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "b20dd021-a15c-4f5f-9124-ea2097f2ab22",
+                                               "global_group_id":  "821bff4c-47d3-476c-8b1e-1ee8b5735256",
+                                               "bounds":  {
+                                                              "x":  407,
+                                                              "y":  373,
+                                                              "width":  548,
+                                                              "height":  92
+                                                          },
+                                               "label":  "Gold Mine Refuel Confirmation State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-14T12:57:44.1098309+00:00",
+                       "sha256":  "95745d593a2bde5622c8d680689ae17d28e8f636fa65209246a6028b97e3835f",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "9fcb8b55-d7b8-4316-b00b-4e0feddf6a9e",
+                                               "global_group_id":  "821bff4c-47d3-476c-8b1e-1ee8b5735256",
+                                               "bounds":  {
+                                                              "x":  407,
+                                                              "y":  373,
+                                                              "width":  548,
+                                                              "height":  92
+                                                          },
+                                               "label":  "Gold Mine Refuel Confirmation State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-14T12:57:53.0920264+00:00",
+                       "sha256":  "0aa8d72b21cd44f0bd31c70099865583b93c674e8d107bc756990121ab72a8f3",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "a817871d-7805-4b5e-b5a7-e8c11ceb3a21",
+                                               "global_group_id":  "821bff4c-47d3-476c-8b1e-1ee8b5735256",
+                                               "bounds":  {
+                                                              "x":  407,
+                                                              "y":  373,
+                                                              "width":  548,
+                                                              "height":  92
+                                                          },
+                                               "label":  "Gold Mine Refuel Confirmation State",
+                                               "notes":  "",
+                                               "ocr_trials":  [
+                                                                  {
+                                                                      "model_name":  "PP-OCRv6_small_rec",
+                                                                      "detector_model_name":  "PP-OCRv6_small_det",
+                                                                      "device":  "gpu:0",
+                                                                      "text":  "Confirm\nCancel\nFuel\n0/100",
+                                                                      "confidence":  0.9998078942298889,
+                                                                      "model_load_milliseconds":  0,
+                                                                      "inference_milliseconds":  48,
+                                                                      "runtime_version":  "3.7.0",
+                                                                      "ran_at_utc":  "2026-08-14T13:03:03.7271951+00:00",
+                                                                      "model_was_cached":  true,
+                                                                      "regions":  [
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  573,
+                                                                                                         "y":  395,
+                                                                                                         "width":  46,
+                                                                                                         "height":  14
+                                                                                                     },
+                                                                                          "text":  "Confirm",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999946117401123,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  752,
+                                                                                                         "y":  393,
+                                                                                                         "width":  39,
+                                                                                                         "height":  17
+                                                                                                     },
+                                                                                          "text":  "Cancel",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9997144341468811,
+                                                                                          "is_ocr_evidence":  true,
+                                                                                          "is_visual_anchor":  true,
+                                                                                          "match_mode":  "exact",
+                                                                                          "evidence_role":  "required"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  611,
+                                                                                                         "y":  447,
+                                                                                                         "width":  24,
+                                                                                                         "height":  11
+                                                                                                     },
+                                                                                          "text":  "Fuel",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.9999589920043945,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      },
+                                                                                      {
+                                                                                          "bounds":  {
+                                                                                                         "x":  726,
+                                                                                                         "y":  446,
+                                                                                                         "width":  34,
+                                                                                                         "height":  13
+                                                                                                     },
+                                                                                          "text":  "0/100",
+                                                                                          "detection_confidence":  null,
+                                                                                          "recognition_confidence":  0.999612033367157,
+                                                                                          "is_ocr_evidence":  false,
+                                                                                          "is_visual_anchor":  false,
+                                                                                          "match_mode":  "exact"
+                                                                                      }
+                                                                                  ]
+                                                                  }
+                                                              ],
+                                               "minimum_pool_matches":  0
+                                           }
+                                       ]
+                   }
+               ]
+}

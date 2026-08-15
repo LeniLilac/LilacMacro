@@ -7,36 +7,31 @@ namespace LilacMacro.Tests;
 public sealed class ResourceRefuelStateRulesTests
 {
     [Fact]
-    public void GoldMineRequiresStationIdentityAndIndependentPanelEvidence()
+    public void MineAndDrillRequireTheNewStableAddFuelOwner()
     {
         Assert.True(DebugOcrStateRunner.Evaluate(
             DebugWorkflowCatalog.GoldMineRefuel,
-            Regions("Fuel Cell", "Rewards", "Put fuel to start generating Gold!", "Add Fuel")).IsMatch);
-        Assert.False(DebugOcrStateRunner.Evaluate(
-            DebugWorkflowCatalog.GoldMineRefuel,
-            Regions("Fuel Cell", "Rewards", "start mining for geodes", "Add Fuel")).IsMatch);
-    }
-
-    [Fact]
-    public void DrillAcceptsObservedOcrVariationButRejectsMine()
-    {
+            Regions("Add Fuel")).IsMatch);
         Assert.True(DebugOcrStateRunner.Evaluate(
             DebugWorkflowCatalog.ResourceDrillRefuel,
-            Regions("Fuel Cell", "Rewards", "orill to start mining for", "AddFuel")).IsMatch);
+            Regions("AddFuel")).IsMatch);
         Assert.False(DebugOcrStateRunner.Evaluate(
-            DebugWorkflowCatalog.ResourceDrillRefuel,
-            Regions("Fuel Cell", "Rewards", "start generating Gold", "Add Fuel")).IsMatch);
+            DebugWorkflowCatalog.GoldMineRefuel,
+            Regions("Fuel Cell", "Rewards")).IsMatch);
     }
 
     [Fact]
     public void DialogRequiresConfirmAndCancelOnSameRow()
     {
         Assert.True(DebugOcrStateRunner.Evaluate(
-            DebugWorkflowCatalog.AddFuelDialog,
-            Regions(("Add Fuel", 250), ("Confirm", 414), ("Cancel", 416))).IsMatch);
+            DebugWorkflowCatalog.GoldMineRefuelConfirmation,
+            Regions(("Confirm", 414), ("Cancel", 416))).IsMatch);
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            DebugWorkflowCatalog.ResourceDrillRefuelConfirmation,
+            Regions(("Confirm", 395), ("Cancel", 393))).IsMatch);
         Assert.False(DebugOcrStateRunner.Evaluate(
-            DebugWorkflowCatalog.AddFuelDialog,
-            Regions(("Add Fuel", 250), ("Confirm", 414), ("Cancel", 520))).IsMatch);
+            DebugWorkflowCatalog.GoldMineRefuelConfirmation,
+            Regions(("Confirm", 414), ("Cancel", 520))).IsMatch);
     }
 
     private static OcrTextRegion[] Regions(params string[] values) => values

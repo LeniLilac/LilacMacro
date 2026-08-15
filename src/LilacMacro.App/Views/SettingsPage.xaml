@@ -390,6 +390,7 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+                    <ContentControl x:Name="DiagnosticUploadHost" />
                     <Border Style="{StaticResource SettingsCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>

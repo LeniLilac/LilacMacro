@@ -22,6 +22,8 @@ public sealed class PlacementMapCardViewModel
 
     public string DisplayName => Reference.Definition.DisplayName;
 
+    public string CopyLabel => $"{ModeLabel} / {DisplayName}";
+
     public string ViewCount => $"{Images.Count} {(Images.Count == 1 ? "VIEW" : "VIEWS")}";
 
     public Uri ThumbnailUri => new(Path.GetFullPath(Images[0].Path), UriKind.Absolute);

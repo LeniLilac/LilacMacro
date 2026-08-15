@@ -65,6 +65,33 @@ public sealed class MacroPriorityPolicyTests
         Assert.True(MacroPriorityPolicy.Supported(utility));
     }
 
+    [Fact]
+    public void EligibleSelectionUsesOneSharedObservationTime()
+    {
+        PlanTaskPrototype expedition = Task(PlanTaskMode.Expedition, 1, 15_000);
+        PlanPrototype plan = new("test", [expedition]);
+        DateTimeOffset observedAt = new(2026, 8, 14, 21, 2, 30, TimeSpan.Zero);
+        List<DateTimeOffset> observations = [];
+
+        PlanTaskPrototype? selected = MacroPriorityPolicy.SelectEligibleAt(
+            plan,
+            new Dictionary<PlanTaskPrototype, int> { [expedition] = 2 },
+            observedAt,
+            (_, fallback) =>
+            {
+                observations.Add(fallback);
+                return fallback;
+            },
+            (_, enabledAt) =>
+            {
+                observations.Add(enabledAt);
+                return true;
+            });
+
+        Assert.Same(expedition, selected);
+        Assert.Equal([observedAt, observedAt], observations);
+    }
+
     [Theory]
     [InlineData("https://www.roblox.com/share?code=secret&type=Server")]
     [InlineData("https://roblox.com/games/1?privateServerLinkCode=secret")]

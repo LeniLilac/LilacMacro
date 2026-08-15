@@ -277,6 +277,7 @@ public sealed class WorkspaceController : IDisposable
         CancellationToken cancellationToken = default) =>
         _input.RunKeysAsync(requiredSize, sequence, cancellationToken);
 
+    public Task RunTextInputAsync(PixelSize requiredSize, string value, CancellationToken cancellationToken = default) => _input.RunTextAsync(requiredSize, value, cancellationToken);
     public Task RunQuickPlacementBatchAsync(
         PixelSize requiredSize,
         int quickPlacementVirtualKey,

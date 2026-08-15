@@ -1,0 +1,102 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "f6d89a6f-79d9-487b-9576-ec7ba05b90b4",
+    "name":  "New Drill Refuel",
+    "notes":  "Click e\r\nwait 2s +2s per attempt\r\ncheck for add fuel button to confirm on ui\r\nup to 3 attempts\r\nclick add fuel button\r\n\r\ncopy the roi + add fuel req from gold mine, since the button positions should be the same\r\n\r\nBundled runtime evidence slice. Original dataset: new-drill-refuel-20260814-125925. Source frames: 1, 2, 3.",
+    "created_at_utc":  "2026-08-14T12:59:25.7354579+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  15088,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-14T12:59:27.0295327+00:00",
+                       "sha256":  "d42d00b7172e4149bedff0f1801a74a2fe02977232f1cb6c27bdcc1075006ee4",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "b99c59ad-77ce-45f7-a5fb-97baed1d86cd",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  551,
+                                                              "y":  496,
+                                                              "width":  268,
+                                                              "height":  134
+                                                          },
+                                               "label":  "Resource Drill Add Fuel State",
+                                               "notes":  "Resource Drill Add Fuel owner cloned from the owner-approved Gold Mine ROI because the controls share the same layout.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-14T12:59:31.0648202+00:00",
+                       "sha256":  "cfb21eaf127cdec02fcffe8a4864e1c3fc87a858a8696c9e0571635906787872",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "b2f0402d-b116-4db8-901b-88404a58e5cf",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  551,
+                                                              "y":  496,
+                                                              "width":  268,
+                                                              "height":  134
+                                                          },
+                                               "label":  "Resource Drill Add Fuel State",
+                                               "notes":  "Resource Drill Add Fuel owner cloned from the owner-approved Gold Mine ROI because the controls share the same layout.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-14T12:59:39.1067322+00:00",
+                       "sha256":  "29b8c49c122c48b62858f7b5365aab2944b416178ce7619fb5be786ea9f4cbb8",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "7a8cce50-05cb-4813-908e-d92008671210",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  551,
+                                                              "y":  496,
+                                                              "width":  268,
+                                                              "height":  134
+                                                          },
+                                               "label":  "Resource Drill Add Fuel State",
+                                               "notes":  "Resource Drill Add Fuel owner cloned from the owner-approved Gold Mine ROI because the controls share the same layout.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   }
+               ]
+}

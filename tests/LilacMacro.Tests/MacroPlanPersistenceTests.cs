@@ -48,6 +48,13 @@ public sealed class MacroPlanPersistenceTests
                 Target = 1,
                 ShopItemIds = ["trait-crystal", "equipment-lock"],
             });
+            plan.Blocks.Add(new PlanTaskPrototype
+            {
+                Priority = 4,
+                Mode = PlanTaskMode.Utilities,
+                Route = LilacMacro.Core.Automation.ResourceRefuelPolicy.CombinedRoute,
+                Target = 400,
+            });
             first.SelectPlan(first.Plans[1]);
             first.NotifyPlansChanged();
             await first.FlushAsync();
@@ -79,6 +86,9 @@ public sealed class MacroPlanPersistenceTests
             Assert.True(challenge.RunSprite);
             PlanTaskPrototype shop = Assert.IsType<PlanTaskPrototype>(restored.Blocks[2]);
             Assert.Equal(["trait-crystal", "equipment-lock"], shop.ShopItemIds);
+            PlanTaskPrototype combinedRefuel = Assert.IsType<PlanTaskPrototype>(restored.Blocks[3]);
+            Assert.Equal(LilacMacro.Core.Automation.ResourceRefuelPolicy.CombinedRoute, combinedRefuel.Route);
+            Assert.Equal(400, combinedRefuel.Target);
         }
         finally
         {

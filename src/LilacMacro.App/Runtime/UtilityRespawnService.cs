@@ -42,14 +42,66 @@ internal sealed class UtilityRespawnService(
                 await Task.Delay(KeyDelay, cancellationToken).ConfigureAwait(false);
         }
 
-        DebugOcrSnapshot lobby = await _states.WaitForMatchAsync(
-            DebugWorkflowCatalog.Lobby,
+        await WaitForSettledLobbyAsync(
+            areasMenuVirtualKey.Value,
+            reservedVirtualKey,
             device,
-            24,
-            ObservationDelay,
             cancellationToken).ConfigureAwait(false);
-        if (!lobby.Evaluation.IsMatch)
-            throw new InvalidOperationException("Lobby was not verified after Utility task respawn.");
+    }
+
+    private async Task WaitForSettledLobbyAsync(
+        int areasMenuVirtualKey,
+        int reservedVirtualKey,
+        string device,
+        CancellationToken cancellationToken)
+    {
+        int stable = 0;
+        int cleanupAttempts = 0;
+        int observationsSinceCleanup = UtilityRespawnPolicy.ObservationsBetweenAreasCleanupAttempts;
+        for (int observation = 0; observation < 24; observation++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            DebugOcrSnapshot areas = await _states.RunAsync(
+                DebugWorkflowCatalog.AreasUi,
+                device,
+                cancellationToken).ConfigureAwait(false);
+            if (UtilityRespawnPolicy.ShouldCloseAreas(
+                    areas.Evaluation.IsMatch,
+                    cleanupAttempts,
+                    observationsSinceCleanup))
+            {
+                await PressAsync(
+                    areasMenuVirtualKey,
+                    reservedVirtualKey,
+                    cancellationToken).ConfigureAwait(false);
+                cleanupAttempts++;
+                observationsSinceCleanup = 0;
+                stable = 0;
+                await Task.Delay(KeyDelay, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            bool lobbyObserved = false;
+            if (!areas.Evaluation.IsMatch)
+            {
+                DebugOcrSnapshot lobby = await _states.RunAsync(
+                    DebugWorkflowCatalog.Lobby,
+                    device,
+                    cancellationToken).ConfigureAwait(false);
+                lobbyObserved = lobby.Evaluation.IsMatch;
+            }
+
+            stable = UtilityRespawnPolicy.UpdateSettledLobbyObservations(
+                stable,
+                lobbyObserved,
+                areas.Evaluation.IsMatch);
+            if (stable >= UtilityRespawnPolicy.RequiredSettledLobbyObservations) return;
+            observationsSinceCleanup++;
+            await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException(
+            "Lobby did not settle with the Utility Areas overlay closed after respawn.");
     }
 
     internal static AutomationKeySequence CreateKeySequence(

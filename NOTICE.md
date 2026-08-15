@@ -9,3 +9,5 @@ Roblox and related marks belong to their respective owners. User-captured game a
 Interface icon geometry comes from Lucide. Lucide is Copyright (c) 2026 Lucide Icons and Contributors and is distributed under the ISC License, with Feather-derived icons under the MIT License. See `licenses/LUCIDE.md`.
 
 The optional local runner bundles TermWrap v0.6 and its Zydis decoder dependency under their respective MIT licenses. See `third_party/termwrap/v0.6/LICENSE.txt` and `third_party/termwrap/v0.6/ZYDIS-LICENSE.txt`.
+
+Signed LilacMacro Services control snapshots are verified with Bouncy Castle Cryptography. Bouncy Castle is Copyright (c) 2000-2025 The Legion of the Bouncy Castle Inc. and is distributed under the MIT License. See `licenses/BOUNCY-CASTLE.md`.

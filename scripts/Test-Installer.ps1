@@ -67,9 +67,13 @@ Require-Text $installer "'uninstall-cleanup'" 'Installer uninstall must invoke c
 Require-Text $installer 'third_party\\termwrap\\v0\.6' 'Installer must bundle the pinned TermWrap payload.'
 Require-Text $installer 'third_party\\termwrap\\v0\.6[^\r\n]+onlyifdoesntexist' 'Installer upgrades must not overwrite the loaded versioned TermWrap payload.'
 Require-Text $installer 'NOTICE\.md' 'Installer must include dependency notices.'
+Require-Text $installer '\[InstallDelete\]' 'Installer upgrades must declare legacy asset cleanup.'
+Require-Text $installer 'Assets\\RuntimeEvidence' 'Installer upgrades must remove legacy installed runtime evidence.'
 
 Require-Text $builder 'dotnet publish' 'Installer build must publish through dotnet.'
 Require-Text $builder '--locked-mode' 'Installer build must use locked dependency resolution.'
+Require-Text $builder 'Published output contains repository-only runtime evidence datasets' 'Installer build must reject bundled runtime evidence datasets.'
+Require-Text $builder 'Unexpected published asset' 'Installer build must reject non-map screenshot assets.'
 Require-Text $builder 'dotnet restore[^\r\n]+--locked-mode' 'Installer build must perform an explicit locked restore.'
 Require-Text $builder 'dotnet publish[^\r\n]+--no-restore' 'Installer publishes must reuse the locked restore.'
 Reject-Text $builder 'dotnet publish[^\r\n]+--locked-mode' 'Do not pass restore-only --locked-mode to dotnet publish.'

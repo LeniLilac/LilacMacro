@@ -10,9 +10,12 @@
     <ProjectReference Include="..\LilacMacro.Windows\LilacMacro.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\..\eng\runtime-state-contexts.json"
+                      LogicalName="LilacMacro.App.RuntimeStateContexts.json" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Normalization\*.cs" />
     <Compile Include="Runner\*.cs" />
+    <Compile Include="Services\*.cs" />
     <Compile Include="..\LilacMacro.App\Diagnostics\*.cs"
              Link="Diagnostics\%(Filename)%(Extension)" />
     <Compile Include="..\LilacMacro.App\Infrastructure\AppSettings.cs"
@@ -76,6 +79,8 @@
              Link="Runtime\ResourceRefuelService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\CalendarClaimService.cs"
              Link="Runtime\CalendarClaimService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\CodeRedemptionService.cs"
+             Link="Runtime\CodeRedemptionService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\ShopPurchaseService.cs"
              Link="Runtime\ShopPurchaseService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\UtilityTaskService.cs"

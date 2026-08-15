@@ -49,6 +49,7 @@
     <Compile Remove="Runtime\RaidDropDismissalPolicy.cs" />
     <Compile Remove="Runtime\ResourceRefuelService.cs" />
     <Compile Remove="Runtime\CalendarClaimService.cs" />
+    <Compile Remove="Runtime\CodeRedemptionService.cs" />
     <Compile Remove="Runtime\ShopPurchaseService.cs" />
     <Compile Remove="Runtime\UtilityTaskService.cs" />
     <Compile Remove="Runtime\UtilityRespawnService.cs" />
@@ -61,10 +62,10 @@
     <Content Include="Assets\PlacementMaps\*.jpg"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="Assets\RuntimeEvidence\**\*"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <Target Name="RemoveLegacyRuntimeEvidenceOutput" AfterTargets="Build">
+    <RemoveDir Directories="$(TargetDir)Assets\RuntimeEvidence" />
+  </Target>
   <Target Name="CreateToolLaunchers"
           AfterTargets="Build"
           Condition="'$(UseAppHost)' != 'false' and Exists('$(TargetDir)$(AssemblyName).exe')">

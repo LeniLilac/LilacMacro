@@ -123,7 +123,7 @@ public partial class PlacementSetupPage : UserControl
         _galleryOffset = GalleryScroll.VerticalOffset;
         GalleryPanel.Visibility = Visibility.Collapsed;
         PlacementEditor.Visibility = Visibility.Visible;
-        await PlacementEditor.OpenAsync(map);
+        await PlacementEditor.OpenAsync(map, _maps);
     }
 
     private void PlacementEditor_OnBackRequested(object? sender, EventArgs eventArgs)

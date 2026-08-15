@@ -22,6 +22,8 @@ internal static class UiScalePanelDetector
     private const double BaseCloseOffsetY = 237.5;
     private const double BasePanelHalfWidth = 447;
     private const double BasePanelHalfHeight = 253;
+    private const int ToolbarButtonPitch = 46;
+    private const int MaximumInsertedToolbarButtons = 1;
     private static readonly PixelRect CloseSearch =
         RuntimeSearchRegionEvidenceCatalog.SettingsClose.Bounds;
     private static readonly PixelRect GearSearch =
@@ -32,29 +34,50 @@ internal static class UiScalePanelDetector
     public static PixelPoint? DetectSettingsGear(RgbImage image)
     {
         Validate(image);
+        for (int insertedButtons = 0; insertedButtons <= MaximumInsertedToolbarButtons; insertedButtons++)
+        {
+            int offsetX = checked(insertedButtons * ToolbarButtonPitch);
+            PixelPoint? candidate = DetectSettingsGear(image, offsetX);
+            if (candidate is not null) return candidate;
+        }
+        return null;
+    }
+
+    private static PixelPoint? DetectSettingsGear(RgbImage image, int offsetX)
+    {
+        PixelRect gearSearch = new(
+            GearSearch.X + offsetX,
+            GearSearch.Y,
+            GearSearch.Width,
+            GearSearch.Height);
+        PixelRect glyphSearch = new(
+            GearGlyphSearch.X + offsetX,
+            GearGlyphSearch.Y,
+            GearGlyphSearch.Width,
+            GearGlyphSearch.Height);
         int white = 0;
         int dark = 0;
         long whiteX = 0;
         long whiteY = 0;
-        int minimumWhiteX = GearGlyphSearch.Right;
-        int minimumWhiteY = GearGlyphSearch.Bottom;
-        int maximumWhiteX = GearGlyphSearch.X;
-        int maximumWhiteY = GearGlyphSearch.Y;
+        int minimumWhiteX = glyphSearch.Right;
+        int minimumWhiteY = glyphSearch.Bottom;
+        int maximumWhiteX = glyphSearch.X;
+        int maximumWhiteY = glyphSearch.Y;
         int[] quadrants = new int[4];
-        for (int y = GearSearch.Y; y < GearSearch.Bottom; y++)
+        for (int y = gearSearch.Y; y < gearSearch.Bottom; y++)
         {
-            for (int x = GearSearch.X; x < GearSearch.Right; x++)
+            for (int x = gearSearch.X; x < gearSearch.Right; x++)
             {
                 Read(image, x, y, out byte red, out byte green, out byte blue);
                 if (IsDark(red, green, blue)) dark++;
             }
         }
 
-        int centerX = GearGlyphSearch.X + GearGlyphSearch.Width / 2;
-        int centerY = GearGlyphSearch.Y + GearGlyphSearch.Height / 2;
-        for (int y = GearGlyphSearch.Y; y < GearGlyphSearch.Bottom; y++)
+        int centerX = glyphSearch.X + glyphSearch.Width / 2;
+        int centerY = glyphSearch.Y + glyphSearch.Height / 2;
+        for (int y = glyphSearch.Y; y < glyphSearch.Bottom; y++)
         {
-            for (int x = GearGlyphSearch.X; x < GearGlyphSearch.Right; x++)
+            for (int x = glyphSearch.X; x < glyphSearch.Right; x++)
             {
                 Read(image, x, y, out byte red, out byte green, out byte blue);
                 if (!IsNeutralWhite(red, green, blue)) continue;
@@ -71,7 +94,7 @@ internal static class UiScalePanelDetector
             }
         }
 
-        int area = GearSearch.Width * GearSearch.Height;
+        int area = gearSearch.Width * gearSearch.Height;
         int whiteWidth = maximumWhiteX - minimumWhiteX + 1;
         int whiteHeight = maximumWhiteY - minimumWhiteY + 1;
         if (white is < 70 or > 310 ||
@@ -84,7 +107,8 @@ internal static class UiScalePanelDetector
         PixelPoint center = new(
             checked((int)Math.Round(whiteX / (double)white)),
             checked((int)Math.Round(whiteY / (double)white)));
-        return center.X is >= 224 and <= 236 && center.Y is >= 28 and <= 40
+        return center.X >= 224 + offsetX && center.X <= 236 + offsetX &&
+               center.Y is >= 28 and <= 40
             ? center
             : null;
     }

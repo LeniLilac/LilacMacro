@@ -45,6 +45,31 @@ public static class PlacementSetupRules
         };
     }
 
+    public static PlacementRouteSetup CopyRouteToSurface(
+        PlacementRouteSetup source,
+        string routeId,
+        int sourceWidth,
+        int sourceHeight,
+        int targetWidth,
+        int targetHeight)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sourceWidth);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sourceHeight);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(targetWidth);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(targetHeight);
+        ValidateRoute(source, sourceWidth, sourceHeight);
+        PlacementRouteSetup copy = CloneRoute(source, routeId);
+        copy.Steps = copy.Steps.Select(step => step.Kind == PlacementStepKind.Place
+            ? step with
+            {
+                X = ScaleCoordinate(step.X, sourceWidth, targetWidth),
+                Y = ScaleCoordinate(step.Y, sourceHeight, targetHeight),
+            }
+            : step).ToList();
+        ValidateRoute(copy, targetWidth, targetHeight);
+        return copy;
+    }
+
     public static PlacementSetupDocument CloneDocument(PlacementSetupDocument source)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -208,4 +233,8 @@ public static class PlacementSetupRules
 
     private static bool IsSafeId(string id) =>
         !string.IsNullOrWhiteSpace(id) && id.All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
+
+    private static int ScaleCoordinate(int value, int sourceSize, int targetSize) => sourceSize == 1
+        ? 0
+        : Math.Clamp((int)Math.Round(value * (targetSize - 1d) / (sourceSize - 1d)), 0, targetSize - 1);
 }

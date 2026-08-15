@@ -18,6 +18,22 @@ internal static class MacroPriorityPolicy
         Func<PlanTaskPrototype, bool>? isEligible = null) => Flatten(plan)
         .FirstOrDefault(task => IsPending(task, victories) && (isEligible?.Invoke(task) ?? true));
 
+    public static PlanTaskPrototype? SelectEligibleAt(
+        PlanPrototype plan,
+        IReadOnlyDictionary<PlanTaskPrototype, int> victories,
+        DateTimeOffset observedAt,
+        Func<PlanTaskPrototype, DateTimeOffset, DateTimeOffset> eligibleAt,
+        Func<PlanTaskPrototype, DateTimeOffset, bool> isEnabled)
+    {
+        ArgumentNullException.ThrowIfNull(eligibleAt);
+        ArgumentNullException.ThrowIfNull(isEnabled);
+        return Select(
+            plan,
+            victories,
+            task => observedAt >= eligibleAt(task, observedAt) &&
+                    isEnabled(task, observedAt));
+    }
+
     public static bool IsPending(
         PlanTaskPrototype task,
         IReadOnlyDictionary<PlanTaskPrototype, int> victories) =>

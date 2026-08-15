@@ -118,6 +118,10 @@ public sealed class LocalSessionContractTests
             KeyBindings = new Dictionary<string, int?> { ["AreasMenu"] = 'A' },
         };
         Assert.True(LocalSessionValidation.Validate(valid, "S-1-5-21-100", "1.0.30").IsValid);
+        Assert.True(LocalSessionValidation.Validate(
+            valid with { Tasks = [utility with { Route = ResourceRefuelPolicy.CombinedRoute }] },
+            "S-1-5-21-100",
+            "1.0.30").IsValid);
         Assert.False(LocalSessionValidation.Validate(
             valid with { Tasks = [utility with { Route = "unknown" }] },
             "S-1-5-21-100",

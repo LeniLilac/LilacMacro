@@ -47,3 +47,6 @@ Before approving a new state, answer all of these from the dataset notes or ask 
 - Which other visible layer can overlap it?
 - Which UI scales and positive/negative states are represented?
 - What fresh destination evidence proves the preceding action succeeded?
+## Release packaging
+
+Full evidence datasets—including manifests, source frames, notes, OCR trials, and review metadata—are repository/test inputs and must not be copied into application output or installer payloads. The release build embeds only a deterministic compact catalog of the ROI bounds and visual-anchor rules required at runtime. `Assets/PlacementMaps/*.jpg` are the only screenshot assets installed on user devices. Installer upgrades delete the legacy `Assets/RuntimeEvidence` directory left by older development packages.

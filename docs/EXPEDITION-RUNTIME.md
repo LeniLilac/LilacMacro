@@ -4,7 +4,7 @@
 
 ## Current-node evidence
 
-Dataset names below are relative to `Documents\LilacMacro Datasets` and remain private local evidence.
+The compact runtime evidence slices below are bundled under `src/LilacMacro.App/Assets/RuntimeEvidence`; the original full datasets remain in `Documents\LilacMacro Datasets`.
 
 | Dataset | Evidence |
 |---|---|
@@ -27,8 +27,11 @@ On the first semantic calibration after match start:
 2. derive the current marker from the live filled-bar endpoint and marker geometry without requiring a particular hue;
 3. sweep left-to-right across the dataset-owned `Hover Line`, stopping only when the dataset-owned multi-scale tooltip-title band exposes one known node title;
 4. retain the measured marker-to-hover offset for later current markers; if that cached point no longer exposes a title, perform a bounded local horizontal reacquisition around the freshly located marker;
-5. accept only a known title: Defense, Elite, Assault, Boss, Encounter, or Checkpoint;
-6. sample the current-node color from the freshly located bar in the same observation and update that local environment's personalized profile.
+5. move the pointer without clicking to the established bottom-right resting point and allow the hover card to clear before handing the node action to another state owner;
+6. accept only a known title: Defense, Elite, Assault, Boss, Encounter, or Checkpoint;
+7. sample the current-node color from the freshly located bar in the same observation and update that local environment's personalized profile.
+
+The color sample is limited to the seven-pixel fill stripe centered on the located marker. Saturated map scenery above the stripe is excluded; it previously could dominate a median and teach a semantic node the background hue instead of the bar hue. Color-profile version 2 invalidates those earlier samples.
 
 The `Hover Line` (`300,73,746,3`) and tooltip-title band (`348,61,660,55`) come from `expedition-node-set4-20260812-204347` and cover all three recorded UI scales. The tooltip geometry establishes that the cursor is over a real node. OCR supplies the semantic label. OCR alone does not authorize unrelated input.
 
@@ -36,12 +39,16 @@ Unknown is relevant only while a marker is in the future. When that marker becom
 
 ### Color hot path
 
-After OCR has labeled a current node, store a small distribution from multiple fresh bar samples rather than one RGB value. A later observation may use color as the fast path only when:
+After OCR has labeled a current node, store a small distribution from multiple fresh bar samples rather than one RGB value. Color may retain the fast path only while the freshly relocated marker is the same marker that received the semantic label. Movement to a new marker always reacquires its tooltip label before changing passive run state. This is stricter than nearest-profile classification because a complete profile was observed accepting incorrect long-run node transitions and delaying extraction for more than an hour.
+
+A retained-marker observation may use color only when:
 
 - the progress bar and current sample region are freshly relocated;
 - the environment and layout fingerprint match the profile;
-- the sample is sufficiently close to exactly one learned node profile with a safe margin from the runner-up; and
+- the sample remains close to the hue recorded with that marker's semantic observation; and
 - the same classification remains stable across consecutive captures.
+
+Movement to a new marker returns to hover/OCR even when every node type has already been calibrated. A complete personalized profile remains diagnostic/calibration data; it does not authorize a cross-marker state transition.
 
 Missing, stale, weak, or ambiguous color evidence falls back to the cached marker-relative hover point plus OCR, then bounded local reacquisition when needed. A successful fallback refreshes both the hover offset and learned color profile. Color never guesses a node and never outranks a contradictory verified tooltip.
 
@@ -78,8 +85,8 @@ Live optimization requires the selected reward quantity to be stable across fres
 
 | Node | Intended behavior |
 |---|---|
-| Defense | First wait for fresh visible Start Game evidence; then replay every active placement; units with no selection panel are retained physical units, while a replacement phantom receives its saved Target and Auto Upgrade configuration; then reacquire and click Start Game |
-| Elite | Same replay/configuration policy as Defense |
+| Defense | First wait for fresh visible Start Game evidence; then replay placements not already retained as physical; a unit with no selection panel is retained and skipped on later Defense/Elite nodes, while a replacement phantom receives its saved Target and Auto Upgrade configuration and remains eligible for later replay; then reacquire and click Start Game |
+| Elite | Same per-placement retention/replay policy as Defense |
 | Assault | Do not place; wait for node completion |
 | Boss | Do not place; wait for node completion and count the stable real Boss transition |
 | Encounter | Wait for ship arrival, then use the verified Continue source and confirmation states |
@@ -89,13 +96,23 @@ The spawn node is always a Checkpoint. After the route is accepted and Start Gam
 
 Defense and Elite node-color/tooltip evidence may become current while the ship is still traveling. That node evidence cannot authorize placement replay. The runner waits at the node-action boundary until the live Start Game prompt is freshly visible, then replays/reconfigures units. After replay it retries fresh Start Game acquisition long enough for the field-observed Enemies Incoming overlay to clear. Only a verified Start Game click completes the boundary; node probing cannot resume while the prompt remains visible.
 
+Node type and node arrival are separate temporal identities. Consecutive Defense nodes or consecutive Elite nodes may expose the same semantic tooltip title, so equality with the previous node type cannot suppress the next action. A newly visible, verified Start Game episode reopens Defense/Elite replay even when the type is unchanged. The episode remains latched after the verified click and may reopen only after fresh evidence observes the prompt absent, preventing duplicate replay on one node.
+
 The Match Preview Start acknowledgment does not prove that the destination process or scene has loaded. Expedition runtime therefore waits for fresh, visible Start Game evidence for up to two minutes before any camera, route, or placement input. Story, Raid, Event, and Challenge use the ordinary Match Preview-to-Match Prestart transition with the same destination evidence; Repeat Stage re-verifies Match Prestart before resuming runtime.
+
+When priority reevaluation selects the exact same Expedition task after Victory or Defeat, the scheduler uses the freshly verified Repeat Stage action instead of returning to Lobby. The repeated runtime waits for a new visible Start Game boundary, reruns route optimization and new-match placement setup, and retains the already-loaded team and camera. Challenge and future Tower tasks remain one-match continuations and reset through Lobby.
 
 ## Encounter flow
 
 Encounter node classification may become stable before the ship reaches its stop point. Classification selects the Encounter workflow but does not authorize input. The runner observes for up to two minutes until the dataset-owned source Continue control or its destination confirmation modal is freshly verified, then performs the same destination-first Continue transition used by checkpoints. The source control and confirmation modal own separate regions; the background source Continue cannot impersonate the modal action.
 
 The first spawn Checkpoint remains immediate because setup begins there. A later Checkpoint uses the same bounded arrival wait as Encounter before Continue or Extract. The 500-frame, 60-second `expedition-spawn-node-encounter-20260814-083006` sequence is timing evidence for this separation and is not bundled wholesale as a runtime search dataset.
+
+The node detector is not an input owner for Encounter or Checkpoint. Each runtime cycle observes terminal states first, then periodically probes the separately dataset-owned later-Checkpoint source first and Encounter source second, before passive node classification. A Checkpoint action requires the independent Extract-plus-Continue pair inside its bounded source ROI; an Encounter action requires its own source Continue ROI. The passive color/tooltip result may describe a pending workflow, but it cannot click Continue or Extract or enter the terminal wait. Repeated observation of the same Checkpoint source replays the last Checkpoint action rather than degrading to `Wait`. A confirmation modal is handled only by the transition that opened it; the identical Continue confirmation artwork cannot retrospectively choose between Encounter and Checkpoint.
+
+Once a live source owns a transition, its destination/modal is observed first. A visible confirmation authorizes only its modal action. If the destination is absent and the initiating source remains stable, the source is retried within the action cap. Two fresh observations with both layers absent complete an initiated Continue transition. Only a verified Extract source-to-confirmation-to-clear transition may enter the Victory/Defeat wait. Defense and Elite remain passive descriptions until fresh Start Game evidence owns replay; Assault and Boss are the only tooltip/color results that directly update passive run history.
+
+The local node monitor cannot wait indefinitely. Its five-minute progress watchdog resets only after a newly OCR-labeled marker, a completed Checkpoint/Encounter transition, or a completed Defense/Elite Start Game episode. Repeated color observations, repeated OCR of the same marker, and idle reward-card clicks are not progress. Expiry returns a retryable runtime failure to the unattended scheduler recovery ladder; manual Stop remains ordinary cancellation and is not diagnosed as a stall.
 
 ## Checkpoints and completion
 

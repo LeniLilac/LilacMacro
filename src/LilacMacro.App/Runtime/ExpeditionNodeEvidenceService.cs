@@ -19,15 +19,22 @@ internal sealed class ExpeditionNodeEvidenceService(
         RuntimeSearchRegionEvidenceCatalog.ExpeditionNodeHoverLine.Bounds;
     internal static readonly PixelRect TooltipTitleBand =
         RuntimeSearchRegionEvidenceCatalog.ExpeditionNodeTooltip.Bounds;
+    internal static readonly PixelPoint TooltipClearPoint = ShopPurchasePolicy.HoverClearPoint;
     private const int InitialHoverSweepStep = 8;
     private const int LocalHoverSweepRadius = 32;
     private const int LocalHoverSweepStep = 4;
+    private static readonly TimeSpan TooltipClearDelay = TimeSpan.FromMilliseconds(350);
     private readonly ExpeditionOcrService _ocr = new(workspace, ocr);
     private readonly ExpeditionColorProfileStore _profiles = new();
     private ExpeditionNodeColorProfile? _profile;
     private ExpeditionNodeType? _hotCandidate;
     private int _hotStable;
     private int? _learnedMarkerToHoverOffsetX;
+    private PixelPoint? _verifiedMarker;
+    private ExpeditionNodeType? _verifiedNode;
+    private double? _verifiedHue;
+
+    public int SemanticRevision { get; private set; }
 
     public async Task<ExpeditionNodeType?> ObserveAsync(
         string device,
@@ -39,16 +46,27 @@ internal sealed class ExpeditionNodeEvidenceService(
         PixelPoint? marker = FindCurrentMarker(bar);
         double? hue = marker is PixelPoint found ? CurrentBarHue(bar, found) : null;
         _profile ??= await _profiles.LoadAsync(cancellationToken).ConfigureAwait(false);
-        if (hue is double hotHue && _profile.Classify(hotHue) is ExpeditionNodeType hotNode)
+        ExpeditionNodeType? hotNode = marker is PixelPoint hotMarker && hue is double hotHue
+            ? RetainVerifiedMarker(
+                hotMarker,
+                hotHue,
+                _verifiedMarker,
+                _verifiedNode,
+                _verifiedHue)
+            : null;
+        if (hotNode is ExpeditionNodeType classifiedNode)
         {
-            _hotStable = _hotCandidate == hotNode ? _hotStable + 1 : 1;
-            _hotCandidate = hotNode;
+            _hotStable = _hotCandidate == classifiedNode ? _hotStable + 1 : 1;
+            _hotCandidate = classifiedNode;
             if (_hotStable >= 2)
             {
-                status?.Invoke($"EXPEDITION NODE {hotNode.ToString().ToUpperInvariant()} | COLOR HOTPATH");
-                return hotNode;
+                _verifiedMarker = marker;
+                _verifiedNode = classifiedNode;
+                _verifiedHue = hue;
+                status?.Invoke($"EXPEDITION NODE {classifiedNode.ToString().ToUpperInvariant()} | COLOR HOTPATH");
+                return classifiedNode;
             }
-            status?.Invoke($"EXPEDITION NODE {hotNode.ToString().ToUpperInvariant()} | COLOR CONFIRM 1/2");
+            status?.Invoke($"EXPEDITION NODE {classifiedNode.ToString().ToUpperInvariant()} | COLOR CONFIRM 1/2");
             return null;
         }
         _hotCandidate = null;
@@ -69,6 +87,13 @@ internal sealed class ExpeditionNodeEvidenceService(
             return null;
         }
         _learnedMarkerToHoverOffsetX = calibrated!.Value.Hover.X - clientMarker.X;
+        bool newSemanticEpisode = _verifiedMarker is not PixelPoint previousMarker ||
+            Math.Abs(marker.Value.X - previousMarker.X) > 2 ||
+            Math.Abs(marker.Value.Y - previousMarker.Y) > 2;
+        _verifiedMarker = marker;
+        _verifiedNode = semantic;
+        _verifiedHue = hue;
+        if (newSemanticEpisode) SemanticRevision++;
         if (hue is double learnedHue)
         {
             _profile.Learn(semantic.Value, learnedHue);
@@ -82,21 +107,71 @@ internal sealed class ExpeditionNodeEvidenceService(
         return semantic;
     }
 
+    public void ResetForMatch()
+    {
+        _hotCandidate = null;
+        _hotStable = 0;
+        _verifiedMarker = null;
+        _verifiedNode = null;
+        _verifiedHue = null;
+        SemanticRevision = 0;
+    }
+
+    internal static ExpeditionNodeType? RetainVerifiedMarker(
+        PixelPoint marker,
+        double hue,
+        PixelPoint? verifiedMarker,
+        ExpeditionNodeType? verifiedNode,
+        double? verifiedHue)
+    {
+        bool sameVerifiedMarker = verifiedMarker is PixelPoint verified &&
+            Math.Abs(marker.X - verified.X) <= 2 &&
+            Math.Abs(marker.Y - verified.Y) <= 2;
+        if (sameVerifiedMarker &&
+            verifiedNode is ExpeditionNodeType retainedNode &&
+            verifiedHue is double retainedHue &&
+            ExpeditionNodeColorProfile.HueDistance(hue, retainedHue) <= 2)
+        {
+            return retainedNode;
+        }
+
+        // A learned hue can accelerate repeated observations of the same current marker,
+        // but it cannot identify a newly moved marker. The bar palette can drift or become
+        // ambiguous during a long run, so every new marker regains semantic tooltip evidence.
+        return null;
+    }
+
     private async Task<(ExpeditionNodeType Node, PixelPoint Hover)?> ObserveTooltipAsync(
         PixelPoint marker,
         string device,
         CancellationToken cancellationToken)
     {
-        foreach (PixelPoint probe in HoverProbePoints(marker, _learnedMarkerToHoverOffsetX))
+        bool pointerMoved = false;
+        try
         {
-            await workspace.HoverRobloxAsync(
-                DebugWorkflowCatalog.ClientSize, probe, cancellationToken).ConfigureAwait(false);
-            IReadOnlyList<OcrTextRegion> regions = await _ocr.ObserveAsync(
-                TooltipTitleBand, device, cancellationToken).ConfigureAwait(false);
-            ExpeditionNodeType? semantic = ParseNode(regions.Select(region => region.Text));
-            if (semantic is ExpeditionNodeType node) return (node, probe);
+            foreach (PixelPoint probe in HoverProbePoints(marker, _learnedMarkerToHoverOffsetX))
+            {
+                await workspace.HoverRobloxAsync(
+                    DebugWorkflowCatalog.ClientSize, probe, cancellationToken).ConfigureAwait(false);
+                pointerMoved = true;
+                IReadOnlyList<OcrTextRegion> regions = await _ocr.ObserveAsync(
+                    TooltipTitleBand, device, cancellationToken).ConfigureAwait(false);
+                ExpeditionNodeType? semantic = ParseNode(regions.Select(region => region.Text));
+                if (semantic is ExpeditionNodeType node) return (node, probe);
+            }
+            return null;
         }
-        return null;
+        finally
+        {
+            if (pointerMoved && !cancellationToken.IsCancellationRequested)
+            {
+                await workspace.HoverRobloxAsync(
+                    DebugWorkflowCatalog.ClientSize,
+                    TooltipClearPoint,
+                    cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TooltipClearDelay, cancellationToken).ConfigureAwait(false);
+            }
+        }
     }
 
     internal static IReadOnlyList<PixelPoint> HoverProbePoints(PixelPoint marker, int? learnedOffsetX)
@@ -211,7 +286,7 @@ internal sealed class ExpeditionNodeEvidenceService(
     internal static double? CurrentBarHue(RgbImage image, PixelPoint marker)
     {
         List<double> hues = [];
-        for (int y = Math.Max(0, marker.Y - 8); y <= Math.Min(image.Size.Height - 1, marker.Y + 2); y++)
+        for (int y = Math.Max(0, marker.Y - 2); y <= Math.Min(image.Size.Height - 1, marker.Y + 4); y++)
             for (int x = Math.Max(0, marker.X - 120); x <= Math.Max(0, marker.X - 25); x++)
             {
                 Read(image, x, y, out byte red, out byte green, out byte blue);

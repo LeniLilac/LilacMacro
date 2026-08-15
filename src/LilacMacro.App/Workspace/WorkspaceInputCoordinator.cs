@@ -52,6 +52,16 @@ internal sealed class WorkspaceInputCoordinator(
         "key_sequence", new { RequiredSize = size, Sequence = sequence },
         (window, cancellation) => input.RunKeySequenceAsync(window, size, sequence, cancellation), token);
 
+    public Task RunTextAsync(PixelSize size, string value, CancellationToken token)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return RunAsync(
+            "text_input",
+            new { RequiredSize = size, CharacterCount = value.Length },
+            (window, cancellation) => input.RunTextInputAsync(window, size, value, cancellation),
+            token);
+    }
+
     public Task RunQuickPlacementAsync(
         PixelSize size,
         int quickKey,

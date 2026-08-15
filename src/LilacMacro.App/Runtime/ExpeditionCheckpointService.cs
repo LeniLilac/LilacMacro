@@ -16,6 +16,14 @@ internal enum CheckpointTransitionDecision
 
 internal static class CheckpointTransitionPolicy
 {
+    internal const int MaximumActions = 4;
+    internal const int MaximumIndeterminateObservations = 12;
+
+    public static bool CanAct(int actionAttempts) => actionAttempts < MaximumActions;
+
+    public static bool CanObserve(int indeterminateObservations) =>
+        indeterminateObservations < MaximumIndeterminateObservations;
+
     public static CheckpointTransitionDecision Decide(
         bool confirmationObserved,
         bool sourceObserved,
@@ -42,8 +50,6 @@ internal sealed class ExpeditionCheckpointService(
     OcrRunner ocr)
 {
     private static readonly TimeSpan ObservationDelay = TimeSpan.FromMilliseconds(300);
-    private const int MaximumActions = 4;
-    private const int MaximumIndeterminateObservations = 12;
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
     public Task ContinueAsync(string device, Action<string>? status, CancellationToken cancellationToken) =>
@@ -96,6 +102,45 @@ internal sealed class ExpeditionCheckpointService(
             status,
             cancellationToken);
 
+    public async Task<ExpeditionLiveControl> ObserveLiveControlAsync(
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        bool checkpointAvailable = await IsSourceAvailableAsync(
+            ExpeditionCheckpointStateCatalog.ContinueSource,
+            "CHECKPOINT CONTROLS VERIFIED",
+            device,
+            status,
+            cancellationToken).ConfigureAwait(false);
+        if (checkpointAvailable) return ExpeditionLiveControl.Checkpoint;
+
+        bool encounterAvailable = await IsSourceAvailableAsync(
+            ExpeditionCheckpointStateCatalog.EncounterContinueSource,
+            "ENCOUNTER CONTROLS VERIFIED",
+            device,
+            status,
+            cancellationToken).ConfigureAwait(false);
+        return ExpeditionLiveControlPolicy.Select(
+            checkpointAvailable: false,
+            encounterAvailable);
+    }
+
+    private async Task<bool> IsSourceAvailableAsync(
+        DebugStateSpec sourceState,
+        string verifiedStatus,
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        DebugOcrSnapshot source = await _states.RunAsync(
+            sourceState, device, cancellationToken).ConfigureAwait(false);
+        if (!source.Evaluation.IsMatch) return false;
+
+        status?.Invoke(verifiedStatus);
+        return true;
+    }
+
     private async Task RunAsync(
         string workflowName,
         string actionName,
@@ -119,8 +164,7 @@ internal sealed class ExpeditionCheckpointService(
         int consecutiveClearObservations = 0;
         bool transitionStarted = false;
 
-        while (actionAttempts < MaximumActions &&
-               indeterminateObservations < MaximumIndeterminateObservations)
+        while (CheckpointTransitionPolicy.CanObserve(indeterminateObservations))
         {
             DebugOcrSnapshot confirmation = await _states.RunAsync(
                 confirmationState, device, cancellationToken).ConfigureAwait(false);
@@ -145,6 +189,17 @@ internal sealed class ExpeditionCheckpointService(
                 consecutiveSourceObservations,
                 consecutiveClearObservations);
 
+            if (decision is CheckpointTransitionDecision.Confirm or
+                CheckpointTransitionDecision.OpenConfirmation &&
+                !CheckpointTransitionPolicy.CanAct(actionAttempts))
+            {
+                indeterminateObservations++;
+                status?.Invoke(
+                    $"{workflowName} {actionName.ToUpperInvariant()} ACTION LIMIT; VERIFYING");
+                await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
             switch (decision)
             {
                 case CheckpointTransitionDecision.Confirm:
@@ -155,7 +210,7 @@ internal sealed class ExpeditionCheckpointService(
                     indeterminateObservations = 0;
                     consecutiveSourceObservations = 0;
                     consecutiveClearObservations = 0;
-                    status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CONFIRM {actionAttempts}/{MaximumActions}");
+                    status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CONFIRM {actionAttempts}/{CheckpointTransitionPolicy.MaximumActions}");
                     break;
                 case CheckpointTransitionDecision.OpenConfirmation:
                     await ClickTargetAsync(source!, actionName, cancellationToken).ConfigureAwait(false);
@@ -164,7 +219,7 @@ internal sealed class ExpeditionCheckpointService(
                     indeterminateObservations = 0;
                     consecutiveSourceObservations = 0;
                     consecutiveClearObservations = 0;
-                    status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CLICK {actionAttempts}/{MaximumActions}");
+                    status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CLICK {actionAttempts}/{CheckpointTransitionPolicy.MaximumActions}");
                     break;
                 case CheckpointTransitionDecision.Complete:
                     status?.Invoke($"{workflowName} {actionName.ToUpperInvariant()} CONFIRMED");

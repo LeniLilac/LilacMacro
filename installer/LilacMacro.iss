@@ -40,6 +40,9 @@ Source: "{#SourceRoot}\third_party\termwrap\v0.6\*"; DestDir: "{app}\native\term
 Source: "{#SourceRoot}\LICENSE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceRoot}\NOTICE.md"; DestDir: "{app}"; Flags: ignoreversion
 
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\Assets\RuntimeEvidence"
+
 [Icons]
 Name: "{group}\LilacMacro"; Filename: "{app}\LilacMacro.exe"
 Name: "{autodesktop}\LilacMacro"; Filename: "{app}\LilacMacro.exe"; Tasks: desktopicon

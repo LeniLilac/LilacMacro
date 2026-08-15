@@ -52,6 +52,8 @@ public sealed class PlacementStepRowViewModel : INotifyPropertyChanged
 {
     private readonly IReadOnlyDictionary<Guid, string> _placementLabels;
     private bool _isNearPointer;
+    private bool _fadeInSelectionMode;
+    private double _markerScale = 1;
 
     public PlacementStepRowViewModel(
         PlacementStep step,
@@ -89,6 +91,17 @@ public sealed class PlacementStepRowViewModel : INotifyPropertyChanged
 
     public bool IsSelectionMode => CursorMode == PlacementCursorMode.Select;
 
+    public double MarkerScale
+    {
+        get => _markerScale;
+        private set
+        {
+            if (Math.Abs(_markerScale - value) < 0.0001) return;
+            _markerScale = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool IsNearPointer
     {
         get => _isNearPointer;
@@ -101,11 +114,18 @@ public sealed class PlacementStepRowViewModel : INotifyPropertyChanged
         }
     }
 
-    public double PinOpacity => !IsSelectionMode && IsNearPointer ? 0.18 : 1;
+    public double PinOpacity => IsNearPointer && (!IsSelectionMode || _fadeInSelectionMode) ? 0.18 : 1;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public void SetNearPointer(bool value) => IsNearPointer = value;
+    public void SetNearPointer(bool value, bool fadeInSelectionMode = false)
+    {
+        _fadeInSelectionMode = fadeInSelectionMode;
+        IsNearPointer = value;
+        OnPropertyChanged(nameof(PinOpacity));
+    }
+
+    public void SetZoom(double zoom) => MarkerScale = 1 / Math.Max(0.01, zoom);
 
     public string Phase => Step.Kind == PlacementStepKind.StartGame
         ? "START"

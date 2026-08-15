@@ -39,6 +39,15 @@ internal enum WireGameMode
     Event,
 }
 
+internal static class WireGameModeRepeatPolicy
+{
+    public static bool Supports(WireGameMode mode) => mode is
+        WireGameMode.Story or
+        WireGameMode.Raid or
+        WireGameMode.Expedition or
+        WireGameMode.Event;
+}
+
 internal sealed record StoryWireNavigationKeys(
     int? PlayMenu,
     int? UnitInventory,
@@ -61,7 +70,8 @@ internal sealed record StoryWireTestOptions(
     int ExpeditionDifficulty = 1,
     int BossesBeforeExtract = 1,
     bool ExtractAtCheckpoint = true,
-    string ExpeditionRewardTarget = "None");
+    string ExpeditionRewardTarget = "None",
+    bool SkipTeamLoad = false);
 
 internal sealed record StoryWireProgress(
     StoryWireStage Stage,

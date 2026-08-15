@@ -62,6 +62,20 @@ try {
     Invoke-Publish 'src\LilacMacro.SessionSetup\LilacMacro.SessionSetup.csproj'
     Invoke-Publish 'src\LilacMacro.SessionWorker\LilacMacro.SessionWorker.csproj'
 
+    $legacyEvidence = Join-Path $publish 'Assets\RuntimeEvidence'
+    if (Test-Path -LiteralPath $legacyEvidence) {
+        throw 'Published output contains repository-only runtime evidence datasets.'
+    }
+    $assetRoot = Join-Path $publish 'Assets'
+    if (Test-Path -LiteralPath $assetRoot) {
+        foreach ($asset in Get-ChildItem -LiteralPath $assetRoot -File -Recurse) {
+            $relativeAsset = $asset.FullName.Substring($assetRoot.Length).TrimStart('\')
+            if ($relativeAsset -notmatch '^PlacementMaps\\[^\\]+\.jpg$') {
+                throw "Unexpected published asset: $relativeAsset"
+            }
+        }
+    }
+
     $required = @('LilacMacro.exe', 'LilacMacro.SessionSetup.exe', 'LilacMacro.SessionWorker.exe')
     foreach ($name in $required) {
         if (-not (Test-Path -LiteralPath (Join-Path $publish $name))) { throw "Missing published file: $name" }

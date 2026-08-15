@@ -14,9 +14,18 @@ public readonly record struct ResourceRefuelDialogActions(PixelPoint Quantity, P
 
 public static class ResourceRefuelPolicy
 {
+    public const int StationInteractionAttempts = 3;
+    public const int ConfirmationAttempts = 3;
     public const string GoldMineRoute = "Gold Mine refuel";
     public const string ResourceDrillRoute = "Resource Drill refuel";
     public const string CombinedRoute = "Gold Mine + Resource Drill";
+
+    public static IReadOnlyList<string> Routes { get; } =
+    [
+        CombinedRoute,
+        GoldMineRoute,
+        ResourceDrillRoute,
+    ];
 
     private static readonly ResourceRefuelWalkStep[] GoldMineSteps =
     [
@@ -48,21 +57,40 @@ public static class ResourceRefuelPolicy
         _ => throw new ArgumentOutOfRangeException(nameof(target)),
     };
 
+    public static TimeSpan StationObservationDelay(int attemptNumber)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(attemptNumber, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(attemptNumber, StationInteractionAttempts);
+        return TimeSpan.FromSeconds(attemptNumber * 2);
+    }
+
     public static bool TryResolveDialogActions(
+        PixelRect addFuel,
         PixelRect confirm,
         PixelRect cancel,
         PixelSize clientSize,
         out ResourceRefuelDialogActions actions)
     {
         actions = default;
-        if (!confirm.IsInside(clientSize) || !cancel.IsInside(clientSize)) return false;
+        if (!addFuel.IsInside(clientSize) ||
+            !confirm.IsInside(clientSize) ||
+            !cancel.IsInside(clientSize)) return false;
         int separation = cancel.Center.X - confirm.Center.X;
         int rowDelta = Math.Abs(cancel.Center.Y - confirm.Center.Y);
-        if (separation is < 200 or > 330 || rowDelta > 20) return false;
+        if (separation is < 150 or > 330 || rowDelta > 20) return false;
+
+        int rowCenterY = (confirm.Center.Y + cancel.Center.Y) / 2;
+        int dialogCenterX = (confirm.Center.X + cancel.Center.X) / 2;
+        int centerTolerance = Math.Max(12, separation / 10);
+        if (Math.Abs(addFuel.Center.X - dialogCenterX) > centerTolerance) return false;
+
+        int verticalSeparation = addFuel.Center.Y - rowCenterY;
+        if (verticalSeparation * 100 < separation * 52 ||
+            verticalSeparation * 100 > separation * 75) return false;
 
         PixelPoint quantity = new(
             cancel.Center.X + (int)Math.Round(separation * 0.32),
-            (confirm.Center.Y + cancel.Center.Y) / 2 - 63);
+            rowCenterY - (int)Math.Round(separation * 0.24));
         if (quantity.X < 0 || quantity.Y < 0 ||
             quantity.X >= clientSize.Width || quantity.Y >= clientSize.Height) return false;
         actions = new ResourceRefuelDialogActions(quantity, confirm.Center);

@@ -4,7 +4,7 @@ namespace LilacMacro.App.Runtime;
 
 internal sealed record MacroSettings
 {
-    public const int CurrentSchemaVersion = 9;
+    public const int CurrentSchemaVersion = 10;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
@@ -21,6 +21,8 @@ internal sealed record MacroSettings
     public string DiscordUserId { get; init; } = string.Empty;
 
     public bool NotifyOnTerminalFailure { get; init; } = true;
+
+    public bool EnableDiagnosticUploads { get; init; }
 
     public bool CheckForUpdatesOnStartup { get; init; } = true;
 

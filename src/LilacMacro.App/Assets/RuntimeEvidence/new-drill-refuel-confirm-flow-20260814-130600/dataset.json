@@ -1,0 +1,102 @@
+﻿{
+    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+    "format":  "lilacmacro.dataset",
+    "coordinate_space":  "roblox_client_pixels_half_open",
+    "image_root":  "images",
+    "schema_version":  1,
+    "id":  "61be447d-a652-4f2d-8d28-52cf41394e4d",
+    "name":  "New drill refuel confirm flow",
+    "notes":  "copy the roi + derrivation from gold mine refuel, since the button positions should be the same\r\n\r\nBundled runtime evidence slice. Original dataset: new-drill-refuel-confirm-flow-20260814-130600. Source frames: 1, 2, 3.",
+    "created_at_utc":  "2026-08-14T13:06:00.2156831+00:00",
+    "source_window_title":  "Roblox",
+    "source_process_id":  15088,
+    "client_width":  1366,
+    "client_height":  700,
+    "capture_mode":  "manual",
+    "requested_frame_count":  0,
+    "requested_duration_seconds":  0,
+    "is_finalized":  true,
+    "frames":  [
+                   {
+                       "file_name":  "frame-0001.png",
+                       "captured_at_utc":  "2026-08-14T13:06:07.6905338+00:00",
+                       "sha256":  "11809f5b8d3f448d7bbaa70f079710e7fdbe18701e754b99c5a20ad5d2ba50a1",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "38350534-2df7-49f1-aa1d-552117cfe095",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  407,
+                                                              "y":  373,
+                                                              "width":  548,
+                                                              "height":  92
+                                                          },
+                                               "label":  "Resource Drill Refuel Confirmation State",
+                                               "notes":  "Resource Drill confirmation owner cloned from the owner-approved Gold Mine ROI because the controls share the same layout.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0002.png",
+                       "captured_at_utc":  "2026-08-14T13:06:13.7680469+00:00",
+                       "sha256":  "30a53255dae2d17fc4c29a8c2cd2e3ae2cf4687c453d99a569a8a96bb9d30dcf",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "fe1c0ed8-7ba0-4391-9048-2fa141651e69",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  407,
+                                                              "y":  373,
+                                                              "width":  548,
+                                                              "height":  92
+                                                          },
+                                               "label":  "Resource Drill Refuel Confirmation State",
+                                               "notes":  "Resource Drill confirmation owner cloned from the owner-approved Gold Mine ROI because the controls share the same layout.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   },
+                   {
+                       "file_name":  "frame-0003.png",
+                       "captured_at_utc":  "2026-08-14T13:06:22.128229+00:00",
+                       "sha256":  "70a7a35179498dec604e36074af8705ddcb659a332cee111840398235c293bec",
+                       "width":  1366,
+                       "height":  700,
+                       "verdict":  "unreviewed",
+                       "notes":  "",
+                       "annotations":  [
+                                           {
+                                               "id":  "d176e06a-0931-4fcc-a157-733af6effa24",
+                                               "global_group_id":  null,
+                                               "bounds":  {
+                                                              "x":  407,
+                                                              "y":  373,
+                                                              "width":  548,
+                                                              "height":  92
+                                                          },
+                                               "label":  "Resource Drill Refuel Confirmation State",
+                                               "notes":  "Resource Drill confirmation owner cloned from the owner-approved Gold Mine ROI because the controls share the same layout.",
+                                               "minimum_pool_matches":  0,
+                                               "ocr_trials":  [
+
+                                                              ]
+                                           }
+                                       ]
+                   }
+               ]
+}

@@ -19,7 +19,7 @@ internal static class ExpeditionCheckpointStateCatalog
         [1],
         2,
         [
-            new OcrTargetRule("Extract", "extract"),
+            new OcrTargetRule("Extract", "extract", "extr"),
             new OcrTargetRule("Continue", "continue"),
         ],
         DebugMatchMode.ExactTargets,
@@ -66,7 +66,7 @@ internal static class ExpeditionCheckpointStateCatalog
         [1],
         2,
         [
-            new OcrTargetRule("Extract", "extract"),
+            new OcrTargetRule("Extract", "extract", "extr"),
             new OcrTargetRule("Continue", "continue"),
         ],
         DebugMatchMode.ExactTargets,

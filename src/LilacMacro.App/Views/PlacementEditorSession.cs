@@ -94,6 +94,37 @@ public sealed class PlacementEditorSession
         });
     }
 
+    public async Task CopyFromAsync(
+        PlacementMapDefinition sourceMap,
+        PlacementRouteDefinition sourceRoute,
+        int targetWidth,
+        int targetHeight,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(sourceMap);
+        ArgumentNullException.ThrowIfNull(sourceRoute);
+        EnsureOpen();
+        await FlushAsync().ConfigureAwait(false);
+        PlacementSetupDocument sourceDocument = await _store.LoadAsync(sourceMap.Id, cancellationToken).ConfigureAwait(false);
+        PlacementRouteSetup sourceSetup = PlacementRouteCatalog.EffectiveRoute(sourceDocument, sourceRoute);
+        PlacementRouteSetup copy = PlacementSetupRules.CopyRouteToSurface(
+            sourceSetup,
+            SelectedRoute!.Id,
+            sourceDocument.ImageWidth,
+            sourceDocument.ImageHeight,
+            targetWidth,
+            targetHeight);
+        await MutateRouteAsync(route =>
+        {
+            route.TeamSlot = copy.TeamSlot;
+            route.SelectedUnitSlot = copy.SelectedUnitSlot;
+            route.DefaultStepDelayMilliseconds = copy.DefaultStepDelayMilliseconds;
+            route.DefaultTargetingPriority = copy.DefaultTargetingPriority;
+            route.DefaultAutoUpgradePriority = copy.DefaultAutoUpgradePriority;
+            route.Steps = copy.Steps;
+        }).ConfigureAwait(false);
+    }
+
     public Task SetRouteDefaultsAsync(
         int teamSlot,
         int selectedUnitSlot,

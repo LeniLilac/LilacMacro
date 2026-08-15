@@ -90,4 +90,32 @@ public sealed class PlacementCursorModeTests
 
         Assert.Equal(expectedOpacity, marker.PinOpacity);
     }
+
+    [Fact]
+    public void SelectionDragDimsNearbyMarkerPins()
+    {
+        PlacementRouteSetup route = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
+        route.Steps.Insert(0, PlacementStep.CreatePlace(
+            2, 200, 300, 900, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
+        PlacementStepRowViewModel marker = PlacementStepRowFactory.Create(
+                route, cursorMode: PlacementCursorMode.Select)
+            .Single(row => row.IsPlacement);
+
+        marker.SetNearPointer(true, fadeInSelectionMode: true);
+
+        Assert.Equal(0.18, marker.PinOpacity);
+    }
+
+    [Fact]
+    public void MarkerScaleCounteractsMapZoom()
+    {
+        PlacementRouteSetup route = PlacementSetupRules.CreateRoute(PlacementRouteCatalog.SharedRouteId);
+        route.Steps.Insert(0, PlacementStep.CreatePlace(
+            2, 200, 300, 900, PlacementTargetingPriority.First, PlacementAutoUpgradePriority.Priority1));
+        PlacementStepRowViewModel marker = PlacementStepRowFactory.Create(route).Single(row => row.IsPlacement);
+
+        marker.SetZoom(2.5);
+
+        Assert.Equal(0.4, marker.MarkerScale, precision: 6);
+    }
 }

@@ -39,6 +39,19 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
+    public void DefenseStartEpisodeReopensAfterPromptClears()
+    {
+        ExpeditionDefenseStartEpisodeTracker tracker = new();
+
+        Assert.True(tracker.Observe(startGameVisible: true));
+        tracker.MarkHandled();
+        Assert.False(tracker.Observe(startGameVisible: true));
+
+        Assert.False(tracker.Observe(startGameVisible: false));
+        Assert.True(tracker.Observe(startGameVisible: true));
+    }
+
+    [Fact]
     public void TrackerCountsOnlyBossFollowedByCheckpoint()
     {
         ExpeditionRunTracker tracker = new(extractAtCheckpoint: true, bossesBeforeExtract: 1);
@@ -52,6 +65,64 @@ public sealed class ExpeditionRuntimePolicyTests
         Assert.Equal(ExpeditionNodeAction.Extract, tracker.Observe(ExpeditionNodeType.Checkpoint));
         Assert.Equal(1, tracker.RealBossesCompleted);
     }
+
+    [Fact]
+    public void CheckpointSourceReplaysItsLastActionInsteadOfWaitingForever()
+    {
+        ExpeditionRunTracker tracker = new(extractAtCheckpoint: true, bossesBeforeExtract: 1);
+
+        Assert.Equal(ExpeditionNodeAction.Wait, tracker.Observe(ExpeditionNodeType.Boss));
+        Assert.Equal(ExpeditionNodeAction.Extract, tracker.ObserveCheckpointSource());
+        Assert.Equal(ExpeditionNodeAction.Extract, tracker.ObserveCheckpointSource());
+    }
+
+    [Fact]
+    public void LiveControlProbeIsFrequentButStillPeriodic() =>
+        Assert.InRange(
+            ExpeditionLiveControlPolicy.ProbeIntervalMilliseconds,
+            1_000,
+            3_000);
+
+    [Fact]
+    public void ProgressWatchdogRejectsAnIndefiniteLocalMonitor()
+    {
+        Assert.False(ExpeditionProgressPolicy.HasStalled(
+            ExpeditionProgressPolicy.MaximumSilence - TimeSpan.FromMilliseconds(1)));
+        Assert.True(ExpeditionProgressPolicy.HasStalled(
+            ExpeditionProgressPolicy.MaximumSilence));
+        Assert.InRange(
+            ExpeditionProgressPolicy.MaximumSilence,
+            TimeSpan.FromMinutes(3),
+            TimeSpan.FromMinutes(8));
+    }
+
+    [Fact]
+    public void CheckpointControlOutranksEncounterControl()
+    {
+        Assert.Equal(
+            ExpeditionLiveControl.Checkpoint,
+            ExpeditionLiveControlPolicy.Select(checkpointAvailable: true, encounterAvailable: true));
+        Assert.Equal(
+            ExpeditionLiveControl.Encounter,
+            ExpeditionLiveControlPolicy.Select(checkpointAvailable: false, encounterAvailable: true));
+        Assert.Equal(
+            ExpeditionLiveControl.None,
+            ExpeditionLiveControlPolicy.Select(checkpointAvailable: false, encounterAvailable: false));
+    }
+
+    [Theory]
+    [InlineData(ExpeditionNodeType.Defense)]
+    [InlineData(ExpeditionNodeType.Elite)]
+    [InlineData(ExpeditionNodeType.Encounter)]
+    [InlineData(ExpeditionNodeType.Checkpoint)]
+    public void ActionableSemanticNodesRequireTheirOwnLiveControls(ExpeditionNodeType node) =>
+        Assert.True(ExpeditionLiveControlPolicy.RequiresLiveControlEvidence(node));
+
+    [Theory]
+    [InlineData(ExpeditionNodeType.Assault)]
+    [InlineData(ExpeditionNodeType.Boss)]
+    public void PassiveSemanticNodesDoNotRequireAnInputControl(ExpeditionNodeType node) =>
+        Assert.False(ExpeditionLiveControlPolicy.RequiresLiveControlEvidence(node));
 
     [Fact]
     public void EncounterAndLaterCheckpointsAllowForShipArrival()
@@ -96,6 +167,16 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
+    public void TooltipClearPointUsesEstablishedBottomRightRestingArea()
+    {
+        Assert.Equal(
+            ShopPurchasePolicy.HoverClearPoint,
+            ExpeditionNodeEvidenceService.TooltipClearPoint);
+        Assert.True(ExpeditionNodeEvidenceService.TooltipClearPoint.X > 1300);
+        Assert.True(ExpeditionNodeEvidenceService.TooltipClearPoint.Y > 650);
+    }
+
+    [Fact]
     public void LearnedNodeHoverUsesCachedOffsetThenBoundedLocalSearch()
     {
         PixelPoint marker = new(650, 74);
@@ -116,6 +197,57 @@ public sealed class ExpeditionRuntimePolicyTests
         Assert.Equal(ExpeditionNodeType.Assault, profile.Classify(13));
         Assert.Null(profile.Classify(26));
         Assert.Null(profile.Classify(80));
+    }
+
+    [Fact]
+    public void ColorProfileTracksEverySemanticNodeCalibration()
+    {
+        ExpeditionNodeColorProfile profile = new();
+        profile.Learn(ExpeditionNodeType.Assault, 14);
+        profile.Learn(ExpeditionNodeType.Checkpoint, 19);
+
+        Assert.False(profile.IsComplete);
+
+        foreach (ExpeditionNodeType node in Enum.GetValues<ExpeditionNodeType>())
+            profile.Learn(node, 10 + (int)node * 20);
+
+        Assert.True(profile.IsComplete);
+    }
+
+    [Fact]
+    public void NewlyMovedMarkerAlwaysRequiresFreshSemanticEvidence()
+    {
+        ExpeditionNodeColorProfile profile = new();
+        profile.Learn(ExpeditionNodeType.Assault, 14);
+        PixelPoint oldMarker = new(185, 23);
+        PixelPoint newMarker = new(177, 22);
+
+        Assert.Equal(
+            ExpeditionNodeType.Assault,
+            ExpeditionNodeEvidenceService.RetainVerifiedMarker(
+                oldMarker, 14, oldMarker, ExpeditionNodeType.Assault, 14));
+        Assert.Null(ExpeditionNodeEvidenceService.RetainVerifiedMarker(
+            newMarker, 19, oldMarker, ExpeditionNodeType.Assault, 14));
+
+        foreach (ExpeditionNodeType node in Enum.GetValues<ExpeditionNodeType>())
+            profile.Learn(node, 10 + (int)node * 20);
+        Assert.True(profile.IsComplete);
+        Assert.Null(ExpeditionNodeEvidenceService.RetainVerifiedMarker(
+            newMarker, 19, oldMarker, ExpeditionNodeType.Assault, 14));
+    }
+
+    [Fact]
+    public void CurrentBarHueExcludesSaturatedSceneRowsAboveTheFill()
+    {
+        byte[] pixels = new byte[700 * 62 * 3];
+        Paint(pixels, 700, new PixelRect(57, 14, 96, 5), 45, 110, 75);
+        Paint(pixels, 700, new PixelRect(57, 20, 96, 7), 220, 158, 40);
+        RgbImage bar = new(700, 62, pixels, takeOwnership: true);
+
+        double hue = Assert.IsType<double>(
+            ExpeditionNodeEvidenceService.CurrentBarHue(bar, new PixelPoint(177, 22)));
+
+        Assert.InRange(hue, 18, 20);
     }
 
     [Theory]
@@ -476,6 +608,20 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
+    public void ContinueSourceAcceptsObservedTruncatedExtractWithIndependentContinue()
+    {
+        Assert.True(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.ContinueSource,
+            [
+                Region(596, 509, 42, 18, "Extr"),
+                Region(733, 508, 69, 19, "Continue"),
+            ]).IsMatch);
+        Assert.False(DebugOcrStateRunner.Evaluate(
+            ExpeditionCheckpointStateCatalog.ContinueSource,
+            [Region(596, 509, 42, 18, "Extr")]).IsMatch);
+    }
+
+    [Fact]
     public void ContinueConfirmationRejectsTheBackgroundContinueControl()
     {
         Assert.False(DebugOcrStateRunner.Evaluate(
@@ -534,6 +680,16 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
+    public void CheckpointActionLimitStillAllowsPostActionVerification()
+    {
+        Assert.False(CheckpointTransitionPolicy.CanAct(
+            CheckpointTransitionPolicy.MaximumActions));
+        Assert.True(CheckpointTransitionPolicy.CanObserve(0));
+        Assert.False(CheckpointTransitionPolicy.CanObserve(
+            CheckpointTransitionPolicy.MaximumIndeterminateObservations));
+    }
+
+    [Fact]
     public void ModalActionIsPairedWithCancelInsteadOfSelectedByScreenOrder()
     {
         OcrTextRegion expected = Region(500, 350, 80, 20, "Restart");
@@ -577,17 +733,33 @@ public sealed class ExpeditionRuntimePolicyTests
                 ExpeditionNodeEvidenceService.FindCurrentMarker(band));
             Console.WriteLine($"frame {index + 1}: marker={ExpeditionNodeEvidenceService.BarBand.X + marker.X},{ExpeditionNodeEvidenceService.BarBand.Y + marker.Y}");
             Assert.InRange(ExpeditionNodeEvidenceService.BarBand.X + marker.X, expectedX[index] - 24, expectedX[index] + 24);
-            Assert.NotNull(ExpeditionNodeEvidenceService.CurrentBarHue(band, marker));
+            double hue = Assert.IsType<double>(ExpeditionNodeEvidenceService.CurrentBarHue(band, marker));
+            Assert.InRange(hue, 17, 21);
         }
     }
 
     private static string? FindDataset(string name)
     {
-        string path = Path.Combine(
+        string local = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
             "LilacMacro Datasets",
             name);
-        return Directory.Exists(path) ? path : null;
+        if (Directory.Exists(local)) return local;
+
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            string bundled = Path.Combine(
+                directory.FullName,
+                "src",
+                "LilacMacro.App",
+                "Assets",
+                "RuntimeEvidence",
+                name);
+            if (Directory.Exists(bundled)) return bundled;
+            directory = directory.Parent;
+        }
+        return null;
     }
 
     private static OcrTextRegion Region(int x, int y, int width, int height, string text) => new()
@@ -604,6 +776,24 @@ public sealed class ExpeditionRuntimePolicyTests
             Buffer.BlockCopy(image.Pixels, ((region.Y + y) * image.Size.Width + region.X) * 3,
                 pixels, y * region.Width * 3, region.Width * 3);
         return new RgbImage(region.Width, region.Height, pixels, takeOwnership: true);
+    }
+
+    private static void Paint(
+        byte[] pixels,
+        int width,
+        PixelRect region,
+        byte red,
+        byte green,
+        byte blue)
+    {
+        for (int y = region.Y; y < region.Bottom; y++)
+            for (int x = region.X; x < region.Right; x++)
+            {
+                int offset = (y * width + x) * 3;
+                pixels[offset] = red;
+                pixels[offset + 1] = green;
+                pixels[offset + 2] = blue;
+            }
     }
 
     private static RgbImage LoadPng(string path)

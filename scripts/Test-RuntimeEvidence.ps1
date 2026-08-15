@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 $repository = Split-Path -Parent $PSScriptRoot
 $specificationPath = Join-Path $repository 'eng\runtime-evidence.json'
 $evidenceRoot = Join-Path $repository 'src\LilacMacro.App\Assets\RuntimeEvidence'
+$contextCatalog = Join-Path $repository 'eng\runtime-state-contexts.json'
 $failures = [Collections.Generic.List[string]]::new()
 
 $specification = Get-Content -LiteralPath $specificationPath -Raw | ConvertFrom-Json
@@ -32,6 +33,31 @@ $actual = if (Test-Path -LiteralPath $evidenceRoot -PathType Container) {
 } else { @() }
 foreach ($extra in @($actual | Where-Object { $_ -notin $expected })) {
     $failures.Add("Bundled runtime evidence has an undeclared dataset: $extra.")
+}
+
+$temporaryCatalog = Join-Path ([IO.Path]::GetTempPath()) ('LilacMacro-runtime-contexts-' + [Guid]::NewGuid().ToString('N') + '.json')
+try {
+    & (Join-Path $PSScriptRoot 'Export-RuntimeContextCatalog.ps1') `
+        -EvidenceRoot $evidenceRoot -OutputPath $temporaryCatalog
+    if (-not (Test-Path -LiteralPath $contextCatalog -PathType Leaf)) {
+        $failures.Add('eng/runtime-state-contexts.json is missing.')
+    } elseif ((Get-Content -LiteralPath $temporaryCatalog -Raw) -cne
+              (Get-Content -LiteralPath $contextCatalog -Raw)) {
+        $failures.Add('eng/runtime-state-contexts.json is stale; run scripts/Export-RuntimeContextCatalog.ps1.')
+    }
+} finally {
+    if (Test-Path -LiteralPath $temporaryCatalog) {
+        Remove-Item -LiteralPath $temporaryCatalog -Force
+    }
+}
+
+$appProject = Get-Content -LiteralPath (Join-Path $repository 'src\LilacMacro.App\LilacMacro.App.csproj') -Raw
+$runtimeProject = Get-Content -LiteralPath (Join-Path $repository 'src\LilacMacro.Runtime\LilacMacro.Runtime.csproj') -Raw
+if ($appProject -match 'Content\s+Include="Assets\\RuntimeEvidence') {
+    $failures.Add('Runtime evidence datasets must not be copied into application output or publish artifacts.')
+}
+if ($runtimeProject -notmatch 'EmbeddedResource\s+Include="\.\.\\\.\.\\eng\\runtime-state-contexts\.json"') {
+    $failures.Add('The compact runtime state context catalog must be embedded in the application assembly.')
 }
 
 $stateCatalogs = @(

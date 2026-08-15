@@ -39,6 +39,30 @@ public sealed class RuntimeEvidencePolicyTests
     }
 
     [Fact]
+    public async Task EmbeddedContextCatalogMatchesRepositoryEvidenceForEveryState()
+    {
+        DebugStateDatasetContextLoader contexts = new();
+        string absentRoot = Path.Combine(
+            Path.GetTempPath(), $"LilacMacro-embedded-context-{Guid.NewGuid():N}");
+
+        foreach (DebugStateSpec state in StateSpecs())
+        {
+            DebugStateDatasetContext repository = await contexts.LoadAsync(
+                state, CancellationToken.None);
+            DebugStateDatasetContext embedded = await contexts.LoadAsync(
+                state with
+                {
+                    DatasetDirectory = Path.Combine(
+                        absentRoot, Path.GetFileName(state.DatasetDirectory)),
+                },
+                CancellationToken.None);
+
+            Assert.Equal(repository.RegionOfInterest, embedded.RegionOfInterest);
+            Assert.Equal(repository.VisualAnchors, embedded.VisualAnchors);
+        }
+    }
+
+    [Fact]
     public async Task EveryStaticSearchRegionEqualsItsBundledAnnotation()
     {
         RuntimeSearchRegionEvidence[] evidence = RuntimeSearchRegionEvidenceCatalog.All.ToArray();
@@ -155,7 +179,8 @@ public sealed class RuntimeEvidencePolicyTests
             .GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
             .Where(field => field.FieldType == typeof(DebugStateSpec))
             .Select(field => Assert.IsType<DebugStateSpec>(field.GetValue(null)))
-            .Concat(ExpeditionCheckpointStateCatalog.All());
+            .Concat(ExpeditionCheckpointStateCatalog.All())
+            .Concat(DebugCodeWorkflowCatalog.All());
 
     private static PixelRect ReadOwner(string owner)
     {

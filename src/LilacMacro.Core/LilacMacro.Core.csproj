@@ -4,4 +4,7 @@
     <RootNamespace>LilacMacro.Core</RootNamespace>
     <AssemblyName>LilacMacro.Core</AssemblyName>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" />
+  </ItemGroup>
 </Project>

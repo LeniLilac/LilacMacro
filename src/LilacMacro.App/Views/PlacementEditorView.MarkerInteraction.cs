@@ -29,13 +29,15 @@ public partial class PlacementEditorView
     private void RefreshPlacementMarkers()
     {
         if (_session.Document is null) return;
-        PlacementMarkers.ItemsSource = PlacementStepRowFactory.Create(
+        PlacementStepRowViewModel[] rows = PlacementStepRowFactory.Create(
                 _session.CurrentRoute,
                 _map?.ImageWidth ?? _session.Document.ImageWidth,
                 _map?.ImageHeight ?? _session.Document.ImageHeight,
                 _cursorMode)
             .Where(row => row.IsPlacement)
             .ToArray();
+        foreach (PlacementStepRowViewModel row in rows) row.SetZoom(_mapZoom);
+        PlacementMarkers.ItemsSource = rows;
     }
 
     private void MapSurface_OnMouseMove(object sender, MouseEventArgs eventArgs)
@@ -90,7 +92,6 @@ public partial class PlacementEditorView
 
         if (_cursorMode == PlacementCursorMode.Select)
         {
-            _timelinePanel.SelectStep(row.Step.Id);
             return;
         }
 

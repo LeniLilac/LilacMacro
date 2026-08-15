@@ -100,8 +100,8 @@ internal sealed class StoryMatchRuntimeRunner(
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken)
     {
-        if (options.GameMode == WireGameMode.Challenge)
-            throw new InvalidOperationException("Challenge cannot continue through Repeat Stage.");
+        if (!WireGameModeRepeatPolicy.Supports(options.GameMode))
+            throw new InvalidOperationException($"{options.GameMode} cannot continue through Repeat Stage.");
 
         progress.Report(new StoryWireProgress(
             StoryWireStage.MatchRuntime,

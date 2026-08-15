@@ -12,6 +12,8 @@ using LilacMacro.App.Workspace;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Updates;
+using LilacMacro.Core.Services;
+using LilacMacro.Runtime.Services;
 using LilacMacro.Windows;
 
 namespace LilacMacro.App;
@@ -27,6 +29,11 @@ public partial class MacroShellWindow : Window
     private readonly SettingsPage _settingsPage;
     private readonly WindowShutdownState _shutdown = new();
     private readonly DispatcherTimer _toastTimer;
+    private readonly ControlSnapshotTransport _controlTransport = new();
+    private readonly DiagnosticUploadTransport _diagnosticUploads = new();
+    private readonly ControlSnapshotPollingService _control;
+    private readonly CancellationTokenSource _controlCancellation = new();
+    private Task? _controlTask;
     private MacroShellPage _currentPage;
     private bool _minimizedForRun;
 
@@ -40,10 +47,24 @@ public partial class MacroShellWindow : Window
         _toastTimer.Tick += ToastTimer_OnTick;
         AppToastService.Raised += AppToastService_OnRaised;
         _ownerState = ownerState;
-        _macroPage = new MacroDashboardPage(deepDebug, _ownerState);
+        _control = new ControlSnapshotPollingService(
+            _controlTransport,
+            new ControlSnapshotStore(
+                Path.Combine(
+                    MacroInstanceContext.Current.ConfigurationRoot,
+                    "services",
+                    "control.json"),
+                new ControlSnapshotVerifier(ControlSnapshotTrust.PublicKeys)));
+        _macroPage = new MacroDashboardPage(deepDebug, _ownerState, _control);
         _macroPage.RunningChanged += MacroPage_OnRunningChanged;
         _setupPage = new PlacementSetupPage(deepDebug, _ownerState);
-        _settingsPage = new SettingsPage(deepDebug, _ownerState, _instanceManager, _updates, SetMacroHotkeyCaptureSuspended);
+        _settingsPage = new SettingsPage(
+            deepDebug,
+            _ownerState,
+            _instanceManager,
+            _updates,
+            _diagnosticUploads,
+            SetMacroHotkeyCaptureSuspended);
         _pages = new Dictionary<MacroShellPage, UserControl>
         {
             [MacroShellPage.Macro] = _macroPage,
@@ -62,6 +83,7 @@ public partial class MacroShellWindow : Window
 
     private async void MacroShellWindow_OnLoaded(object sender, RoutedEventArgs eventArgs)
     {
+        _controlTask ??= RunControlPollingAsync();
         if (_ownerState.EffectiveMinimizeBehavior == MacroMinimizeBehavior.OnApplicationStart)
             WindowState = WindowState.Minimized;
         await _settingsPage.CheckOnStartupAsync();
@@ -186,9 +208,12 @@ public partial class MacroShellWindow : Window
 
         try
         {
+            _controlCancellation.Cancel();
+            _settingsPage.CancelDiagnosticUpload();
             _setupPage.PrepareForClose();
             await _macroPage.CompleteForCloseAsync();
             await _setupPage.CompleteForCloseAsync();
+            await CompleteControlPollingAsync();
             await _ownerState.FlushAsync();
             _shutdown.CompleteFlush();
             _ = Dispatcher.BeginInvoke(
@@ -242,8 +267,32 @@ public partial class MacroShellWindow : Window
         DisposeWindowSizing();
         _macroPage.RunningChanged -= MacroPage_OnRunningChanged;
         _ownerState.DisplayOptionsChanged -= OwnerState_OnDisplayOptionsChanged;
+        _controlCancellation.Cancel();
+        _controlCancellation.Dispose();
+        _controlTransport.Dispose();
+        _diagnosticUploads.Dispose();
         _updates.Dispose();
         _toastTimer.Stop();
         AppToastService.Raised -= AppToastService_OnRaised;
+    }
+
+    private async Task RunControlPollingAsync()
+    {
+        try
+        {
+            await _control.RunAsync(_controlCancellation.Token);
+        }
+        catch (OperationCanceledException) when (_controlCancellation.IsCancellationRequested) { }
+        catch (Exception exception)
+        {
+            AppToastService.ShowError("SERVICE STATUS PAUSED", exception.Message);
+        }
+    }
+
+    private async Task CompleteControlPollingAsync()
+    {
+        if (_controlTask is null) return;
+        await _controlTask;
+        _controlTask = null;
     }
 }

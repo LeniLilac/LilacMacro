@@ -32,9 +32,59 @@ public static class ExpeditionNodeArrivalPolicy
     public const int RetryMilliseconds = 500;
 }
 
+public enum ExpeditionLiveControl
+{
+    None,
+    Checkpoint,
+    Encounter,
+}
+
+public static class ExpeditionLiveControlPolicy
+{
+    public const int ProbeIntervalMilliseconds = 2_000;
+
+    public static ExpeditionLiveControl Select(bool checkpointAvailable, bool encounterAvailable) =>
+        checkpointAvailable
+            ? ExpeditionLiveControl.Checkpoint
+            : encounterAvailable
+                ? ExpeditionLiveControl.Encounter
+                : ExpeditionLiveControl.None;
+
+    public static bool RequiresLiveControlEvidence(ExpeditionNodeType node) =>
+        node is ExpeditionNodeType.Defense or ExpeditionNodeType.Elite or
+            ExpeditionNodeType.Encounter or ExpeditionNodeType.Checkpoint;
+}
+
+public static class ExpeditionProgressPolicy
+{
+    public static readonly TimeSpan MaximumSilence = TimeSpan.FromMinutes(5);
+
+    public static bool HasStalled(TimeSpan elapsedSinceProgress) =>
+        elapsedSinceProgress >= MaximumSilence;
+}
+
+public sealed class ExpeditionDefenseStartEpisodeTracker
+{
+    private bool _handled;
+
+    public bool Observe(bool startGameVisible)
+    {
+        if (!startGameVisible)
+        {
+            _handled = false;
+            return false;
+        }
+
+        return !_handled;
+    }
+
+    public void MarkHandled() => _handled = true;
+}
+
 public sealed class ExpeditionRunTracker(bool extractAtCheckpoint, int bossesBeforeExtract)
 {
     private ExpeditionNodeType? _previous;
+    private ExpeditionNodeAction? _lastCheckpointAction;
 
     public int RealBossesCompleted { get; private set; }
 
@@ -54,5 +104,17 @@ public sealed class ExpeditionRunTracker(bool extractAtCheckpoint, int bossesBef
             ExpeditionNodeType.Checkpoint => ExpeditionNodeAction.Continue,
             _ => ExpeditionNodeAction.Wait,
         };
+    }
+
+    public ExpeditionNodeAction ObserveCheckpointSource()
+    {
+        ExpeditionNodeAction action = Observe(ExpeditionNodeType.Checkpoint);
+        if (action != ExpeditionNodeAction.Wait)
+        {
+            _lastCheckpointAction = action;
+            return action;
+        }
+
+        return _lastCheckpointAction ?? ExpeditionNodeAction.Continue;
     }
 }

@@ -39,6 +39,7 @@ public partial class PlacementEditorView
         drag.Container.RenderTransform = new TranslateTransform(
             x - drag.OriginalX,
             y - drag.OriginalY);
+        FadeNearbyMarkersDuringSelectionDrag(drag, x, y);
         eventArgs.Handled = true;
     }
 
@@ -47,6 +48,7 @@ public partial class PlacementEditorView
         if (_placementMarkerDrag is not { } drag) return;
 
         _placementMarkerDrag = null;
+        ClearNearbyPlacementMarkers();
         drag.Container.RenderTransform = Transform.Identity;
         ApplyCursorModeCursor();
         eventArgs.Handled = true;
@@ -62,6 +64,19 @@ public partial class PlacementEditorView
             drag.Row.Step.Id,
             drag.CurrentX,
             drag.CurrentY));
+    }
+
+    private void FadeNearbyMarkersDuringSelectionDrag(PlacementMarkerDragState drag, int x, int y)
+    {
+        foreach (PlacementStepRowViewModel row in PlacementMarkers.Items.OfType<PlacementStepRowViewModel>())
+        {
+            row.SetNearPointer(!ReferenceEquals(row, drag.Row) && PlacementMarkerPresentation.IsNearPointer(
+                row.Step.X,
+                row.Step.Y,
+                x,
+                y,
+                _mapZoom), fadeInSelectionMode: true);
+        }
     }
 
     private sealed class PlacementMarkerDragState(

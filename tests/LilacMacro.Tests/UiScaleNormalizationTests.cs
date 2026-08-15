@@ -113,6 +113,22 @@ public sealed class UiScaleNormalizationTests
     }
 
     [Fact]
+    public void GearDetector_FollowsToolbarGrowthWithoutAcceptingTheInsertedControl()
+    {
+        RgbImage image = BlankImage();
+        Fill(image, new PixelRect(210, 12, 41, 44), 25, 28, 32);
+        Fill(image, new PixelRect(230, 31, 3, 3), 235, 235, 235);
+        Fill(image, new PixelRect(236, 31, 3, 3), 235, 235, 235);
+        Fill(image, new PixelRect(242, 31, 3, 3), 235, 235, 235);
+
+        Fill(image, new PixelRect(256, 12, 41, 44), 25, 28, 32);
+        Fill(image, new PixelRect(267, 25, 18, 18), 235, 235, 235);
+        Fill(image, new PixelRect(272, 30, 8, 8), 25, 28, 32);
+
+        Assert.Equal(new PixelPoint(276, 34), UiScalePanelDetector.DetectSettingsGear(image));
+    }
+
+    [Fact]
     public void GearDetector_RejectsMissingButtonAndIncompleteGlyph()
     {
         RgbImage missingButton = BlankImage();

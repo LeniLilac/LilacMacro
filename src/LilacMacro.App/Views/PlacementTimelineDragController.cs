@@ -11,7 +11,8 @@ namespace LilacMacro.App.Views;
 internal sealed class ListReorderEventArgs<TItem>(
     TItem source,
     TItem target,
-    bool insertAfter) : EventArgs
+    bool insertAfter,
+    bool dropOnTarget = false) : EventArgs
     where TItem : class
 {
     public TItem Source { get; } = source;
@@ -19,6 +20,8 @@ internal sealed class ListReorderEventArgs<TItem>(
     public TItem Target { get; } = target;
 
     public bool InsertAfter { get; } = insertAfter;
+
+    public bool DropOnTarget { get; } = dropOnTarget;
 }
 
 internal static class ListReorderDestination
@@ -67,6 +70,7 @@ internal sealed class ListBoxReorderDragController<TItem>
 {
     private readonly ListBox _list;
     private readonly FrameworkElement _previewHost;
+    private readonly Func<TItem, TItem, bool>? _canDropOnTarget;
     private readonly DispatcherTimer _edgeScrollTimer;
     private Point? _origin;
     private TItem? _dragged;
@@ -80,11 +84,15 @@ internal sealed class ListBoxReorderDragController<TItem>
     private DragPreviewAdorner? _previewAdorner;
     private TItem? _lastTarget;
     private bool _lastInsertAfter;
+    private bool _lastDropOnTarget;
 
-    public ListBoxReorderDragController(ListBox list)
+    public ListBoxReorderDragController(
+        ListBox list,
+        Func<TItem, TItem, bool>? canDropOnTarget = null)
     {
         _list = list;
         _previewHost = list;
+        _canDropOnTarget = canDropOnTarget;
         _edgeScrollTimer = new DispatcherTimer(DispatcherPriority.Input)
         {
             Interval = TimeSpan.FromMilliseconds(45),
@@ -140,7 +148,11 @@ internal sealed class ListBoxReorderDragController<TItem>
             if (_lastTarget is not null)
                 ReorderRequested?.Invoke(
                     this,
-                    new ListReorderEventArgs<TItem>(_dragged, _lastTarget, _lastInsertAfter));
+                    new ListReorderEventArgs<TItem>(
+                        _dragged,
+                        _lastTarget,
+                        _lastInsertAfter,
+                        _lastDropOnTarget));
             _list.SelectedItem = _dragged;
             eventArgs.Handled = true;
         }
@@ -161,6 +173,7 @@ internal sealed class ListBoxReorderDragController<TItem>
         _isDragging = false;
         _lastTarget = null;
         _lastInsertAfter = false;
+        _lastDropOnTarget = false;
         ClearInsertionAdorner();
         ClearPreviewAdorner();
         if (ReferenceEquals(Mouse.Captured, _list)) Mouse.Capture(null);
@@ -206,7 +219,12 @@ internal sealed class ListBoxReorderDragController<TItem>
 
     private void UpdateDropTarget(Point position)
     {
-        if (!TryFindTarget(position, out TItem? target, out ListBoxItem? container, out bool insertAfter))
+        if (!TryFindTarget(
+                position,
+                out TItem? target,
+                out ListBoxItem? container,
+                out bool insertAfter,
+                out bool dropOnTarget))
         {
             ClearInsertionAdorner();
             return;
@@ -214,18 +232,21 @@ internal sealed class ListBoxReorderDragController<TItem>
 
         _lastTarget = target;
         _lastInsertAfter = insertAfter;
-        ShowInsertionAdorner(container, insertAfter);
+        _lastDropOnTarget = dropOnTarget;
+        ShowInsertionAdorner(container, insertAfter, dropOnTarget);
     }
 
     private bool TryFindTarget(
         Point position,
         [NotNullWhen(true)] out TItem? target,
         [NotNullWhen(true)] out ListBoxItem? container,
-        out bool insertAfter)
+        out bool insertAfter,
+        out bool dropOnTarget)
     {
         target = null;
         container = null;
         insertAfter = false;
+        dropOnTarget = false;
         if (_list.Items.Count == 0) return false;
 
         int sourceIndex = _dragged is null ? -1 : _list.Items.IndexOf(_dragged);
@@ -245,6 +266,14 @@ internal sealed class ListBoxReorderDragController<TItem>
         container = _list.ItemContainerGenerator.ContainerFromIndex(hit.TargetIndex) as ListBoxItem;
         target = container?.DataContext as TItem;
         insertAfter = hit.InsertAfter;
+        if (_dragged is not null && target is not null && container is not null &&
+            _canDropOnTarget?.Invoke(_dragged, target) == true)
+        {
+            double top = container.TranslatePoint(new Point(), _list).Y;
+            double localY = position.Y - top;
+            double dropZoneBottom = Math.Min(44, container.ActualHeight - 8);
+            dropOnTarget = localY >= 8 && localY <= dropZoneBottom;
+        }
         return target is not null && container is not null;
     }
 
@@ -302,15 +331,20 @@ internal sealed class ListBoxReorderDragController<TItem>
         return null;
     }
 
-    private void ShowInsertionAdorner(ListBoxItem item, bool insertAfter)
+    private void ShowInsertionAdorner(ListBoxItem item, bool insertAfter, bool dropOnTarget)
     {
-        if (ReferenceEquals(item, _adornedItem) && _insertionAdorner?.InsertAfter == insertAfter) return;
+        if (ReferenceEquals(item, _adornedItem) &&
+            _insertionAdorner?.InsertAfter == insertAfter &&
+            _insertionAdorner.DropOnTarget == dropOnTarget)
+        {
+            return;
+        }
         ClearInsertionAdorner();
         AdornerLayer? layer = AdornerLayer.GetAdornerLayer(item);
         if (layer is null) return;
         Brush brush = _list.TryFindResource("PinkBrush") as Brush ?? Brushes.DeepPink;
         _adornedItem = item;
-        _insertionAdorner = new InsertionAdorner(item, insertAfter, brush);
+        _insertionAdorner = new InsertionAdorner(item, insertAfter, dropOnTarget, brush);
         layer.Add(_insertionAdorner);
         _insertionAdornerLayer = layer;
     }
@@ -334,9 +368,14 @@ internal sealed class ListBoxReorderDragController<TItem>
     {
         private readonly Pen _pen;
 
-        public InsertionAdorner(UIElement element, bool insertAfter, Brush brush) : base(element)
+        public InsertionAdorner(
+            UIElement element,
+            bool insertAfter,
+            bool dropOnTarget,
+            Brush brush) : base(element)
         {
             InsertAfter = insertAfter;
+            DropOnTarget = dropOnTarget;
             IsHitTestVisible = false;
             _pen = new Pen(brush, 3);
             _pen.Freeze();
@@ -344,8 +383,20 @@ internal sealed class ListBoxReorderDragController<TItem>
 
         public bool InsertAfter { get; }
 
+        public bool DropOnTarget { get; }
+
         protected override void OnRender(DrawingContext drawingContext)
         {
+            if (DropOnTarget)
+            {
+                Rect target = new(
+                    1.5,
+                    1.5,
+                    Math.Max(0, AdornedElement.RenderSize.Width - 3),
+                    Math.Max(0, Math.Min(44, AdornedElement.RenderSize.Height) - 3));
+                drawingContext.DrawRoundedRectangle(null, _pen, target, 3, 3);
+                return;
+            }
             double y = InsertAfter ? AdornedElement.RenderSize.Height - 1.5 : 1.5;
             drawingContext.DrawLine(_pen, new Point(0, y), new Point(AdornedElement.RenderSize.Width, y));
         }

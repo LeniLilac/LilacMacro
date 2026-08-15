@@ -33,27 +33,38 @@ internal sealed class StoryWireTestRunner(
 
         if (!await CheckAsync(StoryWireStage.Lobby, DebugWorkflowCatalog.Lobby, _debug.CheckLobbyAsync, options, progress, cancellationToken))
             return Failed(StoryWireStage.Lobby);
-        if (!await OpenNavigationAsync(
-                StoryWireStage.Units,
-                options.NavigationKeys.UnitInventory,
-                token => _lobby.OpenUnitsAsync(options.Device, token),
-                DebugWorkflowCatalog.Lobby,
-                DebugWorkflowCatalog.UnitInventory,
-                options,
-                progress,
-                cancellationToken))
-            return Failed(StoryWireStage.Units);
-        if (!await TransitionAsync(
-                StoryWireStage.Teams,
-                DebugWorkflowCatalog.UnitInventory,
-                DebugWorkflowCatalog.TeamSwap,
-                token => _debug.OpenTeamsAsync(options.Device, token),
-                options,
-                progress,
-                cancellationToken))
-            return Failed(StoryWireStage.Teams);
-        if (!await LoadTeamAsync(options, progress, cancellationToken))
-            return Failed(StoryWireStage.LoadTeam);
+        if (options.SkipTeamLoad)
+        {
+            progress.Report(new StoryWireProgress(
+                StoryWireStage.LoadTeam,
+                StoryWireStageStatus.Passed,
+                $"TEAM {options.TeamNumber} RETAINED FROM THIS MACRO RUN",
+                [$"TEAM {options.TeamNumber} RETAINED"]));
+        }
+        else
+        {
+            if (!await OpenNavigationAsync(
+                    StoryWireStage.Units,
+                    options.NavigationKeys.UnitInventory,
+                    token => _lobby.OpenUnitsAsync(options.Device, token),
+                    DebugWorkflowCatalog.Lobby,
+                    DebugWorkflowCatalog.UnitInventory,
+                    options,
+                    progress,
+                    cancellationToken))
+                return Failed(StoryWireStage.Units);
+            if (!await TransitionAsync(
+                    StoryWireStage.Teams,
+                    DebugWorkflowCatalog.UnitInventory,
+                    DebugWorkflowCatalog.TeamSwap,
+                    token => _debug.OpenTeamsAsync(options.Device, token),
+                    options,
+                    progress,
+                    cancellationToken))
+                return Failed(StoryWireStage.Teams);
+            if (!await LoadTeamAsync(options, progress, cancellationToken))
+                return Failed(StoryWireStage.LoadTeam);
+        }
         if (options.GameMode == WireGameMode.Event)
         {
             if (!await OpenNavigationAsync(
@@ -187,10 +198,15 @@ internal sealed class StoryWireTestRunner(
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(progress);
-        if (options.GameMode is WireGameMode.Challenge or WireGameMode.Expedition)
+        if (!WireGameModeRepeatPolicy.Supports(options.GameMode))
             throw new InvalidOperationException($"{options.GameMode} cannot continue through Repeat Stage.");
 
         await _debug.PrepareAsync(cancellationToken);
+        if (options.GameMode == WireGameMode.Expedition)
+        {
+            return await _expeditionRuntime.RunAsync(
+                options, progress, alignCamera: false, cancellationToken);
+        }
         if (!await CheckAsync(
                 StoryWireStage.MatchPrestart,
                 DebugWorkflowCatalog.MatchPrestart,

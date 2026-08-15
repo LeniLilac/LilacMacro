@@ -4,6 +4,7 @@
              xmlns:controls="clr-namespace:LilacMacro.App.Controls"
              xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
              Focusable="True"
+             PreviewMouseWheel="PlacementEditor_OnPreviewMouseWheel"
              PreviewKeyDown="PlacementEditor_OnPreviewKeyDown">
     <UserControl.Resources>
         <Style x:Key="CompactButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
@@ -33,6 +34,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Button x:Name="BackToMapsButton" Height="38" Padding="13,5" Style="{StaticResource ButtonStyle}"
                     Content="BACK TO MAPS" Click="BackToMaps_OnClick" />
@@ -45,7 +47,9 @@
             <ComboBox x:Name="TeamSelector" Grid.Column="3" Width="150" Margin="0,0,8,0"
                       DisplayMemberPath="Label" SelectedValuePath="Value"
                       SelectionChanged="TeamSelector_OnSelectionChanged" />
-            <Button x:Name="ResetButton" Grid.Column="5" Width="76"
+            <Button x:Name="CopySetupButton" Grid.Column="5" Margin="0,0,8,0" Style="{StaticResource CompactButtonStyle}"
+                    Content="COPY SETUP" Click="CopySetup_OnClick" />
+            <Button x:Name="ResetButton" Grid.Column="6" Width="76"
                     Style="{StaticResource CompactButtonStyle}"
                     Background="{DynamicResource DangerBrush}"
                     Content="RESET" Click="Reset_OnClick" />
@@ -78,7 +82,6 @@
                                   VerticalContentAlignment="Center"
                                   PanningMode="Both"
                                   SizeChanged="MapViewport_OnSizeChanged"
-                                  PreviewMouseWheel="MapViewport_OnPreviewMouseWheel"
                                   PreviewMouseDown="MapViewport_OnMouseMiddleButtonDown"
                                   MouseMove="MapViewport_OnMouseMove"
                                   PreviewMouseUp="MapViewport_OnMouseMiddleButtonUp"
@@ -117,7 +120,11 @@
                                           Width="{Binding MarkerLayout.CanvasWidth}"
                                           Height="{Binding MarkerLayout.CanvasHeight}"
                                           Background="Transparent"
+                                          RenderTransformOrigin="0.363636,0.782609"
                                           PreviewMouseLeftButtonDown="PlacementMarker_OnPreviewMouseLeftButtonDown">
+                                        <Grid.RenderTransform>
+                                            <ScaleTransform ScaleX="{Binding MarkerScale}" ScaleY="{Binding MarkerScale}" />
+                                        </Grid.RenderTransform>
                                         <Grid.Style>
                                             <Style TargetType="Grid">
                                                 <Setter Property="Cursor" Value="Cross" />
@@ -313,5 +320,37 @@
             <ContentControl x:Name="TimelineHost" Grid.Row="2" />
             </Grid>
         </ScrollViewer>
+
+        <Grid x:Name="CopySetupOverlay" Grid.RowSpan="2" Panel.ZIndex="100" Visibility="Collapsed">
+            <Border Background="{DynamicResource CanvasBrush}" Opacity="0.58" />
+            <Border Width="480" Padding="18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource InkBrush}"
+                    BorderThickness="2" CornerRadius="5">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock FontSize="13" FontWeight="Black" Text="COPY SETUP" />
+                        <Button HorizontalAlignment="Right" Style="{StaticResource CompactButtonStyle}"
+                                ToolTip="Close" Click="CloseCopySetup_OnClick">
+                            <controls:LucideIcon Width="13" Height="13" Data="{StaticResource Lucide.X}" />
+                        </Button>
+                    </Grid>
+                    <TextBlock Margin="0,16,0,6" Style="{StaticResource FieldLabelStyle}" Text="SOURCE MAP" />
+                    <ComboBox x:Name="CopySourceMapSelector" DisplayMemberPath="CopyLabel"
+                              SelectionChanged="CopySourceMapSelector_OnSelectionChanged" />
+                    <TextBlock Margin="0,14,0,6" Style="{StaticResource FieldLabelStyle}" Text="SOURCE ROUTE" />
+                    <ComboBox x:Name="CopySourceRouteSelector" DisplayMemberPath="Label" />
+                    <TextBlock Margin="0,14,0,0" Foreground="{DynamicResource InkSoftBrush}"
+                               TextWrapping="Wrap"
+                               Text="Copies team, defaults, placements, and every timeline action. Reference views of one map already share a setup." />
+                    <StackPanel Margin="0,18,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
+                        <Button Style="{StaticResource CompactButtonStyle}" Content="CANCEL"
+                                Click="CloseCopySetup_OnClick" />
+                        <Button Margin="8,0,0,0" Style="{StaticResource CompactButtonStyle}"
+                                Background="{DynamicResource AccentBrush}" Content="COPY"
+                                Click="ApplyCopySetup_OnClick" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

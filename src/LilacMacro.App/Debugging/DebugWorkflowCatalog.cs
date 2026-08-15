@@ -171,25 +171,13 @@ internal static class DebugWorkflowCatalog
         new("Buildings", "resources and buildings", "resources and buildin"),
     ];
 
-    public static readonly IReadOnlyList<OcrTargetRule> GoldMineRefuelTargets =
+    public static readonly IReadOnlyList<OcrTargetRule> RefuelPanelTargets =
     [
         new("Add Fuel", "add fuel", "addfuel"),
-        new("Fuel Cell", "fuel cell"),
-        new("Rewards", "rewards"),
-        new("Gold Mine", "start generating gold", "generating gold"),
     ];
 
-    public static readonly IReadOnlyList<OcrTargetRule> ResourceDrillRefuelTargets =
+    public static readonly IReadOnlyList<OcrTargetRule> RefuelConfirmationTargets =
     [
-        new("Add Fuel", "add fuel", "addfuel"),
-        new("Fuel Cell", "fuel cell"),
-        new("Rewards", "rewards"),
-        new("Resource Drill", "start mining for", "orill to start mining"),
-    ];
-
-    public static readonly IReadOnlyList<OcrTargetRule> AddFuelDialogTargets =
-    [
-        new("Add Fuel", "add fuel", "addfuel"),
         new("Confirm", "confirm"),
         new("Cancel", "cancel"),
     ];
@@ -271,34 +259,45 @@ internal static class DebugWorkflowCatalog
 
     public static readonly DebugStateSpec GoldMineRefuel = new(
         "GOLD MINE REFUEL",
-        Dataset("gold-mine-fuel-refuel-20260812-184313"),
-        [1],
-        4,
-        GoldMineRefuelTargets,
+        Dataset("new-gold-mine-20260814-125459"),
+        [1, 2, 3],
+        1,
+        RefuelPanelTargets,
         DebugMatchMode.DeclarativeEvidence,
-        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Gold Mine"],
-        RegionLabel: "Gold Mine Refuel State");
+        RequiredTargetNames: ["Add Fuel"],
+        RegionLabel: "Gold Mine Add Fuel State");
 
     public static readonly DebugStateSpec ResourceDrillRefuel = new(
         "RESOURCE DRILL REFUEL",
-        Dataset("drill-fuel-refuel-20260812-184726"),
-        [1],
-        4,
-        ResourceDrillRefuelTargets,
+        Dataset("new-drill-refuel-20260814-125925"),
+        [1, 2, 3],
+        1,
+        RefuelPanelTargets,
         DebugMatchMode.DeclarativeEvidence,
-        RequiredTargetNames: ["Add Fuel", "Fuel Cell", "Rewards", "Resource Drill"],
-        RegionLabel: "Resource Drill Refuel State");
+        RequiredTargetNames: ["Add Fuel"],
+        RegionLabel: "Resource Drill Add Fuel State");
 
-    public static readonly DebugStateSpec AddFuelDialog = new(
-        "ADD FUEL DIALOG",
-        Dataset("gold-mine-fuel-refuel-20260812-184313"),
-        [2],
-        3,
-        AddFuelDialogTargets,
+    public static readonly DebugStateSpec GoldMineRefuelConfirmation = new(
+        "GOLD MINE REFUEL CONFIRMATION",
+        Dataset("new-gold-mine-confirm-flow-20260814-125718"),
+        [1, 2, 3],
+        2,
+        RefuelConfirmationTargets,
         DebugMatchMode.DeclarativeEvidence,
-        RequiredTargetNames: ["Add Fuel", "Confirm", "Cancel"],
+        RequiredTargetNames: ["Confirm", "Cancel"],
         SameRowTargetNames: ["Confirm", "Cancel"],
-        RegionLabel: "Add Fuel Dialog State");
+        RegionLabel: "Gold Mine Refuel Confirmation State");
+
+    public static readonly DebugStateSpec ResourceDrillRefuelConfirmation = new(
+        "RESOURCE DRILL REFUEL CONFIRMATION",
+        Dataset("new-drill-refuel-confirm-flow-20260814-130600"),
+        [1, 2, 3],
+        2,
+        RefuelConfirmationTargets,
+        DebugMatchMode.DeclarativeEvidence,
+        RequiredTargetNames: ["Confirm", "Cancel"],
+        SameRowTargetNames: ["Confirm", "Cancel"],
+        RegionLabel: "Resource Drill Refuel Confirmation State");
 
     public static readonly DebugStateSpec ShopAreas = new(
         "SHOP AREAS",

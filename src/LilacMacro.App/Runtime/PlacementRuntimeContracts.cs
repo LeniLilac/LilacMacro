@@ -36,6 +36,27 @@ internal sealed class PlacementExecutionState(
     public PlacementAutoUpgradePriority AutoUpgrade { get; set; } = PlacementAutoUpgradePriority.Off;
 }
 
-internal sealed record ExpeditionPlacementSession(
-    IReadOnlyList<PlacementExecutionState> ActivePlacements,
-    UnitPanelLayout? PanelLayout);
+internal sealed class ExpeditionPlacementSession(
+    IReadOnlyList<PlacementExecutionState> activePlacements,
+    UnitPanelLayout? panelLayout)
+{
+    private readonly HashSet<Guid> _retainedPhysicalPlacements = [];
+
+    public IReadOnlyList<PlacementExecutionState> ActivePlacements { get; } = activePlacements;
+
+    public UnitPanelLayout? PanelLayout { get; } = panelLayout;
+
+    public IReadOnlyList<PlacementExecutionState> ReplayCandidates => ActivePlacements
+        .Where(state => !_retainedPhysicalPlacements.Contains(state.Placement.Id))
+        .ToArray();
+
+    public bool IsRetainedPhysical(Guid placementId) =>
+        _retainedPhysicalPlacements.Contains(placementId);
+
+    public void MarkRetainedPhysical(Guid placementId)
+    {
+        if (ActivePlacements.All(state => state.Placement.Id != placementId))
+            throw new ArgumentOutOfRangeException(nameof(placementId));
+        _retainedPhysicalPlacements.Add(placementId);
+    }
+}

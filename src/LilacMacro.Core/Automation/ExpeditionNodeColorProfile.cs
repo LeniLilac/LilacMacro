@@ -2,10 +2,13 @@ namespace LilacMacro.Core.Automation;
 
 public sealed record ExpeditionNodeColorProfile
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public int Version { get; init; } = CurrentVersion;
     public Dictionary<ExpeditionNodeType, double> Hues { get; init; } = [];
+
+    public bool IsComplete => Enum.GetValues<ExpeditionNodeType>()
+        .All(Hues.ContainsKey);
 
     public ExpeditionNodeType? Classify(double hue, double maximumDistance = 8, double minimumMargin = 2)
     {

@@ -12,6 +12,7 @@ using LilacMacro.App.Notifications;
 using LilacMacro.App.Updates;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.Core.Updates;
+using LilacMacro.Runtime.Services;
 using LilacMacro.Windows;
 
 namespace LilacMacro.App.Views;
@@ -24,6 +25,7 @@ public partial class SettingsPage : UserControl
     private readonly Action<bool> _keyCaptureStateChanged;
     private readonly ApplicationUpdateService _updates;
     private readonly DiscordWebhookClient _discord = new();
+    private readonly DiagnosticUploadPanel _diagnosticUploadPanel;
     private MacroKeyBinding? _capturingBinding;
     private bool _updatingDisplayControls;
     private bool _updatingThemeControls;
@@ -33,6 +35,7 @@ public partial class SettingsPage : UserControl
         MacroOwnerState ownerState,
         LocalInstanceManagerController instanceManager,
         ApplicationUpdateService updates,
+        IDiagnosticUploadTransport diagnosticUploads,
         Action<bool> keyCaptureStateChanged)
     {
         _deepDebug = deepDebug;
@@ -40,6 +43,11 @@ public partial class SettingsPage : UserControl
         _updates = updates;
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
+        _diagnosticUploadPanel = new DiagnosticUploadPanel(
+            ownerState,
+            new DiagnosticInstallationStore(MacroInstanceContext.Current.ConfigurationRoot),
+            diagnosticUploads);
+        DiagnosticUploadHost.Content = _diagnosticUploadPanel;
         MacroVersionText.Text = BuildVersion();
         LayoutProfileCombo.ItemsSource = new[] { "1920 x 1080 - full dock", "1366 x 768 - compact" };
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on app start" };
@@ -438,6 +446,8 @@ public partial class SettingsPage : UserControl
         Directory.CreateDirectory(_deepDebug.DiagnosticsRoot);
         Process.Start(new ProcessStartInfo(_deepDebug.DiagnosticsRoot) { UseShellExecute = true });
     }
+
+    internal void CancelDiagnosticUpload() => _diagnosticUploadPanel.Cancel();
 
     private void ManualRecording_OnChanged(object sender, RoutedEventArgs eventArgs)
     {

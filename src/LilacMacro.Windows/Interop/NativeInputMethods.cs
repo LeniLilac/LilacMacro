@@ -52,6 +52,9 @@ internal static class NativeInputMethods
     internal static extern uint MapVirtualKey(uint code, uint mapType);
 
     [DllImport("user32.dll")]
+    internal static extern short GetKeyState(int virtualKey);
+
+    [DllImport("user32.dll")]
     internal static extern void keybd_event(
         byte virtualKey,
         byte scanCode,

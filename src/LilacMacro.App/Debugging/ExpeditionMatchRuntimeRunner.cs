@@ -55,17 +55,73 @@ internal sealed class ExpeditionMatchRuntimeRunner(
             await _checkpoint.ContinueAsync(options.Device, report, cancellationToken).ConfigureAwait(false);
 
             ExpeditionRunTracker tracker = new(options.ExtractAtCheckpoint, options.BossesBeforeExtract);
+            ExpeditionDefenseStartEpisodeTracker defenseStartEpisode = new();
+            _nodes.ResetForMatch();
+            int semanticRevision = _nodes.SemanticRevision;
+            Stopwatch progressWatchdog = Stopwatch.StartNew();
+            Stopwatch liveControlProbe = Stopwatch.StartNew();
+            bool initialLiveControlProbe = true;
             ExpeditionNodeType? candidate = null;
             int stable = 0;
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                if (ExpeditionProgressPolicy.HasStalled(progressWatchdog.Elapsed))
+                {
+                    throw new TimeoutException(
+                        "Expedition produced no verified state transition for five minutes.");
+                }
                 MatchTerminalOutcome? terminal = await _terminal.TryObserveAsync(
                     options.Device, cancellationToken).ConfigureAwait(false);
                 if (terminal is MatchTerminalOutcome outcome) return Passed(outcome, progress);
 
+                if (initialLiveControlProbe || liveControlProbe.ElapsedMilliseconds >=
+                    ExpeditionLiveControlPolicy.ProbeIntervalMilliseconds)
+                {
+                    initialLiveControlProbe = false;
+                    liveControlProbe.Restart();
+                    ExpeditionLiveControl control = await _checkpoint.ObserveLiveControlAsync(
+                        options.Device, report, cancellationToken).ConfigureAwait(false);
+                    if (control == ExpeditionLiveControl.Checkpoint)
+                    {
+                        candidate = null;
+                        stable = 0;
+                        ExpeditionNodeAction checkpointAction = tracker.ObserveCheckpointSource();
+                        report($"CHECKPOINT LIVE CONTROL | {checkpointAction.ToString().ToUpperInvariant()}");
+                        await RunActionAsync(
+                            checkpointAction, placement, options, report, cancellationToken)
+                            .ConfigureAwait(false);
+                        progressWatchdog.Restart();
+                        if (checkpointAction == ExpeditionNodeAction.Extract)
+                        {
+                            MatchTerminalOutcome extractionOutcome = await WaitTerminalWithIdleRewardAsync(
+                                options.Device, report, cancellationToken).ConfigureAwait(false);
+                            return Passed(extractionOutcome, progress);
+                        }
+                        continue;
+                    }
+
+                    if (control == ExpeditionLiveControl.Encounter)
+                    {
+                        candidate = null;
+                        stable = 0;
+                        tracker.Observe(ExpeditionNodeType.Encounter);
+                        report("ENCOUNTER LIVE CONTROL | CONTINUE");
+                        await _encounter.RunAsync(
+                            options.Device, report, cancellationToken).ConfigureAwait(false);
+                        progressWatchdog.Restart();
+                        continue;
+                    }
+                }
+
                 ExpeditionNodeType? observed = await _nodes.ObserveAsync(
                     options.Device, report, cancellationToken).ConfigureAwait(false);
+                if (_nodes.SemanticRevision != semanticRevision)
+                {
+                    semanticRevision = _nodes.SemanticRevision;
+                    progressWatchdog.Restart();
+                    report("EXPEDITION SEMANTIC NODE PROGRESS VERIFIED");
+                }
                 if (observed is null)
                 {
                     candidate = null;
@@ -83,10 +139,41 @@ internal sealed class ExpeditionMatchRuntimeRunner(
 
                 if (candidate is ExpeditionNodeType node && stable >= 2)
                 {
-                    ExpeditionNodeAction action = tracker.Observe(node);
+                    ExpeditionNodeAction action = ExpeditionNodeAction.Wait;
+                    if (node is ExpeditionNodeType.Defense or ExpeditionNodeType.Elite)
+                    {
+                        DebugOcrSnapshot prestart = await _states.RunAsync(
+                            DebugWorkflowCatalog.MatchPrestart,
+                            options.Device,
+                            cancellationToken).ConfigureAwait(false);
+                        if (defenseStartEpisode.Observe(prestart.Evaluation.IsMatch))
+                        {
+                            tracker.Observe(node);
+                            action = ExpeditionNodeAction.ReplayPlacementsAndStart;
+                            report("NEW DEFENSE START GAME EPISODE VERIFIED");
+                        }
+                    }
+                    else
+                    {
+                        defenseStartEpisode.Observe(startGameVisible: false);
+                        if (ExpeditionLiveControlPolicy.RequiresLiveControlEvidence(node))
+                        {
+                            report($"{node.ToString().ToUpperInvariant()} SEMANTIC EVIDENCE | WAITING FOR LIVE CONTROLS");
+                        }
+                        else
+                        {
+                            action = tracker.Observe(node);
+                        }
+                    }
+
                     stable = 0;
                     await RunActionAsync(action, placement, options, report, cancellationToken)
                         .ConfigureAwait(false);
+                    if (action == ExpeditionNodeAction.ReplayPlacementsAndStart)
+                    {
+                        defenseStartEpisode.MarkHandled();
+                        progressWatchdog.Restart();
+                    }
                     if (action == ExpeditionNodeAction.Extract)
                     {
                         MatchTerminalOutcome extractionOutcome = await WaitTerminalWithIdleRewardAsync(

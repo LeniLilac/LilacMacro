@@ -39,6 +39,7 @@ internal sealed class MacroOwnerState
         _encryptedDiscordWebhook = webhookValid ? encryptedDiscordWebhook : string.Empty;
         DiscordUserId = settings.DiscordUserId?.Trim() ?? string.Empty;
         NotifyOnTerminalFailure = settings.NotifyOnTerminalFailure;
+        EnableDiagnosticUploads = settings.EnableDiagnosticUploads;
         CheckForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         LayoutProfile = Enum.IsDefined(settings.LayoutProfile)
@@ -78,6 +79,8 @@ internal sealed class MacroOwnerState
     public string DiscordUserId { get; private set; }
 
     public bool NotifyOnTerminalFailure { get; private set; }
+
+    public bool EnableDiagnosticUploads { get; private set; }
 
     public bool CheckForUpdatesOnStartup { get; private set; }
 
@@ -159,6 +162,13 @@ internal sealed class MacroOwnerState
         QueueSave();
     }
 
+    public void SetDiagnosticUploadConsent(bool enabled)
+    {
+        if (enabled == EnableDiagnosticUploads) return;
+        EnableDiagnosticUploads = enabled;
+        QueueSave();
+    }
+
     public void SetUpdateOptions(bool checkOnStartup, bool includePrerelease)
     {
         if (checkOnStartup == CheckForUpdatesOnStartup && includePrerelease == IncludePrereleaseUpdates) return;
@@ -220,6 +230,7 @@ internal sealed class MacroOwnerState
             EncryptedDiscordWebhook = _encryptedDiscordWebhook,
             DiscordUserId = DiscordUserId,
             NotifyOnTerminalFailure = NotifyOnTerminalFailure,
+            EnableDiagnosticUploads = EnableDiagnosticUploads,
             CheckForUpdatesOnStartup = CheckForUpdatesOnStartup,
             IncludePrereleaseUpdates = IncludePrereleaseUpdates,
             LayoutProfile = LayoutProfile,

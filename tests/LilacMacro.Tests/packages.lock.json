@@ -139,27 +139,36 @@
       "LilacMacro": {
         "type": "Project",
         "dependencies": {
-          "LilacMacro.Core": "[1.0.31, )",
-          "LilacMacro.Runtime": "[1.0.31, )",
-          "LilacMacro.Windows": "[1.0.31, )"
+          "LilacMacro.Core": "[1.0.117, )",
+          "LilacMacro.Runtime": "[1.0.117, )",
+          "LilacMacro.Windows": "[1.0.117, )"
         }
       },
       "lilacmacro.core": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "BouncyCastle.Cryptography": "[2.6.2, )"
+        }
       },
       "lilacmacro.runtime": {
         "type": "Project",
         "dependencies": {
-          "LilacMacro.Core": "[1.0.31, )",
-          "LilacMacro.Windows": "[1.0.31, )"
+          "LilacMacro.Core": "[1.0.117, )",
+          "LilacMacro.Windows": "[1.0.117, )"
         }
       },
       "lilacmacro.windows": {
         "type": "Project",
         "dependencies": {
-          "LilacMacro.Core": "[1.0.31, )",
+          "LilacMacro.Core": "[1.0.117, )",
           "Vortice.Direct3D11": "[3.8.3, )"
         }
+      },
+      "BouncyCastle.Cryptography": {
+        "type": "CentralTransitive",
+        "requested": "[2.6.2, )",
+        "resolved": "2.6.2",
+        "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
       },
       "Vortice.Direct3D11": {
         "type": "CentralTransitive",

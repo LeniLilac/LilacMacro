@@ -126,13 +126,25 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         {
             AutomationKeyPress step = sequence.Steps[index];
             _ = await PrepareAsync(window, expectedSize, center, cancellationToken).ConfigureAwait(false);
-            await HoldKeyAsync(step, cancellationToken).ConfigureAwait(false);
+            await RobloxKeyboardInput.HoldKeyAsync(step, cancellationToken).ConfigureAwait(false);
             if (index + 1 < sequence.Steps.Count)
             {
                 await Task.Delay(RobloxInputProtocol.InterKeyDelayMilliseconds, cancellationToken).ConfigureAwait(false);
             }
         }
         VerifyClientSize(window, expectedSize, "key chain");
+    }
+
+    public async Task RunTextInputAsync(
+        RobloxWindow window,
+        PixelSize expectedSize,
+        string value,
+        CancellationToken cancellationToken = default)
+    {
+        _ = AutomationTextInput.Create(value, capsLockEnabled: false);
+        _ = await PrepareWindowAsync(window, expectedSize, cancellationToken).ConfigureAwait(false);
+        await RobloxKeyboardInput.SendTextAsync(value, cancellationToken).ConfigureAwait(false);
+        VerifyClientSize(window, expectedSize, "text input");
     }
 
     public async Task RunQuickPlacementBatchAsync(
@@ -149,9 +161,9 @@ public sealed class RobloxInputService(RobloxWindowService windows)
 
         PixelPoint center = ClientCenter(expectedSize);
         ClientBounds client = await PrepareAsync(window, expectedSize, center, cancellationToken).ConfigureAwait(false);
-        await TapKeyAsync(cancelPlacementVirtualKey, cancellationToken).ConfigureAwait(false);
+        await RobloxKeyboardInput.TapKeyAsync(cancelPlacementVirtualKey, cancellationToken).ConfigureAwait(false);
         KeyboardInputDescriptor quick = KeyboardInputDescriptor.FromAutomationVirtualKey(quickPlacementVirtualKey);
-        SendKey(quick, keyUp: false);
+        RobloxKeyboardInput.SendKey(quick, keyUp: false);
         try
         {
             int? selectedSlot = null;
@@ -160,7 +172,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
                 client = await PrepareAsync(window, expectedSize, placement.Point, cancellationToken).ConfigureAwait(false);
                 if (selectedSlot != placement.UnitSlot)
                 {
-                    await TapKeyAsync(
+                    await RobloxKeyboardInput.TapKeyAsync(
                         '0' + placement.UnitSlot,
                         RobloxInputProtocol.QuickPlacementUnitKeyHoldMilliseconds,
                         cancellationToken).ConfigureAwait(false);
@@ -174,11 +186,13 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         }
         finally
         {
-            SendKey(quick, keyUp: true);
+            RobloxKeyboardInput.SendKey(quick, keyUp: true);
             try
             {
                 _ = await PrepareWindowAsync(window, expectedSize, CancellationToken.None).ConfigureAwait(false);
-                await TapKeyAsync(cancelPlacementVirtualKey, CancellationToken.None).ConfigureAwait(false);
+                await RobloxKeyboardInput.TapKeyAsync(
+                    cancelPlacementVirtualKey,
+                    CancellationToken.None).ConfigureAwait(false);
                 await ParkCursorWithAcknowledgedMotionAsync(client, CancellationToken.None).ConfigureAwait(false);
             }
             catch (InvalidOperationException)
@@ -213,7 +227,9 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await TapKeyAsync(shiftLockVirtualKey, CancellationToken.None).ConfigureAwait(false);
+            await RobloxKeyboardInput.TapKeyAsync(
+                shiftLockVirtualKey,
+                CancellationToken.None).ConfigureAwait(false);
             shiftLockToggled = true;
             await Task.Delay(RobloxInputProtocol.ShiftLockSettleMilliseconds, CancellationToken.None)
                 .ConfigureAwait(false);
@@ -227,7 +243,9 @@ public sealed class RobloxInputService(RobloxWindowService windows)
             if (shiftLockToggled)
             {
                 _ = await PrepareWindowAsync(window, expectedSize, CancellationToken.None).ConfigureAwait(false);
-                await TapKeyAsync(shiftLockVirtualKey, CancellationToken.None).ConfigureAwait(false);
+                await RobloxKeyboardInput.TapKeyAsync(
+                    shiftLockVirtualKey,
+                    CancellationToken.None).ConfigureAwait(false);
             }
         }
         VerifyClientSize(window, expectedSize, "camera alignment");
@@ -281,39 +299,6 @@ public sealed class RobloxInputService(RobloxWindowService windows)
             if (attempt < 2) await Task.Delay(25, cancellationToken).ConfigureAwait(false);
         }
         throw new InvalidOperationException("Windows did not give Roblox input focus.");
-    }
-
-    private static async Task HoldKeyAsync(
-        AutomationKeyPress keyPress,
-        CancellationToken cancellationToken)
-    {
-        KeyboardInputDescriptor key = KeyboardInputDescriptor.FromAutomationVirtualKey(keyPress.VirtualKey);
-        SendKey(key, keyUp: false);
-        try
-        {
-            await Task.Delay(keyPress.HoldMilliseconds, cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            SendKey(key, keyUp: true);
-        }
-    }
-
-    private static async Task TapKeyAsync(int virtualKey, CancellationToken cancellationToken)
-    {
-        await TapKeyAsync(
-            virtualKey,
-            RobloxInputProtocol.ShiftLockKeyHoldMilliseconds,
-            cancellationToken).ConfigureAwait(false);
-    }
-
-    private static async Task TapKeyAsync(
-        int virtualKey,
-        int holdMilliseconds,
-        CancellationToken cancellationToken)
-    {
-        AutomationKeyPress keyPress = new(virtualKey, holdMilliseconds);
-        await HoldKeyAsync(keyPress, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task ClickBurstRetainingCursorAsync(
@@ -425,13 +410,6 @@ public sealed class RobloxInputService(RobloxWindowService windows)
     }
 
     private static PixelPoint ClientCenter(PixelSize size) => new(size.Width / 2, size.Height / 2);
-
-    private static void SendKey(KeyboardInputDescriptor key, bool keyUp)
-    {
-        uint flags = key.Extended ? NativeInputMethods.KeyExtended : 0;
-        if (keyUp) flags |= NativeInputMethods.KeyUp;
-        NativeInputMethods.keybd_event((byte)key.VirtualKey, (byte)key.ScanCode, flags, 0);
-    }
 
     private static void MoveCursorWithRegisteredMotion(ClientBounds client, PixelPoint point)
     {

@@ -108,8 +108,13 @@ internal sealed class PlacementPlaybackService(
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(session);
-        if (session.ActivePlacements.Count == 0) return;
-        QuickPlacementPoint[] batch = session.ActivePlacements
+        PlacementExecutionState[] replayCandidates = [.. session.ReplayCandidates];
+        if (replayCandidates.Length == 0)
+        {
+            status?.Invoke("EXPEDITION REPLAY SKIPPED; ALL PLACEMENTS ARE RETAINED PHYSICAL UNITS");
+            return;
+        }
+        QuickPlacementPoint[] batch = replayCandidates
             .Select(state => new QuickPlacementPoint(state.Placement.UnitSlot, state.LivePoint))
             .ToArray();
         await workspace.RunQuickPlacementBatchAsync(
@@ -118,14 +123,16 @@ internal sealed class PlacementPlaybackService(
 
         if (session.PanelLayout is null)
             throw new InvalidOperationException("Expedition replay has no calibrated unit-panel layout.");
-        foreach (PlacementExecutionState saved in session.ActivePlacements)
+        foreach (PlacementExecutionState saved in replayCandidates)
         {
             await workspace.ClickRobloxAsync(
                 DebugWorkflowCatalog.ClientSize, saved.LivePoint, cancellationToken);
             if (!await _panel.WaitForConfigurableSelectionAsync(
                     session.PanelLayout, device, status, cancellationToken))
             {
-                status?.Invoke($"UNIT {saved.Placement.UnitSlot} ALREADY MOVED; REPLAY SKIPPED");
+                session.MarkRetainedPhysical(saved.Placement.Id);
+                status?.Invoke(
+                    $"UNIT {saved.Placement.UnitSlot} RETAINED PHYSICAL; FUTURE DEFENSE/ELITE REPLAY SKIPPED");
                 continue;
             }
 

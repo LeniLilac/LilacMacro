@@ -67,33 +67,67 @@ internal sealed class ResourceRefuelService(
                 .ConfigureAwait(false);
             await Task.Delay(RouteStepDelay, cancellationToken).ConfigureAwait(false);
         }
-        await PressAsync('E', 80, reservedVirtualKey, cancellationToken).ConfigureAwait(false);
 
         DebugStateSpec stationState = target == ResourceRefuelTarget.GoldMine
             ? DebugWorkflowCatalog.GoldMineRefuel
             : DebugWorkflowCatalog.ResourceDrillRefuel;
+        DebugStateSpec confirmationState = target == ResourceRefuelTarget.GoldMine
+            ? DebugWorkflowCatalog.GoldMineRefuelConfirmation
+            : DebugWorkflowCatalog.ResourceDrillRefuelConfirmation;
+        DebugOcrSnapshot station = await OpenStationPanelAsync(
+            stationState,
+            reservedVirtualKey,
+            device,
+            cancellationToken).ConfigureAwait(false);
+        PixelRect addFuelAnchor = RequiredTarget(station, "Add Fuel").Region.Bounds;
         ObservedStateTransitionRunResult openDialog = await _transitions.RunAsync(
             stationState,
-            DebugWorkflowCatalog.AddFuelDialog,
+            confirmationState,
             device,
-            token => ClickAddFuelAsync(stationState, device, token),
+            token => ClickAddFuelAsync(
+                stationState,
+                device,
+                bounds => addFuelAnchor = bounds,
+                token),
             cancellationToken).ConfigureAwait(false);
         RequireTransition(openDialog, $"{label} Add Fuel dialog");
         status($"{label.ToUpperInvariant()} | ADD FUEL VERIFIED");
 
-        ObservedStateTransitionRunResult confirm = await _transitions.RunAsync(
-            DebugWorkflowCatalog.AddFuelDialog,
+        await ConfirmFuelAsync(
+            addFuelAnchor,
             stationState,
+            confirmationState,
             device,
-            token => ConfirmFuelAsync(device, status, token),
+            status,
             cancellationToken).ConfigureAwait(false);
-        RequireTransition(confirm, $"{label} refuel confirmation");
         status($"{label.ToUpperInvariant()} | REFUEL CONFIRMED");
 
         status($"{label.ToUpperInvariant()} | RESPAWNING");
         await respawn.RunAsync(
             areasMenuVirtualKey, reservedVirtualKey, device, cancellationToken).ConfigureAwait(false);
         status($"{label.ToUpperInvariant()} | LOBBY VERIFIED");
+    }
+
+    private async Task<DebugOcrSnapshot> OpenStationPanelAsync(
+        DebugStateSpec stationState,
+        int reservedVirtualKey,
+        string device,
+        CancellationToken cancellationToken)
+    {
+        DebugOcrSnapshot? snapshot = null;
+        for (int attempt = 1; attempt <= ResourceRefuelPolicy.StationInteractionAttempts; attempt++)
+        {
+            await PressAsync('E', 80, reservedVirtualKey, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(
+                ResourceRefuelPolicy.StationObservationDelay(attempt),
+                cancellationToken).ConfigureAwait(false);
+            snapshot = await _states.RunAsync(stationState, device, cancellationToken).ConfigureAwait(false);
+            if (snapshot.Evaluation.IsMatch) return snapshot;
+        }
+
+        throw new InvalidOperationException(
+            $"{stationState.Name} Add Fuel control was not verified after " +
+            $"{ResourceRefuelPolicy.StationInteractionAttempts} interaction attempt(s).");
     }
 
     private async Task OpenExpeditionHubAsync(
@@ -129,6 +163,7 @@ internal sealed class ResourceRefuelService(
     private async Task<ObservedStateTransitionActionResult> ClickAddFuelAsync(
         DebugStateSpec stationState,
         string device,
+        Action<PixelRect> observeAnchor,
         CancellationToken cancellationToken)
     {
         DebugOcrSnapshot station = await _states.RunAsync(stationState, device, cancellationToken)
@@ -136,31 +171,64 @@ internal sealed class ResourceRefuelService(
         if (!station.Evaluation.IsMatch)
             return new(false, $"{stationState.Name} NOT VERIFIED", []);
         OcrTargetMatch addFuel = RequiredTarget(station, "Add Fuel");
+        observeAnchor(addFuel.Region.Bounds);
         await workspace.ClickRobloxAsync(ClientSize, addFuel.Region.Bounds.Center, cancellationToken)
             .ConfigureAwait(false);
         return new(true, "ADD FUEL CLICKED", ["ADD FUEL VERIFIED + CLICKED"]);
     }
 
-    private async Task<ObservedStateTransitionActionResult> ConfirmFuelAsync(
+    private async Task ConfirmFuelAsync(
+        PixelRect addFuelAnchor,
+        DebugStateSpec stationState,
+        DebugStateSpec confirmationState,
         string device,
         Action<string> status,
         CancellationToken cancellationToken)
     {
         DebugOcrSnapshot dialog = await _states.RunAsync(
-            DebugWorkflowCatalog.AddFuelDialog, device, cancellationToken).ConfigureAwait(false);
+            confirmationState, device, cancellationToken).ConfigureAwait(false);
         if (!dialog.Evaluation.IsMatch)
-            return new(false, "ADD FUEL DIALOG NOT VERIFIED", []);
-        ResourceRefuelDialogActions actions = DialogActions(dialog);
+            throw new InvalidOperationException("ADD FUEL DIALOG NOT VERIFIED");
+        ResourceRefuelDialogActions actions = DialogActions(addFuelAnchor, dialog);
         status("SELECTING AVAILABLE FUEL");
         await workspace.ClickRobloxAsync(ClientSize, actions.Quantity, cancellationToken).ConfigureAwait(false);
         await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
-        dialog = await _states.RunAsync(
-            DebugWorkflowCatalog.AddFuelDialog, device, cancellationToken).ConfigureAwait(false);
-        if (!dialog.Evaluation.IsMatch)
-            return new(false, "ADD FUEL DIALOG CHANGED BEFORE CONFIRM", []);
-        actions = DialogActions(dialog);
-        await workspace.ClickRobloxAsync(ClientSize, actions.Confirm, cancellationToken).ConfigureAwait(false);
-        return new(true, "REFUEL CONFIRM CLICKED", ["QUANTITY + CONFIRM CLICKED"]);
+
+        int confirmationAttempts = 0;
+        int clearObservations = 0;
+        int observationCount = 0;
+        while (observationCount < 12)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            dialog = await _states.RunAsync(
+                confirmationState, device, cancellationToken).ConfigureAwait(false);
+            observationCount++;
+            if (dialog.Evaluation.IsMatch)
+            {
+                clearObservations = 0;
+                if (confirmationAttempts >= ResourceRefuelPolicy.ConfirmationAttempts)
+                {
+                    throw new InvalidOperationException(
+                        "The Add Fuel confirmation remained visible after three clicks.");
+                }
+
+                actions = DialogActions(addFuelAnchor, dialog);
+                await workspace.ClickRobloxAsync(
+                    ClientSize, actions.Confirm, cancellationToken).ConfigureAwait(false);
+                confirmationAttempts++;
+                await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            DebugOcrSnapshot station = await _states.RunAsync(
+                stationState, device, cancellationToken).ConfigureAwait(false);
+            clearObservations = station.Evaluation.IsMatch ? clearObservations + 1 : 0;
+            if (clearObservations >= 2) return;
+            await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new InvalidOperationException(
+            "The Add Fuel confirmation did not reach a stable cleared state.");
     }
 
     private Task<ObservedStateTransitionActionResult> PressActionAsync(
@@ -212,28 +280,18 @@ internal sealed class ResourceRefuelService(
         ]),
         cancellationToken);
 
-    private async Task<DebugOcrSnapshot> RequireStateAsync(
-        DebugStateSpec state,
-        string device,
-        int maximumObservations,
-        CancellationToken cancellationToken)
-    {
-        DebugOcrSnapshot snapshot = await _states.WaitForMatchAsync(
-            state,
-            device,
-            maximumObservations,
-            ObservationDelay,
-            cancellationToken).ConfigureAwait(false);
-        return snapshot.Evaluation.IsMatch
-            ? snapshot
-            : throw new InvalidOperationException($"{state.Name} was not verified before its deadline.");
-    }
-
-    private static ResourceRefuelDialogActions DialogActions(DebugOcrSnapshot dialog)
+    private static ResourceRefuelDialogActions DialogActions(
+        PixelRect addFuelAnchor,
+        DebugOcrSnapshot dialog)
     {
         PixelRect confirm = RequiredTarget(dialog, "Confirm").Region.Bounds;
         PixelRect cancel = RequiredTarget(dialog, "Cancel").Region.Bounds;
-        return ResourceRefuelPolicy.TryResolveDialogActions(confirm, cancel, ClientSize, out ResourceRefuelDialogActions actions)
+        return ResourceRefuelPolicy.TryResolveDialogActions(
+            addFuelAnchor,
+            confirm,
+            cancel,
+            ClientSize,
+            out ResourceRefuelDialogActions actions)
             ? actions
             : throw new InvalidOperationException("The live refuel dialog layout was not safe to use.");
     }

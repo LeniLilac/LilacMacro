@@ -1,8 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
 using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
 using LilacMacro.Core.Automation;
@@ -27,8 +25,7 @@ public partial class PlanPage : UserControl
     ];
     private static readonly string[] UtilityRoutes =
     [
-        ResourceRefuelPolicy.GoldMineRoute,
-        ResourceRefuelPolicy.ResourceDrillRoute,
+        .. ResourceRefuelPolicy.Routes,
         ShopPurchasePolicy.GoldRoute,
         ShopPurchasePolicy.RaidRoute,
         ShopPurchasePolicy.ExpeditionRoute,
@@ -37,7 +34,6 @@ public partial class PlanPage : UserControl
 
     private readonly ObservableCollection<PlanPrototype> _plans;
     private readonly MacroOwnerState _ownerState;
-    private readonly Dictionary<ListBox, ListBoxReorderDragController<PlanBlockPrototype>> _dragControllers = [];
     private PlanPrototype _selectedPlan;
     private PlanTaskPrototype? _editingTask;
     private PlanLoopPrototype? _editingLoop;
@@ -49,6 +45,8 @@ public partial class PlanPage : UserControl
     {
         _ownerState = ownerState;
         _plans = ownerState.Plans;
+        bool normalized = _plans.Aggregate(false, (changed, plan) =>
+            PlanBlockOrderPolicy.NormalizeRoot(plan.Blocks) || changed);
         _selectedPlan = ownerState.SelectedPlan;
         InitializeComponent();
         PlanSelector.DisplayMemberPath = nameof(PlanPrototype.Name);
@@ -59,6 +57,7 @@ public partial class PlanPage : UserControl
         PlanSelector.SelectedItem = _selectedPlan;
         _ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
         BindSelectedPlan();
+        if (normalized) _ownerState.NotifyPlansChanged();
     }
 
     private void PlanSelector_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
@@ -223,11 +222,15 @@ public partial class PlanPage : UserControl
 
         ObservableCollection<PlanBlockPrototype> destination = SelectedDestination()?.Children ?? _selectedPlan.Blocks;
         ObservableCollection<PlanBlockPrototype>? current = FindOwnerCollection(task);
-        if (current is null) destination.Add(task);
+        if (current is null && ReferenceEquals(destination, _selectedPlan.Blocks))
+            PlanBlockOrderPolicy.AddAtPlanLevel(_selectedPlan.Blocks, task);
+        else if (current is null) destination.Add(task);
         else if (!ReferenceEquals(current, destination))
         {
             current.Remove(task);
-            destination.Add(task);
+            if (ReferenceEquals(destination, _selectedPlan.Blocks))
+                PlanBlockOrderPolicy.AddAtPlanLevel(_selectedPlan.Blocks, task);
+            else destination.Add(task);
         }
 
         Reindex();
@@ -315,7 +318,7 @@ public partial class PlanPage : UserControl
     private void AddLoop_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         PlanLoopPrototype loop = new() { Label = $"Loop {AllLoops().Count + 1}" };
-        _selectedPlan.Blocks.Add(loop);
+        PlanBlockOrderPolicy.AddAtPlanLevel(_selectedPlan.Blocks, loop);
         MarkSelected(loop);
         _ownerState.NotifyPlansChanged();
         OpenLoopEditor(loop);
@@ -351,6 +354,7 @@ public partial class PlanPage : UserControl
         }
         _editingLoop.Forever = forever;
         _editingLoop.RepeatCount = count;
+        PlanBlockOrderPolicy.NormalizeRoot(_selectedPlan.Blocks);
         _ownerState.NotifyPlansChanged();
         CloseLoopEditor();
     }
@@ -387,62 +391,7 @@ public partial class PlanPage : UserControl
         int index = owner.IndexOf(loop);
         owner.RemoveAt(index);
         foreach (PlanBlockPrototype child in loop.Children.Reverse()) owner.Insert(index, child);
-        Reindex();
-        _ownerState.NotifyPlansChanged();
-    }
-
-    private void BlockRow_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs eventArgs)
-    {
-        if (sender is Border { DataContext: PlanBlockPrototype block }) MarkSelected(block);
-    }
-
-    private void BlockList_OnLoaded(object sender, RoutedEventArgs eventArgs)
-    {
-        if (sender is ListBox list) EnsureDragController(list);
-    }
-
-    private void BlockDragHandle_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs eventArgs)
-    {
-        if (sender is not FrameworkElement { Tag: PlanBlockPrototype block } element) return;
-        ListBox? list = FindAncestor<ListBox>(element);
-        if (list is null) return;
-        MarkSelected(block);
-        EnsureDragController(list).Begin(block, eventArgs);
-    }
-
-    private void BlockList_OnPreviewMouseMove(object sender, MouseEventArgs eventArgs) => Controller(sender)?.Continue(eventArgs);
-    private void BlockList_OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs eventArgs) => Controller(sender)?.Complete(eventArgs);
-    private void BlockList_OnLostMouseCapture(object sender, MouseEventArgs eventArgs) => Controller(sender)?.Cancel();
-
-    private ListBoxReorderDragController<PlanBlockPrototype>? Controller(object sender) =>
-        sender is ListBox list ? EnsureDragController(list) : null;
-
-    private ListBoxReorderDragController<PlanBlockPrototype> EnsureDragController(ListBox list)
-    {
-        if (_dragControllers.TryGetValue(list, out ListBoxReorderDragController<PlanBlockPrototype>? controller)) return controller;
-        controller = new ListBoxReorderDragController<PlanBlockPrototype>(list);
-        controller.ReorderRequested += DragController_OnReorderRequested;
-        controller.DragEnded += DragController_OnDragEnded;
-        _dragControllers[list] = controller;
-        return controller;
-    }
-
-    private void DragController_OnDragEnded(object? sender, EventArgs eventArgs)
-    {
-        MarkSelected(null);
-        foreach (ListBox list in _dragControllers.Keys) list.SelectedItem = null;
-    }
-
-    private void DragController_OnReorderRequested(object? sender, ListReorderEventArgs<PlanBlockPrototype> eventArgs)
-    {
-        ObservableCollection<PlanBlockPrototype>? sourceOwner = FindOwnerCollection(eventArgs.Source);
-        ObservableCollection<PlanBlockPrototype>? targetOwner = FindOwnerCollection(eventArgs.Target);
-        if (sourceOwner is null || targetOwner is null || eventArgs.Source is PlanLoopPrototype loop && Owns(loop, targetOwner)) return;
-        int destination = targetOwner.IndexOf(eventArgs.Target) + (eventArgs.InsertAfter ? 1 : 0);
-        int sourceIndex = sourceOwner.IndexOf(eventArgs.Source);
-        if (ReferenceEquals(sourceOwner, targetOwner) && sourceIndex < destination) destination--;
-        sourceOwner.Remove(eventArgs.Source);
-        targetOwner.Insert(Math.Clamp(destination, 0, targetOwner.Count), eventArgs.Source);
+        PlanBlockOrderPolicy.NormalizeRoot(_selectedPlan.Blocks);
         Reindex();
         _ownerState.NotifyPlansChanged();
     }
@@ -501,7 +450,6 @@ public partial class PlanPage : UserControl
     }
 
     private static IEnumerable<PlanTaskPrototype> TasksIn(IEnumerable<PlanBlockPrototype> blocks) => BlocksIn(blocks).OfType<PlanTaskPrototype>();
-    private static bool Owns(PlanLoopPrototype loop, ObservableCollection<PlanBlockPrototype> collection) => ReferenceEquals(loop.Children, collection) || loop.Children.OfType<PlanLoopPrototype>().Any(child => Owns(child, collection));
 
     private static string[] RoutesFor(PlanTaskMode mode) => mode switch
     {
@@ -515,12 +463,6 @@ public partial class PlanPage : UserControl
 
     private static string DefaultRoute(PlanTaskMode mode) => RoutesFor(mode).FirstOrDefault() ?? mode.ToString();
 
-    private static T? FindAncestor<T>(DependencyObject current) where T : DependencyObject
-    {
-        for (DependencyObject? node = current; node is not null; node = VisualTreeHelper.GetParent(node))
-            if (node is T match) return match;
-        return null;
-    }
 }
 
 internal sealed class ShopItemChoice(string id, string displayName, bool isSelected)

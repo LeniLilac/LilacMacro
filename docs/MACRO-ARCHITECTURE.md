@@ -4,7 +4,7 @@
 
 ## Root model
 
-Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story/Raid/Villain Invasion selection may continue through Repeat Stage; any task, act, or mode change returns through verified Lobby.
+Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story, Raid, Expedition, or Event selection may continue through Repeat Stage; any task, act, or mode change returns through verified Lobby.
 
 ```mermaid
 flowchart TD
@@ -18,13 +18,13 @@ flowchart TD
     F -- "Yes" --> H["Run one mode workflow"]
     H --> I["Victory, defeat, cooldown, or bounded failure"]
     I --> J["Record outcome and reevaluate priority"]
-    J -- "Exact same Story/Raid task" --> K["Verify and click Repeat Stage"]
+    J -- "Exact same repeatable task" --> K["Verify and click Repeat Stage"]
     K --> L["Verify Match Prestart; retain team and camera"]
     L --> H
     J -- "Changed, complete, Challenge, or Repeat unavailable" --> B
 ```
 
-Repeat Stage is a bounded fast path, not a competing scheduler. It is authorized only after a typed terminal outcome and a fresh priority decision select the exact same Story/Raid task. The continuation verifies Match Prestart and reruns placements without team selection or camera alignment because Roblox retains both. Resetting through Lobby remains mandatory for task/act/mode changes, completion, Challenge, and Repeat failure.
+Repeat Stage is a bounded fast path, not a competing scheduler. It is authorized only after a typed terminal outcome and a fresh priority decision select the exact same Story, Raid, Expedition, or Event task. The continuation verifies fresh Match Prestart/Start Game evidence and reruns mode-specific preparation without team selection or camera alignment because Roblox retains both. Resetting through Lobby remains mandatory for task/act/mode changes, completion, Challenge, Tower when implemented, and Repeat failure.
 
 ## Execution target
 
@@ -41,7 +41,7 @@ Each task will declare:
 - retry and failure budget;
 - completion accounting.
 
-The scheduler evaluates a stable snapshot from highest to lowest priority, runs at most one task, records the terminal outcome, and immediately reevaluates priority. If the same supported task remains selected it may use Repeat Stage; otherwise it resets to Lobby before the next task. It must remain cancellation-aware and must never hold Roblox input while waiting for eligibility.
+The scheduler evaluates a stable snapshot from highest to lowest priority, runs at most one task, records the terminal outcome, and immediately reevaluates priority. Every eligibility predicate in one selection pass receives the same captured observation time; the scheduler never compares a prior `now` against a later fallback timestamp. If the same supported task remains selected it may use Repeat Stage; otherwise it resets to Lobby before the next task. The terminal decision and its same-task, mode, pending-code, and next-task inputs are recorded in deep debug before any result action. A run-scoped exact-team cache avoids reopening Teams when a later task requests the team already verified during the same uninterrupted user-started run; every manual stop/start resets that knowledge to unknown. It must remain cancellation-aware and must never hold Roblox input while waiting for eligibility.
 
 Every plan start and private-server reset begins by closing Roblox in the owning Windows session, atomically normalizing the explicit UI/input allowlist in that profile's Roblox settings file, opening the validated private-server link, and obtaining fresh Lobby evidence. It then normalizes the rendered UI scale. The displayed numeric value is only a calibration input: the runtime measures panel geometry, applies bounded reciprocal feedback, and validates the result. A per-user/per-Windows-session cached candidate is a revalidated hot-path hint, not evidence. These runtime-owned invariants are never optional user settings.
 
@@ -75,8 +75,11 @@ The current Prototype preflights every configured task and placement route befor
 | Placement playback | Execute the selected validated route before and after Start Game |
 | Terminal handling | Detect Victory, Defeat, cooldown, timeout, or fatal ambiguity and return an outcome to the scheduler |
 | Persistence and reporting | Atomically autosave Plan state; protect secrets, redact diagnostics, and optionally send bounded webhooks |
+| Signed control state | Independently poll and verify public maintenance, disablement, schedule, and active-code snapshots in each Macro UI; never treat the service as an input owner |
 
 Modules exchange typed state/outcome contracts rather than clicking through one another. Every handoff requires fresh evidence for the owned state.
+
+At each verified Lobby reset, the scheduler applies any active signed public codes that have not yet completed during this user-started run. The code launcher and Codes panel are independent dataset-owned states. Opening either uses the shared destination-first temporal transition contract, text entry accepts only the bounded game-code alphabet and preserves case, and three fresh panel-owned Redeem actions are followed by the shared Areas-UI respawn cleanup. Publishing a code while an exact task is repeating suppresses the next Repeat Stage fast path so the normal Lobby reset can process it. Manual Stop/Start deliberately clears the in-memory attempted-code set.
 
 Placement routes preserve every authored prestart action in order. The game no longer supplies a timer-driven auto-start fallback, so the `Start Game` boundary requires a fresh verified action before the owner can continue into after-start actions. Individual Delay and post-step values retain their ordinary bounded validation; there is no timer-derived aggregate prestart budget.
 
@@ -102,9 +105,9 @@ The random Challenge map is recognized after type selection and selects the corr
 
 ### Expedition — Planned
 
-Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Expedition map and difficulty -> Match Preview -> route-reward inspect/reroll -> Match Prestart -> current-node loop -> Checkpoint extraction or terminal result -> private-server rejoin -> Lobby.
+Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Expedition map and difficulty -> Match Preview -> route-reward inspect/reroll -> Match Prestart -> current-node loop -> Checkpoint extraction or terminal result -> exact same task: Repeat Stage -> fresh Start Game -> route optimization and new-match placements; otherwise private-server rejoin -> Lobby.
 
-The node loop locates and hovers only the current marker. A stable tooltip title owns semantic calibration, while the color learned from that observation is a per-environment hot path with hover-OCR fallback and refresh. Future-node lookahead is not required. Defense and Elite wait for Start Game before replaying placement/configuration; Assault and Boss wait; Encounter and non-spawn Checkpoint wait for ship arrival and then use separate verified Continue source/modal states; Checkpoint applies extraction policy. The detailed field contract and unresolved behavior are in [Expedition runtime](EXPEDITION-RUNTIME.md).
+The node loop locates and hovers only the current marker. A stable tooltip title owns semantic calibration, while the color learned from that observation is a per-environment hot path with hover-OCR fallback and refresh. Future-node lookahead is not required. Defense and Elite wait for Start Game before replaying placement/configuration. Once a placement probe shows no selection UI, that placement is retained as physical and omitted from later Defense/Elite replay probes for the rest of the match; a replacement phantom remains eligible and receives its saved configuration. Assault and Boss wait; Encounter and non-spawn Checkpoint wait for ship arrival and then use separate verified Continue source/modal states; Checkpoint applies extraction policy. The detailed field contract and unresolved behavior are in [Expedition runtime](EXPEDITION-RUNTIME.md).
 
 ### Event — Prototype
 
@@ -118,7 +121,7 @@ The updated Event sidebar also exposes Boss Bounty and Guess That Unit through t
 
 - Story, Raid, Challenge, and Expedition are permanent game modes. Their runners own only mode-specific navigation and reuse the shared team, match-start, placement, terminal, and Lobby-reset modules.
 - Event acts are limited content. Each event definition must keep its identity, OCR aliases, routes, availability, and runner adapter behind one removable registration boundary instead of adding branches throughout the scheduler and UI.
-- Utilities are scheduler tasks, not game modes. They use the same priority contract but remain separate from mode navigation. Mine and Drill retain configured minute intervals; Gold Shop and Calendar use the next UTC midnight, Raid Shop uses the next seven-day boundary from its field-supplied beacon, and Expedition Shop uses a two-day boundary from that beacon. Shop task snapshots carry only stable enabled-item IDs, never screen positions; the runtime rediscovers catalog rows and availability from fresh evidence.
+- Utilities are scheduler tasks, not game modes. They use the same priority contract but remain separate from mode navigation. Mine and Drill may retain independent configured minute intervals or use one combined task whose clock begins only after the separate Mine and Drill workflows both finish. Gold Shop and Calendar use the next UTC midnight, Raid Shop uses the next seven-day boundary from its field-supplied beacon, and Expedition Shop uses a two-day boundary from that beacon. Shop task snapshots carry only stable enabled-item IDs, never screen positions; the runtime rediscovers catalog rows and availability from fresh evidence.
 - Removing limited content must delete its registration and focused tests without changing shared capture, OCR, input, placement, terminal, or scheduler services. Persisted plan modes use exact stable names and reject unknown values rather than silently deserializing as another mode; an unavailable-content state is still required before a persisted limited Event task can outlive its registration.
 
 ## State-transition safety
@@ -139,7 +142,7 @@ OCR, image detection, and timers may suggest a state. None may authorize input w
 
 ## Persistence and secrets
 
-**Prototype:** Plan edits, selection, and Discord failure options autosave through a serialized queue to a schema-versioned atomic settings file; invalid plan payloads fail closed to the built-in defaults without discarding separately valid settings. Private-server and webhook values are masked in Settings and persisted only as current-user DPAPI ciphertext. Validated web/share links are reduced to bounded share/link codes and launched through the registered `roblox://` protocol without a browser intermediary. Test Webhook performs a bounded, mention-free delivery to the validated Discord endpoint. Terminal failure notifications always include failure details; runtime-triggered delivery remains Planned. Persisted secrets remain redacted from diagnostics, logs, tests, and captures. **Planned:** runtime webhook delivery and explicit recovery UX for DPAPI data that cannot be decrypted.
+**Prototype:** Plan edits, selection, Discord failure options, and the default-off diagnostic-upload consent autosave through a serialized queue to a schema-versioned atomic settings file; invalid plan payloads fail closed to the built-in defaults without discarding separately valid settings. Private-server and webhook values are masked in Settings and persisted only as current-user DPAPI ciphertext. Validated web/share links are reduced to bounded share/link codes and launched through the registered `roblox://` protocol without a browser intermediary. Test Webhook performs a bounded, mention-free delivery to the validated Discord endpoint. Terminal failure notifications always include failure details; runtime-triggered delivery remains Planned. Persisted secrets remain redacted from diagnostics, logs, tests, and captures. Diagnostic consent permits only a new explicit archive selection and never schedules automatic upload. **Planned:** runtime webhook delivery and explicit recovery UX for DPAPI data that cannot be decrypted.
 
 ## Unresolved design work
 

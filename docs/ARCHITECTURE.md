@@ -55,7 +55,7 @@ No Windows service may inject, read Roblox memory, hook the game, or bypass anti
 - Macro is a right-rail runtime dashboard prototype. Its Start/Stop interaction changes local preview state only. Its explicit Dock/Undock control owns only verified Windows window placement and does not start scheduler input.
 - Plan is an in-memory priority authoring prototype. It does not persist plans or feed a scheduler.
 - Setup discovers finalized map datasets and owns placement authoring.
-- Settings groups General, Roblox, Discord, keybind, and diagnostics controls behind internal category tabs. Theme and deep-debug diagnostics are connected. Keybinds persist in shared local app state and feed the global macro toggle, Story/Raid navigation, placement playback, and camera alignment; other controls remain session-only prototypes.
+- Settings groups General, Roblox, Discord, keybind, and diagnostics controls behind internal category tabs. Theme, deep-debug diagnostics, and explicit diagnostic ZIP uploads are connected. Keybinds and the default-off upload consent persist in shared local app state; every archive upload still requires a new user file selection.
 - Semantic color dictionaries can be replaced without rebuilding the visual tree.
 - Central Lucide vector geometry owns icons, and one implicit thin-scrollbar style owns scrollable controls.
 
@@ -74,6 +74,14 @@ Both shells reuse `WorkspaceController`, OCR, vision, diagnostics, and Windows s
 
 App owns one process-wide deep-debug recorder because it coordinates WPF lifecycle, Workspace capture, OCR, vision, and input evidence. A bounded single-reader channel serializes events and already-acquired PNG bytes without requesting extra screenshots. The complete text timeline is always archived under `%LOCALAPPDATA%\LilacMacro\diagnostics`; Main Macro and Dataset Builder keep the configured final rolling image window, while Runtime Lab keeps already-acquired images for the complete owner-triggered operation. Both app surfaces consume the same format; Core and Windows do not depend on diagnostics. See [Deep debug](DEEP-DEBUG.md).
 
+Diagnostic upload remains separate from recording. Core owns only deterministic size, filename, kind, and trusted-storage policy. Runtime owns the WPF-free HTTPS, SHA-256, and multipart protocol plus a random installation-identity store. App owns persisted consent, explicit file selection, progress, cancellation, and lifecycle disposal. The upload client does not enumerate the diagnostics directory or upload automatically.
+
+## Services control boundary
+
+Core owns the signed control-snapshot schema, Ed25519 verification, freshness/revision rules, feature identifiers, public code filtering, and schedule calculations. Runtime owns the bounded no-redirect HTTPS transport, atomic last-known-good cache, and jittered polling. Each full Macro UI, including every managed runner desktop, polls independently and accepts only a fresh snapshot signed by a release-bundled public key. An unavailable service therefore cannot inject new state; a still-fresh verified cache may continue, while expiry removes the snapshot from runtime decisions. A fresh signed shop schedule is authoritative for its exact named reset and may move the next occurrence earlier or later than the bundled fallback beacon; when no fresh schedule exists, the local field-derived cadence remains in force.
+
+App maps the verified snapshot into scheduler policy. Game maintenance can prevent a new run or stop safely at a scheduler boundary; feature disablements skip only their named task/action; public game codes are redeemed from verified Lobby through separate dataset-owned launcher and panel states. Code input uses ordinary case-sensitive Windows keyboard events, each published code is attempted once per uninterrupted user-started Macro run, and a newly published code forces the next terminal boundary through Lobby instead of bypassing it with Repeat Stage. No Services command receives direct Windows-input or process authority.
+
 ## OCR process boundary
 
 OCR is an optional local Python helper rather than an in-process dependency. The setup script creates an isolated environment under `%LOCALAPPDATA%\LilacMacro\ocr` and installs one pinned CPU or GPU Paddle runtime plus PaddleOCR.
@@ -87,6 +95,8 @@ Transition layers remain separate evidence owners. A source control and the conf
 ## Runtime evidence boundary
 
 Every semantic runtime search area is traceable to one named annotation in the curated evidence bundle. App owns `DebugStateSpec` annotation selection and `RuntimeSearchRegionEvidenceCatalog`; Runtime consumes the resulting WPF-free rectangles and state contracts. Static search rectangles are centralized and compared against their bundled annotations by policy tests. Dynamic search geometry must start from freshly observed bounds owned by a bundled state. Full-client capture transports pixels but does not itself establish semantic ownership. The bundle allowlist, synchronization process, privacy exception, and ambiguity stop rule are defined in [Runtime evidence ownership](RUNTIME-EVIDENCE.md).
+
+Release installations do not contain the runtime evidence datasets or their source frames. A deterministic repository check derives the minimal ROI and visual-anchor context catalog from those datasets, verifies it is current, and embeds that compact metadata in the application assembly. Full manifests and frames remain repository/test evidence. Placement map JPGs are the only screenshot assets copied into application output; installer upgrades remove the legacy `Assets\RuntimeEvidence` directory created by earlier development builds.
 
 ## Startup normalization boundary
 

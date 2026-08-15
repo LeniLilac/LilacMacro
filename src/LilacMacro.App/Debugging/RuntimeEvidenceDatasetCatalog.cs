@@ -10,9 +10,6 @@ internal static class RuntimeEvidenceDatasetCatalog
         if (!string.Equals(Path.GetFileName(name), name, StringComparison.Ordinal))
             throw new ArgumentException("Runtime evidence dataset names cannot contain a path.", nameof(name));
 
-        string installed = Path.Combine(AppContext.BaseDirectory, "Assets", "RuntimeEvidence", name);
-        if (Directory.Exists(installed)) return installed;
-
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
         while (directory is not null)
         {
@@ -21,6 +18,9 @@ internal static class RuntimeEvidenceDatasetCatalog
             if (Directory.Exists(repository)) return repository;
             directory = directory.Parent;
         }
+
+        string installed = Path.Combine(AppContext.BaseDirectory, "Assets", "RuntimeEvidence", name);
+        if (Directory.Exists(installed)) return installed;
 
         return installed;
     }

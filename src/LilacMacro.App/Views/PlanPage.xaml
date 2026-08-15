@@ -134,7 +134,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Button Width="25" MinWidth="25" Height="28" Padding="0" Background="Transparent" BorderThickness="0"
-                                Cursor="SizeAll" Tag="{Binding}" ToolTip="Drag to reorder"
+                                Cursor="SizeAll" Tag="{Binding}" ToolTip="Drag to reorder" IsEnabled="{Binding CanReorder}"
                                 PreviewMouseLeftButtonDown="BlockDragHandle_OnPreviewMouseLeftButtonDown">
                             <controls:LucideIcon Width="15" Height="15" Foreground="{DynamicResource InkSoftBrush}"
                                                  Data="{StaticResource Lucide.GripVertical}" />
