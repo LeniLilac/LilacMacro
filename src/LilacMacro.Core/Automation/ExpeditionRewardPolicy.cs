@@ -13,6 +13,10 @@ public enum ExpeditionRewardResource
 public sealed record ExpeditionRewardPool(IReadOnlyDictionary<ExpeditionRewardResource, int> Quantities)
 {
     public int Quantity(ExpeditionRewardResource resource) => Quantities.TryGetValue(resource, out int value) ? value : 0;
+
+    public bool IsComplete => Enum.GetValues<ExpeditionRewardResource>()
+        .Where(resource => resource != ExpeditionRewardResource.None)
+        .All(Quantities.ContainsKey);
 }
 
 public static class ExpeditionRewardPolicy
@@ -26,6 +30,14 @@ public static class ExpeditionRewardPolicy
 
     public static bool Accepts(ExpeditionRewardPool pool, ExpeditionRewardResource resource, int minimum) =>
         resource == ExpeditionRewardResource.None || pool.Quantity(resource) >= Math.Max(0, minimum);
+
+    public static bool SameCompletePool(ExpeditionRewardPool? first, ExpeditionRewardPool? second)
+    {
+        if (first is null || second is null || !first.IsComplete || !second.IsComplete) return false;
+        return Enum.GetValues<ExpeditionRewardResource>()
+            .Where(resource => resource != ExpeditionRewardResource.None)
+            .All(resource => first.Quantity(resource) == second.Quantity(resource));
+    }
 
     public static ExpeditionRewardResource ParseResource(string value) => Normalize(value) switch
     {
@@ -111,11 +123,24 @@ public static class ExpeditionRewardPolicy
         {
             return 11;
         }
+        if (normalized == "1b" && resource == ExpeditionRewardResource.EquipmentLock)
+            return 11;
+        if (normalized is "3b" or "31b" && IsStandardQuantityResource(resource))
+            return 31;
+        if (normalized is "4b" or "4k" or "41b" && IsStandardQuantityResource(resource))
+            return 41;
+        if (normalized is "5b" or "5k" or "51b" && IsStandardQuantityResource(resource))
+            return 51;
         return normalized.Length > 0 && normalized.All(char.IsDigit) &&
                int.TryParse(normalized, out int parsed)
             ? parsed
             : null;
     }
+
+    private static bool IsStandardQuantityResource(ExpeditionRewardResource resource) => resource is
+        ExpeditionRewardResource.FuelCell or
+        ExpeditionRewardResource.EquipmentScrap or
+        ExpeditionRewardResource.ExpeditionCoin;
 
     private static string Normalize(string value) => new(
         value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());

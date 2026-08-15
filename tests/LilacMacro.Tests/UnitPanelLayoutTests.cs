@@ -70,6 +70,26 @@ public sealed class UnitPanelLayoutTests
         Assert.Equal(expected, result.State);
     }
 
+    [Fact]
+    public void SelectedPanelImageMatchRejectsColorSimilarMapBackground()
+    {
+        RgbImage priorityReference = PanelControl(100, 31, 0, 44, 5);
+        RgbImage sellReference = PanelControl(100, 14, 18, 51, 4);
+        RgbImage priorityPanel = Alter(priorityReference, 8, (40, 65, 150));
+        RgbImage sellPanel = Alter(sellReference, 8, (155, 45, 50));
+        RgbImage priorityBackground = PanelControl(100, 27, 43, 0, 1);
+        RgbImage sellBackground = PanelControl(100, 35, 37, 0, 0);
+
+        Assert.True(UnitPanelColorClassifier.MatchSelectedPanel(
+            priorityReference, sellReference, priorityPanel, sellPanel).IsMatch);
+        UnitPanelImageMatch background = UnitPanelColorClassifier.MatchSelectedPanel(
+            priorityReference, sellReference, priorityBackground, sellBackground);
+
+        Assert.False(background.IsMatch);
+        Assert.True(background.PrioritySimilarity < UnitPanelColorClassifier.MinimumReferenceSimilarity);
+        Assert.True(background.SellSimilarity < UnitPanelColorClassifier.MinimumReferenceSimilarity);
+    }
+
     private static OcrTextRegion Region(string text, int x, int y, int width, int height) => new()
     {
         Text = text,
@@ -95,5 +115,39 @@ public sealed class UnitPanelLayoutTests
             pixels[offset + 2] = blue;
         }
         return new RgbImage(count, 1, pixels, takeOwnership: true);
+    }
+
+    private static RgbImage PanelControl(int count, int blue, int red, int dark, int white)
+    {
+        byte[] pixels = new byte[count * 3];
+        for (int index = 0; index < count; index++)
+        {
+            (byte redChannel, byte greenChannel, byte blueChannel) = index < blue
+                ? ((byte)45, (byte)75, (byte)160)
+                : index < blue + red
+                    ? ((byte)175, (byte)50, (byte)55)
+                    : index < blue + red + dark
+                        ? ((byte)20, (byte)20, (byte)20)
+                        : index < blue + red + dark + white
+                            ? ((byte)230, (byte)230, (byte)230)
+                            : ((byte)115, (byte)85, (byte)125);
+            int offset = index * 3;
+            pixels[offset] = redChannel;
+            pixels[offset + 1] = greenChannel;
+            pixels[offset + 2] = blueChannel;
+        }
+        return new RgbImage(count, 1, pixels, takeOwnership: true);
+    }
+
+    private static RgbImage Alter(RgbImage source, int pixels, (byte Red, byte Green, byte Blue) color)
+    {
+        byte[] changed = source.Pixels.ToArray();
+        for (int index = 0; index < pixels; index++)
+        {
+            changed[index * 3] = color.Red;
+            changed[index * 3 + 1] = color.Green;
+            changed[index * 3 + 2] = color.Blue;
+        }
+        return new RgbImage(source.Size.Width, source.Size.Height, changed, takeOwnership: true);
     }
 }

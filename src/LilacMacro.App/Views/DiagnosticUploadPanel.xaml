@@ -21,10 +21,13 @@
                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="REMOTE UPLOAD" />
                     <CheckBox x:Name="AllowUploadsCheck"
                               Grid.Column="1"
-                              Content="Allow selected archive uploads"
+                              Content="Allow manually selected archive uploads"
                               Checked="AllowUploads_OnChanged"
                               Unchecked="AllowUploads_OnChanged" />
                 </Grid>
+                <TextBlock Margin="240,6,0,0" FontSize="9"
+                           Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                           Text="This does not enable automatic reports. Every manual transfer starts with the ZIP picker below." />
                 <Grid Margin="0,12,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="240" />

@@ -31,6 +31,9 @@ public partial class MacroShellWindow : Window
     private readonly DispatcherTimer _toastTimer;
     private readonly ControlSnapshotTransport _controlTransport = new();
     private readonly DiagnosticUploadTransport _diagnosticUploads = new();
+    private readonly ProductTelemetryTransport _telemetryTransport = new();
+    private readonly ProductTelemetryService _telemetry;
+    private readonly AutomaticDiagnosticReportService _automaticReports;
     private readonly ControlSnapshotPollingService _control;
     private readonly CancellationTokenSource _controlCancellation = new();
     private Task? _controlTask;
@@ -55,6 +58,11 @@ public partial class MacroShellWindow : Window
                     "services",
                     "control.json"),
                 new ControlSnapshotVerifier(ControlSnapshotTrust.PublicKeys)));
+        DiagnosticInstallationStore installation = new(MacroInstanceContext.Current.ConfigurationRoot);
+        _telemetry = new ProductTelemetryService(
+            deepDebug, ownerState, installation, _telemetryTransport);
+        _automaticReports = new AutomaticDiagnosticReportService(
+            deepDebug, ownerState, installation, _diagnosticUploads);
         _macroPage = new MacroDashboardPage(deepDebug, _ownerState, _control);
         _macroPage.RunningChanged += MacroPage_OnRunningChanged;
         _setupPage = new PlacementSetupPage(deepDebug, _ownerState);
@@ -83,6 +91,7 @@ public partial class MacroShellWindow : Window
 
     private async void MacroShellWindow_OnLoaded(object sender, RoutedEventArgs eventArgs)
     {
+        _telemetry.Start();
         _controlTask ??= RunControlPollingAsync();
         if (_ownerState.EffectiveMinimizeBehavior == MacroMinimizeBehavior.OnApplicationStart)
             WindowState = WindowState.Minimized;
@@ -214,6 +223,8 @@ public partial class MacroShellWindow : Window
             await _macroPage.CompleteForCloseAsync();
             await _setupPage.CompleteForCloseAsync();
             await CompleteControlPollingAsync();
+            await _telemetry.DisposeAsync();
+            await _automaticReports.DisposeAsync();
             await _ownerState.FlushAsync();
             _shutdown.CompleteFlush();
             _ = Dispatcher.BeginInvoke(
@@ -271,6 +282,7 @@ public partial class MacroShellWindow : Window
         _controlCancellation.Dispose();
         _controlTransport.Dispose();
         _diagnosticUploads.Dispose();
+        _telemetryTransport.Dispose();
         _updates.Dispose();
         _toastTimer.Stop();
         AppToastService.Raised -= AppToastService_OnRaised;
@@ -280,7 +292,9 @@ public partial class MacroShellWindow : Window
     {
         try
         {
-            await _control.RunAsync(_controlCancellation.Token);
+            await _control.RunAsync(
+                _ownerState.IsOnlineFeaturesDurablyEnabledAsync,
+                _controlCancellation.Token);
         }
         catch (OperationCanceledException) when (_controlCancellation.IsCancellationRequested) { }
         catch (Exception exception)

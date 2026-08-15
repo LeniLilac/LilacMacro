@@ -26,6 +26,7 @@ public partial class SettingsPage : UserControl
     private readonly ApplicationUpdateService _updates;
     private readonly DiscordWebhookClient _discord = new();
     private readonly DiagnosticUploadPanel _diagnosticUploadPanel;
+    private readonly PrivacySettingsPanel _privacySettingsPanel;
     private MacroKeyBinding? _capturingBinding;
     private bool _updatingDisplayControls;
     private bool _updatingThemeControls;
@@ -43,6 +44,8 @@ public partial class SettingsPage : UserControl
         _updates = updates;
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
+        _privacySettingsPanel = new PrivacySettingsPanel(ownerState);
+        PrivacySettingsHost.Content = _privacySettingsPanel;
         _diagnosticUploadPanel = new DiagnosticUploadPanel(
             ownerState,
             new DiagnosticInstallationStore(MacroInstanceContext.Current.ConfigurationRoot),
@@ -78,6 +81,7 @@ public partial class SettingsPage : UserControl
         RefreshDisplayControls();
         RefreshUpdateOwnership();
         _deepDebug.ArchiveSaved += DeepDebug_OnArchiveSaved;
+        _ownerState.PrivacyOptionsChanged += OwnerState_OnPrivacyOptionsChanged;
         RefreshThemeControls();
     }
 
@@ -142,7 +146,9 @@ public partial class SettingsPage : UserControl
 
     internal async Task CheckOnStartupAsync()
     {
-        if (!_ownerState.CheckForUpdatesOnStartup || MacroInstanceContext.Current.IsManagedRunner) return;
+        if (!await _ownerState.IsOnlineFeaturesDurablyEnabledAsync()
+            || !_ownerState.CheckForUpdatesOnStartup
+            || MacroInstanceContext.Current.IsManagedRunner) return;
         await CheckUpdatesAsync(showErrors: false);
     }
 
@@ -151,6 +157,11 @@ public partial class SettingsPage : UserControl
 
     private async Task CheckUpdatesAsync(bool showErrors)
     {
+        if (!await _ownerState.IsOnlineFeaturesDurablyEnabledAsync())
+        {
+            GeneralStatusText.Text = "Online features are disabled";
+            return;
+        }
         CheckUpdatesButton.IsEnabled = false;
         InstallUpdateButton.Visibility = Visibility.Collapsed;
         GeneralStatusText.Text = "Checking official GitHub Releases...";
@@ -176,7 +187,7 @@ public partial class SettingsPage : UserControl
         }
         finally
         {
-            CheckUpdatesButton.IsEnabled = !MacroInstanceContext.Current.IsManagedRunner;
+            RefreshUpdateOwnership();
         }
     }
 
@@ -245,10 +256,19 @@ public partial class SettingsPage : UserControl
     private void RefreshUpdateOwnership()
     {
         bool owner = !MacroInstanceContext.Current.IsManagedRunner;
-        CheckUpdatesOnStartupCheck.IsEnabled = owner;
-        IncludePrereleaseCheck.IsEnabled = owner;
-        CheckUpdatesButton.IsEnabled = owner;
+        bool enabled = owner && _ownerState.OnlineFeaturesEnabled;
+        CheckUpdatesOnStartupCheck.IsEnabled = enabled;
+        IncludePrereleaseCheck.IsEnabled = enabled;
+        CheckUpdatesButton.IsEnabled = enabled;
         if (!owner) GeneralStatusText.Text = "Updates are coordinated from This desktop";
+    }
+
+    private void OwnerState_OnPrivacyOptionsChanged(object? sender, EventArgs eventArgs)
+    {
+        RefreshUpdateOwnership();
+        GeneralStatusText.Text = _ownerState.OnlineFeaturesEnabled
+            ? "Privacy choices saved"
+            : "Online features are disabled";
     }
     private void LocalPath_OnClick(object sender, RoutedEventArgs eventArgs) => GeneralStatusText.Text = "Folder opening is not connected";
     private async void TestPrivateServer_OnClick(object sender, RoutedEventArgs eventArgs)

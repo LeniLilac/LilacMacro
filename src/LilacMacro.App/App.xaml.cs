@@ -9,6 +9,7 @@ using LilacMacro.App.Theming;
 using LilacMacro.App.Updates;
 using LilacMacro.Core.Updates;
 using LilacMacro.Windows.LocalSession;
+using LilacMacro.App.Views;
 
 namespace LilacMacro.App;
 
@@ -41,6 +42,20 @@ public partial class App : Application
         {
             Runtime.MacroOwnerState ownerState = await Runtime.MacroOwnerState.LoadAsync();
             AppThemeManager.Apply(ownerState.ThemeMode, ownerState.ColorTheme);
+            if (!ownerState.HasAcceptedCurrentPrivacyChoices)
+            {
+                ShutdownMode previousMode = ShutdownMode;
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                PrivacyChoicesWindow privacyWindow = new(ownerState);
+                MainWindow = privacyWindow;
+                bool accepted = privacyWindow.ShowDialog() == true;
+                ShutdownMode = previousMode;
+                if (!accepted)
+                {
+                    Shutdown(0);
+                    return;
+                }
+            }
             startupWindow = new MacroShellWindow(_deepDebug, ownerState);
         }
         else

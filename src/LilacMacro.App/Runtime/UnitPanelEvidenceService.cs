@@ -17,6 +17,7 @@ internal sealed class UnitPanelEvidenceService(
     private static readonly TimeSpan UpgradeTimeout = TimeSpan.FromMinutes(3);
     private const int DismissAttempts = 8;
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
+    private PanelReference? _reference;
 
     public async Task<UnitPanelLayout> CalibrateAsync(
         string device,
@@ -37,6 +38,11 @@ internal sealed class UnitPanelEvidenceService(
             if (layout is not null && (physical || phantom) &&
                 tracker.Observe(layout) is { } stable)
             {
+                IReadOnlyList<CapturedRgbRegion> reference = await workspace.CaptureRgbRegionsAsync(
+                    DebugWorkflowCatalog.ClientSize,
+                    [stable.PriorityControl, stable.SellControl],
+                    cancellationToken);
+                _reference = new PanelReference(reference[0].Image, reference[1].Image);
                 status?.Invoke($"UNIT PANEL CALIBRATED {stable.UpgradeControl} {(phantom ? "PHANTOM" : "PHYSICAL")}");
                 return stable;
             }
@@ -164,7 +170,13 @@ internal sealed class UnitPanelEvidenceService(
                 DebugWorkflowCatalog.ClientSize,
                 [layout.PriorityControl, layout.SellControl],
                 cancellationToken);
-            bool visible = UnitPanelColorClassifier.IsSelectedPanel(captures[0].Image, captures[1].Image);
+            PanelReference reference = _reference
+                ?? throw new InvalidOperationException("Selected-unit panel image reference was not calibrated.");
+            bool visible = UnitPanelColorClassifier.MatchSelectedPanel(
+                reference.Priority,
+                reference.Sell,
+                captures[0].Image,
+                captures[1].Image).IsMatch;
             hidden = visible ? 0 : hidden + 1;
             if (hidden >= 2) return true;
             await Task.Delay(100, cancellationToken);
@@ -182,7 +194,13 @@ internal sealed class UnitPanelEvidenceService(
             DebugWorkflowCatalog.ClientSize,
             [layout.PriorityControl, layout.SellControl, dps],
             cancellationToken);
-        if (!UnitPanelColorClassifier.IsSelectedPanel(captures[0].Image, captures[1].Image))
+        PanelReference reference = _reference
+            ?? throw new InvalidOperationException("Selected-unit panel image reference was not calibrated.");
+        if (!UnitPanelColorClassifier.MatchSelectedPanel(
+                reference.Priority,
+                reference.Sell,
+                captures[0].Image,
+                captures[1].Image).IsMatch)
             return new PanelObservation(false, false);
 
         OcrWorkerResult result = await RunTinyOcrAsync(captures[2].Image, device, cancellationToken);
@@ -224,4 +242,6 @@ internal sealed class UnitPanelEvidenceService(
     }
 
     private sealed record PanelObservation(bool Physical, bool Phantom);
+
+    private sealed record PanelReference(RgbImage Priority, RgbImage Sell);
 }

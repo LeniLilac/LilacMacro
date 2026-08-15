@@ -1,6 +1,6 @@
 # Expedition reward optimization
 
-**Status: Prototype runtime and field evidence.** Compact enlarged-ROI OCR, typed target selection, per-difficulty local sampling, device-timed dynamic thresholds, and verified restart reroll transitions are wired. Learned decisions remain provisional until broader post-update evidence and owner live acceptance are supplied.
+**Status: Prototype runtime and field evidence.** Compact enlarged-ROI OCR, typed target selection, bundled per-difficulty post-update priors, local complete-pool refinement, device-timed dynamic thresholds, and verified restart reroll transitions are wired. Learned decisions remain provisional until broader post-update evidence and owner live acceptance are supplied.
 
 ## Goal
 
@@ -45,7 +45,21 @@ The 414-frame sample produced these historical accept-at-or-above estimates:
 | Equipment Lock | 5 |
 | Expedition Coin | 34 |
 
-These values describe this sample and the timing assumptions above. They are not constants in workflow code. Runtime recomputes the threshold from the selected difficulty's local distribution and the current OCR device's rolling end-to-end reroll time.
+These values describe this historical sample and its timing assumptions. They are not constants in workflow code. Runtime recomputes the threshold from the selected difficulty's bundled-plus-local distribution and the current OCR device's rolling end-to-end reroll time.
+
+### Post-update bundled priors
+
+The 2026-08-15 Difficulty 3 owner run supplied 547 recovered complete five-resource pools after the game update. Two-sample goodness-of-fit tests against the previous Difficulty 3 profile rejected an unchanged distribution for every optimized resource: Fuel Cell `p = 9.46e-7`, Equipment Scrap `p = 0.000559`, Expedition Coin `p = 3.07e-8`, Equipment Reroll `p = 4.48e-80`, and Equipment Lock `p = 5.46e-34`.
+
+The release therefore bundles those 547 direct Difficulty 3 pools as its post-update prior. Difficulty 1 and 2 have no direct post-update batch; their priors contain 1,019 and 1,000 pools respectively and apply the monotone empirical-quantile shift observed from old Difficulty 3 to new Difficulty 3 to their uncontaminated pre-update distributions. This preserves their relative difficulty shape instead of copying Difficulty 3. At the measured `7.848`-second reroll time, the bundled priors produce these accept-at-or-above thresholds:
+
+| Difficulty | Fuel | Scrap | Reroll | Lock | Coin |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 28 | 27 | 3 | 4 | 29 |
+| 2 | 33 | 32 | 3 | 6 | 34 |
+| 3 | 39 | 40 | 6 | 6 | 42 |
+
+Difficulty 1 and 2 remain extrapolations and should be replaced by direct post-update batches when available.
 
 ### UI-scale spot check
 
@@ -69,8 +83,8 @@ Nine of ten quantities were exact at approximately 98.8-99.9% recognition confid
 2. Capture only that compact client-relative strip.
 3. Enlarge the strip four times for one batched OCR pass. Sort quantity badges by X, derive the observed card spacing, and associate split label lines only with their owning card interval.
 5. Match labels against the resource vocabulary with bounded fuzzy matching and same-card spatial evidence.
-6. Parse quantities using resource-scoped corrections backed by independent audited pools. The stylized `1x` result `bx` is accepted only for Equipment Lock/Reroll, where the full audit was unambiguous; `2bx/2kx` is accepted as `21x` only for Fuel Cell/Equipment Scrap. Other ambiguous forms invalidate the observation and retry instead of becoming zero or receiving a global replacement.
-7. Read all five optimization resources from every pool. Require two consecutive full-pool observations with identical typed quantities before persisting a sample. A verified pool without a card for one resource records zero for that resource; a detected target card with an unreadable quantity invalidates that observation.
+6. Parse quantities using resource-scoped corrections backed by independent audited pools. The stylized `1x` result `bx` is accepted only for Equipment Lock/Reroll; `2bx/2kx` is accepted as `21x` only for Fuel Cell/Equipment Scrap. The post-update Difficulty 3 run additionally supports `31x -> 3bx/31bx`, `41x -> 4bx/4kx/41bx`, and `51x -> 5bx/5kx/51bx` for Fuel Cell, Equipment Scrap, and Expedition Coin, plus `11x -> 1bx` for Equipment Lock. Expedition Coin `2bx/2kx` remains ambiguous and invalidates that frame rather than receiving a global replacement.
+7. Read all five optimization resources from every pool. Require two consecutive full-pool observations with identical typed quantities before persisting a sample. A verified pool without a card for one resource records zero for that resource; a detected card with an unreadable quantity invalidates the full-pool observation. Two stable selected-target reads may still drive the current accept/reroll decision after bounded full-pool retries, but that target-only fallback is not persisted.
 8. Associate labels only with the quantity in the same reward card; neighboring-card text cannot authorize a value.
 9. Persist raw OCR text, normalized values, timing, selected resource, dynamic threshold, and decision in deep debug.
 
@@ -78,7 +92,9 @@ Full-client OCR is not the production path for these tiny labels. The expected f
 
 ## Optimizer contract
 
-The runtime stores only the owner-selected target resource. There is no manual minimum. It keeps separate reward distributions for Difficulty 1, 2, and 3 and requires 500 independent pools for a usable profile; 1,000 per difficulty is the recommended collection target. Every complete pool updates every supported resource distribution.
+The runtime stores only the owner-selected target resource. There is no manual minimum. It ships separate reward priors for Difficulty 1, 2, and 3, then adds every locally observed complete pool to all five supported resource distributions. Local evidence therefore refines and can eventually outweigh the bundled prior without changing other users. The bundled count plus local count must reach 500 pools for a usable profile; 1,000 per difficulty remains the recommended direct collection target.
+
+Reward profile schema 3 stores only local user observations and per-device timing samples; the bundled prior remains versioned with the application. Upgrading a schema-2 profile preserves its reroll timing but discards its pool histograms because those files combined the obsolete pre-update baseline, incomplete-pool false zeroes, and—in the owner test case—Difficulty 3 observations mislabeled as Difficulty 1. This prevents an installer upgrade from silently continuing to optimize against stale distributions.
 
 The threshold is recomputed from the selected difficulty, a ten-minute expected run, and the rolling last 100 end-to-end reroll durations for the active OCR device. The reroll measurement includes leaving the current pool, game restart/loading, reopening Expedition Map, and completing the next stable OCR read. Faster environments can be more selective; slower environments accept lower quantities when that maximizes expected reward per hour. A positive threshold must retain at least 30 observed accepted samples, preventing unsupported tail estimates.
 
@@ -88,7 +104,7 @@ The optimizer must keep capture/OCR policy separate from reward economics. OCR r
 
 ## Runtime Lab trial tester
 
-Runtime Lab exposes an owner-triggered Route Optimizer Test for collecting bounded live evidence. The owner starts at verified Expedition Match Prestart, labels the current pool Difficulty 1-3, chooses one display target, and requests 1-1000 trials. Every trial reads the production compact reward strip at four-times scale, persists all five target quantities after two matching observations, and shows LEARNING until that difficulty reaches 500 pools. It then displays the dynamic threshold and ACCEPT/REROLL decision. The REROLL column is the measured end-to-end time from the preceding pool to the current stable pool.
+Runtime Lab exposes an owner-triggered Route Optimizer Test for collecting bounded live evidence. The owner starts at verified Expedition Match Prestart, labels the current pool Difficulty 1-3, chooses one display target, and requests 1-1000 trials. Every trial reads the production compact reward strip at four-times scale and persists all five quantities only after two consecutive identical complete-pool observations. Two stable target-only reads may still report the current decision, but do not increment the profile. Deep debug records whether the pool was complete and the exact normalized quantities retained for that trial. The tester shows LEARNING until that difficulty reaches 500 complete pools, then displays the dynamic threshold and ACCEPT/REROLL decision. The REROLL column is the measured end-to-end time from the preceding pool to the current stable target or pool.
 
 The first verified Expedition menu supplies an operation-scoped Map point. Between trials the tester retries Back while Back remains visible, Start Game while Match Prestart remains visible, and Restart while Restart plus Cancel remain visible. Once confirmation disappears, it clicks the cached Map point until exact Back evidence proves the map is open. One unreadable reward observation is recorded as ERROR and recovered through the observed Back state; it does not discard an otherwise useful long sampling batch. Stop, page navigation, unverified transition recovery, or Runtime Lab shutdown still cancels without speculative input.
 

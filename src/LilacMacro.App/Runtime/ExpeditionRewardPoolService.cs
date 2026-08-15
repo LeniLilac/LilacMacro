@@ -76,7 +76,10 @@ internal sealed class ExpeditionRewardPoolService(
         CancellationToken cancellationToken)
     {
         int? previousTargetQuantity = null;
-        int stableObservations = 0;
+        int stableTargetObservations = 0;
+        ExpeditionRewardPool? previousCompletePool = null;
+        int stableCompletePoolObservations = 0;
+        ExpeditionRewardObservation? stableTargetObservation = null;
         for (int attempt = 0; attempt < 8; attempt++)
         {
             IReadOnlyList<OcrTextRegion> regions = await _ocr.ObserveAsync(
@@ -88,21 +91,53 @@ internal sealed class ExpeditionRewardPoolService(
             if (back is not null && routeRewards && HasPopulatedRewardStrip(regions) && parsed)
             {
                 int targetQuantity = pool.Quantity(target);
-                stableObservations = previousTargetQuantity == targetQuantity
-                    ? stableObservations + 1
+                stableTargetObservations = previousTargetQuantity == targetQuantity
+                    ? stableTargetObservations + 1
                     : 1;
                 previousTargetQuantity = targetQuantity;
-                if (stableObservations >= 2)
+                if (stableTargetObservations < 2) stableTargetObservation = null;
+                if (stableTargetObservations >= 2)
                 {
-                    return new ExpeditionRewardObservation(
-                        pool,
+                    stableTargetObservation = new ExpeditionRewardObservation(
+                        PoolForObservation(target, (target, targetQuantity)),
                         back.Bounds.Center,
                         regions.Select(region => region.Text).ToArray(),
-                        completePool);
+                        CompletePool: false);
                 }
+
+                if (completePool)
+                {
+                    stableCompletePoolObservations = ExpeditionRewardPolicy.SameCompletePool(
+                        previousCompletePool, pool)
+                        ? stableCompletePoolObservations + 1
+                        : 1;
+                    previousCompletePool = pool;
+                    if (stableCompletePoolObservations >= 2)
+                    {
+                        return new ExpeditionRewardObservation(
+                            pool,
+                            back.Bounds.Center,
+                            regions.Select(region => region.Text).ToArray(),
+                            CompletePool: true);
+                    }
+                }
+                else
+                {
+                    previousCompletePool = null;
+                    stableCompletePoolObservations = 0;
+                }
+            }
+            else
+            {
+                previousTargetQuantity = null;
+                stableTargetObservations = 0;
+                previousCompletePool = null;
+                stableCompletePoolObservations = 0;
+                stableTargetObservation = null;
             }
             await Task.Delay(TimeSpan.FromMilliseconds(350), cancellationToken).ConfigureAwait(false);
         }
+        if (stableTargetObservation is not null) return stableTargetObservation;
         throw new InvalidOperationException($"Expedition route reward '{target}' was not read reliably.");
     }
 

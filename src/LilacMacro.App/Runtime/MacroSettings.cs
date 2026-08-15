@@ -2,9 +2,16 @@ using LilacMacro.App.Theming;
 
 namespace LilacMacro.App.Runtime;
 
+internal enum PrivacyChoiceKind
+{
+    OnlineFeatures,
+    Telemetry,
+    AutomaticErrorReports,
+}
+
 internal sealed record MacroSettings
 {
-    public const int CurrentSchemaVersion = 10;
+    public const int CurrentSchemaVersion = 11;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
@@ -24,6 +31,14 @@ internal sealed record MacroSettings
 
     public bool EnableDiagnosticUploads { get; init; }
 
+    public int PrivacyChoicesVersion { get; init; }
+
+    public bool OnlineFeaturesEnabled { get; init; } = true;
+
+    public bool TelemetryEnabled { get; init; } = true;
+
+    public bool AutomaticErrorReportsEnabled { get; init; }
+
     public bool CheckForUpdatesOnStartup { get; init; } = true;
 
     public bool IncludePrereleaseUpdates { get; init; }
@@ -37,4 +52,21 @@ internal sealed record MacroSettings
     public AppColorTheme ColorTheme { get; init; } = AppColorTheme.Lilac;
 
     public Dictionary<string, MacroLayoutProfile> RunnerLayoutProfiles { get; init; } = [];
+}
+
+internal sealed record PersistedPrivacyChoices
+{
+    public const int CurrentSchemaVersion = 1;
+
+    public int SchemaVersion { get; init; } = CurrentSchemaVersion;
+
+    public long Generation { get; init; }
+
+    public int NoticeVersion { get; init; }
+
+    public bool OnlineFeaturesEnabled { get; init; }
+
+    public bool TelemetryEnabled { get; init; }
+
+    public bool AutomaticErrorReportsEnabled { get; init; }
 }

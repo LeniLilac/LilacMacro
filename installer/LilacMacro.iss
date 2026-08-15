@@ -30,6 +30,7 @@ SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayIcon={app}\LilacMacro.exe
 LicenseFile={#SourceRoot}\LICENSE.md
+InfoBeforeFile={#SourceRoot}\TERMS.md
 SetupLogging=yes
 CloseApplications=no
 RestartApplications=no
@@ -39,6 +40,8 @@ Source: "{#PublishRoot}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdir
 Source: "{#SourceRoot}\third_party\termwrap\v0.6\*"; DestDir: "{app}\native\termwrap\v0.6"; Flags: ignoreversion recursesubdirs createallsubdirs onlyifdoesntexist
 Source: "{#SourceRoot}\LICENSE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceRoot}\NOTICE.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceRoot}\PRIVACY.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceRoot}\TERMS.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}\Assets\RuntimeEvidence"

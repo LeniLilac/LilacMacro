@@ -16,8 +16,15 @@ public sealed record UnitUpgradeObservation(
     double MainGrayFraction,
     double ExtensionGrayFraction);
 
+public sealed record UnitPanelImageMatch(
+    bool IsMatch,
+    double PrioritySimilarity,
+    double SellSimilarity);
+
 public static class UnitPanelColorClassifier
 {
+    public const double MinimumReferenceSimilarity = 0.85;
+
     public static UnitUpgradeObservation ClassifyUpgrade(RgbImage main, RgbImage extension)
     {
         ArgumentNullException.ThrowIfNull(main);
@@ -49,6 +56,24 @@ public static class UnitPanelColorClassifier
         return blue >= 0.18 && redScore >= 0.15;
     }
 
+    public static UnitPanelImageMatch MatchSelectedPanel(
+        RgbImage referencePriority,
+        RgbImage referenceSell,
+        RgbImage priority,
+        RgbImage sell)
+    {
+        ArgumentNullException.ThrowIfNull(referencePriority);
+        ArgumentNullException.ThrowIfNull(referenceSell);
+        ArgumentNullException.ThrowIfNull(priority);
+        ArgumentNullException.ThrowIfNull(sell);
+        double prioritySimilarity = Similarity(referencePriority, priority);
+        double sellSimilarity = Similarity(referenceSell, sell);
+        bool matched = IsSelectedPanel(priority, sell)
+            && prioritySimilarity >= MinimumReferenceSimilarity
+            && sellSimilarity >= MinimumReferenceSimilarity;
+        return new UnitPanelImageMatch(matched, prioritySimilarity, sellSimilarity);
+    }
+
     private static bool IsControlGray(byte red, byte green, byte blue) =>
         Math.Max(red, Math.Max(green, blue)) - Math.Min(red, Math.Min(green, blue)) <= 12 &&
         red is >= 25 and <= 100;
@@ -61,5 +86,14 @@ public static class UnitPanelColorClassifier
             if (predicate(image.Pixels[index], image.Pixels[index + 1], image.Pixels[index + 2])) matches++;
         }
         return matches / (double)(image.Pixels.Length / 3);
+    }
+
+    private static double Similarity(RgbImage reference, RgbImage candidate)
+    {
+        if (reference.Size != candidate.Size) return 0;
+        long difference = 0;
+        for (int index = 0; index < reference.Pixels.Length; index++)
+            difference += Math.Abs(reference.Pixels[index] - candidate.Pixels[index]);
+        return 1 - difference / (reference.Pixels.Length * 255d);
     }
 }

@@ -52,7 +52,7 @@ public partial class MacroDashboardPage : UserControl
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
-        _control = new MacroControlCoordinator(control);
+        _control = new MacroControlCoordinator(control, () => ownerState.OnlineFeaturesEnabled);
         _workspace = new WorkspaceController(deepDebug);
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = true };
         _runner = new StoryWireTestRunner(_workspace, _ocr, deepDebug);

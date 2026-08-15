@@ -14,9 +14,13 @@ internal sealed class MacroOwnerState
     private readonly MacroSettingsStore _settingsStore;
     private readonly ISecretProtector _secretProtector;
     private readonly object _saveSync = new();
+    private readonly SemaphoreSlim _privacyCommitGate = new(1, 1);
     private Task _pendingSave = Task.CompletedTask;
+    private bool _privacyCommitInProgress;
+    private bool _saveRequestedDuringPrivacyCommit;
     private string _encryptedPrivateServerLink;
     private string _encryptedDiscordWebhook;
+    private long _privacyGeneration;
 
     private MacroOwnerState(
         MacroSettingsStore settingsStore,
@@ -24,10 +28,12 @@ internal sealed class MacroOwnerState
         ObservableCollection<PlanPrototype> plans,
         int selectedPlanIndex,
         ISecretProtector secretProtector,
-        MacroSettings settings)
+        MacroSettings settings,
+        long privacyGeneration)
     {
         _settingsStore = settingsStore;
         _secretProtector = secretProtector;
+        _privacyGeneration = privacyGeneration;
         KeyBindings = keyBindings;
         Plans = plans;
         SelectedPlanIndex = Math.Clamp(selectedPlanIndex, 0, Plans.Count - 1);
@@ -40,6 +46,10 @@ internal sealed class MacroOwnerState
         DiscordUserId = settings.DiscordUserId?.Trim() ?? string.Empty;
         NotifyOnTerminalFailure = settings.NotifyOnTerminalFailure;
         EnableDiagnosticUploads = settings.EnableDiagnosticUploads;
+        PrivacyChoicesVersion = settings.PrivacyChoicesVersion;
+        OnlineFeaturesEnabled = settings.OnlineFeaturesEnabled;
+        TelemetryEnabled = settings.TelemetryEnabled;
+        AutomaticErrorReportsEnabled = settings.AutomaticErrorReportsEnabled;
         CheckForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         LayoutProfile = Enum.IsDefined(settings.LayoutProfile)
@@ -62,6 +72,8 @@ internal sealed class MacroOwnerState
 
     public event EventHandler? AppearanceChanged;
 
+    public event EventHandler? PrivacyOptionsChanged;
+
     public ObservableCollection<PlanPrototype> Plans { get; }
 
     public int SelectedPlanIndex { get; private set; }
@@ -81,6 +93,18 @@ internal sealed class MacroOwnerState
     public bool NotifyOnTerminalFailure { get; private set; }
 
     public bool EnableDiagnosticUploads { get; private set; }
+
+    public int PrivacyChoicesVersion { get; private set; }
+
+    public bool OnlineFeaturesEnabled { get; private set; }
+
+    public bool TelemetryEnabled { get; private set; }
+
+    public bool AutomaticErrorReportsEnabled { get; private set; }
+
+    public bool HasAcceptedCurrentPrivacyChoices =>
+        _privacyGeneration >= 1
+        && PrivacyChoicesVersion >= PrivacyChoicesPolicy.CurrentNoticeVersion;
 
     public bool CheckForUpdatesOnStartup { get; private set; }
 
@@ -106,6 +130,8 @@ internal sealed class MacroOwnerState
     {
         MacroSettingsStore store = settingsStore ?? new MacroSettingsStore();
         MacroSettings settings = await store.LoadAsync(cancellationToken).ConfigureAwait(false);
+        PersistedPrivacyChoices? privacy = await store.LoadPrivacyChoicesAsync(cancellationToken)
+            .ConfigureAwait(false);
         MacroKeyBindings keyBindings = new();
         keyBindings.ApplyPersisted(settings.KeyBindings);
         if (!PlanPersistence.TryRestore(settings.Plans, out ObservableCollection<PlanPrototype>? plans))
@@ -116,7 +142,8 @@ internal sealed class MacroOwnerState
             plans,
             settings.SelectedPlanIndex,
             secretProtector ?? new DpapiSecretProtector(MacroInstanceContext.Current.UsesMachineProtectedSecrets),
-            settings);
+            settings,
+            privacy?.Generation ?? 0);
     }
 
     public void SelectPlan(PlanPrototype plan)
@@ -167,6 +194,73 @@ internal sealed class MacroOwnerState
         if (enabled == EnableDiagnosticUploads) return;
         EnableDiagnosticUploads = enabled;
         QueueSave();
+    }
+
+    public async Task SavePrivacyChoicesAsync(
+        bool onlineFeaturesEnabled,
+        bool telemetryEnabled,
+        bool automaticErrorReportsEnabled) =>
+        await SavePrivacyChoicesCoreAsync(
+            onlineFeaturesEnabled,
+            telemetryEnabled,
+            automaticErrorReportsEnabled);
+
+    public Task SavePrivacyChoiceAsync(PrivacyChoiceKind kind, bool enabled) =>
+        SavePrivacyChoicesCoreAsync(
+            kind == PrivacyChoiceKind.OnlineFeatures ? enabled : null,
+            kind == PrivacyChoiceKind.Telemetry ? enabled : null,
+            kind == PrivacyChoiceKind.AutomaticErrorReports ? enabled : null);
+
+    private async Task SavePrivacyChoicesCoreAsync(
+        bool? onlineFeaturesEnabled,
+        bool? telemetryEnabled,
+        bool? automaticErrorReportsEnabled)
+    {
+        await _privacyCommitGate.WaitAsync();
+        try
+        {
+            lock (_saveSync) _privacyCommitInProgress = true;
+            bool desiredOnline = onlineFeaturesEnabled ?? OnlineFeaturesEnabled;
+            bool desiredTelemetry = telemetryEnabled ?? TelemetryEnabled;
+            bool desiredReports = automaticErrorReportsEnabled ?? AutomaticErrorReportsEnabled;
+
+            bool revoked = RevokeDisabledChoices(
+                desiredOnline,
+                desiredTelemetry,
+                desiredReports);
+            if (revoked) PrivacyOptionsChanged?.Invoke(this, EventArgs.Empty);
+
+            Task<PersistedPrivacyChoices> save;
+            lock (_saveSync)
+            {
+                save = PersistPrivacyAfterAsync(
+                    _pendingSave,
+                    onlineFeaturesEnabled,
+                    telemetryEnabled,
+                    automaticErrorReportsEnabled);
+                _pendingSave = save;
+            }
+            PersistedPrivacyChoices persisted = await save;
+
+            _privacyGeneration = persisted.Generation;
+            PrivacyChoicesVersion = persisted.NoticeVersion;
+            OnlineFeaturesEnabled = persisted.OnlineFeaturesEnabled;
+            TelemetryEnabled = persisted.TelemetryEnabled;
+            AutomaticErrorReportsEnabled = persisted.AutomaticErrorReportsEnabled;
+            PrivacyOptionsChanged?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            bool queueDeferred;
+            lock (_saveSync)
+            {
+                _privacyCommitInProgress = false;
+                queueDeferred = _saveRequestedDuringPrivacyCommit;
+                _saveRequestedDuringPrivacyCommit = false;
+            }
+            if (queueDeferred) QueueSave();
+            _privacyCommitGate.Release();
+        }
     }
 
     public void SetUpdateOptions(bool checkOnStartup, bool includePrerelease)
@@ -221,29 +315,64 @@ internal sealed class MacroOwnerState
 
     private void QueueSave()
     {
-        MacroSettings snapshot = new()
-        {
-            KeyBindings = KeyBindings.CreatePersistedSnapshot(),
-            Plans = PlanPersistence.CreateSnapshot(Plans),
-            SelectedPlanIndex = SelectedPlanIndex,
-            EncryptedPrivateServerLink = _encryptedPrivateServerLink,
-            EncryptedDiscordWebhook = _encryptedDiscordWebhook,
-            DiscordUserId = DiscordUserId,
-            NotifyOnTerminalFailure = NotifyOnTerminalFailure,
-            EnableDiagnosticUploads = EnableDiagnosticUploads,
-            CheckForUpdatesOnStartup = CheckForUpdatesOnStartup,
-            IncludePrereleaseUpdates = IncludePrereleaseUpdates,
-            LayoutProfile = LayoutProfile,
-            MinimizeBehavior = MinimizeBehavior,
-            ThemeMode = ThemeMode,
-            ColorTheme = ColorTheme,
-            RunnerLayoutProfiles = new Dictionary<string, MacroLayoutProfile>(RunnerLayoutProfiles, StringComparer.Ordinal),
-        };
         lock (_saveSync)
         {
+            if (_privacyCommitInProgress)
+            {
+                _saveRequestedDuringPrivacyCommit = true;
+                return;
+            }
+            MacroSettings snapshot = CreateSnapshot();
             Task previous = _pendingSave;
             _pendingSave = PersistAfterAsync(previous, snapshot);
         }
+    }
+
+    private MacroSettings CreateSnapshot() => new()
+    {
+        KeyBindings = KeyBindings.CreatePersistedSnapshot(),
+        Plans = PlanPersistence.CreateSnapshot(Plans),
+        SelectedPlanIndex = SelectedPlanIndex,
+        EncryptedPrivateServerLink = _encryptedPrivateServerLink,
+        EncryptedDiscordWebhook = _encryptedDiscordWebhook,
+        DiscordUserId = DiscordUserId,
+        NotifyOnTerminalFailure = NotifyOnTerminalFailure,
+        EnableDiagnosticUploads = EnableDiagnosticUploads,
+        PrivacyChoicesVersion = PrivacyChoicesVersion,
+        OnlineFeaturesEnabled = OnlineFeaturesEnabled,
+        TelemetryEnabled = TelemetryEnabled,
+        AutomaticErrorReportsEnabled = AutomaticErrorReportsEnabled,
+        CheckForUpdatesOnStartup = CheckForUpdatesOnStartup,
+        IncludePrereleaseUpdates = IncludePrereleaseUpdates,
+        LayoutProfile = LayoutProfile,
+        MinimizeBehavior = MinimizeBehavior,
+        ThemeMode = ThemeMode,
+        ColorTheme = ColorTheme,
+        RunnerLayoutProfiles = new Dictionary<string, MacroLayoutProfile>(RunnerLayoutProfiles, StringComparer.Ordinal),
+    };
+
+    private bool RevokeDisabledChoices(
+        bool onlineFeaturesEnabled,
+        bool telemetryEnabled,
+        bool automaticErrorReportsEnabled)
+    {
+        bool changed = false;
+        if (!onlineFeaturesEnabled && OnlineFeaturesEnabled)
+        {
+            OnlineFeaturesEnabled = false;
+            changed = true;
+        }
+        if (!telemetryEnabled && TelemetryEnabled)
+        {
+            TelemetryEnabled = false;
+            changed = true;
+        }
+        if (!automaticErrorReportsEnabled && AutomaticErrorReportsEnabled)
+        {
+            AutomaticErrorReportsEnabled = false;
+            changed = true;
+        }
+        return changed;
     }
 
     private async Task PersistAfterAsync(Task previous, MacroSettings snapshot)
@@ -257,6 +386,73 @@ internal sealed class MacroOwnerState
             // A newer complete snapshot still gets an independent save attempt.
         }
         await _settingsStore.SaveAsync(snapshot).ConfigureAwait(false);
+    }
+
+    private async Task<PersistedPrivacyChoices> PersistPrivacyAfterAsync(
+        Task previous,
+        bool? onlineFeaturesEnabled,
+        bool? telemetryEnabled,
+        bool? automaticErrorReportsEnabled)
+    {
+        try
+        {
+            await previous.ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // The complete privacy snapshot still gets independent bounded attempts.
+        }
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await _settingsStore.SavePrivacyChoicesAsync(
+                    onlineFeaturesEnabled,
+                    telemetryEnabled,
+                    automaticErrorReportsEnabled).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (
+                attempt < 3 && exception is (IOException or UnauthorizedAccessException))
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100 * attempt)).ConfigureAwait(false);
+            }
+        }
+    }
+
+    public Task<bool> IsOnlineFeaturesDurablyEnabledAsync(CancellationToken cancellationToken = default) =>
+        IsChoiceDurablyEnabledAsync(choice => choice.OnlineFeaturesEnabled, cancellationToken);
+
+    public Task<bool> IsTelemetryDurablyEnabledAsync(CancellationToken cancellationToken = default) =>
+        IsChoiceDurablyEnabledAsync(choice => choice.TelemetryEnabled, cancellationToken);
+
+    public Task<bool> AreAutomaticReportsDurablyEnabledAsync(CancellationToken cancellationToken = default) =>
+        IsChoiceDurablyEnabledAsync(choice => choice.AutomaticErrorReportsEnabled, cancellationToken);
+
+    public bool IsTelemetryDurablyEnabled() =>
+        IsChoiceDurablyEnabled(choice => choice.TelemetryEnabled);
+
+    public bool AreAutomaticReportsDurablyEnabled() =>
+        IsChoiceDurablyEnabled(choice => choice.AutomaticErrorReportsEnabled);
+
+    private bool IsChoiceDurablyEnabled(Func<PersistedPrivacyChoices, bool> selector)
+    {
+        PersistedPrivacyChoices? persisted = _settingsStore.LoadPrivacyChoices();
+        return persisted is not null
+            && persisted.Generation == _privacyGeneration
+            && persisted.NoticeVersion >= PrivacyChoicesPolicy.CurrentNoticeVersion
+            && selector(persisted);
+    }
+
+    private async Task<bool> IsChoiceDurablyEnabledAsync(
+        Func<PersistedPrivacyChoices, bool> selector,
+        CancellationToken cancellationToken)
+    {
+        PersistedPrivacyChoices? persisted = await _settingsStore.LoadPrivacyChoicesAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (persisted is null) return false;
+        return persisted.Generation == _privacyGeneration
+            && persisted.NoticeVersion >= PrivacyChoicesPolicy.CurrentNoticeVersion
+            && selector(persisted);
     }
 
     private string UnprotectOrEmpty(string protectedValue, out bool valid)

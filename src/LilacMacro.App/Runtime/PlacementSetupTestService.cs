@@ -13,6 +13,7 @@ internal sealed class PlacementSetupTestService : IDisposable
     private readonly WorkspaceController _workspace;
     private readonly OcrRunner _ocr;
     private readonly PlacementPlaybackService _playback;
+    private readonly MapPreparationService _mapPreparation;
     private bool _initialized;
     private bool _disposed;
 
@@ -25,6 +26,7 @@ internal sealed class PlacementSetupTestService : IDisposable
         _workspace = new WorkspaceController(deepDebug);
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = true };
         _playback = new PlacementPlaybackService(_workspace, _ocr);
+        _mapPreparation = new MapPreparationService(_workspace);
     }
 
     public Task<int> RunAsync(
@@ -73,6 +75,12 @@ internal sealed class PlacementSetupTestService : IDisposable
         await _workspace.AlignCameraAsync(
             DebugWorkflowCatalog.ClientSize,
             keys.ShiftLock,
+            cancellationToken);
+        status?.Invoke("PREPARING MAP POSITION");
+        await _mapPreparation.PrepareAsync(
+            document.MapId,
+            keys.Placement.ReservedVirtualKey,
+            status,
             cancellationToken);
         status?.Invoke("PLAYING SETUP");
         return await _playback.RunSetupAsync(

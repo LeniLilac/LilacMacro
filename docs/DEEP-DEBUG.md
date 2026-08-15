@@ -11,7 +11,7 @@
 - Runtime Lab retains already-acquired PNG evidence for its complete operation and displays `DEEP DEBUG ON`; the frame-history setting applies to the main Macro and Dataset Builder only.
 - Archives are written to `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - Settings exposes `OPEN DEBUG FOLDER`.
-- Settings also exposes a default-off diagnostic-upload consent and an explicit `UPLOAD ARCHIVE` file picker. Recording never triggers an upload.
+- Settings exposes independent automatic-report and manual-upload choices. Manual upload remains default-off and requires an explicit `UPLOAD ARCHIVE` file selection. Automatic reports also default off; when enabled, a completed active Deep Debug archive is queued automatically and deleted only after the service accepts it. A failed transfer leaves the archive local.
 - Open `LilacMacro.DeepDebugViewer.exe`, choose `OPEN ARCHIVE`, or drop a ZIP onto the window. The viewer does not initialize OCR or Roblox.
 
 The main Macro records its scheduler lifecycle, state and input evidence, terminal result, and private-server reset status without recording the private link. Dataset Builder records timed capture, an entire manual-capture session, and standalone OCR trials. Runtime Lab records Debug actions, complete Wire Tests, randomized Team Swap Test batches, and Route Optimizer batches with their selected resource, threshold, compact OCR text, decision, elapsed time, click, and transition evidence.
@@ -69,4 +69,4 @@ The contact sheet defaults to ignored output under `artifacts\diagnostic-contact
 
 ## Privacy boundary
 
-Private-server links, Discord webhooks, Windows usernames, and Windows profile paths are redacted from text artifacts. Roblox pixels can still expose account, chat, inventory, or other personal game data. Treat every archive as private capture data and never commit it. Upload only an archive the user explicitly selected through the optional LilacMacro Services flow; see [Privacy](../PRIVACY.md#optional-diagnostic-uploads) for limits, retention, and transfer ownership.
+Private-server links, Discord webhooks, Windows usernames, and Windows profile paths are redacted from text artifacts. Roblox pixels can still expose account, chat, inventory, or other personal game data. Treat every archive as private capture data and never commit it. Manual transfer still requires explicit selection; versioned automatic reporting is a separate default-off choice. Successfully sent automatic archives are deleted; a bounded exact-name marker retries deletion at orderly close and startup if Windows temporarily locks the ZIP. See [Privacy](../PRIVACY.md#automatic-and-manual-diagnostic-uploads) for limits, retention, and transfer ownership.

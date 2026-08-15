@@ -123,12 +123,22 @@ public sealed class ControlSnapshotPollingService
         return result;
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken)
+    public Task RunAsync(CancellationToken cancellationToken) =>
+        RunAsync(() => true, cancellationToken);
+
+    public Task RunAsync(Func<bool> isEnabled, CancellationToken cancellationToken) =>
+        RunAsync(_ => Task.FromResult(isEnabled()), cancellationToken);
+
+    public async Task RunAsync(
+        Func<CancellationToken, Task<bool>> isEnabled,
+        CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(isEnabled);
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await RefreshAsync(cancellationToken).ConfigureAwait(false);
+            if (await isEnabled(cancellationToken).ConfigureAwait(false))
+                await RefreshAsync(cancellationToken).ConfigureAwait(false);
             TimeSpan jitter = _nextJitter();
             if (jitter < TimeSpan.Zero || jitter > MaximumPollJitter)
                 throw new InvalidOperationException("Control polling jitter was outside its bound.");

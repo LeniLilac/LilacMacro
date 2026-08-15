@@ -9,7 +9,7 @@ using LilacMacro.Core.Vision;
 
 namespace LilacMacro.App.Diagnostics;
 
-public sealed class DeepDebugSessionService
+public sealed partial class DeepDebugSessionService
 {
     private const int ArchiveLimit = 20;
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
@@ -155,6 +155,7 @@ public sealed class DeepDebugSessionService
 
     public void RecordEvent(string category, string action, object? data = null)
     {
+        PublishObservation(category, action, data, null);
         DeepDebugSession? session = ActiveSession();
         if (session is null) return;
         Interlocked.Increment(ref session.EventCount);
@@ -164,8 +165,7 @@ public sealed class DeepDebugSessionService
     public void RecordInput(string action, object? data = null)
     {
         DeepDebugSession? session = ActiveSession();
-        if (session is null) return;
-        Interlocked.Increment(ref session.InputEventCount);
+        if (session is not null) Interlocked.Increment(ref session.InputEventCount);
         RecordEvent("input", action, data);
     }
 
@@ -202,6 +202,7 @@ public sealed class DeepDebugSessionService
 
     public void RecordPng(ReadOnlySpan<byte> png, string source, object? data = null)
     {
+        if (FrameRecorded is not null) PublishFrameObservation(source, data, png.ToArray());
         DeepDebugSession? session = ActiveSession();
         if (session is null) return;
         int index = Interlocked.Increment(ref session.ArtifactCount);

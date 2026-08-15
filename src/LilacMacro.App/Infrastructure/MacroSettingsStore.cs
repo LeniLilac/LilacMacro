@@ -12,6 +12,7 @@ internal sealed class MacroSettingsStore
     };
 
     private readonly string _settingsPath;
+    private readonly string _privacyPath;
 
     internal bool Exists => File.Exists(_settingsPath);
 
@@ -20,31 +21,41 @@ internal sealed class MacroSettingsStore
     {
     }
 
-    internal MacroSettingsStore(string appDataRoot) =>
+    internal MacroSettingsStore(string appDataRoot)
+    {
         _settingsPath = Path.Combine(appDataRoot, "macro-settings.json");
+        _privacyPath = Path.Combine(appDataRoot, "privacy-choices.json");
+    }
 
     public async Task<MacroSettings> LoadAsync(CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(_settingsPath)) return new MacroSettings();
+        MacroSettings loaded = new();
         try
         {
-            await using FileStream stream = File.OpenRead(_settingsPath);
-            MacroSettings? settings = await JsonSerializer.DeserializeAsync<MacroSettings>(
-                stream,
-                JsonOptions,
-                cancellationToken).ConfigureAwait(false);
-            return settings?.SchemaVersion switch
+            if (File.Exists(_settingsPath))
             {
-                MacroSettings.CurrentSchemaVersion => settings,
-                1 or 2 => MigrateLegacySettings(settings),
-                3 or 4 or 5 or 6 or 7 or 8 or 9 => settings with { SchemaVersion = MacroSettings.CurrentSchemaVersion },
-                _ => new MacroSettings(),
-            };
+                await using FileStream stream = File.OpenRead(_settingsPath);
+                MacroSettings? settings = await JsonSerializer.DeserializeAsync<MacroSettings>(
+                    stream,
+                    JsonOptions,
+                    cancellationToken).ConfigureAwait(false);
+                loaded = settings?.SchemaVersion switch
+                {
+                    MacroSettings.CurrentSchemaVersion => settings,
+                    1 or 2 => MigrateLegacySettings(settings),
+                    3 or 4 or 5 or 6 or 7 or 8 or 9 or 10 =>
+                        settings with { SchemaVersion = MacroSettings.CurrentSchemaVersion },
+                    _ => new MacroSettings(),
+                };
+            }
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
-            return new MacroSettings();
+            loaded = new MacroSettings();
         }
+        PersistedPrivacyChoices? privacy = await LoadPrivacyChoicesAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return privacy is null ? loaded : ApplyPrivacy(loaded, privacy);
     }
 
     private static MacroSettings MigrateLegacySettings(MacroSettings settings)
@@ -67,7 +78,117 @@ internal sealed class MacroSettingsStore
             ?? throw new InvalidOperationException("Macro settings path has no parent directory.");
         Directory.CreateDirectory(directory);
         await using FileStream writeLock = await AcquireWriteLockAsync(cancellationToken).ConfigureAwait(false);
-        string temporary = _settingsPath + $".{Guid.NewGuid():N}.tmp";
+        PersistedPrivacyChoices? privacy = await LoadPrivacyChoicesAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (privacy is not null) settings = ApplyPrivacy(settings, privacy);
+        await WriteAtomicAsync(_settingsPath, settings, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<PersistedPrivacyChoices> SavePrivacyChoicesAsync(
+        bool? onlineFeaturesEnabled,
+        bool? telemetryEnabled,
+        bool? automaticErrorReportsEnabled,
+        CancellationToken cancellationToken = default)
+    {
+        string directory = Path.GetDirectoryName(_privacyPath)
+            ?? throw new InvalidOperationException("Privacy settings path has no parent directory.");
+        Directory.CreateDirectory(directory);
+        await using FileStream writeLock = await AcquireWriteLockAsync(cancellationToken).ConfigureAwait(false);
+        PersistedPrivacyChoices? current = await LoadPrivacyChoicesAsync(cancellationToken)
+            .ConfigureAwait(false);
+        PersistedPrivacyChoices desired = new()
+        {
+            Generation = checked((current?.Generation ?? 0) + 1),
+            NoticeVersion = PrivacyChoicesPolicy.CurrentNoticeVersion,
+            OnlineFeaturesEnabled = onlineFeaturesEnabled ?? current?.OnlineFeaturesEnabled ?? false,
+            TelemetryEnabled = telemetryEnabled ?? current?.TelemetryEnabled ?? false,
+            AutomaticErrorReportsEnabled = automaticErrorReportsEnabled
+                ?? current?.AutomaticErrorReportsEnabled ?? false,
+        };
+        await WriteAtomicAsync(_privacyPath, desired, cancellationToken).ConfigureAwait(false);
+        return desired;
+    }
+
+    public async Task<PersistedPrivacyChoices?> LoadPrivacyChoicesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(_privacyPath)) return null;
+        try
+        {
+            await using FileStream stream = new(
+                _privacyPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete,
+                8192,
+                useAsync: true);
+            PersistedPrivacyChoices? choices = await JsonSerializer.DeserializeAsync<PersistedPrivacyChoices>(
+                stream,
+                JsonOptions,
+                cancellationToken).ConfigureAwait(false);
+            return choices is
+            {
+                SchemaVersion: PersistedPrivacyChoices.CurrentSchemaVersion,
+                Generation: >= 1,
+                NoticeVersion: >= 0,
+            } ? choices : DisabledPrivacyChoices();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return DisabledPrivacyChoices();
+        }
+    }
+
+    public PersistedPrivacyChoices? LoadPrivacyChoices()
+    {
+        if (!File.Exists(_privacyPath)) return null;
+        try
+        {
+            using FileStream stream = new(
+                _privacyPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            PersistedPrivacyChoices? choices = JsonSerializer.Deserialize<PersistedPrivacyChoices>(
+                stream,
+                JsonOptions);
+            return choices is
+            {
+                SchemaVersion: PersistedPrivacyChoices.CurrentSchemaVersion,
+                Generation: >= 1,
+                NoticeVersion: >= 0,
+            } ? choices : DisabledPrivacyChoices();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return DisabledPrivacyChoices();
+        }
+    }
+
+    private static MacroSettings ApplyPrivacy(MacroSettings settings, PersistedPrivacyChoices privacy) =>
+        settings with
+        {
+            PrivacyChoicesVersion = privacy.NoticeVersion,
+            OnlineFeaturesEnabled = privacy.OnlineFeaturesEnabled,
+            TelemetryEnabled = privacy.TelemetryEnabled,
+            AutomaticErrorReportsEnabled = privacy.AutomaticErrorReportsEnabled,
+        };
+
+    private static PersistedPrivacyChoices DisabledPrivacyChoices() => new()
+    {
+        Generation = 1,
+        NoticeVersion = 0,
+        OnlineFeaturesEnabled = false,
+        TelemetryEnabled = false,
+        AutomaticErrorReportsEnabled = false,
+    };
+
+    private static async Task WriteAtomicAsync<T>(
+        string path,
+        T value,
+        CancellationToken cancellationToken)
+    {
+        string temporary = path + $".{Guid.NewGuid():N}.tmp";
         try
         {
             await using (FileStream stream = new(
@@ -78,11 +199,11 @@ internal sealed class MacroSettingsStore
                 8192,
                 useAsync: true))
             {
-                await JsonSerializer.SerializeAsync(stream, settings, JsonOptions, cancellationToken)
+                await JsonSerializer.SerializeAsync(stream, value, JsonOptions, cancellationToken)
                     .ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
-            File.Move(temporary, _settingsPath, overwrite: true);
+            File.Move(temporary, path, overwrite: true);
         }
         finally
         {

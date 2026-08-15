@@ -4,17 +4,24 @@ using LilacMacro.Runtime.Services;
 
 namespace LilacMacro.App.Runtime;
 
-internal sealed class MacroControlCoordinator(ControlSnapshotPollingService polling)
+internal sealed class MacroControlCoordinator(
+    ControlSnapshotPollingService polling,
+    Func<bool> onlineFeaturesEnabled)
 {
     private readonly ControlSnapshotPollingService _polling =
         polling ?? throw new ArgumentNullException(nameof(polling));
+    private readonly Func<bool> _onlineFeaturesEnabled =
+        onlineFeaturesEnabled ?? throw new ArgumentNullException(nameof(onlineFeaturesEnabled));
+
+    private SignedControlSnapshot? Current =>
+        _onlineFeaturesEnabled() ? _polling.Current : null;
 
     public DateTimeOffset SnapshotExpiry =>
-        _polling.Current?.Payload.ExpiresAt ?? DateTimeOffset.UtcNow.AddMinutes(1);
+        Current?.Payload.ExpiresAt ?? DateTimeOffset.UtcNow.AddMinutes(1);
 
     public bool CanStart(out string message)
     {
-        SignedControlSnapshot? snapshot = _polling.Current;
+        SignedControlSnapshot? snapshot = Current;
         if (ControlOperationalPolicy.IsGameAvailable(snapshot))
         {
             message = string.Empty;
@@ -33,27 +40,27 @@ internal sealed class MacroControlCoordinator(ControlSnapshotPollingService poll
     }
 
     public bool IsTaskEnabled(PlanTaskPrototype task, DateTimeOffset now) =>
-        MacroControlPolicy.IsTaskEnabled(_polling.Current, task, now);
+        MacroControlPolicy.IsTaskEnabled(Current, task, now);
 
     public bool IsTeamSwapEnabled(DateTimeOffset now) =>
-        MacroControlPolicy.IsTeamSwapEnabled(_polling.Current, now);
+        MacroControlPolicy.IsTeamSwapEnabled(Current, now);
 
     public bool IsSettingsNormalizerEnabled(DateTimeOffset now) =>
-        MacroControlPolicy.IsSettingsNormalizerEnabled(_polling.Current, now);
+        MacroControlPolicy.IsSettingsNormalizerEnabled(Current, now);
 
     public bool IsCodeRedemptionEnabled(DateTimeOffset now) =>
         ControlOperationalPolicy.IsFeatureEnabled(
-            _polling.Current,
+            Current,
             "task.code-redeem",
             now);
 
     public IReadOnlyList<string> ActiveCodes(DateTimeOffset now) =>
-        ControlOperationalPolicy.ActiveCodes(_polling.Current, now);
+        ControlOperationalPolicy.ActiveCodes(Current, now);
 
     public DateTimeOffset NextUtilityDue(
         PlanTaskPrototype task,
         DateTimeOffset completedAt) => MacroControlPolicy.NextUtilityDue(
-            _polling.Current,
+            Current,
             task,
             completedAt);
 }

@@ -94,7 +94,11 @@ internal sealed class RouteOptimizerTestRunner(
                 reroll.Stop();
                 await profiles.RecordRerollAsync(device, reroll.Elapsed, cancellationToken).ConfigureAwait(false);
             }
-            await profiles.RecordPoolAsync(difficulty, observation.Pool, cancellationToken).ConfigureAwait(false);
+            if (observation.CompletePool)
+            {
+                await profiles.RecordPoolAsync(
+                    difficulty, observation.Pool, cancellationToken).ConfigureAwait(false);
+            }
             ExpeditionRewardOptimization? optimization = await profiles.OptimizeAsync(
                 difficulty, target, device, cancellationToken).ConfigureAwait(false);
             int quantity = observation.Pool.Quantity(target);
@@ -119,6 +123,9 @@ internal sealed class RouteOptimizerTestRunner(
                 result.Decision,
                 result.RerollMilliseconds,
                 result.OcrText,
+                observation.CompletePool,
+                Quantities = observation.Pool.Quantities.ToDictionary(
+                    entry => entry.Key.ToString(), entry => entry.Value),
             });
             progress?.Report(new RouteOptimizerTestProgress(
                 trial, trialCount, result,

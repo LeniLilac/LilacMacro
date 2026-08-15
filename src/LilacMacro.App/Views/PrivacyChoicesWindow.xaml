@@ -1,0 +1,110 @@
+<Window x:Class="LilacMacro.App.Views.PrivacyChoicesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LilacMacro privacy choices"
+        Width="1120"
+        Height="720"
+        MinWidth="900"
+        MinHeight="620"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource AppBackgroundBrush}">
+    <Window.Resources>
+        <Style x:Key="ChoiceCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="Padding" Value="20,17" />
+        </Style>
+        <Style x:Key="ChoiceCheckStyle" TargetType="CheckBox">
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="36,30">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="36" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel>
+            <Border Width="78" Height="78" HorizontalAlignment="Left"
+                    Background="{DynamicResource AccentBrush}"
+                    BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="3">
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="44" FontWeight="Black" Text="L" />
+            </Border>
+            <TextBlock Margin="0,26,0,0" FontSize="34" FontWeight="Black"
+                       TextWrapping="Wrap" Text="Choose how LilacMacro connects" />
+            <TextBlock Margin="0,16,0,0" FontSize="14" LineHeight="21"
+                       Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                       Text="Review these choices before any optional service request is made. You can change them later in Settings." />
+            <TextBlock Margin="0,24,0,0" FontFamily="Consolas" FontSize="10"
+                       Foreground="{DynamicResource InkSoftBrush}"
+                       Text="PRIVACY NOTICE 01  /  LOCAL CHOICES" />
+        </StackPanel>
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock FontSize="24" FontWeight="Black" Text="PRIVACY &amp; ONLINE FEATURES" />
+            <ScrollViewer Grid.Row="1" Margin="0,20,0,18" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Style="{StaticResource ChoiceCardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,24,0">
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="Online features" />
+                                <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource InkSoftBrush}"
+                                           Text="Checks signed service status and GitHub update metadata, claims available codes, applies remote safety disables during bugs or maintenance, and enables service-backed sharing when available." />
+                            </StackPanel>
+                            <CheckBox x:Name="OnlineFeaturesCheck" Grid.Column="1"
+                                      Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="True" />
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource ChoiceCardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,24,0">
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="Product telemetry" />
+                                <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource InkSoftBrush}"
+                                           Text="Sends bounded events about feature use, reward observations, failures, OCR timing, app version, and coarse OS/CPU/GPU capability. It never sends Roblox credentials, webhook URLs, screenshots, or raw hardware identifiers." />
+                            </StackPanel>
+                            <CheckBox x:Name="TelemetryCheck" Grid.Column="1"
+                                      Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="True" />
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource ChoiceCardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,24,0">
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="Automatic error reports" />
+                                <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource InkSoftBrush}"
+                                           Text="When enabled, errors send a temporary light report with at most 32 important frames and an 80 MiB hard limit. Active Deep Debug sessions send their completed archive instead. Temporary reports are deleted after the upload attempt; your normal Deep Debug archives remain local if upload fails." />
+                            </StackPanel>
+                            <CheckBox x:Name="AutomaticReportsCheck" Grid.Column="1"
+                                      Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="False" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Padding="12,7" Click="Privacy_OnClick" Content="PRIVACY" />
+                    <Button Margin="8,0,0,0" Padding="12,7" Click="Terms_OnClick" Content="TERMS" />
+                </StackPanel>
+                <Button Grid.Column="1" MinWidth="150" Padding="18,10"
+                        Background="{DynamicResource AccentBrush}" FontWeight="Bold"
+                        Click="Continue_OnClick" Content="SAVE &amp; CONTINUE" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

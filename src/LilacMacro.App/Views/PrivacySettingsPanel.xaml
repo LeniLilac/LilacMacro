@@ -1,0 +1,52 @@
+<UserControl x:Class="LilacMacro.App.Views.PrivacySettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Margin="0,0,0,12" Padding="15" Style="{StaticResource CardStyle}">
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <TextBlock FontSize="15" FontWeight="Bold" Text="Privacy and online features" />
+            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="ONLINE FEATURES" />
+                    <StackPanel Grid.Column="1">
+                        <CheckBox x:Name="OnlineFeaturesCheck" Content="Enable signed status, codes, update metadata, safety disables, and sharing services"
+                                  Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
+                        <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                                   Text="Turning this off prevents LilacMacro service and update requests. Local macro functions remain available without remote safety status." />
+                    </StackPanel>
+                </Grid>
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PRODUCT TELEMETRY" />
+                    <StackPanel Grid.Column="1">
+                        <CheckBox x:Name="TelemetryCheck" Content="Send bounded usage, reward, error, OCR timing, and coarse device capability events"
+                                  Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
+                        <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                                   Text="No screenshots, credentials, webhook URLs, file paths, raw hardware identifiers, or free-form error text." />
+                    </StackPanel>
+                </Grid>
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="AUTOMATIC REPORTS" />
+                    <StackPanel Grid.Column="1">
+                        <CheckBox x:Name="AutomaticReportsCheck" Content="Automatically send bounded diagnostics when a macro error occurs"
+                                  Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
+                        <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                                   Text="Light reports: up to 32 important frames and 80 MiB. Deep Debug: completed archive. Temporary light reports are removed after the upload attempt." />
+                    </StackPanel>
+                </Grid>
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="POLICIES" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Padding="10,5" Click="Privacy_OnClick" Content="PRIVACY" />
+                        <Button Margin="8,0,0,0" Padding="10,5" Click="Terms_OnClick" Content="TERMS" />
+                        <TextBlock x:Name="SavedText" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="9"
+                                   Foreground="{DynamicResource InkSoftBrush}" Text="Choices saved locally" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

@@ -5,7 +5,7 @@ namespace LilacMacro.App.Runtime;
 
 internal sealed class ExpeditionRewardProfileStore
 {
-    private const int SchemaVersion = 2;
+    private const int SchemaVersion = 3;
     private const int MaximumSamplesPerDifficulty = 5000;
     private const int MaximumTimingSamples = 100;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -33,6 +33,8 @@ internal sealed class ExpeditionRewardProfileStore
     {
         ValidateDifficulty(difficulty);
         ArgumentNullException.ThrowIfNull(pool);
+        if (!pool.IsComplete)
+            throw new InvalidDataException("Expedition reward profiles require a complete five-resource pool.");
         Document document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
         string key = difficulty.ToString(System.Globalization.CultureInfo.InvariantCulture);
         DifficultyProfile profile = document.Difficulties.GetValueOrDefault(key) ?? new DifficultyProfile();
@@ -78,8 +80,9 @@ internal sealed class ExpeditionRewardProfileStore
         Document document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
         string key = difficulty.ToString(System.Globalization.CultureInfo.InvariantCulture);
         DifficultyProfile profile = document.Difficulties.GetValueOrDefault(key) ?? new DifficultyProfile();
-        if (profile.PoolCount < ExpeditionRewardPolicy.MinimumOptimizationSamples) return null;
-        Dictionary<string, int> histogram = profile.Histograms.GetValueOrDefault(resource.ToString()) ?? [];
+        int observationCount = ExpeditionRewardPriorCatalog.PoolCount(difficulty) + profile.PoolCount;
+        if (observationCount < ExpeditionRewardPolicy.MinimumOptimizationSamples) return null;
+        Dictionary<string, int> histogram = CombinedHistogram(difficulty, resource, profile);
         int[] quantities = histogram.SelectMany(entry => Enumerable.Repeat(
                 int.Parse(entry.Key, System.Globalization.CultureInfo.InvariantCulture), entry.Value))
             .ToArray();
@@ -97,7 +100,9 @@ internal sealed class ExpeditionRewardProfileStore
     {
         ValidateDifficulty(difficulty);
         Document document = await LoadDocumentAsync(cancellationToken).ConfigureAwait(false);
-        int pools = (document.Difficulties.GetValueOrDefault(difficulty.ToString()) ?? new DifficultyProfile()).PoolCount;
+        int localPools = (document.Difficulties.GetValueOrDefault(difficulty.ToString()) ?? new DifficultyProfile())
+            .PoolCount;
+        int pools = ExpeditionRewardPriorCatalog.PoolCount(difficulty) + localPools;
         List<double> timings = document.RerollSeconds.GetValueOrDefault(EnvironmentKey(device)) ?? [];
         return (pools, timings.Count, timings.Count == 0
             ? ExpeditionRewardPolicy.DefaultRerollDuration.TotalSeconds
@@ -114,7 +119,15 @@ internal sealed class ExpeditionRewardProfileStore
                 await using FileStream stream = File.OpenRead(_path);
                 Document? loaded = await JsonSerializer.DeserializeAsync<Document>(
                     stream, JsonOptions, cancellationToken).ConfigureAwait(false);
-                return loaded?.Version == SchemaVersion ? loaded : new Document();
+                if (loaded?.Version == SchemaVersion) return loaded;
+                if (loaded?.Version == 2)
+                {
+                    return new Document
+                    {
+                        RerollSeconds = loaded.RerollSeconds,
+                    };
+                }
+                return new Document();
             }
             catch (JsonException)
             {
@@ -179,9 +192,23 @@ internal sealed class ExpeditionRewardProfileStore
         profile.PoolCount = retained;
     }
 
+    private static Dictionary<string, int> CombinedHistogram(
+        int difficulty,
+        ExpeditionRewardResource resource,
+        DifficultyProfile profile)
+    {
+        Dictionary<string, int> combined = ExpeditionRewardPriorCatalog.Histogram(difficulty, resource);
+        Dictionary<string, int> local = profile.Histograms.GetValueOrDefault(resource.ToString()) ?? [];
+        foreach ((string quantity, int count) in local)
+        {
+            combined[quantity] = combined.GetValueOrDefault(quantity) + count;
+        }
+        return combined;
+    }
+
     private sealed class Document
     {
-        public int Version { get; init; } = SchemaVersion;
+        public int Version { get; set; } = SchemaVersion;
         public Dictionary<string, DifficultyProfile> Difficulties { get; init; } = new(StringComparer.Ordinal);
         public Dictionary<string, List<double>> RerollSeconds { get; init; } = new(StringComparer.Ordinal);
     }

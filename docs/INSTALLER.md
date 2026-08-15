@@ -17,6 +17,8 @@ The versioned native payload is install-once. Upgrades do not attempt to overwri
 
 Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local instances, Set Up and approve UAC. The initial setup creates Runner 1; additional shared/separate runners use the same allowlisted elevated helper.
 
+The installer displays `TERMS.md` before installation while preserving the repository-license page, and installs both `TERMS.md` and `PRIVACY.md` beside the executable. The application—not the elevated installer—owns the versioned first-run privacy choices so the same screen applies to new installs, existing profiles receiving a changed notice, and managed configuration roots. No choice-covered request occurs before that screen is saved.
+
 ## Build
 
 Install Inno Setup 6 and a Windows code-signing certificate, then run:

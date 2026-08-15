@@ -291,14 +291,8 @@ public sealed class ExpeditionRuntimePolicyTests
         try
         {
             ExpeditionRewardProfileStore store = new(root);
-            ExpeditionRewardPool first = new(new Dictionary<ExpeditionRewardResource, int>
-            {
-                [ExpeditionRewardResource.FuelCell] = 2,
-            });
-            ExpeditionRewardPool second = new(new Dictionary<ExpeditionRewardResource, int>
-            {
-                [ExpeditionRewardResource.FuelCell] = 34,
-            });
+            ExpeditionRewardPool first = CompleteRewardPool(2);
+            ExpeditionRewardPool second = CompleteRewardPool(34);
             await store.RecordPoolAsync(1, first);
             await store.RecordPoolAsync(2, second);
             await store.RecordRerollAsync("cpu", TimeSpan.FromSeconds(8));
@@ -307,8 +301,8 @@ public sealed class ExpeditionRuntimePolicyTests
             (int Pools, int Timings, double RerollSeconds) difficulty1 = await store.StatusAsync(1, "cpu");
             (int Pools, int Timings, double RerollSeconds) difficulty2 = await store.StatusAsync(2, "gpu:0");
 
-            Assert.Equal((1, 1, 8d), difficulty1);
-            Assert.Equal((1, 1, 2d), difficulty2);
+            Assert.Equal((1020, 1, 8d), difficulty1);
+            Assert.Equal((1001, 1, 2d), difficulty2);
         }
         finally
         {
@@ -378,7 +372,7 @@ public sealed class ExpeditionRuntimePolicyTests
     [Theory]
     [InlineData("bx", ExpeditionRewardResource.FuelCell)]
     [InlineData("2bx", ExpeditionRewardResource.ExpeditionCoin)]
-    [InlineData("3bx", ExpeditionRewardResource.EquipmentScrap)]
+    [InlineData("2kx", ExpeditionRewardResource.ExpeditionCoin)]
     public void AmbiguousRewardGlyphsRemainUnreadable(string text, ExpeditionRewardResource resource) =>
         Assert.Null(ExpeditionRewardPolicy.ParseQuantity(text, resource));
 
@@ -469,12 +463,12 @@ public sealed class ExpeditionRuntimePolicyTests
     {
         OcrTextRegion[] regions =
         [
-            Region(234, 601, 20, 13, "3bx"),
+            Region(234, 601, 20, 13, "2bx"),
             Region(308, 601, 15, 13, "bx"),
             Region(383, 601, 16, 13, "bx"),
             Region(459, 601, 42, 13, "14,353x"),
-            Region(244, 646, 54, 12, "Equipment"),
-            Region(270, 656, 27, 11, "Scrap"),
+            Region(244, 646, 54, 12, "Expedition"),
+            Region(270, 656, 27, 11, "Coin"),
         ];
 
         Assert.False(ExpeditionRewardPoolService.TryPoolFromRegions(regions, out _));
@@ -768,6 +762,12 @@ public sealed class ExpeditionRuntimePolicyTests
         Text = text,
         RecognitionConfidence = 0.99,
     };
+
+    private static ExpeditionRewardPool CompleteRewardPool(int fuelCell) => new(
+        Enum.GetValues<ExpeditionRewardResource>()
+            .Where(resource => resource != ExpeditionRewardResource.None)
+            .ToDictionary(resource => resource,
+                resource => resource == ExpeditionRewardResource.FuelCell ? fuelCell : 0));
 
     private static RgbImage Crop(RgbImage image, LilacMacro.Core.Geometry.PixelRect region)
     {
