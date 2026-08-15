@@ -41,9 +41,18 @@ try {
         -EvidenceRoot $evidenceRoot -OutputPath $temporaryCatalog
     if (-not (Test-Path -LiteralPath $contextCatalog -PathType Leaf)) {
         $failures.Add('eng/runtime-state-contexts.json is missing.')
-    } elseif ((Get-Content -LiteralPath $temporaryCatalog -Raw) -cne
-              (Get-Content -LiteralPath $contextCatalog -Raw)) {
-        $failures.Add('eng/runtime-state-contexts.json is stale; run scripts/Export-RuntimeContextCatalog.ps1.')
+    } else {
+        try {
+            $generatedContext = Get-Content -LiteralPath $temporaryCatalog -Raw |
+                ConvertFrom-Json | ConvertTo-Json -Depth 12 -Compress
+            $checkedInContext = Get-Content -LiteralPath $contextCatalog -Raw |
+                ConvertFrom-Json | ConvertTo-Json -Depth 12 -Compress
+            if ($generatedContext -cne $checkedInContext) {
+                $failures.Add('eng/runtime-state-contexts.json is stale; run scripts/Export-RuntimeContextCatalog.ps1.')
+            }
+        } catch {
+            $failures.Add('eng/runtime-state-contexts.json must contain valid JSON.')
+        }
     }
 } finally {
     if (Test-Path -LiteralPath $temporaryCatalog) {
