@@ -10,7 +10,7 @@ Download the current public beta from [GitHub Releases](https://github.com/LeniL
 - .NET SDK version pinned by [`global.json`](global.json)
 - Roblox running in windowed mode for capture or Runtime Lab work
 - 100% Windows display scale on the monitor containing Roblox
-- Optional: Python 3.12 for local PaddleOCR
+- Internet access on first launch so LilacMacro can bootstrap its isolated OCR runtime
 
 ## Contributor quick start
 
@@ -21,7 +21,7 @@ dotnet test LilacMacro.slnx -c Release --no-build
 dotnet run --project src/LilacMacro.App/LilacMacro.App.csproj
 ```
 
-Optional OCR setup:
+Optional manual OCR setup for development or a pre-warmed machine:
 
 ```powershell
 ./scripts/Setup-Ocr.ps1 -Device cpu

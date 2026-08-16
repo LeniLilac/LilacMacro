@@ -45,6 +45,18 @@ public sealed class OcrRunner : IDisposable
         _ => false,
     };
 
+    public async Task<string> EnsureReadyAsync(CancellationToken cancellationToken = default)
+    {
+        string? readyDevice = SelectPreferredDevice(IsDeviceReady(GpuDevice), IsDeviceReady(CpuDevice));
+        if (readyDevice is not null) return readyDevice;
+
+        await SetupAsync(CpuDevice, cancellationToken).ConfigureAwait(false);
+        return CpuDevice;
+    }
+
+    internal static string? SelectPreferredDevice(bool gpuReady, bool cpuReady) =>
+        gpuReady ? GpuDevice : cpuReady ? CpuDevice : null;
+
     public bool KeepLoaded
     {
         get => _keepLoaded;
@@ -82,11 +94,25 @@ public sealed class OcrRunner : IDisposable
 
         using Process process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Could not start the OCR setup process.");
-        Task<string> output = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        Task<string> error = process.StandardError.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken);
-        string standardOutput = await output;
-        string standardError = await error;
+        string standardOutput;
+        string standardError;
+        try
+        {
+            Task<string> output = process.StandardOutput.ReadToEndAsync(cancellationToken);
+            Task<string> error = process.StandardError.ReadToEndAsync(cancellationToken);
+            await process.WaitForExitAsync(cancellationToken);
+            standardOutput = await output;
+            standardError = await error;
+        }
+        catch (OperationCanceledException)
+        {
+            if (!process.HasExited)
+            {
+                try { process.Kill(entireProcessTree: true); }
+                catch (InvalidOperationException) { }
+            }
+            throw;
+        }
         if (process.ExitCode != 0 || !IsDeviceReady(device))
         {
             throw new InvalidOperationException(

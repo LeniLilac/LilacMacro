@@ -44,7 +44,9 @@ Read [Deep debug](DEEP-DEBUG.md) before sharing or inspecting an archive. To ren
 
 ## OCR is not ready
 
-Install Python 3.12 and ensure the Windows `py` launcher can resolve it:
+The Macro shell automatically installs the CPU OCR runtime on first launch. It uses the Windows App Installer (`winget`) to bootstrap Python 3.12 when Python is not already available, then installs the isolated runtime under `%LOCALAPPDATA%\LilacMacro\ocr`.
+
+If automatic setup fails, confirm that the device has internet access and Windows App Installer is available. The exact setup error appears in the Macro run log and toast. Developers can repair the runtime manually with:
 
 ```powershell
 py -3.12 -c "import sys; print(sys.version)"

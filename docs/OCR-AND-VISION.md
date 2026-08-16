@@ -4,7 +4,7 @@
 
 ## Current OCR pipeline
 
-LilacMacro installs OCR into an isolated Python 3.12 environment at `%LOCALAPPDATA%\LilacMacro\ocr`. The setup script pins PaddlePaddle 3.3.0 and PaddleOCR 3.7.0. It installs one runtime at a time:
+LilacMacro installs OCR into an isolated Python 3.12 environment at `%LOCALAPPDATA%\LilacMacro\ocr`. The Macro shell performs this setup automatically on first launch, bootstrapping Python through Windows App Installer when needed. The setup script pins PaddlePaddle 3.3.0 and PaddleOCR 3.7.0. It installs one runtime at a time:
 
 ```powershell
 ./scripts/Setup-Ocr.ps1 -Device cpu

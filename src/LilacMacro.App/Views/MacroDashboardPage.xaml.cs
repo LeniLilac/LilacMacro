@@ -124,6 +124,12 @@ public partial class MacroDashboardPage : UserControl
 
     public async Task CompleteForCloseAsync()
     {
+        _lifecycleCancellation.Cancel();
+        if (_ocrSetupTask is not null)
+        {
+            try { await _ocrSetupTask; }
+            catch (OperationCanceledException) { }
+        }
         _runCancellation?.Cancel();
         if (_runTask is not null)
         {
@@ -134,6 +140,7 @@ public partial class MacroDashboardPage : UserControl
         await _discordEvents.DisposeAsync();
         _ocr.Dispose();
         _workspace.Dispose();
+        _lifecycleCancellation.Dispose();
     }
 
     private void PlanCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
@@ -166,8 +173,10 @@ public partial class MacroDashboardPage : UserControl
     {
         if (_runTask is not null || _runStarting || PlanCombo.SelectedItem is not PlanPrototype plan) return;
         _runStarting = true;
+        UpdateStartButtonState();
         try
         {
+            if (!_ocrReady && !await EnsureOcrReadyAsync()) return;
             if (!_control.CanStart(out string unavailableMessage))
             {
                 AppToastService.ShowError(
@@ -473,7 +482,7 @@ public partial class MacroDashboardPage : UserControl
     {
         if (_ocr.IsDeviceReady(OcrRunner.GpuDevice)) return OcrRunner.GpuDevice;
         if (_ocr.IsDeviceReady(OcrRunner.CpuDevice)) return OcrRunner.CpuDevice;
-        throw new InvalidOperationException("Set up OCR in Dataset Builder before starting the macro.");
+        throw new InvalidOperationException("Automatic OCR setup did not complete. Retry OCR setup before starting the macro.");
     }
 
     private DateTimeOffset EligibleAt(PlanTaskPrototype task, DateTimeOffset fallback)

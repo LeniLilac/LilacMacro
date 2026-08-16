@@ -27,11 +27,26 @@ public partial class MacroDashboardPage
 
     private void RefreshRunState(bool running)
     {
-        StartButton.IsEnabled = !running;
+        StartButton.IsEnabled = !running && !_runStarting && !_ocrSetupInProgress && (_ocrReady || _ocrSetupFailed);
         StopButton.IsEnabled = running;
         PlanCombo.IsEnabled = !running;
+        StartButtonText.Text = _ocrReady
+            ? "START"
+            : _ocrSetupInProgress
+                ? "SETTING UP OCR"
+                : "RETRY OCR SETUP";
         RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
         RunningChanged?.Invoke(running);
+    }
+
+    private void UpdateStartButtonState()
+    {
+        StartButton.IsEnabled = !_runStarting && _runTask is null && !_ocrSetupInProgress && (_ocrReady || _ocrSetupFailed);
+        StartButtonText.Text = _ocrReady
+            ? "START"
+            : _ocrSetupInProgress
+                ? "SETTING UP OCR"
+                : "RETRY OCR SETUP";
     }
 
     private void RefreshUpcomingTasks(PlanPrototype plan) =>

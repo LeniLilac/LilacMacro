@@ -23,20 +23,56 @@ if (-not (Test-Path -LiteralPath $gpuPolicy)) {
 }
 . $gpuPolicy
 
+function Find-Python312 {
+    $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
+    if ($null -ne $launcher) {
+        $probe = @(& $launcher.Source -3.12 -c "import sys; print(sys.executable)" 2>$null)
+        $candidate = if ($probe.Count -gt 0) { [string]$probe[0] } else { '' }
+        $candidate = $candidate.Trim()
+        if ($LASTEXITCODE -eq 0 -and $candidate -and (Test-Path -LiteralPath $candidate)) {
+            return [IO.Path]::GetFullPath($candidate)
+        }
+    }
+
+    $roots = @(
+        (Join-Path $env:LOCALAPPDATA 'Programs\Python'),
+        (Join-Path $env:ProgramFiles 'Python'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Python')
+    ) | Where-Object { $_ }
+    foreach ($root in $roots) {
+        if (-not (Test-Path -LiteralPath $root)) { continue }
+        $candidates = Get-ChildItem -LiteralPath $root -Directory -Filter 'Python312*' -ErrorAction SilentlyContinue |
+            ForEach-Object { Join-Path $_.FullName 'python.exe' }
+        foreach ($candidate in $candidates) {
+            if (Test-Path -LiteralPath $candidate) {
+                return [IO.Path]::GetFullPath($candidate)
+            }
+        }
+    }
+    return $null
+}
+
+$python312 = Find-Python312
+if (-not $python312) {
+    $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if ($null -eq $winget) {
+        throw 'LilacMacro could not automatically install Python 3.12 because Windows App Installer is unavailable.'
+    }
+    & $winget.Source install --id Python.Python.3.12 --exact --scope user --silent --accept-source-agreements --accept-package-agreements
+    if ($LASTEXITCODE -ne 0) {
+        throw 'LilacMacro could not automatically install Python 3.12.'
+    }
+    $python312 = Find-Python312
+}
+if (-not $python312) {
+    throw 'LilacMacro installed Python 3.12 but could not locate its interpreter.'
+}
+
 $gpu = $null
 $runtime = $null
 if ($Device -eq 'gpu') {
     $gpu = Get-LilacNvidiaGpu
     $runtime = Resolve-LilacNvidiaOcrRuntime -Name $gpu.Name -ComputeCapability $gpu.ComputeCapability
-}
-
-if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
-    throw 'Python Launcher is not installed. Install Python 3.12, then run this script again.'
-}
-
-$python312 = (& py -3.12 -c "import sys; print(sys.executable)" 2>$null).Trim()
-if ($LASTEXITCODE -ne 0 -or -not $python312) {
-    throw 'Python 3.12 is not installed. Install the Python.Python.3.12 winget package, then run this script again.'
 }
 
 New-Item -ItemType Directory -Path $ocrRoot -Force | Out-Null

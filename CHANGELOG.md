@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.142 — Public beta
+
+- Made the main Macro shell bootstrap OCR on first launch, including automatic Python 3.12 setup when needed.
+
 ## 1.0.141 — Public beta
 
 - Added optional current Roblox client PNG attachments to real Discord runtime events through Components V2 Media Gallery messages.
