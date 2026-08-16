@@ -272,7 +272,7 @@ end;
 
 procedure StopUninstallProcesses;
 var
-  Result: String;
+  CleanupError: String;
   Requested: Boolean;
 begin
   Log('Requesting bounded shutdown of LilacMacro UI processes before uninstall.');
@@ -282,9 +282,9 @@ begin
   RequestCloseProductImage('LilacMacro.DatasetBuilder.exe', Requested);
   RequestCloseProductImage('LilacMacro.DeepDebugViewer.exe', Requested);
   if Requested then Sleep(5000);
-  Result := StopManualUpdateProcesses;
-  if Result <> '' then
-    RaiseException('LilacMacro could not close every application window before uninstall. ' + Result);
+  CleanupError := StopManualUpdateProcesses;
+  if CleanupError <> '' then
+    RaiseException('LilacMacro could not close every application window before uninstall. ' + CleanupError);
 end;
 
 function SafeDirectory(const Path: String): Boolean;
