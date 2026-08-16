@@ -21,10 +21,74 @@ public sealed class DiscordWebhookTests
 
         Assert.Equal(HttpMethod.Post, handler.Method);
         Assert.Equal("discord.com", handler.Uri?.Host);
+        Assert.Equal("?wait=true&with_components=true", handler.Uri?.Query);
         Assert.Contains("LilacMacro webhook test", handler.Body, StringComparison.Ordinal);
         Assert.Contains("\"flags\":32768", handler.Body, StringComparison.Ordinal);
         Assert.Contains("\"type\":17", handler.Body, StringComparison.Ordinal);
         Assert.Contains("\"parse\":[]", handler.Body, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData((int)DiscordEventKind.RunStarted, "runstarted")]
+    [InlineData((int)DiscordEventKind.RunStopped, "runstopped")]
+    [InlineData((int)DiscordEventKind.TaskChanged, "taskchanged")]
+    [InlineData((int)DiscordEventKind.Victory, "victory")]
+    [InlineData((int)DiscordEventKind.Defeat, "defeat")]
+    [InlineData((int)DiscordEventKind.Recovery, "recovery")]
+    [InlineData((int)DiscordEventKind.TerminalFailure, "terminalfailure")]
+    public async Task Event_delivery_attaches_the_roblox_screenshot(
+        int kindValue,
+        string filenameKind)
+    {
+        RecordingHandler handler = new(HttpStatusCode.NoContent);
+        DiscordWebhookClient client = new(new HttpClient(handler));
+        byte[] screenshot = [137, 80, 78, 71, 13, 10, 26, 10];
+        DiscordEventKind kind = (DiscordEventKind)kindValue;
+
+        await client.SendEventAsync(
+            ValidWebhook,
+            new DiscordEventNotification(
+                kind,
+                "Plan",
+                "Task",
+                "Event detail.",
+                "This desktop",
+                DateTimeOffset.UnixEpoch,
+                ScreenshotPng: screenshot));
+
+        const string filenamePrefix = "lilacmacro-";
+        string filename = $"{filenamePrefix}{filenameKind}-19700101-000000000.png";
+        Assert.Equal("multipart/form-data", handler.ContentType);
+        Assert.Equal("?wait=true&with_components=true", handler.Uri?.Query);
+        Assert.Contains($"attachment://{filename}", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("\"type\":12", handler.Body, StringComparison.Ordinal);
+        Assert.Contains($"\"filename\":\"{filename}\"", handler.Body, StringComparison.Ordinal);
+        Assert.True(handler.ContentBytes.Length > screenshot.Length);
+    }
+
+    [Fact]
+    public async Task Dispatcher_sends_text_when_screenshot_capture_fails()
+    {
+        RecordingHandler handler = new(HttpStatusCode.NoContent);
+        DiscordWebhookClient client = new(new HttpClient(handler));
+        TaskCompletionSource<bool> sent = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        handler.OnRequest = () => sent.TrySetResult(true);
+        await using DiscordEventDispatcher dispatcher = new(
+            () => ValidWebhook,
+            _ => { },
+            _ => throw new InvalidOperationException("capture unavailable"),
+            client);
+
+        dispatcher.Enqueue(new DiscordEventNotification(
+            DiscordEventKind.RunStarted,
+            "Plan",
+            null,
+            "Started.",
+            "This desktop",
+            DateTimeOffset.UnixEpoch));
+
+        await sent.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.DoesNotContain("\"type\":12", handler.Body, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -128,6 +192,9 @@ public sealed class DiscordWebhookTests
         public HttpMethod? Method { get; private set; }
         public Uri? Uri { get; private set; }
         public string Body { get; private set; } = string.Empty;
+        public string? ContentType { get; private set; }
+        public byte[] ContentBytes { get; private set; } = [];
+        public Action? OnRequest { get; set; }
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -135,9 +202,12 @@ public sealed class DiscordWebhookTests
         {
             Method = request.Method;
             Uri = request.RequestUri;
-            Body = request.Content is null
-                ? string.Empty
-                : await request.Content.ReadAsStringAsync(cancellationToken);
+            ContentType = request.Content?.Headers.ContentType?.MediaType;
+            ContentBytes = request.Content is null
+                ? []
+                : await request.Content.ReadAsByteArrayAsync(cancellationToken);
+            Body = Encoding.UTF8.GetString(ContentBytes);
+            OnRequest?.Invoke();
             return new HttpResponseMessage(statusCode)
             {
                 Content = new StringContent(string.Empty, Encoding.UTF8),

@@ -11,7 +11,8 @@ public partial class MacroDashboardPage
         _discordEvents = new DiscordEventDispatcher(
             () => _ownerState.DiscordWebhook,
             message => _ = Dispatcher.BeginInvoke(
-                new Action(() => AppendLog($"DISCORD EVENT NOT SENT | {message}"))));
+                new Action(() => AppendLog($"DISCORD EVENT NOT SENT | {message}"))),
+            _workspace.CaptureWebhookScreenshotAsync);
 
     private void BeginDiscordRun(PlanPrototype plan)
     {

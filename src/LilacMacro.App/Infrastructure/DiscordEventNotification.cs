@@ -18,4 +18,5 @@ internal sealed record DiscordEventNotification(
     string Detail,
     string Instance,
     DateTimeOffset OccurredAtUtc,
-    string? MentionUserId = null);
+    string? MentionUserId = null,
+    byte[]? ScreenshotPng = null);

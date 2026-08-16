@@ -1,5 +1,8 @@
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace LilacMacro.App.Infrastructure;
@@ -39,14 +42,27 @@ internal sealed class DiscordWebhookClient
         CancellationToken cancellationToken)
     {
         Uri destination = Validate(webhook);
+        string? screenshotFilename = notification.ScreenshotPng is null
+            ? null
+            : ScreenshotFilename(notification);
+        Uri requestDestination = BuildRequestUri(destination);
         using CancellationTokenSource deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(15));
         HttpResponseMessage response;
         try
         {
-            response = await _client.PostAsJsonAsync(
-                destination,
-                BuildPayload(notification, test),
+            using HttpRequestMessage request = new(HttpMethod.Post, requestDestination)
+            {
+                Content = screenshotFilename is null
+                    ? JsonContent.Create(BuildPayload(notification, test))
+                    : CreateMultipartContent(
+                        BuildPayload(notification, test, screenshotFilename),
+                        screenshotFilename,
+                        notification.ScreenshotPng!),
+            };
+            response = await _client.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
                 deadline.Token).ConfigureAwait(false);
         }
         catch (HttpRequestException exception)
@@ -60,7 +76,10 @@ internal sealed class DiscordWebhookClient
         }
     }
 
-    internal static object BuildPayload(DiscordEventNotification notification, bool test)
+    internal static object BuildPayload(
+        DiscordEventNotification notification,
+        bool test,
+        string? screenshotFilename = null)
     {
         (string icon, string title, int color) = Describe(notification.Kind, test);
         string body = $"**Plan**  {SafeText(notification.Plan)}\n" +
@@ -80,16 +99,45 @@ internal sealed class DiscordWebhookClient
         ];
         if (userId is not null) children.Add(new { type = 10, content = $"<@{userId}>" });
 
-        return new
+        if (screenshotFilename is not null)
         {
-            flags = 32768,
-            components = new[] { new { type = 17, accent_color = color, components = children } },
-            allowed_mentions = new
+            children.Add(new
+            {
+                type = 12,
+                items = new[]
+                {
+                    new
+                    {
+                        media = new { url = $"attachment://{screenshotFilename}" },
+                        description = $"Roblox screen for {title}.",
+                    },
+                },
+            });
+        }
+
+        Dictionary<string, object?> payload = new()
+        {
+            ["flags"] = 32768,
+            ["components"] = new[] { new { type = 17, accent_color = color, components = children } },
+            ["allowed_mentions"] = new
             {
                 parse = Array.Empty<string>(),
                 users = userId is null ? Array.Empty<string>() : new[] { userId },
             },
         };
+        if (screenshotFilename is not null)
+        {
+            payload["attachments"] = new[]
+            {
+                new
+                {
+                    id = 0,
+                    filename = screenshotFilename,
+                    description = "Roblox client screenshot captured for this event.",
+                },
+            };
+        }
+        return payload;
     }
 
     internal static Uri Validate(string value)
@@ -138,6 +186,42 @@ internal sealed class DiscordWebhookClient
 
     private static bool ValidUserId(string? value) =>
         value is not null && value.Length is >= 15 and <= 22 && value.All(char.IsAsciiDigit);
+
+    private static string ScreenshotFilename(DiscordEventNotification notification) =>
+        $"lilacmacro-{notification.Kind.ToString().ToLowerInvariant()}-{notification.OccurredAtUtc:yyyyMMdd-HHmmssfff}.png";
+
+    private static MultipartFormDataContent CreateMultipartContent(
+        object payload,
+        string filename,
+        byte[] screenshotPng)
+    {
+        MultipartFormDataContent multipart = new();
+        multipart.Add(
+            new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"),
+            "payload_json");
+        ByteArrayContent image = new(screenshotPng);
+        image.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        multipart.Add(image, "files[0]", filename);
+        return multipart;
+    }
+
+    private static Uri BuildRequestUri(Uri destination)
+    {
+        UriBuilder builder = new(destination);
+        List<string> query = builder.Query.TrimStart('?')
+            .Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Where(part =>
+            {
+                string key = part.Split('=', 2)[0];
+                return !key.Equals("wait", StringComparison.OrdinalIgnoreCase)
+                    && !key.Equals("with_components", StringComparison.OrdinalIgnoreCase);
+            })
+            .ToList();
+        query.Add("wait=true");
+        query.Add("with_components=true");
+        builder.Query = string.Join('&', query);
+        return builder.Uri;
+    }
 
     private static HttpClient CreateClient() => new(new HttpClientHandler { AllowAutoRedirect = false });
 }

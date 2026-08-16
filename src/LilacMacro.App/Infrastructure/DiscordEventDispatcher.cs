@@ -8,14 +8,20 @@ internal sealed class DiscordEventDispatcher : IAsyncDisposable
     private readonly DiscordWebhookClient _client;
     private readonly Func<string> _webhook;
     private readonly Action<string> _reportFailure;
+    private readonly Func<CancellationToken, Task<byte[]?>>? _captureScreenshot;
     private readonly Channel<DiscordEventNotification> _queue;
     private readonly CancellationTokenSource _cancellation = new();
     private readonly Task _worker;
 
-    public DiscordEventDispatcher(Func<string> webhook, Action<string> reportFailure, DiscordWebhookClient? client = null)
+    public DiscordEventDispatcher(
+        Func<string> webhook,
+        Action<string> reportFailure,
+        Func<CancellationToken, Task<byte[]?>>? captureScreenshot = null,
+        DiscordWebhookClient? client = null)
     {
         _webhook = webhook;
         _reportFailure = reportFailure;
+        _captureScreenshot = captureScreenshot;
         _client = client ?? new DiscordWebhookClient();
         _queue = Channel.CreateBounded<DiscordEventNotification>(new BoundedChannelOptions(64)
         {
@@ -47,9 +53,24 @@ internal sealed class DiscordEventDispatcher : IAsyncDisposable
         {
             string webhook = _webhook();
             if (string.IsNullOrWhiteSpace(webhook)) continue;
+            byte[]? screenshot = null;
+            if (_captureScreenshot is not null)
+            {
+                try
+                {
+                    screenshot = await _captureScreenshot(_cancellation.Token).ConfigureAwait(false);
+                }
+                catch (Exception error) when (error is not OperationCanceledException)
+                {
+                    // A missing frame must not suppress the text event or interrupt the macro.
+                }
+            }
             try
             {
-                await _client.SendEventAsync(webhook, notification, _cancellation.Token)
+                await _client.SendEventAsync(
+                        webhook,
+                        notification with { ScreenshotPng = screenshot },
+                        _cancellation.Token)
                     .ConfigureAwait(false);
             }
             catch (Exception exception) when (exception is InvalidDataException or HttpRequestException or TaskCanceledException)

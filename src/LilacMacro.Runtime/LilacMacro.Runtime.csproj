@@ -36,6 +36,8 @@
              Link="Workspace\CrossProcessRobloxInputGate.cs" />
     <Compile Include="..\LilacMacro.App\Workspace\WorkspaceController.cs"
              Link="Workspace\WorkspaceController.cs" />
+    <Compile Include="..\LilacMacro.App\Workspace\WorkspaceController.Discord.cs"
+             Link="Workspace\WorkspaceController.Discord.cs" />
     <Compile Include="..\LilacMacro.App\Workspace\WorkspaceInputCoordinator.cs"
              Link="Workspace\WorkspaceInputCoordinator.cs" />
     <Compile Include="..\LilacMacro.App\Debugging\*.cs"

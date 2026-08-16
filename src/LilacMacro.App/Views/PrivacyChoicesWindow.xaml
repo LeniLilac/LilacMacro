@@ -41,7 +41,7 @@
                        Text="Review these choices before any optional service request is made. You can change them later in Settings." />
             <TextBlock Margin="0,24,0,0" FontFamily="Consolas" FontSize="10"
                        Foreground="{DynamicResource InkSoftBrush}"
-                       Text="PRIVACY NOTICE 01  /  LOCAL CHOICES" />
+                       Text="PRIVACY NOTICE 02  /  LOCAL CHOICES" />
         </StackPanel>
 
         <Grid Grid.Column="2">
@@ -92,6 +92,8 @@
                                       Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="False" />
                         </Grid>
                     </Border>
+                    <TextBlock Margin="0,4,0,0" FontSize="11" LineHeight="17" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                               Text="Discord reporting is configured separately in Settings. Real runtime events may include a current Roblox client screenshot when a webhook is configured; Test webhook remains text-only." />
                 </StackPanel>
             </ScrollViewer>
 

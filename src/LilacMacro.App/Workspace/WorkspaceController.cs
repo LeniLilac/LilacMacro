@@ -11,7 +11,7 @@ using LilacMacro.Windows.Capture;
 
 namespace LilacMacro.App.Workspace;
 
-public sealed class WorkspaceController : IDisposable
+public sealed partial class WorkspaceController : IDisposable
 {
     private readonly AppSettingsStore _settingsStore = new();
     private readonly DatasetStore _datasets = new();

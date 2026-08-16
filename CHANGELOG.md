@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.141 — Public beta
+
+- Added optional current Roblox client PNG attachments to real Discord runtime events through Components V2 Media Gallery messages.
+- Kept the Test webhook action text-only and made screenshot capture or upload failures non-blocking for automation.
+- Updated the Discord webhook request contract to enable Components V2 attachments and wait for server confirmation.
+- Incremented the privacy notice for the new Discord screenshot behavior.
+
 ## 1.0.140 — Public beta
 
 - Published the first source-available Windows public beta and project-signed six-asset release channel.
