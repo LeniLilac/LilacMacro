@@ -237,6 +237,49 @@ public sealed class PlacementSetupTests
     }
 
     [Fact]
+    public async Task PlacementBatchRollsBackUntilItsOwnerCommits()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-placement-batch-{Guid.NewGuid():N}");
+        try
+        {
+            PlacementSetupStore store = new(root);
+            PlacementSetupDocument original = PlacementSetupRules.CreateDocument(
+                "story-school-grounds",
+                1366,
+                700);
+            await store.SaveAsync(original);
+            PlacementSetupDocument imported = PlacementSetupRules.CloneDocument(original);
+            imported.Shared.TeamSlot = 4;
+
+            using (PlacementSetupBatch pending = await store.BeginBatchAsync([imported])) { }
+            Assert.Equal(1, (await store.LoadAsync(original.MapId)).Shared.TeamSlot);
+
+            using (PlacementSetupBatch committed = await store.BeginBatchAsync([imported]))
+                committed.Commit();
+            Assert.Equal(4, (await store.LoadAsync(original.MapId)).Shared.TeamSlot);
+            Assert.Empty(Directory.EnumerateFiles(root, "*.share.*"));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void PlacementValidationRejectsOversizedOrMissingCollectionsBeforeDetailedWork()
+    {
+        PlacementSetupDocument missing = PlacementSetupRules.CreateDocument("story-school-grounds", 1366, 700);
+        missing.Shared.Steps = null!;
+        Assert.Throws<InvalidDataException>(() => PlacementSetupRules.Validate(missing));
+
+        PlacementSetupDocument oversized = PlacementSetupRules.CreateDocument("story-school-grounds", 1366, 700);
+        oversized.Shared.Steps = Enumerable.Range(0, PlacementSetupRules.MaximumStepsPerRoute + 1)
+            .Select(_ => PlacementStep.CreateStartGame())
+            .ToList();
+        Assert.Throws<InvalidDataException>(() => PlacementSetupRules.Validate(oversized));
+    }
+
+    [Fact]
     public async Task EditorSessionMovesStepDirectlyToDroppedPosition()
     {
         string root = Path.Combine(Path.GetTempPath(), $"lilac-placement-reorder-{Guid.NewGuid():N}");

@@ -74,6 +74,12 @@ public partial class SettingsPage : UserControl
         WebhookPassword.Password = ownerState.DiscordWebhook;
         DiscordUserIdText.Text = ownerState.DiscordUserId;
         NotifyTerminalFailureCheck.IsChecked = ownerState.NotifyOnTerminalFailure;
+        NotifyRunStartCheck.IsChecked = ownerState.NotifyOnRunStart;
+        NotifyRunStopCheck.IsChecked = ownerState.NotifyOnRunStop;
+        NotifyTaskChangeCheck.IsChecked = ownerState.NotifyOnTaskChange;
+        NotifyVictoryCheck.IsChecked = ownerState.NotifyOnVictory;
+        NotifyDefeatCheck.IsChecked = ownerState.NotifyOnDefeat;
+        NotifyRecoveryCheck.IsChecked = ownerState.NotifyOnRecovery;
         DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
         FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
@@ -318,11 +324,17 @@ public partial class SettingsPage : UserControl
         }
     }
 
-    private void DiscordFailureOptions_OnChanged(object sender, RoutedEventArgs eventArgs)
+    private void DiscordEventOptions_OnChanged(object sender, RoutedEventArgs eventArgs)
     {
         if (!_initialized) return;
-        _ownerState.SetDiscordFailureOptions(
+        _ownerState.SetDiscordEventOptions(
             DiscordUserIdText.Text,
+            NotifyRunStartCheck.IsChecked == true,
+            NotifyRunStopCheck.IsChecked == true,
+            NotifyTaskChangeCheck.IsChecked == true,
+            NotifyVictoryCheck.IsChecked == true,
+            NotifyDefeatCheck.IsChecked == true,
+            NotifyRecoveryCheck.IsChecked == true,
             NotifyTerminalFailureCheck.IsChecked == true);
     }
 

@@ -153,6 +153,38 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
         lock (_gate) return TryReleaseCore(showRestoredWindow: false, out error);
     }
 
+    public bool TryReleaseAndMinimize(out string error)
+    {
+        lock (_gate)
+        {
+            if (_state is not { } state)
+            {
+                error = string.Empty;
+                return true;
+            }
+            if (!IsSourceAvailable(state))
+            {
+                _state = null;
+                error = string.Empty;
+                return true;
+            }
+
+            try
+            {
+                Restore(state, showRestoredWindow: false);
+                _ = NativeMethods.ShowWindowAsync(state.Source.Handle, NativeMethods.SwShowMinNoActive);
+                _state = null;
+                error = string.Empty;
+                return true;
+            }
+            catch (Exception exception) when (exception is Win32Exception or InvalidOperationException)
+            {
+                error = $"Windows could not minimize Roblox after releasing the dock: {exception.Message}";
+                return false;
+            }
+        }
+    }
+
     public void Dispose() => _ = TryUndock(out _);
 
     internal static long BuildDockedStyle(long originalStyle)

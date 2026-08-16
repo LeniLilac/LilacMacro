@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using LilacMacro.App.Notifications;
 using LilacMacro.Core.Placements;
 
@@ -170,11 +171,19 @@ public partial class PlacementTimelinePanel : UserControl
     private async void EditStep_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         if (_session is null || sender is not Button { Tag: PlacementStepRowViewModel row } || !row.CanEdit) return;
+        ScrollViewer? pageScroller = FindAncestorScrollViewer(this);
+        double pageOffset = pageScroller?.VerticalOffset ?? 0;
         PlacementStepEditorDialog dialog = new(row, _session.CurrentRoute.Steps);
         Window? owner = Window.GetWindow(this);
         if (owner is not null) dialog.Owner = owner;
         if (dialog.ShowDialog() != true || dialog.Replacement is not { } replacement) return;
         await RunEditAsync(() => _session.ReplaceStepAsync(row.Index, replacement));
+        if (pageScroller is not null)
+        {
+            _ = Dispatcher.BeginInvoke(
+                DispatcherPriority.Loaded,
+                new Action(() => pageScroller.ScrollToVerticalOffset(pageOffset)));
+        }
     }
 
     private void StepDragHandle_OnPreviewMouseLeftButtonDown(

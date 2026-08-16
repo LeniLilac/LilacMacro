@@ -35,6 +35,7 @@ public partial class MacroDashboardPage : UserControl
     private readonly Dictionary<PlanTaskPrototype, DateTimeOffset> _blockedUntil = [];
     private readonly Dictionary<PlanTaskPrototype, DateTimeOffset> _utilityDueAt = [];
     private readonly MacroUnattendedRecoveryRunner _recovery;
+    private readonly ConfigurationMutationGate _configurationGate = ConfigurationMutationGate.CreateDefault();
     private readonly List<RunStatsPoint> _runStats = [];
     private readonly DispatcherTimer _runtimeTimer;
     private DeepDebugScope? _debugScope;
@@ -43,8 +44,11 @@ public partial class MacroDashboardPage : UserControl
     private bool _runStarting;
     private bool _initialized;
     private PlanTaskPrototype? _currentTask;
+    private IDisposable? _configurationRunLease;
 
     public event Action<bool>? RunningChanged;
+
+    internal bool IsRunning => _runStarting || _runTask is not null || _runCancellation is not null;
 
     internal MacroDashboardPage(
         DeepDebugSessionService deepDebug,
@@ -64,7 +68,8 @@ public partial class MacroDashboardPage : UserControl
             _workspace,
             _ocr,
             deepDebug,
-            AppendLog);
+            AppendLog,
+            () => _ = Dispatcher.BeginInvoke(RobloxDock.ReacquireAfterRobloxLaunch));
         PlacementSetupStore placements = new(Path.Combine(
             MacroInstanceContext.Current.ConfigurationRoot,
             "placements"));
@@ -75,8 +80,10 @@ public partial class MacroDashboardPage : UserControl
             () => _currentTask = null,
             AppendLog,
             RefreshUpcomingTasks,
-            deepDebug);
+            deepDebug,
+            NotifyDiscordRecovery);
         InitializeComponent();
+        InitializeDiscordEvents();
         _runtimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _runtimeTimer.Tick += (_, _) => RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
         StatsChart.SetPoints(_runStats);
@@ -124,6 +131,7 @@ public partial class MacroDashboardPage : UserControl
             catch (OperationCanceledException) { }
         }
         await CompleteDebugAsync("closed");
+        await _discordEvents.DisposeAsync();
         _ocr.Dispose();
         _workspace.Dispose();
     }
@@ -168,6 +176,7 @@ public partial class MacroDashboardPage : UserControl
                 return;
             }
             PrivateServerRejoinService.Validate(_ownerState.PrivateServerLink);
+            _configurationRunLease = _configurationGate.AcquireRunLease();
             await _ownerState.FlushAsync();
             _runCancellation = new CancellationTokenSource();
             _debugScope = await _deepDebug.OpenSessionAsync(
@@ -183,6 +192,7 @@ public partial class MacroDashboardPage : UserControl
             _runStats.Clear();
             StatsChart.SetPoints(_runStats);
             RefreshRunState(true);
+            BeginDiscordRun(plan);
             string device = SelectOcrDevice();
             if (!_initialized)
             {
@@ -220,16 +230,19 @@ public partial class MacroDashboardPage : UserControl
                 _runCancellation.Token);
             await _runTask;
             AppendLog("PLAN COMPLETE");
+            NotifyDiscordRunStopped(plan, "Plan complete.");
         }
         catch (OperationCanceledException)
         {
             AppendLog("STOPPED");
+            NotifyDiscordRunStopped(plan, "Stopped by the user.");
         }
         catch (Exception error)
         {
             AppToastService.ShowError("MACRO STOPPED", error.Message);
             AppendLog($"ERROR {error.Message}");
             _deepDebug.RecordEvent("macro", "runtime_error", new { Error = error.ToString() });
+            NotifyDiscordTerminalFailure(plan);
         }
         finally
         {
@@ -239,6 +252,8 @@ public partial class MacroDashboardPage : UserControl
             _runTask = null;
             _runCancellation?.Dispose();
             _runCancellation = null;
+            _configurationRunLease?.Dispose();
+            _configurationRunLease = null;
             await CompleteDebugAsync("stopped");
             RefreshRunState(false);
             _currentTask = null;
@@ -305,6 +320,7 @@ public partial class MacroDashboardPage : UserControl
                 throw new InvalidOperationException($"{task.ModeLabel} runtime is not implemented; priority evaluation stopped.");
 
             _currentTask = task;
+            NotifyDiscordTaskChanged(plan, task);
             RefreshUpcomingTasks(plan);
             AppendLog($"RUN {task.Name}");
 
@@ -368,6 +384,7 @@ public partial class MacroDashboardPage : UserControl
             MatchTerminalOutcome outcome = result.Outcome
                 ?? throw new InvalidOperationException("The completed match did not return a terminal outcome.");
             bool victory = outcome == MatchTerminalOutcome.Victory;
+            NotifyDiscordOutcome(plan, task, victory);
             if (victory)
             {
                 _victories[task] = _victories.GetValueOrDefault(task) + 1;
@@ -459,70 +476,4 @@ public partial class MacroDashboardPage : UserControl
         return eligible;
     }
 
-    private void StopButton_OnClick(object sender, RoutedEventArgs eventArgs) => _runCancellation?.Cancel();
-
-    private void DockButton_OnClick(object sender, RoutedEventArgs eventArgs)
-    {
-        RobloxDock.SetRequested(!RobloxDock.IsRequested);
-        RefreshDockState();
-    }
-
-    private void RobloxDock_OnStateChanged(object? sender, EventArgs eventArgs) => RefreshDockState();
-
-    private void RefreshDockState()
-    {
-        if (DockStatusText is null || DockButtonText is null) return;
-        DockStatusText.Text = RobloxDock.Status;
-        DockButtonText.Text = RobloxDock.IsRequested ? "UNDOCK" : "DOCK";
-        DockButton.SetResourceReference(
-            Control.BackgroundProperty,
-            RobloxDock.IsRequested ? "AccentBrush" : "CardBrush");
-    }
-
-    private void RefreshRunState(bool running)
-    {
-        StartButton.IsEnabled = !running;
-        StopButton.IsEnabled = running;
-        PlanCombo.IsEnabled = !running;
-        RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
-        RunningChanged?.Invoke(running);
-    }
-
-    private void RefreshUpcomingTasks(PlanPrototype plan)
-    {
-        UpcomingTasksList.ItemsSource = UpcomingTaskRowFactory.Build(
-            plan,
-            _currentTask,
-            _victories,
-            _completedLoopRuns,
-            DateTimeOffset.UtcNow,
-            EligibleAt);
-        /* Legacy inline row projection removed after the view model factory extraction.
-                    ? $"CURRENT · PRIORITY {task.Priority}"
-                    : $"{task.ModeLabel.ToUpperInvariant()} · PRIORITY {task.Priority}",
-        */
-    }
-
-    private void AppendLog(string message)
-    {
-        if (!Dispatcher.CheckAccess())
-        {
-            if (!Dispatcher.HasShutdownStarted)
-                _ = Dispatcher.BeginInvoke(() => AppendLog(message));
-            return;
-        }
-
-        string entry = $"{DateTime.Now:HH:mm:ss} {message}";
-        TraceLogText.Text = string.IsNullOrWhiteSpace(TraceLogText.Text) || TraceLogText.Text == "Macro runtime is not connected."
-            ? entry
-            : TraceLogText.Text + Environment.NewLine + entry;
-        TraceLogText.ScrollToEnd();
-    }
-
-    private async Task CompleteDebugAsync(string outcome)
-    {
-        if (_debugScope is null) return;
-        await _debugScope.CompleteAsync(outcome);
-        _debugScope = null;
-    }
 }

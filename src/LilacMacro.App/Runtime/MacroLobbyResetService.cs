@@ -15,6 +15,7 @@ internal sealed class MacroLobbyResetService
     private readonly GameSettingsNormalizer _gameSettings;
     private readonly CodeRedemptionService _codes;
     private readonly Action<string> _status;
+    private readonly Action _robloxRejoined;
 
     public MacroLobbyResetService(
         MacroOwnerState ownerState,
@@ -22,7 +23,8 @@ internal sealed class MacroLobbyResetService
         WorkspaceController workspace,
         OcrRunner ocr,
         DeepDebugSessionService deepDebug,
-        Action<string> status)
+        Action<string> status,
+        Action robloxRejoined)
     {
         _ownerState = ownerState;
         _control = control;
@@ -34,6 +36,7 @@ internal sealed class MacroLobbyResetService
             ocr,
             new UtilityRespawnService(workspace, ocr));
         _status = status;
+        _robloxRejoined = robloxRejoined;
     }
 
     public bool HasPendingCodes(IReadOnlySet<string> redeemedCodes, DateTimeOffset now) =>
@@ -51,6 +54,7 @@ internal sealed class MacroLobbyResetService
             device,
             _status,
             cancellationToken).ConfigureAwait(false);
+        _robloxRejoined();
         if (normalizeStartupSettings &&
             _control.IsSettingsNormalizerEnabled(DateTimeOffset.UtcNow))
         {

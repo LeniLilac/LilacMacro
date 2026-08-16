@@ -124,6 +124,14 @@ public sealed class RobloxWindowDockTests
             expected,
             RobloxDockMaintenancePolicy.CanAcquire(awaitingOwnerExposure, ownerActive));
 
+    [Theory]
+    [InlineData(true, RobloxDockInactiveAction.KeepSourceVisible)]
+    [InlineData(false, RobloxDockInactiveAction.MinimizeSource)]
+    public void InactiveOwner_PreservesUserFocusedRobloxOtherwiseMinimizes(
+        bool sourceIsForeground,
+        RobloxDockInactiveAction expected) =>
+        Assert.Equal(expected, RobloxDockMaintenancePolicy.ResolveInactive(sourceIsForeground));
+
     private static bool IsExposed(
         int foreground,
         WindowBounds foregroundBounds,

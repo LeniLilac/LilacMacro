@@ -174,6 +174,38 @@ public sealed class MacroPlanPersistenceTests
     }
 
     [Fact]
+    public async Task ExistingSettingsDoNotSilentlyOptIntoNewDiscordEvents()
+    {
+        string root = TemporaryRoot();
+        try
+        {
+            Directory.CreateDirectory(root);
+            await File.WriteAllTextAsync(
+                Path.Combine(root, "macro-settings.json"),
+                """
+                {
+                  "schema_version": 11,
+                  "notify_on_terminal_failure": true
+                }
+                """);
+
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+
+            Assert.True(owner.NotifyOnTerminalFailure);
+            Assert.False(owner.NotifyOnRunStart);
+            Assert.False(owner.NotifyOnRunStop);
+            Assert.False(owner.NotifyOnTaskChange);
+            Assert.False(owner.NotifyOnVictory);
+            Assert.False(owner.NotifyOnDefeat);
+            Assert.False(owner.NotifyOnRecovery);
+        }
+        finally
+        {
+            Delete(root);
+        }
+    }
+
+    [Fact]
     public void NullNestedPlanPayloadIsRejectedWithoutThrowing()
     {
         PlanSettingsSnapshot snapshot = new()
@@ -197,7 +229,15 @@ public sealed class MacroPlanPersistenceTests
             MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root), protector);
             first.SetPrivateServerLink("https://www.roblox.com/share?code=private-code&type=Server");
             first.SetDiscordWebhook("https://discord.com/api/webhooks/123/private-token");
-            first.SetDiscordFailureOptions("123456789012345678", notifyOnTerminalFailure: false);
+            first.SetDiscordEventOptions(
+                "123456789012345678",
+                notifyOnRunStart: false,
+                notifyOnRunStop: true,
+                notifyOnTaskChange: false,
+                notifyOnVictory: true,
+                notifyOnDefeat: false,
+                notifyOnRecovery: true,
+                notifyOnTerminalFailure: false);
             await first.FlushAsync();
 
             string json = await File.ReadAllTextAsync(Path.Combine(root, "macro-settings.json"));
@@ -210,6 +250,12 @@ public sealed class MacroPlanPersistenceTests
             Assert.Equal("https://discord.com/api/webhooks/123/private-token", second.DiscordWebhook);
             Assert.Equal("123456789012345678", second.DiscordUserId);
             Assert.False(second.NotifyOnTerminalFailure);
+            Assert.False(second.NotifyOnRunStart);
+            Assert.True(second.NotifyOnRunStop);
+            Assert.False(second.NotifyOnTaskChange);
+            Assert.True(second.NotifyOnVictory);
+            Assert.False(second.NotifyOnDefeat);
+            Assert.True(second.NotifyOnRecovery);
         }
         finally
         {

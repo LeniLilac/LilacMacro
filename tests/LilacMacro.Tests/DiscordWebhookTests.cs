@@ -18,8 +18,55 @@ public sealed class DiscordWebhookTests
 
         Assert.Equal(HttpMethod.Post, handler.Method);
         Assert.Equal("discord.com", handler.Uri?.Host);
-        Assert.Contains("LilacMacro webhook test passed", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("LilacMacro webhook test", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("\"flags\":32768", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("\"type\":17", handler.Body, StringComparison.Ordinal);
         Assert.Contains("\"parse\":[]", handler.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Failure_delivery_mentions_only_the_explicit_user_and_sanitizes_other_mentions()
+    {
+        RecordingHandler handler = new(HttpStatusCode.NoContent);
+        DiscordWebhookClient client = new(new HttpClient(handler));
+
+        await client.SendEventAsync(
+            "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456",
+            new DiscordEventNotification(
+                DiscordEventKind.TerminalFailure,
+                "@everyone plan",
+                "@here task",
+                "Runtime stopped.",
+                "This desktop",
+                DateTimeOffset.UnixEpoch,
+                "123456789012345678"));
+
+        Assert.Contains("\"flags\":32768", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("\"users\":[\"123456789012345678\"]", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("\\u003C@123456789012345678\\u003E", handler.Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("@everyone", handler.Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("@here", handler.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Non_terminal_events_cannot_enable_a_configured_mention()
+    {
+        RecordingHandler handler = new(HttpStatusCode.NoContent);
+        DiscordWebhookClient client = new(new HttpClient(handler));
+
+        await client.SendEventAsync(
+            "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456",
+            new DiscordEventNotification(
+                DiscordEventKind.RunStarted,
+                "Plan",
+                null,
+                "Started.",
+                "This desktop",
+                DateTimeOffset.UnixEpoch,
+                "123456789012345678"));
+
+        Assert.Contains("\"users\":[]", handler.Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u003C@123456789012345678\u003E", handler.Body, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -69,7 +116,7 @@ public sealed class DiscordWebhookTests
             $"https://discord.com/api/webhooks/123456789012345678/{secret}",
             "Runner 1"));
 
-        Assert.Equal("Discord webhook test could not be delivered.", error.Message);
+        Assert.Equal("Discord webhook event could not be delivered.", error.Message);
         Assert.DoesNotContain(secret, error.Message, StringComparison.Ordinal);
     }
 

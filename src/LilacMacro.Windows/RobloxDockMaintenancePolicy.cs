@@ -7,6 +7,12 @@ public enum RobloxDockMaintenanceAction
     Repair,
 }
 
+public enum RobloxDockInactiveAction
+{
+    KeepSourceVisible,
+    MinimizeSource,
+}
+
 public static class RobloxDockMaintenancePolicy
 {
     public static bool CanAcquire(bool awaitingOwnerExposure, bool ownerActive) =>
@@ -18,4 +24,9 @@ public static class RobloxDockMaintenancePolicy
             : docked
                 ? RobloxDockMaintenanceAction.Maintain
                 : RobloxDockMaintenanceAction.Repair;
+
+    public static RobloxDockInactiveAction ResolveInactive(bool sourceIsForeground) =>
+        sourceIsForeground
+            ? RobloxDockInactiveAction.KeepSourceVisible
+            : RobloxDockInactiveAction.MinimizeSource;
 }

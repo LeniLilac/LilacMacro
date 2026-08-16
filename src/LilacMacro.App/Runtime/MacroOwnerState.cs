@@ -45,6 +45,12 @@ internal sealed class MacroOwnerState
         _encryptedDiscordWebhook = webhookValid ? encryptedDiscordWebhook : string.Empty;
         DiscordUserId = settings.DiscordUserId?.Trim() ?? string.Empty;
         NotifyOnTerminalFailure = settings.NotifyOnTerminalFailure;
+        NotifyOnRunStart = settings.NotifyOnRunStart;
+        NotifyOnRunStop = settings.NotifyOnRunStop;
+        NotifyOnTaskChange = settings.NotifyOnTaskChange;
+        NotifyOnVictory = settings.NotifyOnVictory;
+        NotifyOnDefeat = settings.NotifyOnDefeat;
+        NotifyOnRecovery = settings.NotifyOnRecovery;
         EnableDiagnosticUploads = settings.EnableDiagnosticUploads;
         PrivacyChoicesVersion = settings.PrivacyChoicesVersion;
         OnlineFeaturesEnabled = settings.OnlineFeaturesEnabled;
@@ -91,6 +97,18 @@ internal sealed class MacroOwnerState
     public string DiscordUserId { get; private set; }
 
     public bool NotifyOnTerminalFailure { get; private set; }
+
+    public bool NotifyOnRunStart { get; private set; }
+
+    public bool NotifyOnRunStop { get; private set; }
+
+    public bool NotifyOnTaskChange { get; private set; }
+
+    public bool NotifyOnVictory { get; private set; }
+
+    public bool NotifyOnDefeat { get; private set; }
+
+    public bool NotifyOnRecovery { get; private set; }
 
     public bool EnableDiagnosticUploads { get; private set; }
 
@@ -176,15 +194,35 @@ internal sealed class MacroOwnerState
         QueueSave();
     }
 
-    public void SetDiscordFailureOptions(string userId, bool notifyOnTerminalFailure)
+    public void SetDiscordEventOptions(
+        string userId,
+        bool notifyOnRunStart,
+        bool notifyOnRunStop,
+        bool notifyOnTaskChange,
+        bool notifyOnVictory,
+        bool notifyOnDefeat,
+        bool notifyOnRecovery,
+        bool notifyOnTerminalFailure)
     {
         userId = userId.Trim();
         if (string.Equals(userId, DiscordUserId, StringComparison.Ordinal) &&
+            notifyOnRunStart == NotifyOnRunStart &&
+            notifyOnRunStop == NotifyOnRunStop &&
+            notifyOnTaskChange == NotifyOnTaskChange &&
+            notifyOnVictory == NotifyOnVictory &&
+            notifyOnDefeat == NotifyOnDefeat &&
+            notifyOnRecovery == NotifyOnRecovery &&
             notifyOnTerminalFailure == NotifyOnTerminalFailure)
         {
             return;
         }
         DiscordUserId = userId;
+        NotifyOnRunStart = notifyOnRunStart;
+        NotifyOnRunStop = notifyOnRunStop;
+        NotifyOnTaskChange = notifyOnTaskChange;
+        NotifyOnVictory = notifyOnVictory;
+        NotifyOnDefeat = notifyOnDefeat;
+        NotifyOnRecovery = notifyOnRecovery;
         NotifyOnTerminalFailure = notifyOnTerminalFailure;
         QueueSave();
     }
@@ -337,6 +375,12 @@ internal sealed class MacroOwnerState
         EncryptedDiscordWebhook = _encryptedDiscordWebhook,
         DiscordUserId = DiscordUserId,
         NotifyOnTerminalFailure = NotifyOnTerminalFailure,
+        NotifyOnRunStart = NotifyOnRunStart,
+        NotifyOnRunStop = NotifyOnRunStop,
+        NotifyOnTaskChange = NotifyOnTaskChange,
+        NotifyOnVictory = NotifyOnVictory,
+        NotifyOnDefeat = NotifyOnDefeat,
+        NotifyOnRecovery = NotifyOnRecovery,
         EnableDiagnosticUploads = EnableDiagnosticUploads,
         PrivacyChoicesVersion = PrivacyChoicesVersion,
         OnlineFeaturesEnabled = OnlineFeaturesEnabled,

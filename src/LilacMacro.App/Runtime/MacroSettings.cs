@@ -11,7 +11,7 @@ internal enum PrivacyChoiceKind
 
 internal sealed record MacroSettings
 {
-    public const int CurrentSchemaVersion = 11;
+    public const int CurrentSchemaVersion = 12;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
@@ -28,6 +28,18 @@ internal sealed record MacroSettings
     public string DiscordUserId { get; init; } = string.Empty;
 
     public bool NotifyOnTerminalFailure { get; init; } = true;
+
+    public bool NotifyOnRunStart { get; init; } = true;
+
+    public bool NotifyOnRunStop { get; init; } = true;
+
+    public bool NotifyOnTaskChange { get; init; } = true;
+
+    public bool NotifyOnVictory { get; init; } = true;
+
+    public bool NotifyOnDefeat { get; init; } = true;
+
+    public bool NotifyOnRecovery { get; init; } = true;
 
     public bool EnableDiagnosticUploads { get; init; }
 

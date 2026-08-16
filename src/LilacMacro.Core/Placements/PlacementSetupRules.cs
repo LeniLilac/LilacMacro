@@ -7,6 +7,9 @@ public static class PlacementSetupRules
     public const int MaximumDelayDurationMilliseconds = 3_600_000;
     public const int MaximumUpgradeCount = 100;
     public const int MinimumPlacementSpacingPixels = 7;
+    public const int MaximumRouteOverrides = 16;
+    public const int MaximumStepsPerRoute = 256;
+    public const int MaximumStepsPerDocument = 2_048;
 
     public static PlacementSetupDocument CreateDocument(string mapId, int imageWidth, int imageHeight)
     {
@@ -90,7 +93,7 @@ public static class PlacementSetupRules
 
     public static void Validate(PlacementSetupDocument document)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        if (document is null) throw new InvalidDataException("Placement setup document is missing.");
         if (document.SchemaVersion != PlacementSetupDocument.CurrentSchemaVersion)
         {
             throw new InvalidDataException("Placement setup schema is unsupported.");
@@ -100,14 +103,21 @@ public static class PlacementSetupRules
         {
             throw new InvalidDataException("Placement image size is invalid.");
         }
+        if (document.Shared is null || document.Overrides is null)
+            throw new InvalidDataException("Placement routes are missing.");
+        if (document.Overrides.Count > MaximumRouteOverrides)
+            throw new InvalidDataException("Placement setup has too many route overrides.");
         if (!string.Equals(document.Shared.RouteId, PlacementRouteCatalog.SharedRouteId, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidDataException("Shared placement route is invalid.");
         }
         ValidateRoute(document.Shared, document.ImageWidth, document.ImageHeight);
-        foreach ((string routeId, PlacementRouteSetup route) in document.Overrides)
+        int totalSteps = document.Shared.Steps.Count;
+        HashSet<string> routeIds = new(StringComparer.OrdinalIgnoreCase);
+        foreach ((string routeId, PlacementRouteSetup? route) in document.Overrides)
         {
-            if (!IsSafeId(routeId) || !string.Equals(routeId, route.RouteId, StringComparison.OrdinalIgnoreCase))
+            if (route is null || !IsSafeId(routeId) || !routeIds.Add(routeId) ||
+                !string.Equals(routeId, route.RouteId, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidDataException("Placement route override id is invalid.");
             }
@@ -115,14 +125,21 @@ public static class PlacementSetupRules
             {
                 throw new InvalidDataException("Shared route cannot be stored as an override.");
             }
+            totalSteps = checked(totalSteps + (route.Steps?.Count ?? 0));
+            if (totalSteps > MaximumStepsPerDocument)
+                throw new InvalidDataException("Placement setup has too many total steps.");
             ValidateRoute(route, document.ImageWidth, document.ImageHeight);
         }
     }
 
     public static void ValidateRoute(PlacementRouteSetup route, int imageWidth, int imageHeight)
     {
-        ArgumentNullException.ThrowIfNull(route);
+        if (route is null) throw new InvalidDataException("Placement route is missing.");
         if (!IsSafeId(route.RouteId)) throw new InvalidDataException("Placement route id is invalid.");
+        if (route.Steps is null || route.Steps.Count is < 1 or > MaximumStepsPerRoute)
+            throw new InvalidDataException("Placement route step count is invalid.");
+        if (route.Steps.Any(step => step is null))
+            throw new InvalidDataException("Placement route contains a missing step.");
         if (route.TeamSlot is < 1 or > 8 || route.SelectedUnitSlot is < 1 or > 6)
         {
             throw new InvalidDataException("Team slot must be 1 through 8 and unit slot must be 1 through 6.");
@@ -231,8 +248,9 @@ public static class PlacementSetupRules
         Steps = source.Steps.Select(step => step with { }).ToList(),
     };
 
-    private static bool IsSafeId(string id) =>
-        !string.IsNullOrWhiteSpace(id) && id.All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
+    private static bool IsSafeId(string? id) =>
+        !string.IsNullOrWhiteSpace(id) && id.Length <= 64 &&
+        id.All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
 
     private static int ScaleCoordinate(int value, int sourceSize, int targetSize) => sourceSize == 1
         ? 0

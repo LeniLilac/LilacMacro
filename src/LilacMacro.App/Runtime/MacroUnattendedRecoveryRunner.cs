@@ -9,7 +9,8 @@ internal sealed class MacroUnattendedRecoveryRunner(
     Action clearCurrentTask,
     Action<string> appendLog,
     Action<PlanPrototype> refreshTasks,
-    DeepDebugSessionService deepDebug)
+    DeepDebugSessionService deepDebug,
+    Action<PlanTaskPrototype?, TimeSpan> recoveryStarted)
 {
     private readonly Dictionary<PlanTaskPrototype, int> _taskFailures = [];
 
@@ -50,6 +51,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
                     RetrySeconds = delay.TotalSeconds,
                 });
                 refreshTasks(plan);
+                recoveryStarted(failedTask, delay);
                 await Task.Delay(delay, cancellationToken);
             }
         }

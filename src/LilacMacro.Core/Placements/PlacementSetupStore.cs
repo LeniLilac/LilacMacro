@@ -88,6 +88,51 @@ public sealed class PlacementSetupStore
         }
     }
 
+    public async Task<PlacementSetupBatch> BeginBatchAsync(
+        IReadOnlyCollection<PlacementSetupDocument> documents,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(documents);
+        if (documents.Count == 0) return new PlacementSetupBatch([]);
+        HashSet<string> mapIds = new(StringComparer.OrdinalIgnoreCase);
+        foreach (PlacementSetupDocument document in documents)
+        {
+            PlacementSetupRules.Validate(document);
+            if (!mapIds.Add(document.MapId))
+                throw new InvalidDataException("Placement batch contains a duplicate map.");
+        }
+
+        Directory.CreateDirectory(_rootDirectory);
+        List<PlacementSetupBatchEntry> entries = [];
+        try
+        {
+            foreach (PlacementSetupDocument document in documents)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                string destination = PathFor(document.MapId);
+                string identity = Guid.NewGuid().ToString("N");
+                string temporary = destination + $".{identity}.share.tmp";
+                string? backup = File.Exists(destination)
+                    ? destination + $".{identity}.share.bak"
+                    : null;
+                await WriteDocumentAsync(temporary, document, cancellationToken).ConfigureAwait(false);
+                if (backup is not null) File.Copy(destination, backup, overwrite: false);
+                entries.Add(new PlacementSetupBatchEntry(destination, temporary, backup));
+            }
+            foreach (PlacementSetupBatchEntry entry in entries)
+            {
+                File.Move(entry.Temporary, entry.Destination, overwrite: true);
+                entry.Applied = true;
+            }
+            return new PlacementSetupBatch(entries);
+        }
+        catch
+        {
+            PlacementSetupBatch.RollBack(entries);
+            throw;
+        }
+    }
+
     private string PathFor(string mapId)
     {
         if (string.IsNullOrWhiteSpace(mapId) ||
@@ -108,4 +153,93 @@ public sealed class PlacementSetupStore
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
         return options;
     }
+
+    private static async Task WriteDocumentAsync(
+        string path,
+        PlacementSetupDocument document,
+        CancellationToken cancellationToken)
+    {
+        await using FileStream stream = new(
+            path,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None,
+            16 * 1024,
+            useAsync: true);
+        await JsonSerializer.SerializeAsync(stream, document, JsonOptions, cancellationToken).ConfigureAwait(false);
+        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+    }
+}
+
+public sealed class PlacementSetupBatch : IDisposable
+{
+    private readonly IReadOnlyList<PlacementSetupBatchEntry> _entries;
+    private bool _committed;
+    private bool _disposed;
+
+    internal PlacementSetupBatch(IReadOnlyList<PlacementSetupBatchEntry> entries) => _entries = entries;
+
+    public void Commit()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _committed = true;
+        Clean(_entries);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        if (!_committed) RollBack(_entries);
+        else Clean(_entries);
+    }
+
+    internal static void RollBack(IEnumerable<PlacementSetupBatchEntry> entries)
+    {
+        Exception? firstFailure = null;
+        foreach (PlacementSetupBatchEntry entry in entries.Reverse())
+        {
+            bool restored = !entry.Applied;
+            try
+            {
+                if (entry.Applied)
+                {
+                    if (entry.Backup is not null) File.Move(entry.Backup, entry.Destination, overwrite: true);
+                    else if (File.Exists(entry.Destination)) File.Delete(entry.Destination);
+                    restored = true;
+                }
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                firstFailure ??= exception;
+            }
+            finally
+            {
+                DeleteIfPresent(entry.Temporary);
+                if (restored && entry.Backup is not null) DeleteIfPresent(entry.Backup);
+            }
+        }
+        if (firstFailure is not null)
+            throw new IOException("A placement import could not restore every prior file; backup files were retained.", firstFailure);
+    }
+
+    private static void Clean(IEnumerable<PlacementSetupBatchEntry> entries)
+    {
+        foreach (PlacementSetupBatchEntry entry in entries)
+        {
+            DeleteIfPresent(entry.Temporary);
+            if (entry.Backup is not null) DeleteIfPresent(entry.Backup);
+        }
+    }
+
+    private static void DeleteIfPresent(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { }
+    }
+}
+
+internal sealed record PlacementSetupBatchEntry(string Destination, string Temporary, string? Backup)
+{
+    public bool Applied { get; set; }
 }

@@ -316,17 +316,25 @@
                     <Border Style="{StaticResource SettingsCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                            <TextBlock FontSize="15" FontWeight="Bold" Text="Failures" />
+                            <TextBlock FontSize="15" FontWeight="Bold" Text="Events" />
                             <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <UniformGrid Columns="2" Margin="240,0,0,0">
+                                    <CheckBox x:Name="NotifyRunStartCheck" IsChecked="True" Content="Macro starts" Checked="DiscordEventOptions_OnChanged" Unchecked="DiscordEventOptions_OnChanged" />
+                                    <CheckBox x:Name="NotifyRunStopCheck" IsChecked="True" Content="Macro stops" Checked="DiscordEventOptions_OnChanged" Unchecked="DiscordEventOptions_OnChanged" />
+                                    <CheckBox x:Name="NotifyTaskChangeCheck" Margin="0,10,0,0" IsChecked="True" Content="Task changes" Checked="DiscordEventOptions_OnChanged" Unchecked="DiscordEventOptions_OnChanged" />
+                                    <CheckBox x:Name="NotifyRecoveryCheck" Margin="0,10,0,0" IsChecked="True" Content="Recovery attempts" Checked="DiscordEventOptions_OnChanged" Unchecked="DiscordEventOptions_OnChanged" />
+                                    <CheckBox x:Name="NotifyVictoryCheck" Margin="0,10,0,0" IsChecked="True" Content="Wins" Checked="DiscordEventOptions_OnChanged" Unchecked="DiscordEventOptions_OnChanged" />
+                                    <CheckBox x:Name="NotifyDefeatCheck" Margin="0,10,0,0" IsChecked="True" Content="Losses" Checked="DiscordEventOptions_OnChanged" Unchecked="DiscordEventOptions_OnChanged" />
+                                </UniformGrid>
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="TERMINAL FAILURE" />
-                                    <CheckBox x:Name="NotifyTerminalFailureCheck" Grid.Column="1" IsChecked="True" Content="Notify on terminal failure" Checked="DiscordFailureOptions_OnChanged" Unchecked="DiscordFailureOptions_OnChanged" />
+                                    <CheckBox x:Name="NotifyTerminalFailureCheck" Grid.Column="1" Margin="0,12,0,0" IsChecked="True" Content="Notify and mention on terminal failure" Checked="DiscordEventOptions_OnChanged" Unchecked="DiscordEventOptions_OnChanged" />
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="DISCORD USER ID" />
-                                    <TextBox x:Name="DiscordUserIdText" Grid.Column="1" Width="240" MaxLength="32" HorizontalAlignment="Left" TextChanged="DiscordFailureOptions_OnChanged" />
+                                    <TextBox x:Name="DiscordUserIdText" Grid.Column="1" Width="240" MaxLength="22" HorizontalAlignment="Left" TextChanged="DiscordEventOptions_OnChanged" />
                                 </Grid>
                             </StackPanel>
                         </Grid>

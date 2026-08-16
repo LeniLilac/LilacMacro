@@ -1,0 +1,59 @@
+<Window x:Class="LilacMacro.App.Views.PlanShareWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:LilacMacro.App.Controls"
+        Title="Share plan"
+        Width="720" Height="590" MinWidth="640" MinHeight="540"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
+        Background="{DynamicResource AppBackgroundBrush}">
+    <Grid Margin="26,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid>
+            <TextBlock FontSize="22" FontWeight="Black" Text="SHARE CONFIGURATION" />
+            <Button HorizontalAlignment="Right" Width="34" Height="32" Click="Close_OnClick">
+                <controls:LucideIcon Width="14" Height="14" Data="{StaticResource Lucide.X}" />
+            </Button>
+        </Grid>
+        <TextBlock Grid.Row="1" Margin="0,8,0,18" Foreground="{DynamicResource InkSoftBrush}"
+                   TextWrapping="Wrap"
+                   Text="Create an expiring code or import one. Plans never include private-server links, webhooks, run history, or other app settings." />
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="14" /><ColumnDefinition /></Grid.ColumnDefinitions>
+            <Border Padding="16" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="4">
+                <StackPanel>
+                    <TextBlock FontSize="15" FontWeight="Black" Text="EXPORT" />
+                    <TextBlock Margin="0,7,0,14" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                               Text="Uploads an opaque copy and returns a private 20-character code. Codes expire after 30 days." />
+                    <CheckBox x:Name="ExportPlanCheck" IsChecked="True" Content="Selected plan" />
+                    <CheckBox x:Name="ExportPlacementsCheck" Margin="0,10,0,0" IsChecked="True" Content="Map placements + match settings" />
+                    <Button x:Name="ExportButton" Margin="0,18,0,0" Padding="12,9" Background="{DynamicResource AccentBrush}" FontWeight="Bold" Click="Export_OnClick" Content="CREATE CODE" />
+                    <TextBlock Margin="0,18,0,6" Style="{StaticResource FieldLabelStyle}" Text="SHARE CODE" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBox x:Name="ExportCodeText" IsReadOnly="True" FontFamily="Consolas" FontSize="17" FontWeight="Bold" />
+                        <Button Grid.Column="1" Margin="8,0,0,0" Padding="10,6" Click="CopyCode_OnClick" Content="COPY" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Padding="16" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="4">
+                <StackPanel>
+                    <TextBlock FontSize="15" FontWeight="Black" Text="IMPORT" />
+                    <TextBlock Margin="0,7,0,14" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                               Text="A plan is added as a new plan. Imported placements replace matching saved maps." />
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="SHARE CODE" />
+                    <TextBox x:Name="ImportCodeText" Margin="0,6,0,14" MaxLength="23" CharacterCasing="Upper" FontFamily="Consolas" FontSize="17" FontWeight="Bold" />
+                    <CheckBox x:Name="ImportPlanCheck" IsChecked="True" Content="Import plan" />
+                    <CheckBox x:Name="ImportPlacementsCheck" Margin="0,10,0,0" IsChecked="True" Content="Import map placements + settings" />
+                    <Button x:Name="ImportButton" Margin="0,18,0,0" Padding="12,9" Background="{DynamicResource AccentBrush}" FontWeight="Bold" Click="Import_OnClick" Content="IMPORT CODE" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <TextBlock x:Name="StatusText" Grid.Row="3" Margin="0,16,0,0" MinHeight="18"
+                   Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap" />
+    </Grid>
+</Window>

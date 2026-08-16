@@ -56,7 +56,7 @@ public partial class RobloxDockSurface : UserControl
     public bool SetDashboardActive(bool active, out string error)
     {
         _dashboardActive = active;
-        if (!active && !_dock.TryUndock(out error)) return false;
+        if (!active && !ReleaseForInactiveOwner(out error)) return false;
         if (!active) _awaitingOwnerExposure = true;
         if (active) RefreshDock();
         error = string.Empty;
@@ -113,9 +113,25 @@ public partial class RobloxDockSurface : UserControl
     private void Owner_OnStateChanged(object? sender, EventArgs eventArgs) => RefreshDock();
 
     private void Owner_OnActivationChanged(object? sender, EventArgs eventArgs) =>
-        _ = Dispatcher.BeginInvoke(
-            DispatcherPriority.Input,
-            new Action(RefreshDock));
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (_owner?.IsActive == true)
+            {
+                RefreshDock();
+                return;
+            }
+            if (!_requested || !_dashboardActive || _releaseForClose) return;
+            if (!ReleaseForInactiveOwner(out string error)) ReportError(error);
+            _awaitingOwnerExposure = true;
+            SetStatus("PAUSED", "FOCUS MACRO TO DOCK");
+        }));
+
+    public void ReacquireAfterRobloxLaunch()
+    {
+        if (!_requested || !_dashboardActive || _releaseForClose) return;
+        _awaitingOwnerExposure = false;
+        RefreshDock();
+    }
 
     private void UpdateTargetDipSize()
     {
@@ -135,7 +151,7 @@ public partial class RobloxDockSurface : UserControl
                 !TryGetTargetLocation(owner, out int x, out int y))
             {
                 _awaitingOwnerExposure = true;
-                _ = _dock.TrySuspend(out _);
+                if (!ReleaseForInactiveOwner(out string error)) ReportError(error);
                 SetStatus("VIEW TOO SMALL", "MAXIMIZE TO DOCK");
                 return;
             }
@@ -163,7 +179,7 @@ public partial class RobloxDockSurface : UserControl
             }
             if (!_dock.IsDashboardExposed(ownerHandle, sourceHandle))
             {
-                if (!_dock.TrySuspend(out string error)) ReportError(error);
+                if (!ReleaseForInactiveOwner(out string error)) ReportError(error);
                 _awaitingOwnerExposure = true;
                 SetStatus("PAUSED", "DASHBOARD COVERED");
                 return;
@@ -229,4 +245,11 @@ public partial class RobloxDockSurface : UserControl
         _lastReportedError = message;
         AppToastService.ShowError("ROBLOX DOCK FAILED", message);
     }
+
+    private bool ReleaseForInactiveOwner(out string error) =>
+        RobloxDockMaintenancePolicy.ResolveInactive(_dock.IsSourceForeground) switch
+        {
+            RobloxDockInactiveAction.KeepSourceVisible => _dock.TryUndock(out error),
+            _ => _dock.TryReleaseAndMinimize(out error),
+        };
 }
