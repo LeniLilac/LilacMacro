@@ -136,6 +136,7 @@ public partial class DiagnosticUploadPanel
     {
         bool enabled = AllowUploadsCheck.IsChecked == true;
         bool idle = _uploadCancellation is null;
+        UploadProgress.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
         UploadButton.IsEnabled = enabled && idle;
         LargeGrantPassword.IsEnabled = enabled && idle;
         CancelButton.IsEnabled = !idle;

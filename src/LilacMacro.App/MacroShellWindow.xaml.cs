@@ -24,7 +24,7 @@ public partial class MacroShellWindow : Window
     private readonly MacroOwnerState _ownerState;
     private readonly MacroDashboardPage _macroPage;
     private readonly PlacementSetupPage _setupPage;
-    private readonly LocalInstanceManagerController _instanceManager = new();
+    private readonly LocalInstanceManagerController _instanceManager;
     private readonly ApplicationUpdateService _updates = new();
     private readonly SettingsPage _settingsPage;
     private readonly WindowShutdownState _shutdown = new();
@@ -50,6 +50,7 @@ public partial class MacroShellWindow : Window
         _toastTimer.Tick += ToastTimer_OnTick;
         AppToastService.Raised += AppToastService_OnRaised;
         _ownerState = ownerState;
+        _instanceManager = new LocalInstanceManagerController(deepDebug);
         _control = new ControlSnapshotPollingService(
             _controlTransport,
             new ControlSnapshotStore(

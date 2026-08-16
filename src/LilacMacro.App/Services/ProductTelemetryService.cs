@@ -15,6 +15,7 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
     private readonly DeepDebugSessionService _deepDebug;
     private readonly MacroOwnerState _ownerState;
     private readonly DiagnosticInstallationStore _installation;
+    private readonly ProductTelemetryRateLimitStore _rateLimits;
     private readonly IProductTelemetryTransport _transport;
     private readonly Channel<QueuedEvent> _events = Channel.CreateBounded<QueuedEvent>(
         new BoundedChannelOptions(256)
@@ -41,6 +42,7 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
         _deepDebug = deepDebug;
         _ownerState = ownerState;
         _installation = installation;
+        _rateLimits = new ProductTelemetryRateLimitStore(installation.ConfigurationRoot);
         _transport = transport;
         _batchWindow = batchWindow ?? BatchWindow;
         _deepDebug.ObservationRecorded += DeepDebug_OnObservationRecorded;
@@ -103,6 +105,8 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
+        await _rateLimits.LoadAsync(cancellationToken).ConfigureAwait(false);
+        string appVersion = BuildVersion();
         QueuedEvent? pending = null;
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -114,9 +118,9 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
             }
             QueuedEvent first = pending;
             pending = null;
-            List<ProductTelemetryEvent> batch = [first.Event];
+            List<QueuedEvent> batchItems = [first];
             await Task.Delay(_batchWindow, cancellationToken).ConfigureAwait(false);
-            while (batch.Count < ProductTelemetryPolicy.MaximumEventsPerBatch
+            while (batchItems.Count < ProductTelemetryPolicy.MaximumEventsPerBatch
                 && _events.Reader.TryRead(out QueuedEvent? next))
             {
                 if (next.Consent.Generation != first.Consent.Generation)
@@ -124,8 +128,16 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
                     pending = next;
                     break;
                 }
-                batch.Add(next.Event);
+                batchItems.Add(next);
             }
+            HashSet<string> rateLimitKeys = [];
+            List<QueuedEvent> eligibleItems = batchItems
+                .Where(item => !IsRateLimitedEvent(item.Event)
+                    || (!_rateLimits.WasSent(appVersion, item.Event)
+                        && rateLimitKeys.Add(RateLimitKey(item.Event))))
+                .ToList();
+            if (eligibleItems.Count == 0) continue;
+            List<ProductTelemetryEvent> batch = eligibleItems.Select(item => item.Event).ToList();
             if (!IsCurrent(first.Consent)
                 || !await _ownerState.IsTelemetryDurablyEnabledAsync(cancellationToken)
                     .ConfigureAwait(false)) continue;
@@ -144,6 +156,8 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
                         PrivacyChoicesPolicy.CurrentNoticeVersion,
                         batch),
                     sendCancellation.Token).ConfigureAwait(false);
+                await _rateLimits.MarkSentAsync(appVersion, batch, CancellationToken.None)
+                    .ConfigureAwait(false);
             }
             catch (Exception exception) when (exception is HttpRequestException or IOException
                 or UnauthorizedAccessException or InvalidDataException or JsonException
@@ -178,7 +192,13 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
         }
     }
 
-    private static ProductTelemetryEvent? Map(DeepDebugObservation observation)
+    private static bool IsRateLimitedEvent(ProductTelemetryEvent item) =>
+        item.Kind is ProductTelemetryKind.OcrSetupFailure or ProductTelemetryKind.LocalInstanceFailure;
+
+    private static string RateLimitKey(ProductTelemetryEvent item) =>
+        $"{item.Kind}\0{item.Feature}\0{item.Outcome}\0{item.RequestedDevice ?? item.ConfigurationMode}";
+
+    internal static ProductTelemetryEvent? Map(DeepDebugObservation observation)
     {
         if (observation.Category is "macro" or "application"
             && observation.Action is "runtime_error" or "unhandled_exception")
@@ -199,6 +219,70 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
                 Outcome: "completed",
                 DurationMilliseconds: ReadInt(data, "InferenceMilliseconds"),
                 GraphicsCapability: ReadGraphicsCapability(data));
+        }
+        if (observation.Category == "ocr_setup" && observation.Action == "setup_failed")
+        {
+            JsonElement data = JsonSerializer.SerializeToElement(observation.Data);
+            string? code = ReadSafeText(data, "FailureCode");
+            string? stage = ReadSafeText(data, "SetupStage");
+            string? device = ReadSetupDevice(data);
+            int? duration = ReadInt(data, "DurationMilliseconds");
+            int? processExitCode = ReadInt(data, "ProcessExitCode");
+            bool? pythonLauncherPresent = ReadBool(data, "PythonLauncherPresent");
+            bool? wingetPresent = ReadBool(data, "WingetPresent");
+            bool? existingOcrPythonPresent = ReadBool(data, "ExistingOcrPythonPresent");
+            bool? runtimeMarkerPresent = ReadBool(data, "RuntimeMarkerPresent");
+            if (!ProductTelemetryPolicy.IsOcrSetupFailureCode(code)
+                || !ProductTelemetryPolicy.IsOcrSetupStage(stage)
+                || device is not ("cpu" or "gpu:0")
+                || duration is null
+                || pythonLauncherPresent is null
+                || wingetPresent is null
+                || existingOcrPythonPresent is null
+                || runtimeMarkerPresent is null)
+                return null;
+            return new ProductTelemetryEvent(
+                ProductTelemetryKind.OcrSetupFailure,
+                observation.ObservedAtUtc,
+                Feature: "ocr-setup",
+                Outcome: code,
+                DurationMilliseconds: duration,
+                OperatingSystem: OperatingSystemValue(),
+                SetupStage: stage,
+                RequestedDevice: device,
+                ProcessExitCode: processExitCode,
+                PythonLauncherPresent: pythonLauncherPresent,
+                WingetPresent: wingetPresent,
+                ExistingOcrPythonPresent: existingOcrPythonPresent,
+                RuntimeMarkerPresent: runtimeMarkerPresent);
+        }
+        if (observation.Category == "local_instance" && observation.Action == "operation_failed")
+        {
+            JsonElement data = JsonSerializer.SerializeToElement(observation.Data);
+            string? operation = ReadSafeText(data, "Operation");
+            string? code = ReadSafeText(data, "FailureCode");
+            string? configurationMode = ReadSafeText(data, "ConfigurationMode");
+            int? duration = ReadInt(data, "DurationMilliseconds");
+            int? processExitCode = ReadInt(data, "ProcessExitCode");
+            int? runnerCount = ReadInt(data, "RunnerCount");
+            if (!ProductTelemetryPolicy.IsLocalInstanceOperation(operation)
+                || !ProductTelemetryPolicy.IsLocalInstanceFailureCode(code)
+                || configurationMode is not ("shared" or "isolated" or "not-applicable")
+                || duration is null
+                || runnerCount is null)
+                return null;
+            return new ProductTelemetryEvent(
+                ProductTelemetryKind.LocalInstanceFailure,
+                observation.ObservedAtUtc,
+                Feature: "local-instance",
+                Outcome: code,
+                DurationMilliseconds: duration,
+                OperatingSystem: OperatingSystemValue(),
+                ProcessExitCode: processExitCode,
+                Operation: operation,
+                FailureCode: code,
+                ConfigurationMode: configurationMode,
+                RunnerCount: runnerCount);
         }
         if (observation.Category == "route_optimizer_test" && observation.Action == "trial_observed")
         {
@@ -227,6 +311,12 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
         data.ValueKind == JsonValueKind.Object && data.TryGetProperty(name, out JsonElement value)
             && value.TryGetInt32(out int result) ? result : null;
 
+    private static bool? ReadBool(JsonElement data, string name) =>
+        data.ValueKind == JsonValueKind.Object && data.TryGetProperty(name, out JsonElement value)
+            && value.ValueKind is JsonValueKind.True or JsonValueKind.False
+                ? value.GetBoolean()
+                : null;
+
     private static string? ReadSafeText(JsonElement data, string name)
     {
         if (data.ValueKind != JsonValueKind.Object || !data.TryGetProperty(name, out JsonElement value)) return null;
@@ -234,6 +324,17 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
         return text is { Length: >= 1 and <= 48 }
             && text.All(character => char.IsAsciiLetterOrDigit(character) || character is '.' or '_' or '-' or ' ')
             ? text : null;
+    }
+
+    private static string? ReadSetupDevice(JsonElement data)
+    {
+        if (data.ValueKind != JsonValueKind.Object
+            || !data.TryGetProperty("Device", out JsonElement value)
+            || value.ValueKind != JsonValueKind.String)
+            return null;
+        return value.GetString()?.ToLowerInvariant() is "cpu" or "gpu:0"
+            ? value.GetString()!.ToLowerInvariant()
+            : null;
     }
 
     private static string ReadGraphicsCapability(JsonElement data)

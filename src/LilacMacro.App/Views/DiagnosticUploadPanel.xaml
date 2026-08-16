@@ -109,6 +109,7 @@
                                      Width="420"
                                      Height="5"
                                      Margin="0,7,0,0"
+                                     Visibility="Collapsed"
                                      Minimum="0"
                                      Maximum="100"
                                      Value="0" />

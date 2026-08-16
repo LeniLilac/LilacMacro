@@ -319,6 +319,127 @@ public sealed class PrivacyTelemetryTests
     }
 
     [Fact]
+    public async Task Ocr_setup_failure_telemetry_is_bounded_and_rate_limited_per_version_and_device()
+    {
+        string root = NewTemporaryDirectory();
+        try
+        {
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+            await owner.SavePrivacyChoicesAsync(true, true, false);
+            DeepDebugSessionService deepDebug = new(root);
+            RecordingProductTelemetryTransport transport = new();
+            ProductTelemetryService telemetry = new(
+                deepDebug,
+                owner,
+                new DiagnosticInstallationStore(root),
+                transport,
+                TimeSpan.FromMilliseconds(10));
+            telemetry.Start();
+
+            deepDebug.RecordEvent("ocr_setup", "setup_failed", new
+            {
+                Device = "gpu:0",
+                FailureCode = "winget_unavailable",
+                SetupStage = "python-bootstrap",
+                DurationMilliseconds = 42,
+                ProcessExitCode = 7,
+                PythonLauncherPresent = true,
+                WingetPresent = false,
+                ExistingOcrPythonPresent = false,
+                RuntimeMarkerPresent = false,
+                Error = "C:\\Users\\name\\secret.txt",
+            });
+
+            await Task.Delay(25);
+            await transport.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await Task.Delay(100);
+            await telemetry.DisposeAsync();
+
+            ProductTelemetryEvent setup = Assert.Single(
+                transport.Batches.SelectMany(batch => batch.Events),
+                item => item.Kind == ProductTelemetryKind.OcrSetupFailure);
+            Assert.Equal("ocr-setup", setup.Feature);
+            Assert.Equal("winget_unavailable", setup.Outcome);
+            Assert.Equal("python-bootstrap", setup.SetupStage);
+            Assert.Equal("gpu:0", setup.RequestedDevice);
+            Assert.Equal(42, setup.DurationMilliseconds);
+            Assert.Equal(7, setup.ProcessExitCode);
+            Assert.False(setup.WingetPresent);
+            Assert.DoesNotContain("secret", JsonSerializer.Serialize(setup), StringComparison.OrdinalIgnoreCase);
+            ProductTelemetryPolicy.Validate(new ProductTelemetryBatch(
+                Guid.NewGuid(), "1.2.3", 1, [setup]));
+
+            DeepDebugSessionService secondDeepDebug = new(root);
+            RecordingProductTelemetryTransport secondTransport = new();
+            await using ProductTelemetryService secondTelemetry = new(
+                secondDeepDebug,
+                owner,
+                new DiagnosticInstallationStore(root),
+                secondTransport,
+                TimeSpan.FromMilliseconds(10));
+            secondTelemetry.Start();
+            secondDeepDebug.RecordEvent("ocr_setup", "setup_failed", new
+            {
+                Device = "gpu:0",
+                FailureCode = "winget_unavailable",
+                SetupStage = "python-bootstrap",
+                DurationMilliseconds = 43,
+                ProcessExitCode = 7,
+                PythonLauncherPresent = true,
+                WingetPresent = false,
+                ExistingOcrPythonPresent = false,
+                RuntimeMarkerPresent = false,
+            });
+            await Task.Delay(250);
+
+            Assert.DoesNotContain(
+                secondTransport.Batches.SelectMany(batch => batch.Events),
+                item => item.Kind == ProductTelemetryKind.OcrSetupFailure);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Ocr_setup_failure_does_not_trigger_an_automatic_report()
+    {
+        string root = NewTemporaryDirectory();
+        try
+        {
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+            await owner.SavePrivacyChoicesAsync(false, false, true);
+            DeepDebugSessionService deepDebug = new(root);
+            RecordingUploadTransport uploads = new();
+            await using AutomaticDiagnosticReportService reports = new(
+                deepDebug,
+                owner,
+                new DiagnosticInstallationStore(root),
+                uploads);
+
+            deepDebug.RecordEvent("ocr_setup", "setup_failed", new
+            {
+                Device = "cpu",
+                FailureCode = "winget_unavailable",
+                SetupStage = "python-bootstrap",
+                DurationMilliseconds = 42,
+                PythonLauncherPresent = true,
+                WingetPresent = false,
+                ExistingOcrPythonPresent = false,
+                RuntimeMarkerPresent = false,
+            });
+            await Task.Delay(150);
+
+            Assert.Null(uploads.ArchivePath);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Light_diagnostics_are_bounded_and_strip_ocr_text_and_errors()
     {
         LightDiagnosticBuffer buffer = new();

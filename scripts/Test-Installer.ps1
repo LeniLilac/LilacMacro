@@ -50,6 +50,8 @@ Require-Text $installer 'CloseApplications=no' 'Installer must not let Restart M
 Reject-Text $installer 'RegisterExtraCloseApplicationsResource' 'Installer shutdown must remain product-bounded instead of registering the full install tree with Restart Manager.'
 Require-Text $installer 'taskkill\.exe' 'Manual upgrades must have a bounded cross-session shutdown fallback.'
 Require-Text $installer '/F /T /IM' 'Manual upgrade shutdown must terminate only explicit LilacMacro process images.'
+Require-Text $installer 'StopUninstallProcesses' 'Uninstall must close LilacMacro UI processes before cleanup.'
+Require-Text $installer '/T /IM "' 'Uninstall must request a non-force product-bounded close before force cleanup.'
 Require-Text $installer 'relaunch-runners' 'Manual upgrades must relaunch configured runner UIs.'
 Require-Text $installer 'RunnerRepairSucceeded := AttemptRunnerRepair' 'Runner relaunch must observe the repair result.'
 Require-Text $installer 'if RunnerRepairSucceeded then' 'Runner relaunch must fail closed when repair fails.'

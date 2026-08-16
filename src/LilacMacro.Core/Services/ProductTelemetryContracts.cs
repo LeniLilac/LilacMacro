@@ -9,6 +9,8 @@ public enum ProductTelemetryKind
     OperationError,
     ExpeditionRewardObserved,
     OcrTiming,
+    OcrSetupFailure,
+    LocalInstanceFailure,
 }
 
 public sealed record ProductTelemetryEvent(
@@ -21,7 +23,18 @@ public sealed record ProductTelemetryEvent(
     int? Quantity = null,
     string? OperatingSystem = null,
     int? LogicalProcessorCount = null,
-    string? GraphicsCapability = null);
+    string? GraphicsCapability = null,
+    string? SetupStage = null,
+    string? RequestedDevice = null,
+    int? ProcessExitCode = null,
+    bool? PythonLauncherPresent = null,
+    bool? WingetPresent = null,
+    bool? ExistingOcrPythonPresent = null,
+    bool? RuntimeMarkerPresent = null,
+    string? Operation = null,
+    string? FailureCode = null,
+    string? ConfigurationMode = null,
+    int? RunnerCount = null);
 
 public sealed record ProductTelemetryBatch(
     Guid InstallId,
@@ -63,8 +76,63 @@ public static partial class ProductTelemetryPolicy
         ProductTelemetryKind.OperationError => "operation-error",
         ProductTelemetryKind.ExpeditionRewardObserved => "expedition-reward-observed",
         ProductTelemetryKind.OcrTiming => "ocr-timing",
+        ProductTelemetryKind.OcrSetupFailure => "ocr-setup-failure",
+        ProductTelemetryKind.LocalInstanceFailure => "local-instance-failure",
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
+
+    public static bool IsOcrSetupFailureCode(string? code) => code is
+        "python312_missing" or
+        "winget_unavailable" or
+        "python_install_failed" or
+        "python312_not_found" or
+        "gpu_detection_failed" or
+        "gpu_runtime_invalid" or
+        "venv_create_failed" or
+        "pip_update_failed" or
+        "paddle_install_failed" or
+        "paddleocr_install_failed" or
+        "ocr_import_failed" or
+        "runtime_not_ready" or
+        "setup_process_start_failed" or
+        "setup_process_failed" or
+        "setup_failed";
+
+    public static bool IsOcrSetupStage(string? stage) => stage is
+        "python-bootstrap" or
+        "gpu-runtime" or
+        "environment" or
+        "paddle" or
+        "paddleocr" or
+        "import-check" or
+        "runtime" or
+        "process" or
+        "setup";
+
+    public static bool IsLocalInstanceOperation(string? operation) => operation is
+        "setup" or
+        "repair" or
+        "remove-all" or
+        "add-shared" or
+        "add-isolated" or
+        "remove-profile" or
+        "open" or
+        "refresh";
+
+    public static bool IsLocalInstanceFailureCode(string? code) => code is
+        "preflight-rejected" or
+        "setup-rolled-back" or
+        "helper-failed" or
+        "cleanup-incomplete" or
+        "operation-incomplete" or
+        "helper-missing" or
+        "helper-start-failed" or
+        "access-denied" or
+        "io-failure" or
+        "invalid-state" or
+        "windows-failure" or
+        "canceled" or
+        "operation-failed";
 
     private static void ValidateEvent(ProductTelemetryEvent item)
     {
@@ -75,7 +143,8 @@ public static partial class ProductTelemetryPolicy
                 && item.OperatingSystem is not null && OperatingSystemPattern().IsMatch(item.OperatingSystem)
                 && item.LogicalProcessorCount is >= 1 and <= 512
                 && item.GraphicsCapability == "not-observed"
-                && item.DurationMilliseconds is null && item.Material is null && item.Quantity is null,
+                && item.DurationMilliseconds is null && item.Material is null && item.Quantity is null
+                && HasNoSetupDetails(item),
             ProductTelemetryKind.FeatureUsed =>
                 item.Feature is "workspace" or "wire" or "challenge" or "game_settings" or "ui_scale"
                 && item.Outcome == "completed" && HasNoMetrics(item),
@@ -88,13 +157,43 @@ public static partial class ProductTelemetryPolicy
                     or "EquipmentLock" or "ExpeditionCoin"
                 && item.Quantity is >= 0 and <= 1_000
                 && item.DurationMilliseconds is null && item.OperatingSystem is null
-                && item.LogicalProcessorCount is null && item.GraphicsCapability is null,
+                && item.LogicalProcessorCount is null && item.GraphicsCapability is null
+                && HasNoSetupDetails(item),
             ProductTelemetryKind.OcrTiming =>
                 item.Feature == "ocr" && item.Outcome == "completed"
                 && item.DurationMilliseconds is >= 0 and <= 600_000
                 && item.GraphicsCapability is "cpu" or "gpu" or "gpu:0" or "not-observed"
                 && item.Material is null && item.Quantity is null && item.OperatingSystem is null
-                && item.LogicalProcessorCount is null,
+                && item.LogicalProcessorCount is null && HasNoSetupDetails(item),
+            ProductTelemetryKind.OcrSetupFailure =>
+                item.Feature == "ocr-setup"
+                && IsOcrSetupFailureCode(item.Outcome)
+                && item.OperatingSystem is not null && OperatingSystemPattern().IsMatch(item.OperatingSystem)
+                && item.SetupStage is not null && IsOcrSetupStage(item.SetupStage)
+                && item.RequestedDevice is "cpu" or "gpu:0"
+                && item.DurationMilliseconds is >= 0 and <= 600_000
+                && item.ProcessExitCode is null or >= 0 and <= 65_535
+                && item.PythonLauncherPresent is not null
+                && item.WingetPresent is not null
+                && item.ExistingOcrPythonPresent is not null
+                && item.RuntimeMarkerPresent is not null
+                && item.LogicalProcessorCount is null && item.GraphicsCapability is null
+                && item.Material is null && item.Quantity is null
+                && HasNoLocalInstanceDetails(item),
+            ProductTelemetryKind.LocalInstanceFailure =>
+                item.Feature == "local-instance"
+                && IsLocalInstanceOperation(item.Operation)
+                && IsLocalInstanceFailureCode(item.Outcome)
+                && IsLocalInstanceFailureCode(item.FailureCode)
+                && item.Outcome == item.FailureCode
+                && item.OperatingSystem is not null && OperatingSystemPattern().IsMatch(item.OperatingSystem)
+                && item.DurationMilliseconds is >= 0 and <= 600_000
+                && item.ConfigurationMode is "shared" or "isolated" or "not-applicable"
+                && item.RunnerCount is >= 0 and <= 16
+                && item.ProcessExitCode is null or >= 0 and <= 65_535
+                && item.LogicalProcessorCount is null && item.GraphicsCapability is null
+                && item.Material is null && item.Quantity is null
+                && HasNoOcrSetupDetails(item),
             _ => false,
         };
         if (!valid) throw new InvalidDataException("Telemetry event fields were invalid for its kind.");
@@ -103,7 +202,23 @@ public static partial class ProductTelemetryPolicy
     private static bool HasNoMetrics(ProductTelemetryEvent item) =>
         item.DurationMilliseconds is null && item.Material is null && item.Quantity is null
         && item.OperatingSystem is null && item.LogicalProcessorCount is null
-        && item.GraphicsCapability is null;
+        && item.GraphicsCapability is null && HasNoSetupDetails(item);
+
+    private static bool HasNoSetupDetails(ProductTelemetryEvent item) =>
+        item.SetupStage is null && item.RequestedDevice is null && item.ProcessExitCode is null
+        && item.PythonLauncherPresent is null && item.WingetPresent is null
+        && item.ExistingOcrPythonPresent is null && item.RuntimeMarkerPresent is null
+        && item.Operation is null && item.FailureCode is null && item.ConfigurationMode is null
+        && item.RunnerCount is null;
+
+    private static bool HasNoOcrSetupDetails(ProductTelemetryEvent item) =>
+        item.SetupStage is null && item.RequestedDevice is null
+        && item.PythonLauncherPresent is null && item.WingetPresent is null
+        && item.ExistingOcrPythonPresent is null && item.RuntimeMarkerPresent is null;
+
+    private static bool HasNoLocalInstanceDetails(ProductTelemetryEvent item) =>
+        item.Operation is null && item.FailureCode is null
+        && item.ConfigurationMode is null && item.RunnerCount is null;
 
     [GeneratedRegex("^\\d+\\.\\d+\\.\\d+$", RegexOptions.CultureInvariant)]
     private static partial Regex SemanticVersionPattern();

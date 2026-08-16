@@ -26,10 +26,24 @@ if (-not (Test-Path -LiteralPath $gpuPolicy)) {
 function Find-Python312 {
     $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
     if ($null -ne $launcher) {
-        $probe = @(& $launcher.Source -3.12 -c "import sys; print(sys.executable)" 2>$null)
+        $probe = @()
+        $probeExitCode = 1
+        $previousErrorActionPreference = $ErrorActionPreference
+        try {
+            # A launcher without Python 3.12 is an expected miss; let the winget fallback handle it.
+            $ErrorActionPreference = 'Continue'
+            $probe = @(& $launcher.Source -3.12 -c "import sys; print(sys.executable)" 2>$null)
+            $probeExitCode = $LASTEXITCODE
+        }
+        catch {
+            $probe = @()
+        }
+        finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+        }
         $candidate = if ($probe.Count -gt 0) { [string]$probe[0] } else { '' }
         $candidate = $candidate.Trim()
-        if ($LASTEXITCODE -eq 0 -and $candidate -and (Test-Path -LiteralPath $candidate)) {
+        if ($probeExitCode -eq 0 -and $candidate -and (Test-Path -LiteralPath $candidate)) {
             return [IO.Path]::GetFullPath($candidate)
         }
     }

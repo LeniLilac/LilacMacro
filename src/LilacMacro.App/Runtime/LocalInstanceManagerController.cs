@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using LilacMacro.App.Diagnostics;
 using LilacMacro.Core.LocalSession;
 using LilacMacro.Windows.LocalSession;
 
@@ -16,6 +17,12 @@ internal sealed record LocalInstanceManagerSnapshot(
 internal sealed class LocalInstanceManagerController
 {
     private readonly LocalSessionPaths paths = LocalSessionPaths.CreateDefault(AppContext.BaseDirectory);
+    private readonly DeepDebugSessionService deepDebug;
+
+    internal LocalInstanceManagerController(DeepDebugSessionService deepDebug)
+    {
+        this.deepDebug = deepDebug;
+    }
 
     public async Task<LocalInstanceManagerSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
     {
@@ -76,14 +83,35 @@ internal sealed class LocalInstanceManagerController
         MacroLayoutProfile layout,
         CancellationToken cancellationToken = default)
     {
-        LocalInstanceManagerSnapshot snapshot = await GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
-        if (!snapshot.Status.CanOpenInteractiveSession)
-            throw new InvalidOperationException(snapshot.Status.Problems.FirstOrDefault() ?? snapshot.Status.Detail);
-        LocalRunnerProfile profile = snapshot.Profiles.SingleOrDefault(item => item.Profile.Id == profileId)?.Profile
-            ?? throw new InvalidOperationException("The requested local instance is not configured.");
-        RefreshRdpCredential(profile);
-        _ = Process.Start(CreateRdpStartInfo(profile, layout))
-            ?? throw new InvalidOperationException("Windows did not start the local instance viewport.");
+        Stopwatch operationTimer = Stopwatch.StartNew();
+        LocalInstanceManagerSnapshot? snapshot = null;
+        try
+        {
+            snapshot = await GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
+            if (!snapshot.Status.CanOpenInteractiveSession)
+                throw new InvalidOperationException(snapshot.Status.Problems.FirstOrDefault() ?? snapshot.Status.Detail);
+            LocalRunnerProfile profile = snapshot.Profiles.SingleOrDefault(item => item.Profile.Id == profileId)?.Profile
+                ?? throw new InvalidOperationException("The requested local instance is not configured.");
+            RefreshRdpCredential(profile);
+            _ = Process.Start(CreateRdpStartInfo(profile, layout))
+                ?? throw new InvalidOperationException("Windows did not start the local instance viewport.");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception error)
+        {
+            RecordFailure(
+                "open",
+                snapshot is null ? "not-applicable" : ConfigurationModeFor(snapshot, profileId),
+                operationTimer,
+                snapshot,
+                null,
+                helperStarted: true,
+                error);
+            throw;
+        }
     }
 
     internal static ProcessStartInfo CreateRdpStartInfo(
@@ -195,21 +223,77 @@ internal sealed class LocalInstanceManagerController
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken)
     {
-        string helper = Path.Combine(AppContext.BaseDirectory, "LilacMacro.SessionSetup.exe");
-        if (!File.Exists(helper)) throw new FileNotFoundException("The signed local-instance setup helper is missing.", helper);
-        using Process process = Process.Start(new ProcessStartInfo(helper)
+        string operation = LocalInstanceFailurePolicy.OperationFor(arguments);
+        string configurationMode = LocalInstanceFailurePolicy.ConfigurationModeFor(operation);
+        Stopwatch operationTimer = Stopwatch.StartNew();
+        LocalInstanceManagerSnapshot? snapshot = null;
+        int? processExitCode = null;
+        bool helperStarted = false;
+        try
         {
-            UseShellExecute = true,
-            Verb = "runas",
-            WorkingDirectory = AppContext.BaseDirectory,
-            Arguments = string.Join(' ', arguments.Select(QuoteArgument)),
-        }) ?? throw new InvalidOperationException("Windows did not start the local-instance setup helper.");
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-        LocalInstanceManagerSnapshot snapshot = await GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
-        if (process.ExitCode != 0)
-            throw new InvalidOperationException(OperationFailureDetail(snapshot));
-        return snapshot;
+            string helper = Path.Combine(AppContext.BaseDirectory, "LilacMacro.SessionSetup.exe");
+            if (!File.Exists(helper)) throw new FileNotFoundException("The signed local-instance setup helper is missing.", helper);
+            using Process process = Process.Start(new ProcessStartInfo(helper)
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+                WorkingDirectory = AppContext.BaseDirectory,
+                Arguments = string.Join(' ', arguments.Select(QuoteArgument)),
+            }) ?? throw new InvalidOperationException("Windows did not start the local-instance setup helper.");
+            helperStarted = true;
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            processExitCode = process.ExitCode;
+            snapshot = await GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
+            if (processExitCode != 0)
+                throw new InvalidOperationException(OperationFailureDetail(snapshot));
+            return snapshot;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception error)
+        {
+            RecordFailure(
+                operation,
+                configurationMode,
+                operationTimer,
+                snapshot,
+                processExitCode,
+                helperStarted,
+                error);
+            throw;
+        }
     }
+
+    private void RecordFailure(
+        string operation,
+        string configurationMode,
+        Stopwatch operationTimer,
+        LocalInstanceManagerSnapshot? snapshot,
+        int? processExitCode,
+        bool helperStarted,
+        Exception error) =>
+        deepDebug.RecordEvent("local_instance", "operation_failed", new LocalInstanceFailureObservation(
+            operation,
+            LocalInstanceFailurePolicy.Classify(
+                operation,
+                snapshot?.Status.StatusCode,
+                error,
+                processExitCode,
+                helperStarted),
+            configurationMode,
+            LocalInstanceFailurePolicy.BoundedDuration(operationTimer.Elapsed),
+            LocalInstanceFailurePolicy.BoundedExitCode(processExitCode),
+            LocalInstanceFailurePolicy.BoundedRunnerCount(snapshot?.Profiles.Count ?? 0)));
+
+    private static string ConfigurationModeFor(LocalInstanceManagerSnapshot snapshot, string profileId) =>
+        snapshot.Profiles.SingleOrDefault(item => item.Profile.Id == profileId)?.Profile.ConfigurationMode
+            == RunnerConfigurationMode.Shared
+            ? "shared"
+            : snapshot.Profiles.Any(item => item.Profile.Id == profileId)
+                ? "isolated"
+                : "not-applicable";
 
     internal static string OperationFailureDetail(LocalInstanceManagerSnapshot snapshot) =>
         snapshot.Status.Problems.FirstOrDefault()

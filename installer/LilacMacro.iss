@@ -254,6 +254,39 @@ begin
   if Result = '' then Sleep(1000);
 end;
 
+procedure RequestCloseProductImage(const ImageName: String; var Requested: Boolean);
+var
+  ResultCode: Integer;
+begin
+  ResultCode := 0;
+  if not Exec(ExpandConstant('{sys}\taskkill.exe'), '/T /IM "' + ImageName + '"', '',
+    SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
+    Log('Windows could not start the graceful shutdown request for ' + ImageName + '.');
+    exit;
+  end;
+  if ResultCode = 0 then Requested := True;
+  if (ResultCode <> 0) and (ResultCode <> 128) then
+    Log('The graceful shutdown request for ' + ImageName + ' returned exit code '
+      + IntToStr(ResultCode) + '; the bounded force-close fallback will run.');
+end;
+
+procedure StopUninstallProcesses;
+var
+  Result: String;
+  Requested: Boolean;
+begin
+  Log('Requesting bounded shutdown of LilacMacro UI processes before uninstall.');
+  Requested := False;
+  RequestCloseProductImage('LilacMacro.exe', Requested);
+  RequestCloseProductImage('LilacMacro.RuntimeLab.exe', Requested);
+  RequestCloseProductImage('LilacMacro.DatasetBuilder.exe', Requested);
+  RequestCloseProductImage('LilacMacro.DeepDebugViewer.exe', Requested);
+  if Requested then Sleep(5000);
+  Result := StopManualUpdateProcesses;
+  if Result <> '' then
+    RaiseException('LilacMacro could not close every application window before uninstall. ' + Result);
+end;
+
 function SafeDirectory(const Path: String): Boolean;
 var
   Attributes: LongWord;
@@ -409,6 +442,8 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
-  if CurUninstallStep = usUninstall then
+  if CurUninstallStep = usUninstall then begin
+    StopUninstallProcesses;
     RequireRunnerCleanup;
+  end;
 end;

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.143 — Public beta
+
+- Fixed first-run OCR setup when the Windows Python launcher exists without Python 3.12, allowing the automatic App Installer fallback to run.
+- Added opt-in, rate-limited OCR setup failure telemetry using classified codes and bounded runtime flags without uploading setup output.
+- Added opt-in local-instance setup, repair, add, remove, and open failure telemetry using bounded operation/status fields without uploading account or exception details.
+- Hid the manual diagnostic upload progress track until manual uploads are enabled.
+
 ## 1.0.142 — Public beta
 
 - Made the main Macro shell bootstrap OCR on first launch, including automatic Python 3.12 setup when needed.

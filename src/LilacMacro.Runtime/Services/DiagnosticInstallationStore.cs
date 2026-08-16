@@ -13,10 +13,13 @@ public sealed class DiagnosticInstallationStore
 
     private readonly string _path;
 
+    public string ConfigurationRoot { get; }
+
     public DiagnosticInstallationStore(string configurationRoot)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(configurationRoot);
-        _path = Path.Combine(configurationRoot, "services", "diagnostic-installation.json");
+        ConfigurationRoot = Path.GetFullPath(configurationRoot);
+        _path = Path.Combine(ConfigurationRoot, "services", "diagnostic-installation.json");
     }
 
     public async Task<Guid> GetOrCreateAsync(CancellationToken cancellationToken = default)

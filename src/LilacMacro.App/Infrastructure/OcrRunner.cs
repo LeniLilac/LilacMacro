@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using LilacMacro.Core.Geometry;
 using LilacMacro.App.Diagnostics;
+using LilacMacro.Runtime.Services;
 
 namespace LilacMacro.App.Infrastructure;
 
@@ -73,52 +74,77 @@ public sealed class OcrRunner : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!SupportedDevices.Contains(device)) throw new ArgumentOutOfRangeException(nameof(device));
-        _persistentWorker.Stop();
-        string script = ResolveBundledFile("scripts", "Setup-Ocr.ps1");
-        ProcessStartInfo startInfo = new("powershell.exe")
-        {
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-        startInfo.ArgumentList.Add("-NoProfile");
-        startInfo.ArgumentList.Add("-ExecutionPolicy");
-        startInfo.ArgumentList.Add("Bypass");
-        startInfo.ArgumentList.Add("-File");
-        startInfo.ArgumentList.Add(script);
-        startInfo.ArgumentList.Add("-Device");
-        startInfo.ArgumentList.Add(device == GpuDevice ? "gpu" : "cpu");
-        startInfo.ArgumentList.Add("-InstallRoot");
-        startInfo.ArgumentList.Add(_ocrRoot);
-
-        using Process process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Could not start the OCR setup process.");
-        string standardOutput;
-        string standardError;
+        Stopwatch setupTimer = Stopwatch.StartNew();
+        int? processExitCode = null;
         try
         {
-            Task<string> output = process.StandardOutput.ReadToEndAsync(cancellationToken);
-            Task<string> error = process.StandardError.ReadToEndAsync(cancellationToken);
-            await process.WaitForExitAsync(cancellationToken);
-            standardOutput = await output;
-            standardError = await error;
+            _persistentWorker.Stop();
+            string script = ResolveBundledFile("scripts", "Setup-Ocr.ps1");
+            ProcessStartInfo startInfo = new("powershell.exe")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(script);
+            startInfo.ArgumentList.Add("-Device");
+            startInfo.ArgumentList.Add(device == GpuDevice ? "gpu" : "cpu");
+            startInfo.ArgumentList.Add("-InstallRoot");
+            startInfo.ArgumentList.Add(_ocrRoot);
+
+            using Process process = Process.Start(startInfo)
+                ?? throw new InvalidOperationException("Could not start the OCR setup process.");
+            string standardOutput;
+            string standardError;
+            try
+            {
+                Task<string> output = process.StandardOutput.ReadToEndAsync(cancellationToken);
+                Task<string> error = process.StandardError.ReadToEndAsync(cancellationToken);
+                await process.WaitForExitAsync(cancellationToken);
+                standardOutput = await output;
+                standardError = await error;
+            }
+            catch (OperationCanceledException)
+            {
+                if (!process.HasExited)
+                {
+                    try { process.Kill(entireProcessTree: true); }
+                    catch (InvalidOperationException) { }
+                }
+                throw;
+            }
+            if (process.ExitCode != 0 || !IsDeviceReady(device))
+            {
+                processExitCode = process.ExitCode;
+                throw new InvalidOperationException(
+                    string.IsNullOrWhiteSpace(standardError) ? standardOutput.Trim() : standardError.Trim());
+            }
+            if (KeepLoaded) await WarmUpAsync(SmallModel, device, cancellationToken);
         }
         catch (OperationCanceledException)
         {
-            if (!process.HasExited)
-            {
-                try { process.Kill(entireProcessTree: true); }
-                catch (InvalidOperationException) { }
-            }
             throw;
         }
-        if (process.ExitCode != 0 || !IsDeviceReady(device))
+        catch (Exception error) when (error is not ArgumentOutOfRangeException and not ObjectDisposedException)
         {
-            throw new InvalidOperationException(
-                string.IsNullOrWhiteSpace(standardError) ? standardOutput.Trim() : standardError.Trim());
+            string code = OcrSetupFailurePolicy.Classify(error.Message, device, processExitCode);
+            _deepDebug.RecordEvent("ocr_setup", "setup_failed", new OcrSetupFailureObservation(
+                device,
+                code,
+                OcrSetupFailurePolicy.Stage(code),
+                OcrSetupFailurePolicy.BoundedDuration(setupTimer.Elapsed),
+                OcrSetupFailurePolicy.BoundedExitCode(processExitCode),
+                OcrSetupFailurePolicy.IsCommandAvailableOnPath("py.exe"),
+                OcrSetupFailurePolicy.IsCommandAvailableOnPath("winget.exe"),
+                File.Exists(_pythonPath),
+                File.Exists(_runtimeMarkerPath)));
+            throw;
         }
-        if (KeepLoaded) await WarmUpAsync(SmallModel, device, cancellationToken);
     }
 
     public async Task WarmUpAsync(
