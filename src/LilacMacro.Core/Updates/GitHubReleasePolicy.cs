@@ -21,17 +21,23 @@ public sealed record VerifiedUpdateRelease(
     bool Prerelease,
     DateTimeOffset PublishedAtUtc,
     GitHubReleaseAsset Installer,
-    GitHubReleaseAsset ChecksumManifest);
+    GitHubReleaseAsset ChecksumManifest,
+    GitHubReleaseAsset ReleaseManifest,
+    GitHubReleaseAsset ReleaseSignature);
 
 public static class GitHubReleasePolicy
 {
     public const string Repository = "LeniLilac/LilacMacro";
     public const string InstallerName = "LilacMacro-Setup.exe";
     public const string ChecksumName = "LilacMacro-Setup.exe.sha256";
+    public const string ReleaseManifestName = "LilacMacro-Release.json";
+    public const string ReleaseSignatureName = "LilacMacro-Release.sig";
     public static readonly IReadOnlySet<string> RequiredAssetNames = new HashSet<string>(StringComparer.Ordinal)
     {
         InstallerName,
         ChecksumName,
+        ReleaseManifestName,
+        ReleaseSignatureName,
         "LICENSE.md",
         "NOTICE.md",
     };
@@ -56,6 +62,8 @@ public static class GitHubReleasePolicy
         ValidateRelease(selected, selectedVersion);
         GitHubReleaseAsset installer = selected.Assets.Single(asset => asset.Name == InstallerName);
         GitHubReleaseAsset checksums = selected.Assets.Single(asset => asset.Name == ChecksumName);
+        GitHubReleaseAsset manifest = selected.Assets.Single(asset => asset.Name == ReleaseManifestName);
+        GitHubReleaseAsset signature = selected.Assets.Single(asset => asset.Name == ReleaseSignatureName);
         return new VerifiedUpdateRelease(
             selectedVersion,
             selected.TagName,
@@ -63,7 +71,9 @@ public static class GitHubReleasePolicy
             selected.Prerelease,
             selected.PublishedAtUtc,
             installer,
-            checksums);
+            checksums,
+            manifest,
+            signature);
     }
 
     public static string ParseInstallerChecksum(string manifest)
@@ -97,7 +107,7 @@ public static class GitHubReleasePolicy
         if (release.Assets.Count != RequiredAssetNames.Count
             || !release.Assets.Select(asset => asset.Name).ToHashSet(StringComparer.Ordinal).SetEquals(RequiredAssetNames))
         {
-            throw new InvalidDataException("The release does not contain the exact four-asset inventory.");
+            throw new InvalidDataException($"The release does not contain the exact {RequiredAssetNames.Count}-asset inventory.");
         }
         if (release.Assets.GroupBy(asset => asset.Name, StringComparer.Ordinal).Any(group => group.Count() != 1))
             throw new InvalidDataException("The release contains duplicate asset names.");
@@ -117,6 +127,8 @@ public static class GitHubReleasePolicy
         {
             InstallerName => 512L * 1024 * 1024,
             ChecksumName => 256,
+            ReleaseManifestName => ReleaseManifestVerifier.MaximumManifestBytes,
+            ReleaseSignatureName => 256,
             _ => 1024 * 1024,
         };
         long minimum = asset.Name == InstallerName ? 1024 * 1024 : 1;

@@ -65,14 +65,19 @@ public sealed partial class DeepDebugSessionService
         }
     }
 
-    public async Task UpdateOptionsAsync(bool enabled, int frameRetentionMinutes)
+    public async Task UpdateOptionsAsync(
+        bool enabled,
+        int frameRetentionMinutes,
+        bool? automaticCleanupEnabled = null)
     {
         Options = new DeepDebugOptions
         {
             Enabled = enabled,
             FrameRetentionMinutes = DeepDebugOptions.NormalizeFrameRetention(frameRetentionMinutes),
+            AutomaticCleanupEnabled = automaticCleanupEnabled ?? Options.AutomaticCleanupEnabled,
         };
         await _optionsStore.SaveAsync(Options);
+        if (Options.AutomaticCleanupEnabled) PruneOldArchives();
         OptionsChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -278,7 +283,7 @@ public sealed partial class DeepDebugSessionService
         string archive = CreateArchive(session);
         LastArchivePath = archive;
         TryDeleteDirectory(session.StagingDirectory);
-        PruneOldArchives();
+        if (Options.AutomaticCleanupEnabled) PruneOldArchives();
         try
         {
             ArchiveSaved?.Invoke(this, archive);

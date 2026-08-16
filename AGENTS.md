@@ -4,7 +4,7 @@ This file applies to the entire repository. Scoped `AGENTS.md` files add rules f
 
 ## Mission and hard boundaries
 
-LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox screen automation.
+LilacMacro is a public source-available, Windows-only .NET/WPF utility for inspectable Roblox screen automation.
 
 - Do not inject into Roblox, inspect or modify its memory, hook it, or bypass anti-cheat systems.
 - Use ordinary Windows window management, Windows Graphics Capture, and Windows input only.
@@ -39,7 +39,7 @@ LilacMacro is a private, Windows-only .NET/WPF utility for inspectable Roblox sc
 - Save manifests, settings, and placement documents atomically; never overwrite an existing finalized dataset directory.
 - Keep input cancellation-aware and release every held key or mouse button on all exit paths.
 - Runner setup requires an offline exact-binary native preflight, runner-profile-only policy, loopback-only isolation, and a rollback journal. Cache compatibility only by exact TermService/TermWrap hashes. Never provision the owner's machine during agent testing unless the owner explicitly authorizes it for the current task.
-- Application updates may use only the unauthenticated official GitHub Releases channel. Require the exact semantic tag, release URL, four-asset inventory, sizes, direct URLs, GitHub SHA-256 digests, checksum manifest, and bounded trusted HTTPS redirects. Automatic checks are metadata-only; downloading and opening the installer require separate explicit consent, and a restart-recovered installer must be rehashed before launch.
+- Application updates may use only the unauthenticated official GitHub Releases channel. Require the exact semantic tag, release URL, six-asset inventory, sizes, direct URLs, GitHub SHA-256 digests, project-signed release manifest, checksum manifest, and bounded trusted HTTPS redirects. Automatic checks are metadata-only; downloading and opening the intentionally non-Authenticode installer requires separate explicit consent, and a restart-recovered installer must be rehashed before launch.
 
 ## Architecture and status language
 

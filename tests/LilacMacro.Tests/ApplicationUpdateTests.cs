@@ -2,6 +2,10 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Updates;
 using LilacMacro.Core.Updates;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.X509;
+using System.Text;
 
 namespace LilacMacro.Tests;
 
@@ -18,7 +22,7 @@ public sealed class ApplicationUpdateTests
     }
 
     [Fact]
-    public void Release_policy_accepts_only_a_newer_exact_four_asset_release()
+    public void Release_policy_accepts_only_a_newer_exact_six_asset_release()
     {
         VerifiedUpdateRelease? selected = GitHubReleasePolicy.Select(
             [Release("1.0.72"), Release("1.0.71")],
@@ -72,6 +76,30 @@ public sealed class ApplicationUpdateTests
         Assert.Equal(digest, GitHubReleasePolicy.ParseInstallerChecksum($"{digest}  LilacMacro-Setup.exe\n"));
         Assert.Throws<InvalidDataException>(() => GitHubReleasePolicy.ParseInstallerChecksum(
             $"{digest} *LilacMacro-Setup.exe"));
+    }
+
+    [Fact]
+    public void Project_release_signature_binds_tag_size_and_installer_digest()
+    {
+        Ed25519PrivateKeyParameters privateKey = new(Enumerable.Range(1, 32).Select(value => (byte)value).ToArray(), 0);
+        string publicKey = Convert.ToBase64String(
+            SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(privateKey.GeneratePublicKey()).GetDerEncoded());
+        VerifiedUpdateRelease release = GitHubReleasePolicy.Select(
+            [Release("1.0.72")],
+            new LilacSemanticVersion(1, 0, 71),
+            includePrerelease: false)!;
+        string digest = new('A', 64);
+        byte[] manifest = Encoding.UTF8.GetBytes(
+            $"{{\"format\":\"lilacmacro.release\",\"schemaVersion\":1,\"keyId\":\"test-key\",\"algorithm\":\"Ed25519\",\"tag\":\"{release.TagName}\",\"sourceCommit\":\"{new string('a', 40)}\",\"installer\":{{\"name\":\"LilacMacro-Setup.exe\",\"size\":{release.Installer.Size},\"sha256\":\"{digest}\"}}}}");
+        Ed25519Signer signer = new();
+        signer.Init(true, privateKey);
+        signer.BlockUpdate(manifest, 0, manifest.Length);
+        string signature = Convert.ToBase64String(signer.GenerateSignature());
+        ReleaseManifestVerifier verifier = new("test-key", publicKey);
+
+        Assert.Equal(digest, verifier.Verify(manifest, signature, release));
+        manifest[^2] ^= 1;
+        Assert.Throws<InvalidDataException>(() => verifier.Verify(manifest, signature, release));
     }
 
     [Fact]
@@ -170,6 +198,8 @@ public sealed class ApplicationUpdateTests
             [
                 Asset(tag, GitHubReleasePolicy.InstallerName, 50 * 1024 * 1024),
                 Asset(tag, GitHubReleasePolicy.ChecksumName, 96),
+                Asset(tag, GitHubReleasePolicy.ReleaseManifestName, 240),
+                Asset(tag, GitHubReleasePolicy.ReleaseSignatureName, 89),
                 Asset(tag, "LICENSE.md", 1000),
                 Asset(tag, "NOTICE.md", 1000),
             ]);

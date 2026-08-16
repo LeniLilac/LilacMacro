@@ -8,11 +8,11 @@ product
 
 ## Users
 
-LilacMacro is a private, single-user Windows tool for its owner. It supports the hands-on workflow of preparing Roblox for repeatable visual automation, collecting representative frames, and reviewing those frames while the game and its UI are changing.
+LilacMacro serves Windows users testing repeatable Anime Expeditions automation and contributors maintaining its visual evidence. Users build Plans and placements, supervise beta runs, and can keep separate local or managed-runner configurations while the game and its UI continue to change.
 
 ## Product Purpose
 
-LilacMacro creates trustworthy image-detection inputs, placement plans, and explicit OCR state evidence before unattended macro playback is built. Dataset Builder owns capture and dataset authoring. Runtime Lab owns owner-triggered Debug rules, OCR/image comparison, and flow tests that expose matched text and coordinates before sending input. The planned product adds a Lobby-rooted priority scheduler and modular mode runners without weakening those evidence boundaries.
+LilacMacro creates inspectable placement Plans and explicit visual state evidence for bounded automation. Dataset Builder owns capture and dataset authoring. Runtime Lab owns developer-triggered Debug rules, OCR/image comparison, and flow tests that expose matched text and coordinates before sending input. The Macro owns a Lobby-rooted priority scheduler and modular mode runners without weakening those evidence boundaries.
 
 ## Brand Personality
 
@@ -41,4 +41,4 @@ Detailed field rules belong in [docs/GAME-BEHAVIOR.md](docs/GAME-BEHAVIOR.md), p
 
 ## Accessibility & Inclusion
 
-There is no formal accessibility compliance scope for this private tool. Preserve native keyboard focus, readable contrast, Windows display scaling, and text-backed status as sensible desktop defaults.
+The public beta does not claim formal accessibility certification. Preserve native keyboard focus, readable contrast, 100% display-scale guidance for capture accuracy, and text-backed status as required desktop behavior.

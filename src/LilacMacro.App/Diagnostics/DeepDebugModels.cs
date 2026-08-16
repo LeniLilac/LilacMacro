@@ -9,6 +9,8 @@ public sealed record DeepDebugOptions
 
     public int FrameRetentionMinutes { get; init; } = 15;
 
+    public bool AutomaticCleanupEnabled { get; init; } = true;
+
     public static int NormalizeFrameRetention(int value) => Math.Clamp(value, 1, 120);
 }
 

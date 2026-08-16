@@ -59,7 +59,7 @@ The RDP viewport must remain visibly connected while that instance captures Robl
 
 ## Coordinated updates
 
-Only **This desktop** checks and downloads updates. Every UI runs the single Program Files installation, so the owner approves one installer rather than updating each Windows account separately. The owner UI records the exact active macro PIDs and configured runners, then starts the signed installer. Each desktop observes a machine-scoped shutdown request and closes through the normal cancellation path. Installation fails closed if a recorded process remains active or cannot be inspected. After replacement and repair, the helper re-registers and launches each configured runner task; the installer reopens the owner UI.
+Only **This desktop** checks and downloads updates. Every UI runs the single Program Files installation, so the owner approves one installer rather than updating each Windows account separately. The owner UI verifies the exact GitHub digests, project-signed manifest, and checksum, records the exact active macro PIDs and configured runners, then starts the installer. Each desktop observes a machine-scoped shutdown request and closes through the normal cancellation path. Installation fails closed if a recorded process remains active or cannot be inspected. After replacement and repair, the helper re-registers and launches each configured runner task; the installer reopens the owner UI.
 
 Automatic startup checks fetch metadata only. Download and install are separate owner actions. Runner UIs show that updates are coordinated from **This desktop** and cannot initiate them.
 

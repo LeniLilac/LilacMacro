@@ -81,6 +81,7 @@ public partial class SettingsPage : UserControl
         NotifyDefeatCheck.IsChecked = ownerState.NotifyOnDefeat;
         NotifyRecoveryCheck.IsChecked = ownerState.NotifyOnRecovery;
         DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
+        AutomaticCleanupCheck.IsChecked = _deepDebug.Options.AutomaticCleanupEnabled;
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
         FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
         _initialized = true;
@@ -201,7 +202,7 @@ public partial class SettingsPage : UserControl
     {
         CheckUpdatesButton.IsEnabled = false;
         InstallUpdateButton.IsEnabled = false;
-        GeneralStatusText.Text = "Downloading and verifying the signed installer...";
+        GeneralStatusText.Text = "Downloading and verifying the project-signed installer...";
         try
         {
             await _ownerState.FlushAsync();
@@ -451,7 +452,7 @@ public partial class SettingsPage : UserControl
         int retention = int.TryParse(FrameHistoryText.Text, out int parsed)
             ? parsed
             : _deepDebug.Options.FrameRetentionMinutes;
-        await _deepDebug.UpdateOptionsAsync(enabled, retention);
+        await _deepDebug.UpdateOptionsAsync(enabled, retention, AutomaticCleanupCheck.IsChecked == true);
         DiagnosticsStatusText.Text = enabled
             ? $"Deep debug enabled · {_deepDebug.Options.FrameRetentionMinutes} minute frame history"
             : "Deep debug disabled";
@@ -469,7 +470,10 @@ public partial class SettingsPage : UserControl
         int retention = int.TryParse(FrameHistoryText.Text, out int parsed)
             ? parsed
             : _deepDebug.Options.FrameRetentionMinutes;
-        await _deepDebug.UpdateOptionsAsync(DeepDebugCheck.IsChecked == true, retention);
+        await _deepDebug.UpdateOptionsAsync(
+            DeepDebugCheck.IsChecked == true,
+            retention,
+            AutomaticCleanupCheck.IsChecked == true);
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
     }
 

@@ -1,0 +1,178 @@
+name: Publish installer release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact x.y.z version
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lilacmacro-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    runs-on: windows-latest
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Check out main without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Validate release input and trust root
+        shell: pwsh
+        env:
+          EXPECTED_RELEASE_PUBLIC_KEY: ${{ vars.LILACMACRO_RELEASE_SIGNING_PUBLIC_KEY }}
+        run: |
+          if ($env:RELEASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw 'Version must be semantic x.y.z.'
+          }
+          git fetch origin main --tags
+          if ((git rev-parse HEAD).Trim() -ne (git rev-parse origin/main).Trim()) {
+            throw 'The release checkout is not the current origin/main commit.'
+          }
+          [xml]$props = Get-Content -LiteralPath 'Directory.Build.props' -Raw
+          if ([string]$props.Project.PropertyGroup.VersionPrefix -cne $env:RELEASE_VERSION) {
+            throw 'The release input does not match Directory.Build.props.'
+          }
+          $trust = Get-Content -LiteralPath 'eng/release-trust.json' -Raw | ConvertFrom-Json
+          if ([string]::IsNullOrWhiteSpace($env:EXPECTED_RELEASE_PUBLIC_KEY) -or
+              [string]$trust.publicKeySpkiBase64 -cne $env:EXPECTED_RELEASE_PUBLIC_KEY) {
+            throw 'The committed release public key does not match the repository variable.'
+          }
+
+      - name: Install pinned Inno Setup
+        shell: pwsh
+        run: choco install innosetup --version=6.7.1 --source=https://community.chocolatey.org/api/v2/ --no-progress --yes
+
+      - name: Restore
+        run: dotnet restore LilacMacro.slnx --locked-mode
+
+      - name: Validate repository
+        shell: pwsh
+        run: |
+          ./scripts/Test-Documentation.ps1
+          ./scripts/Test-Installer.ps1
+          ./scripts/Test-RepositoryPolicy.ps1
+          dotnet build LilacMacro.slnx -c Release --no-restore -warnaserror
+          dotnet test LilacMacro.slnx -c Release --no-build
+          dotnet format LilacMacro.slnx --verify-no-changes --no-restore
+
+      - name: Build unsigned release candidate
+        shell: pwsh
+        run: ./scripts/Build-Installer.ps1 -Version $env:RELEASE_VERSION
+
+      - name: Transfer unsigned candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: unsigned-release-candidate-${{ inputs.version }}
+          path: artifacts/macro-${{ inputs.version }}-installer
+          if-no-files-found: error
+          retention-days: 1
+
+  sign:
+    needs: build
+    environment: release-signing
+    permissions:
+      contents: read
+    runs-on: windows-latest
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Check out signing policy without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore signing library without the signing secret
+        run: dotnet restore src/LilacMacro.Core/LilacMacro.Core.csproj --locked-mode
+
+      - name: Receive unsigned candidate
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: unsigned-release-candidate-${{ inputs.version }}
+          path: artifacts/macro-${{ inputs.version }}-installer
+
+      - name: Sign only the validated manifest
+        shell: pwsh
+        env:
+          LILACMACRO_RELEASE_SIGNING_PRIVATE_KEY: ${{ secrets.LILACMACRO_RELEASE_SIGNING_PRIVATE_KEY }}
+        run: ./scripts/Finalize-ReleaseArtifact.ps1 -Version $env:RELEASE_VERSION
+
+      - name: Transfer signed release
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: signed-release-${{ inputs.version }}
+          path: artifacts/macro-${{ inputs.version }}-installer
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: sign
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Check out main without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore verification library without the repository token
+        run: dotnet restore src/LilacMacro.Core/LilacMacro.Core.csproj --locked-mode
+
+      - name: Receive signed release
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: signed-release-${{ inputs.version }}
+          path: artifacts/macro-${{ inputs.version }}-installer
+
+      - name: Create tag and publish exact release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v$env:RELEASE_VERSION"
+          gh auth setup-git
+          git fetch origin --tags
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git show-ref --verify --quiet "refs/tags/$tag"
+          if ($LASTEXITCODE -eq 0) {
+            if ((git rev-list -n 1 $tag).Trim() -ne (git rev-parse HEAD).Trim()) {
+              throw "Existing tag $tag does not point at this commit."
+            }
+          } else {
+            git tag -a $tag -m "LilacMacro $tag"
+            git push origin "refs/tags/$tag"
+          }
+          ./scripts/Publish-GitHubRelease.ps1 -Version $env:RELEASE_VERSION

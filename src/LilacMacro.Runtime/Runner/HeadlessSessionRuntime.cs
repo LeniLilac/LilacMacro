@@ -220,6 +220,12 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                     modeSupportsRepeat: task.Mode is RunnerTaskMode.Story or RunnerTaskMode.Raid or RunnerTaskMode.Event,
                     sameTaskSelected: string.Equals(task.Id, nextTask?.Id, StringComparison.Ordinal)))
             {
+                if (result.RepeatedPrestartReady)
+                {
+                    Report(progress, task, "infinite-continuation", wins, losses, "VERIFIED PRESTART | TEAM + CAMERA RETAINED");
+                    repeatedTask = task;
+                    continue;
+                }
                 try
                 {
                     await runner.RepeatStageAsync(
@@ -387,6 +393,7 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             RunMatchRuntime: true,
             RepeatStage: false,
             ExpeditionDifficulty: task.Difficulty,
+            InfiniteWave: task.InfiniteWave,
             BossesBeforeExtract: task.BossesBeforeExtract,
             ExtractAtCheckpoint: task.ExtractAtCheckpoint,
             ExpeditionRewardTarget: task.RewardTarget);

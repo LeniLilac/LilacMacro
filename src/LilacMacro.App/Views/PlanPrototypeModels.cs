@@ -49,6 +49,7 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
     private int _target = 15;
     private int _defeatRetries;
     private int _difficulty = 1;
+    private int _infiniteWave = 140;
     private int _bossesBeforeExtract = 1;
     private bool _extractAtCheckpoint = true;
     private string _rewardTarget = "None";
@@ -64,6 +65,7 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
     public int Target { get => _target; set { if (Set(ref _target, Math.Max(1, value))) NotifySummary(); } }
     public int DefeatRetries { get => _defeatRetries; set => Set(ref _defeatRetries, Math.Clamp(value, 0, 20)); }
     public int Difficulty { get => _difficulty; set { if (Set(ref _difficulty, Math.Clamp(value, 1, 3))) NotifySummary(); } }
+    public int InfiniteWave { get => _infiniteWave; set => Set(ref _infiniteWave, Math.Clamp(value, 1, 999)); }
     public int BossesBeforeExtract { get => _bossesBeforeExtract; set => Set(ref _bossesBeforeExtract, Math.Clamp(value, 0, 99)); }
     public bool ExtractAtCheckpoint { get => _extractAtCheckpoint; set => Set(ref _extractAtCheckpoint, value); }
     public string RewardTarget { get => _rewardTarget; set => Set(ref _rewardTarget, value); }
@@ -98,6 +100,7 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
     {
         PlanTaskMode.Utilities => UtilityTaskPolicy.ScheduleLabel(Route, Target),
         PlanTaskMode.Challenge => "Every reset",
+        PlanTaskMode.Story when Route.Contains("Infinite", StringComparison.OrdinalIgnoreCase) => $"{Target} runs",
         _ => $"{Target} victories",
     };
 
@@ -111,6 +114,7 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
         Target = Target,
         DefeatRetries = DefeatRetries,
         Difficulty = Difficulty,
+        InfiniteWave = InfiniteWave,
         BossesBeforeExtract = BossesBeforeExtract,
         ExtractAtCheckpoint = ExtractAtCheckpoint,
         RewardTarget = RewardTarget,

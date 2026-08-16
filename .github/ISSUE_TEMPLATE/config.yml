@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security or private-data report
+    url: https://github.com/LeniLilac/LilacMacro/blob/main/SECURITY.md
+    about: Follow the private email-reporting instructions for vulnerabilities, credentials, private links, or captures.

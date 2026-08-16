@@ -25,6 +25,11 @@ foreach ($name in $expected) {
     $directory = Join-Path $evidenceRoot $name
     if (-not (Test-Path -LiteralPath (Join-Path $directory 'dataset.json') -PathType Leaf)) {
         $failures.Add("Bundled runtime evidence is missing dataset.json for $name.")
+    } else {
+        $manifestContent = Get-Content -LiteralPath (Join-Path $directory 'dataset.json') -Raw
+        if ($manifestContent -match '(?i)(?:[A-Z]:\\Users\\[^\\/\s]+|[A-Z]:/Users/[^/\s]+|/Users/[^/\s]+|/home/[^/\s]+)') {
+            $failures.Add("Bundled runtime evidence contains a personal absolute path: $name.")
+        }
     }
 }
 

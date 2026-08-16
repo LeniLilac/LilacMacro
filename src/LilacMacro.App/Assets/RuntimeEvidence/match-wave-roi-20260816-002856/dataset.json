@@ -1,0 +1,225 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "2ecff741-2bf4-443a-91ff-3f631f1bf036",
+  "name": "Match Wave ROI",
+  "notes": "Bundled runtime evidence slice. Original dataset: match-wave-roi-20260816-002856. Source frames: 1, 2, 3.",
+  "created_at_utc": "2026-08-16T00:28:56.6195089+00:00",
+  "source_window_title": "Roblox",
+  "source_process_id": 26784,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-16T00:28:57.7593625+00:00",
+      "sha256": "d7f52bc47a6127b7992dd69df78064ee4b050d11814ce9b6dbfe50ad737260ab",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "8542600e-3ae8-4d9b-bb1f-db4a8149ce06",
+          "global_group_id": "e31a4116-2cb7-45ef-8e1d-700fe73e30c8",
+          "bounds": {
+            "x": 561,
+            "y": 0,
+            "width": 110,
+            "height": 52
+          },
+          "label": "Match Wave Counter",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "139\nwave",
+              "confidence": 0.9999684393405914,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 781,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-16T00:30:00.4541543+00:00",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 595,
+                    "y": 26,
+                    "width": 24,
+                    "height": 13
+                  },
+                  "text": "139",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999831318855286,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 626,
+                    "y": 27,
+                    "width": 34,
+                    "height": 12
+                  },
+                  "text": "wave",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999537467956543,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-16T00:29:04.5831868+00:00",
+      "sha256": "b8c17632bc460635b3d48ec9153008f2b19eed9f011f6b5f3b0168d0b78c2b9d",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "a406a21e-d834-4af3-9ff1-344029b32e1b",
+          "global_group_id": "e31a4116-2cb7-45ef-8e1d-700fe73e30c8",
+          "bounds": {
+            "x": 561,
+            "y": 0,
+            "width": 110,
+            "height": 52
+          },
+          "label": "Match Wave Counter",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "140wave",
+              "confidence": 0.9998576045036316,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 27,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-16T00:30:02.9008285+00:00",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 561,
+                    "y": 19,
+                    "width": 97,
+                    "height": 24
+                  },
+                  "text": "140wave",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998576045036316,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-16T00:29:08.5630724+00:00",
+      "sha256": "a1dfeb905e01acf3585b19b927a6d5fcf9be56496353d53db0f2d56be7cd0524",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "4636a080-2ed6-4cc5-95f2-fae05717ef59",
+          "global_group_id": "e31a4116-2cb7-45ef-8e1d-700fe73e30c8",
+          "bounds": {
+            "x": 561,
+            "y": 0,
+            "width": 110,
+            "height": 52
+          },
+          "label": "Match Wave Counter",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Ith\n140\nwave",
+              "confidence": 0.9817732373873392,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 33,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-16T00:30:04.4220798+00:00",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 561,
+                    "y": 28,
+                    "width": 15,
+                    "height": 10
+                  },
+                  "text": "Ith",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9457595944404602,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 613,
+                    "y": 26,
+                    "width": 21,
+                    "height": 13
+                  },
+                  "text": "140",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998008608818054,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 639,
+                    "y": 28,
+                    "width": 26,
+                    "height": 9
+                  },
+                  "text": "wave",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997592568397522,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
+}

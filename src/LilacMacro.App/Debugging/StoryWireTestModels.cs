@@ -68,6 +68,7 @@ internal sealed record StoryWireTestOptions(
     bool RunMatchRuntime,
     bool RepeatStage,
     int ExpeditionDifficulty = 1,
+    int InfiniteWave = 140,
     int BossesBeforeExtract = 1,
     bool ExtractAtCheckpoint = true,
     string ExpeditionRewardTarget = "None",
@@ -109,7 +110,8 @@ internal sealed record StoryWireTestResult(
     string Status,
     DateTimeOffset? UnavailableUntilUtc = null,
     bool DailyLimitReached = false,
-    MatchTerminalOutcome? Outcome = null);
+    MatchTerminalOutcome? Outcome = null,
+    bool RepeatedPrestartReady = false);
 
 internal sealed record ChallengeNavigationResult(
     bool Succeeded,

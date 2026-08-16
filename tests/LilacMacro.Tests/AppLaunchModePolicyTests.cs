@@ -4,6 +4,11 @@ namespace LilacMacro.Tests;
 
 public sealed class AppLaunchModePolicyTests
 {
+    private static readonly string SyntheticExecutable = Path.Combine(
+        Path.GetTempPath(),
+        "LilacMacro.Tests",
+        "LilacMacro.exe");
+
     [Theory]
     [InlineData("--DATASET-BUILDER", "DatasetBuilder")]
     [InlineData("--RUNTIME-LAB", "RuntimeLab")]
@@ -12,7 +17,7 @@ public sealed class AppLaunchModePolicyTests
     {
         AppLaunchMode result = AppLaunchModePolicy.Resolve(
             [argument],
-            @"C:\Projects\LilacMacro\LilacMacro.exe");
+            SyntheticExecutable);
 
         Assert.Equal(expected, result.ToString());
     }
@@ -26,7 +31,7 @@ public sealed class AppLaunchModePolicyTests
     {
         AppLaunchMode result = AppLaunchModePolicy.Resolve(
             [],
-            Path.Combine(@"C:\Projects\LilacMacro", executable));
+            Path.Combine(Path.GetDirectoryName(SyntheticExecutable)!, executable));
 
         Assert.Equal(expected, result.ToString());
     }
@@ -36,6 +41,6 @@ public sealed class AppLaunchModePolicyTests
     {
         Assert.Throws<ArgumentException>(() => AppLaunchModePolicy.Resolve(
             ["--dataset-builder", "--runtime-lab", "--deep-debug-viewer"],
-            @"C:\Projects\LilacMacro\LilacMacro.exe"));
+            SyntheticExecutable));
     }
 }

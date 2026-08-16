@@ -1,12 +1,13 @@
 using System.Security.Cryptography;
 using System.Text;
 using LilacMacro.Core.Updates;
-using LilacMacro.Windows;
 
 namespace LilacMacro.App.Updates;
 
 internal sealed class UpdatePackageDownloader(UpdateHttpTransport transport)
 {
+    private readonly ReleaseManifestVerifier _releaseVerifier = new();
+
     public async Task<(string InstallerPath, string Sha256)> DownloadAsync(
         VerifiedUpdateRelease release,
         string destinationRoot,
@@ -14,11 +15,32 @@ internal sealed class UpdatePackageDownloader(UpdateHttpTransport transport)
     {
         Directory.CreateDirectory(destinationRoot);
         string checksumPath = Path.Combine(destinationRoot, GitHubReleasePolicy.ChecksumName);
+        string manifestPath = Path.Combine(destinationRoot, GitHubReleasePolicy.ReleaseManifestName);
+        string signaturePath = Path.Combine(destinationRoot, GitHubReleasePolicy.ReleaseSignatureName);
         string installerPath = Path.Combine(destinationRoot, GitHubReleasePolicy.InstallerName);
         DeleteIfPresent(checksumPath);
+        DeleteIfPresent(manifestPath);
+        DeleteIfPresent(signaturePath);
         DeleteIfPresent(installerPath);
         try
         {
+            string manifestAssetHash = await transport.DownloadAsync(
+                new Uri(release.ReleaseManifest.DownloadUrl),
+                manifestPath,
+                release.ReleaseManifest.Size,
+                cancellationToken).ConfigureAwait(false);
+            RequireDigest(release.ReleaseManifest, manifestAssetHash);
+            string signatureAssetHash = await transport.DownloadAsync(
+                new Uri(release.ReleaseSignature.DownloadUrl),
+                signaturePath,
+                release.ReleaseSignature.Size,
+                cancellationToken).ConfigureAwait(false);
+            RequireDigest(release.ReleaseSignature, signatureAssetHash);
+            string signedInstallerHash = _releaseVerifier.Verify(
+                await File.ReadAllBytesAsync(manifestPath, cancellationToken).ConfigureAwait(false),
+                await File.ReadAllTextAsync(signaturePath, Encoding.ASCII, cancellationToken).ConfigureAwait(false),
+                release);
+
             string checksumAssetHash = await transport.DownloadAsync(
                 new Uri(release.ChecksumManifest.DownloadUrl),
                 checksumPath,
@@ -35,8 +57,9 @@ internal sealed class UpdatePackageDownloader(UpdateHttpTransport transport)
                 cancellationToken).ConfigureAwait(false);
             RequireDigest(release.Installer, installerHash);
             if (!string.Equals(installerHash, declaredInstallerHash, StringComparison.Ordinal))
-                throw new InvalidDataException("The installer digest does not match the signed release checksum manifest.");
-            AuthenticodeSignatureVerifier.VerifyTrusted(installerPath);
+                throw new InvalidDataException("The installer digest does not match the release checksum manifest.");
+            if (!string.Equals(installerHash, signedInstallerHash, StringComparison.Ordinal))
+                throw new InvalidDataException("The installer digest does not match the project-signed release manifest.");
             return (installerPath, installerHash);
         }
         catch
@@ -61,7 +84,6 @@ internal sealed class UpdatePackageDownloader(UpdateHttpTransport transport)
         byte[] hash = await SHA256.HashDataAsync(stream, cancellationToken).ConfigureAwait(false);
         if (!string.Equals(Convert.ToHexString(hash), expectedSha256, StringComparison.Ordinal))
             throw new InvalidDataException("The cached update installer changed before launch.");
-        AuthenticodeSignatureVerifier.VerifyTrusted(installerPath);
     }
 
     private static void RequireDigest(GitHubReleaseAsset asset, string actual)

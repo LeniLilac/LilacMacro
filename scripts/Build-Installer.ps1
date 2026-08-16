@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [string]$Version,
-    [string]$CertificateThumbprint,
     [switch]$UnsignedDevelopmentBuild
 )
 
@@ -14,8 +13,15 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
     $Version = [string]$props.Project.PropertyGroup.VersionPrefix
 }
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'Version must be semantic x.y.z.' }
-if (-not $UnsignedDevelopmentBuild -and [string]::IsNullOrWhiteSpace($CertificateThumbprint)) {
-    throw 'Release installers require -CertificateThumbprint. Use -UnsignedDevelopmentBuild only for local validation.'
+$sourceCommit = 'development'
+if (-not $UnsignedDevelopmentBuild) {
+    if (& git -C $repository status --porcelain) {
+        throw 'Release candidate builds require a clean source worktree.'
+    }
+    $sourceCommit = (& git -C $repository rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $sourceCommit -notmatch '^[0-9a-f]{40}$') {
+        throw 'Release candidate source commit was unavailable.'
+    }
 }
 
 $iscc = @(
@@ -36,22 +42,6 @@ function Invoke-Publish([string]$project) {
     & dotnet publish (Join-Path $repository $project) -c Release --nologo --no-restore `
         -r win-x64 --self-contained true "-p:Version=$Version" -o $publish
     if ($LASTEXITCODE -ne 0) { throw "Publish failed: $project" }
-}
-
-function Find-SignTool {
-    $direct = Get-Command signtool.exe -ErrorAction SilentlyContinue
-    if ($direct) { return $direct.Source }
-    $kits = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
-    if (-not (Test-Path -LiteralPath $kits)) { return $null }
-    return Get-ChildItem -LiteralPath $kits -Filter signtool.exe -Recurse |
-        Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
-        Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
-}
-
-function Sign-File([string]$path, [string]$signTool) {
-    & $signTool sign /sha1 $CertificateThumbprint /fd SHA256 /td SHA256 `
-        /tr https://timestamp.digicert.com $path
-    if ($LASTEXITCODE -ne 0) { throw "Signing failed: $path" }
 }
 
 try {
@@ -76,31 +66,19 @@ try {
         }
     }
 
-    $required = @('LilacMacro.exe', 'LilacMacro.SessionSetup.exe', 'LilacMacro.SessionWorker.exe')
-    foreach ($name in $required) {
+    foreach ($name in @('LilacMacro.exe', 'LilacMacro.SessionSetup.exe', 'LilacMacro.SessionWorker.exe')) {
         if (-not (Test-Path -LiteralPath (Join-Path $publish $name))) { throw "Missing published file: $name" }
-    }
-
-    $signTool = if ($UnsignedDevelopmentBuild) { $null } else { Find-SignTool }
-    if (-not $UnsignedDevelopmentBuild -and -not $signTool) { throw 'Windows SignTool was not found.' }
-    if ($signTool) {
-        Get-ChildItem -LiteralPath $publish -File |
-            Where-Object {
-                $_.Name -like 'LilacMacro*.exe' -or $_.Name -like 'LilacMacro*.dll'
-            } |
-            ForEach-Object { Sign-File $_.FullName $signTool }
     }
 
     & $iscc "/DSourceRoot=$repository" "/DPublishRoot=$publish" `
         "/DOutputRoot=$output" "/DAppVersion=$Version" `
         (Join-Path $repository 'installer\LilacMacro.iss')
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup compilation failed.' }
-    $setup = Join-Path $output 'LilacMacro-Setup.exe'
-    if ($signTool) { Sign-File $setup $signTool }
 
     New-Item -ItemType Directory -Path $artifact | Out-Null
     $artifactSetup = Join-Path $artifact 'LilacMacro-Setup.exe'
-    Move-Item -LiteralPath $setup -Destination $artifactSetup
+    Move-Item -LiteralPath (Join-Path $output 'LilacMacro-Setup.exe') -Destination $artifactSetup
+    $setupFile = Get-Item -LiteralPath $artifactSetup
     $setupHash = (Get-FileHash -LiteralPath $artifactSetup -Algorithm SHA256).Hash
     [IO.File]::WriteAllText(
         (Join-Path $artifact 'LilacMacro-Setup.exe.sha256'),
@@ -108,9 +86,42 @@ try {
         [Text.UTF8Encoding]::new($false))
     Copy-Item -LiteralPath (Join-Path $repository 'LICENSE.md') -Destination (Join-Path $artifact 'LICENSE.md')
     Copy-Item -LiteralPath (Join-Path $repository 'NOTICE.md') -Destination (Join-Path $artifact 'NOTICE.md')
+
+    $trustKeyId = 'none'
+    $manifestPrepared = $false
+    if (-not $UnsignedDevelopmentBuild) {
+        $trust = Get-Content -LiteralPath (Join-Path $repository 'eng\release-trust.json') -Raw | ConvertFrom-Json
+        if ($trust.format -ne 'lilacmacro.release-trust' -or $trust.schemaVersion -ne 1 -or
+            $trust.algorithm -ne 'Ed25519' -or [string]::IsNullOrWhiteSpace([string]$trust.keyId)) {
+            throw 'Release trust policy is invalid.'
+        }
+        $manifest = [ordered]@{
+            format = 'lilacmacro.release'
+            schemaVersion = 1
+            keyId = [string]$trust.keyId
+            algorithm = 'Ed25519'
+            tag = "v$Version"
+            sourceCommit = $sourceCommit
+            installer = [ordered]@{
+                name = 'LilacMacro-Setup.exe'
+                size = $setupFile.Length
+                sha256 = $setupHash
+            }
+        } | ConvertTo-Json -Depth 4 -Compress
+        $manifestPath = Join-Path $artifact 'LilacMacro-Release.json'
+        [IO.File]::WriteAllText($manifestPath, $manifest, [Text.UTF8Encoding]::new($false))
+        $trustKeyId = [string]$trust.keyId
+        $manifestPrepared = $true
+    }
+
     [IO.File]::WriteAllLines((Join-Path $artifact 'BUILD-INFO.txt'), @(
-        "artifact=macro-installer", "version=$Version",
-        "signed=$(((-not $UnsignedDevelopmentBuild).ToString()).ToLowerInvariant())",
+        'artifact=macro-installer', "version=$Version",
+        "source_commit=$sourceCommit",
+        "source_dirty=$($UnsignedDevelopmentBuild.ToString().ToLowerInvariant())",
+        'authenticode_signed=false',
+        "release_manifest_prepared=$($manifestPrepared.ToString().ToLowerInvariant())",
+        'release_manifest_signed=false',
+        "release_trust_key=$trustKeyId",
         "built_utc=$([DateTimeOffset]::UtcNow.ToString('O'))"
     ), [Text.UTF8Encoding]::new($false))
     Write-Output $artifactSetup

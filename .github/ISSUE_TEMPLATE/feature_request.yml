@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a bounded change within LilacMacro's safety boundary.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe observable behavior, safety evidence, and failure handling.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Safety boundary
+      options:
+        - label: This does not require Roblox injection, process memory access, hooks, anti-cheat bypasses, or remote executable automation.
+          required: true

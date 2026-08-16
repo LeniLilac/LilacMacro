@@ -10,7 +10,7 @@
                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="ONLINE FEATURES" />
                     <StackPanel Grid.Column="1">
-                        <CheckBox x:Name="OnlineFeaturesCheck" Content="Enable signed status, codes, update metadata, safety disables, and sharing services"
+                        <CheckBox x:Name="OnlineFeaturesCheck" Content="Enable online safety, updates, code claiming, and configuration sharing"
                                   Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
                         <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
                                    Text="Turning this off prevents LilacMacro service and update requests. Local macro functions remain available without remote safety status." />
@@ -40,8 +40,8 @@
                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="POLICIES" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Padding="10,5" Click="Privacy_OnClick" Content="PRIVACY" />
-                        <Button Margin="8,0,0,0" Padding="10,5" Click="Terms_OnClick" Content="TERMS" />
+                        <Button Width="112" Style="{DynamicResource SettingsButtonStyle}" Click="Privacy_OnClick" Content="PRIVACY" />
+                        <Button Width="112" Margin="8,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="Terms_OnClick" Content="TERMS" />
                         <TextBlock x:Name="SavedText" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="9"
                                    Foreground="{DynamicResource InkSoftBrush}" Text="Choices saved locally" />
                     </StackPanel>

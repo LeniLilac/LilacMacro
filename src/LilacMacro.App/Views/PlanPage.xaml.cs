@@ -9,13 +9,6 @@ namespace LilacMacro.App.Views;
 
 public partial class PlanPage : UserControl
 {
-    private static readonly string[] StoryRoutes =
-    [
-        "School Grounds · Act 1", "School Grounds · Act 2", "School Grounds · Act 3",
-        "School Grounds · Act 4", "School Grounds · Act 5", "School Grounds · Infinite",
-        "School Grounds · Mastery", "Flower Forest · Act 1", "Rose Kingdom · Act 1",
-        "Fairy King Forest · Act 1", "King's Tomb · Mastery", "East Town · Act 1",
-    ];
     private static readonly string[] RaidRoutes = ["Spirit City · Act 1", "Spirit City · Act 2", "Spirit City · Act 3"];
     private static readonly string[] ExpeditionRoutes = ["School Grounds", "Flower Forest", "Rose Kingdom", "East Town"];
     private static readonly string[] EventRoutes =
@@ -52,6 +45,8 @@ public partial class PlanPage : UserControl
         PlanSelector.DisplayMemberPath = nameof(PlanPrototype.Name);
         PlanSelector.ItemsSource = _plans;
         TaskDifficultyCombo.ItemsSource = new[] { "Difficulty 1", "Difficulty 2", "Difficulty 3" };
+        TaskStoryMapCombo.ItemsSource = StoryMaps;
+        TaskStoryActCombo.ItemsSource = StoryActs;
         TaskRewardTargetCombo.ItemsSource = new[] { "None", "Fuel Cell", "Equipment Scrap", "Equipment Reroll", "Equipment Lock", "Expedition Coin" };
         _initialized = true;
         PlanSelector.SelectedItem = _selectedPlan;
@@ -145,6 +140,7 @@ public partial class PlanPage : UserControl
         TaskTargetText.Text = "15";
         TaskRetriesText.Text = "0";
         TaskDifficultyCombo.SelectedIndex = 0;
+        TaskInfiniteWaveText.Text = "140";
         TaskBossNodesText.Text = "1";
         TaskExtractCheck.IsChecked = true;
         TaskRewardTargetCombo.SelectedIndex = 0;
@@ -164,10 +160,12 @@ public partial class PlanPage : UserControl
         TaskEditorTitle.Text = $"EDIT TASK {task.Priority}";
         PopulateDestinations(FindParentLoop(task));
         SetEditorMode(task.Mode);
-        TaskRouteCombo.SelectedItem = task.Route;
+        if (task.Mode == PlanTaskMode.Story) SetStoryRoute(task.Route);
+        else TaskRouteCombo.SelectedItem = task.Route;
         TaskTargetText.Text = task.Target.ToString();
         TaskRetriesText.Text = task.DefeatRetries.ToString();
         TaskDifficultyCombo.SelectedIndex = task.Difficulty - 1;
+        TaskInfiniteWaveText.Text = task.InfiniteWave.ToString();
         TaskBossNodesText.Text = task.BossesBeforeExtract.ToString();
         TaskExtractCheck.IsChecked = task.ExtractAtCheckpoint;
         TaskRewardTargetCombo.SelectedItem = task.RewardTarget;
@@ -182,8 +180,8 @@ public partial class PlanPage : UserControl
 
     private void ApplyTaskEditor_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        bool fixedReset = _editorMode == PlanTaskMode.Utilities && UtilityTaskPolicy.UsesFixedUtcReset(
-            TaskRouteCombo.SelectedItem as string ?? string.Empty);
+        string selectedRoute = SelectedEditorRoute();
+        bool fixedReset = _editorMode == PlanTaskMode.Utilities && UtilityTaskPolicy.UsesFixedUtcReset(selectedRoute);
         if (!int.TryParse(TaskTargetText.Text, out int target) && _editorMode != PlanTaskMode.Challenge && !fixedReset)
         {
             AppToastService.ShowError("INVALID TARGET", "Enter a whole-number target.");
@@ -191,10 +189,16 @@ public partial class PlanPage : UserControl
         }
         if (!int.TryParse(TaskRetriesText.Text, out int retries)) retries = 0;
         if (!int.TryParse(TaskBossNodesText.Text, out int bosses)) bosses = 1;
+        int infiniteWave = 140;
+        if (IsInfiniteStory && (!int.TryParse(TaskInfiniteWaveText.Text, out infiniteWave) || infiniteWave is < 1 or > 999))
+        {
+            AppToastService.ShowError("INVALID WAVE", "Enter an Infinite reset wave from 1 to 999.");
+            return;
+        }
 
         PlanTaskPrototype task = _editingTask ?? new PlanTaskPrototype();
         task.Mode = _editorMode;
-        task.Route = TaskRouteCombo.SelectedItem as string ?? DefaultRoute(_editorMode);
+        task.Route = selectedRoute;
         string[] selectedShopItems = TaskShopItemsList.ItemsSource is IEnumerable<ShopItemChoice> choices
             ? choices.Where(choice => choice.IsSelected).Select(choice => choice.Id).ToArray()
             : [];
@@ -211,10 +215,11 @@ public partial class PlanPage : UserControl
         };
         task.DefeatRetries = retries;
         task.Difficulty = TaskDifficultyCombo.SelectedIndex + 1;
+        task.InfiniteWave = infiniteWave;
         task.BossesBeforeExtract = bosses;
         task.ExtractAtCheckpoint = TaskExtractCheck.IsChecked == true;
         task.RewardTarget = TaskRewardTargetCombo.SelectedItem as string ?? "None";
-        task.HardMode = TaskHardModeCheck.IsChecked == true;
+        task.HardMode = !IsInfiniteStory && !IsMasteryStory && TaskHardModeCheck.IsChecked == true;
         task.RunTrait = TaskTraitCheck.IsChecked == true;
         task.RunStat = TaskStatCheck.IsChecked == true;
         task.RunSprite = TaskSpriteCheck.IsChecked == true;
@@ -281,9 +286,14 @@ public partial class PlanPage : UserControl
         TaskChallengePanel.Visibility = challenge ? Visibility.Visible : Visibility.Collapsed;
         TaskExpeditionPanel.Visibility = expedition ? Visibility.Visible : Visibility.Collapsed;
         TaskStoryPanel.Visibility = story ? Visibility.Visible : Visibility.Collapsed;
-        TaskTargetLabel.Text = utility ? "INTERVAL, MIN" : "VICTORIES";
+        TaskStoryRoutePanel.Visibility = story ? Visibility.Visible : Visibility.Collapsed;
+        TaskRoutePanel.Visibility = story ? Visibility.Collapsed : Visibility.Visible;
+        TaskTargetLabel.Text = utility ? "INTERVAL, MIN" : IsInfiniteStory ? "RUNS" : "VICTORIES";
         TaskRouteCombo.ItemsSource = RoutesFor(_editorMode);
         TaskRouteCombo.SelectedIndex = 0;
+        if (story && TaskStoryMapCombo.SelectedIndex < 0) TaskStoryMapCombo.SelectedIndex = 0;
+        if (story && TaskStoryActCombo.SelectedIndex < 0) TaskStoryActCombo.SelectedIndex = 0;
+        UpdateStoryOptions();
         if (utility) TaskTargetText.Text = "60";
         RefreshShopItemEditor();
     }
@@ -293,6 +303,9 @@ public partial class PlanPage : UserControl
         if (!_initialized) return;
         RefreshShopItemEditor();
     }
+
+    private void TaskStoryRouteCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs) =>
+        UpdateStoryOptions();
 
     private void RefreshShopItemEditor()
     {
@@ -453,7 +466,6 @@ public partial class PlanPage : UserControl
 
     private static string[] RoutesFor(PlanTaskMode mode) => mode switch
     {
-        PlanTaskMode.Story => StoryRoutes,
         PlanTaskMode.Raid => RaidRoutes,
         PlanTaskMode.Expedition => ExpeditionRoutes,
         PlanTaskMode.Event => EventRoutes,

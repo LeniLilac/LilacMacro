@@ -44,6 +44,8 @@ The Debug rule engine:
 
 Some states require exact normalized boxes, a required first anchor, or multiple separate boxes. See [Game behavior](GAME-BEHAVIOR.md). Confidence helps inspect evidence but never substitutes for the required state structure or fresh target coordinates.
 
+Story Infinite uses a compact counter-specific hybrid owner rather than a generic text state. OCR may parse a merged `140wave` region or separate number and `wave` boxes only inside the bundled `(561,0,110,52)` client ROI. The same pixels must independently contain the counter's bright neutral glyph mass, dark capsule field, and blue icon band, and the reset threshold requires two fresh nondecreasing readings. Text on an unrelated background cannot authorize Restart.
+
 Startup UI-scale normalization deliberately does not OCR the displayed numeric scale. OCR verifies the Settings/search/navigation structure and the semantic `Miscellaneous`/`UI Scale` row before input. Independent RGB panel geometry measures the rendered result, because the same numeric input may render differently across devices and Windows sessions.
 
 ## CPU, GPU, and resident workers

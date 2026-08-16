@@ -131,7 +131,7 @@ public sealed record LocalSessionProvisioningManifest
 
 public sealed record RunnerRuntimeSnapshot
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
     public long Revision { get; init; }
@@ -172,6 +172,7 @@ public sealed record RunnerTaskSnapshot
     public bool RunStat { get; init; } = true;
     public bool RunSprite { get; init; } = true;
     public int Difficulty { get; init; } = 1;
+    public int InfiniteWave { get; init; } = 140;
     public int BossesBeforeExtract { get; init; } = 1;
     public bool ExtractAtCheckpoint { get; init; } = true;
     public string RewardTarget { get; init; } = "None";

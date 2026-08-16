@@ -7,4 +7,7 @@
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\eng\release-trust.json" LogicalName="LilacMacro.ReleaseTrust.json" />
+  </ItemGroup>
 </Project>

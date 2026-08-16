@@ -26,7 +26,10 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.NotNull(scope);
         service.RecordEvent("ocr", "state_evaluated", new
         {
-            Path = $@"C:\Users\{Environment.UserName}\Documents\dataset",
+            Path = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "Documents",
+                "dataset"),
             Text = "Lobby",
         });
         RgbImage image = new(2, 1, [255, 0, 0, 0, 255, 0], takeOwnership: true);
@@ -169,6 +172,25 @@ public sealed class DeepDebugSessionTests : IDisposable
         using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
         string manifest = await ReadAsync(archive, "manifest.json");
         Assert.Contains("Visual locator was unavailable for profile wire-test", manifest, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task LocalArchiveCleanupIsIndependentFromAutomaticUploadConsent()
+    {
+        DeepDebugSessionService service = new(_root);
+        Directory.CreateDirectory(service.DiagnosticsRoot);
+        for (int index = 0; index < 22; index++)
+        {
+            string path = Path.Combine(service.DiagnosticsRoot, $"deep-debug-test-{index:D2}.zip");
+            await File.WriteAllBytesAsync(path, []);
+            File.SetCreationTimeUtc(path, DateTime.UtcNow.AddMinutes(index));
+        }
+
+        await service.UpdateOptionsAsync(true, 15, automaticCleanupEnabled: false);
+        Assert.Equal(22, Directory.EnumerateFiles(service.DiagnosticsRoot, "deep-debug-*.zip").Count());
+
+        await service.UpdateOptionsAsync(true, 15, automaticCleanupEnabled: true);
+        Assert.Equal(20, Directory.EnumerateFiles(service.DiagnosticsRoot, "deep-debug-*.zip").Count());
     }
 
     private static async Task<string> ReadAsync(ZipArchive archive, string name)

@@ -63,6 +63,8 @@
              Link="Runtime\ExpeditionSettingsService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MatchTerminalService.cs"
              Link="Runtime\MatchTerminalService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\MatchWaveService.cs"
+             Link="Runtime\MatchWaveService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MapPreparationService.cs"
              Link="Runtime\MapPreparationService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\ModalActionLocator.cs"

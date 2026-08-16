@@ -11,7 +11,7 @@ using LilacMacro.Windows.LocalSession;
 
 namespace LilacMacro.Tests;
 
-public sealed class LocalSessionContractTests
+public sealed partial class LocalSessionContractTests
 {
     [Fact]
     public async Task Every_ui_instance_executes_on_its_own_desktop()
@@ -63,7 +63,13 @@ public sealed class LocalSessionContractTests
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["remove-profile"]));
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["remove-profile", "../owner"]));
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["add-shared", "runner-2"]));
-        Assert.True(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-update", @"C:\Users\owner\AppData\Local\LilacMacro\updates\id\update-state.txt"]));
+        string statePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "LilacMacro",
+            "updates",
+            "id",
+            "update-state.txt");
+        Assert.True(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-update", statePath]));
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-update", "bad\npath"]));
         Assert.True(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-runners"]));
         Assert.False(LocalSessionSetupVerbPolicy.AreArgumentsAllowed(["relaunch-runners", "runner-2"]));

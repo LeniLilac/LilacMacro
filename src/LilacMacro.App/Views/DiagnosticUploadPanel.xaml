@@ -11,7 +11,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <TextBlock FontSize="15" FontWeight="Bold" Text="Diagnostic upload" />
+            <TextBlock FontSize="15" FontWeight="Bold" Text="Manual diagnostic upload" />
             <StackPanel Grid.Row="1" Margin="0,16,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -44,8 +44,8 @@
                                  Text="Loading..." />
                         <Button x:Name="CopyInstallationIdButton"
                                 Margin="8,0,0,0"
-                                MinHeight="33"
-                                Padding="10,5"
+                                Width="92"
+                                Style="{DynamicResource SettingsButtonStyle}"
                                 IsEnabled="False"
                                 Click="CopyInstallationId_OnClick"
                                 Content="COPY" />
@@ -75,8 +75,8 @@
                                Text="ACTIONS" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button x:Name="UploadButton"
-                                MinHeight="33"
-                                Padding="10,5"
+                                Width="170"
+                                Style="{DynamicResource SettingsButtonStyle}"
                                 IsEnabled="False"
                                 Click="Upload_OnClick">
                             <StackPanel Orientation="Horizontal">
@@ -87,8 +87,8 @@
                         </Button>
                         <Button x:Name="CancelButton"
                                 Margin="8,0,0,0"
-                                MinHeight="33"
-                                Padding="10,5"
+                                Width="100"
+                                Style="{DynamicResource SettingsButtonStyle}"
                                 IsEnabled="False"
                                 Click="Cancel_OnClick"
                                 Content="CANCEL" />
@@ -100,12 +100,13 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STATUS" />
-                    <StackPanel Grid.Column="1">
+                    <StackPanel Grid.Column="1" Width="420" HorizontalAlignment="Left">
                         <TextBlock x:Name="StatusText"
                                    FontSize="10"
                                    Foreground="{DynamicResource InkSoftBrush}"
                                    Text="Opt-in disabled" />
                         <ProgressBar x:Name="UploadProgress"
+                                     Width="420"
                                      Height="5"
                                      Margin="0,7,0,0"
                                      Minimum="0"

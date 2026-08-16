@@ -1,48 +1,59 @@
 # Installer
 
-**Status: Prototype.** The repository contains an Inno Setup definition, signed-build script, elevated setup helper, session worker, and shared WPF-free runner runtime. Supported release distribution remains blocked until the pinned native payload, production signing, and disposable-VM lifecycle certification are complete.
+**Status: Implemented.** The installer and updater are entering public beta. The repository contains the Inno Setup definition, project-signed release workflow, elevated setup helper, session worker, and shared WPF-free runner runtime. Multi-session installation and cleanup remain beta features that require owner-supervised disposable-VM acceptance before broader confidence.
 
-## Release shape
+## Release shape and trust
 
-Supported releases install one signed `LilacMacro-Setup.exe` under `%ProgramFiles%\LilacMacro`. Portable publish folders remain development-only and cannot provision, coordinate updates, or reliably uninstall system resources. A GitHub release contains exactly four public assets: `LilacMacro-Setup.exe`, `LilacMacro-Setup.exe.sha256`, `LICENSE.md`, and `NOTICE.md`.
+Official releases install one `LilacMacro-Setup.exe` under `%ProgramFiles%\LilacMacro`. Portable publish folders remain development-only and cannot provision, coordinate updates, or reliably uninstall system resources. A GitHub release contains exactly six public assets:
+
+- `LilacMacro-Setup.exe`
+- `LilacMacro-Setup.exe.sha256`
+- `LilacMacro-Release.json`
+- `LilacMacro-Release.sig`
+- `LICENSE.md`
+- `NOTICE.md`
+
+LilacMacro does not use an Authenticode identity certificate. Windows therefore reports **Unknown publisher**, and Microsoft Defender SmartScreen may require the user to inspect **More info** before deciding whether to run the installer. That is expected for an official beta artifact; it must not be described as a Windows-verified publisher.
+
+Release integrity is instead bound to a repository-controlled Ed25519 key. `eng/release-trust.json` publishes the key ID and public key, while the private key exists only as the protected `LILACMACRO_RELEASE_SIGNING_PRIVATE_KEY` GitHub Actions secret. The release workflow signs the exact raw manifest bytes. The manifest binds the tag, installer filename, byte length, and SHA-256 digest. The separate checksum is convenient for manual verification. This project signature proves continuity with the published LilacMacro key, not the contributor's legal identity and not that the program is bug-free.
 
 The installer contains:
 
 - the self-contained x64 desktop application;
-- the signed elevated session-setup helper;
-- the signed windowless profile-policy bootstrap retained for local-instance setup compatibility;
+- the elevated session-setup helper;
+- the windowless profile-policy bootstrap retained for local-instance setup compatibility;
 - the pinned TermWrap payload, hash manifest, license, and notices.
 
-The versioned native payload is install-once. Upgrades do not attempt to overwrite its loaded files; Repair verifies their exact pinned hashes and fails closed on drift. A future native payload must use a new versioned directory and an explicitly certified migration.
+The versioned native payload is install-once. Upgrades do not overwrite loaded native files; Repair verifies their exact pinned hashes and fails closed on drift. A future native payload must use a new versioned directory and an explicitly certified migration.
 
 Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local instances, Set Up and approve UAC. The initial setup creates Runner 1; additional shared/separate runners use the same allowlisted elevated helper.
 
 The installer displays `TERMS.md` before installation while preserving the repository-license page, and installs both `TERMS.md` and `PRIVACY.md` beside the executable. The application—not the elevated installer—owns the versioned first-run privacy choices so the same screen applies to new installs, existing profiles receiving a changed notice, and managed configuration roots. No choice-covered request occurs before that screen is saved.
 
-## Build
+## Build and publish
 
-Install Inno Setup 6 and a Windows code-signing certificate, then run:
+Local installer validation requires Inno Setup 6:
 
 ```powershell
-./scripts/Build-Installer.ps1 -Version 1.0.0 -CertificateThumbprint CERTIFICATE_THUMBPRINT
+./scripts/Build-Installer.ps1 -Version 1.0.140 -UnsignedDevelopmentBuild
 ```
 
-For local compilation only, an explicitly marked unsigned development installer may be produced with `-UnsignedDevelopmentBuild`. It is not a release artifact.
+That switch deliberately omits the release manifest and signature, records `release_manifest_signed=false`, and cannot produce a publishable release.
 
-The script performs locked restore, warning-free Release publishes for app/helper/worker, signs LilacMacro-owned executable payloads, compiles Inno Setup, signs the final installer, and writes one immutable versioned artifact directory. It never overwrites an existing artifact. The artifact directory contains the exact four release assets plus local `BUILD-INFO.txt` evidence.
+Official artifacts are built by `.github/workflows/release.yml` from the current `main` commit. The workflow pins its GitHub Actions and Inno Setup dependencies, requires the input version to match `Directory.Build.props`, compares the committed release key with the public repository variable, and runs the complete validation suite in a read-only build job with no persisted GitHub credential. A second `release-signing` environment job receives only the immutable candidate and exposes the private key only to the in-process manifest finalizer; it never runs restore, build, installer, or GitHub tooling while the key exists. A third job receives only the signed result, verifies its source commit and signature, creates the annotated tag, and publishes the exact six-asset inventory. Public beta releases use the normal supported update channel while their title and notes clearly retain the beta label. Never copy the private key into a local file, command line, artifact, log, or repository secret other than the protected `release-signing` environment secret.
 
-After validation, `./scripts/Publish-GitHubRelease.ps1 -Version 1.0.0 -ArtifactDirectory ...` publishes the exact tagged inventory through `gh`. The script requires a clean worktree, an existing exact tag, signed payloads, and an otherwise empty release.
+`scripts/Build-Installer.ps1` requires a clean source tree for release candidates, records the exact source commit, performs locked restore, publishes app/helper/worker, compiles Inno Setup, hashes the installer, and creates—but never signs—the canonical manifest. `scripts/Finalize-ReleaseArtifact.ps1` validates that candidate and signs only the exact raw manifest bytes. It does not launch a child process while the private key is present. The scripts write one immutable versioned artifact directory and refuse to overwrite an existing one. `BUILD-INFO.txt` is local CI evidence and is not a release asset.
 
-Run `./scripts/Test-Installer.ps1` on every platform-neutral installer change. It validates required files, TermWrap sizes/hashes, helper verbs, cleanup hooks, signing requirements, and release naming without provisioning Windows. Runtime native compatibility is established offline from the exact local TermService and TermWrap binaries before the elevated helper mutates system state.
+`scripts/Publish-GitHubRelease.ps1` requires a clean worktree, exact existing tag, official build metadata, all six assets, a matching checksum/manifest, and a valid Ed25519 signature before calling GitHub. `scripts/Test-Installer.ps1` validates required files, TermWrap sizes/hashes, helper verbs, cleanup hooks, release trust, and naming without provisioning Windows.
 
 ## Upgrade and uninstall
 
-An owner-approved in-app update downloads the exact release installer and checksum, verifies GitHub's asset digests, the manifest checksum, and trusted Authenticode, then writes an exact machine shutdown request before starting the installer with UAC. The elevated installer creates a dedicated non-reparse ProgramData control directory, replaces inheritance with an Administrators/SYSTEM-write and Users-read ACL, and refuses an unsafe precreated request path. It then rehashes its own source, requests shutdown from every recorded macro process, refuses replacement while a process remains active or uninspectable, upgrades Program Files once, validates and repairs configured runner tasks, relaunches those tasks only after successful repair, clears the request, and reopens the owner UI. A manually opened installer writes the same graceful machine shutdown request and gives each owner/runner UI five seconds to flush. Because Windows Restart Manager cannot close a detected process across sessions and also treats the install-once TermWrap payload as owned by Remote Desktop Services, the installer does not delegate shutdown to Restart Manager. Setup instead applies an exact four-product-image `taskkill` fallback before extraction, aborts on any unexpected shutdown result, repairs the runner tasks, and requests each configured runner UI to relaunch. It never proceeds directly into a locked-file overwrite and never terminates Roblox, Remote Desktop Services, or unrelated processes.
+An owner-approved in-app update downloads the exact six-asset release metadata, then downloads the manifest, signature, checksum, and installer from exact official GitHub URLs without a token. It requires GitHub's SHA-256 digest for every asset, verifies the Ed25519 manifest signature and its tag/name/size binding, requires the installer hash to match both the signed manifest and checksum, and rehashes the cached installer immediately before launch. Any missing, changed, redirected, private, draft, or disallowed prerelease artifact fails closed.
 
-An upgrade that finds an owned provisioning journal attempts an idempotent repair/migration before the upgraded runner can be used. If a prior rollback removed every owned resource but left only its journal because an already-absent scheduled task was misclassified as a cleanup failure, migration verifies the empty state and clears that orphan instead of recreating the runner. A failed optional-runner migration leaves the runner unavailable and its exact status available to the upgraded app, but it does not roll back or block the main LilacMacro upgrade. A normal uninstall still invokes `uninstall-cleanup` before deleting binaries. If cleanup fails, uninstall stops and retains the signed helper and provisioning journal. The error lists unresolved resources and can be retried after correcting the reported Windows condition.
+The elevated installer creates a dedicated non-reparse ProgramData control directory, replaces inheritance with an Administrators/SYSTEM-write and Users-read ACL, and refuses an unsafe precreated request path. It rehashes its own source, requests shutdown from every recorded macro process, refuses replacement while a process remains active or uninspectable, upgrades Program Files once, validates and repairs configured runner tasks, relaunches those tasks only after successful repair, clears the request, and reopens the owner UI. A manually opened installer writes the same graceful machine shutdown request and gives each owner/runner UI five seconds to flush. Because Windows Restart Manager cannot close a detected process across sessions and treats the install-once TermWrap payload as owned by Remote Desktop Services, setup instead applies an exact four-product-image `taskkill` fallback before extraction. It aborts on any unexpected shutdown result and never terminates Roblox, Remote Desktop Services, or unrelated processes.
 
-The updater intentionally has no GitHub token path. Until the official repository or release channel is anonymously readable, in-app checks fail closed and signed installers remain manually distributed owner-test artifacts.
+An upgrade that finds an owned provisioning journal attempts an idempotent repair/migration before the upgraded runner can be used. If a prior rollback removed every owned resource but left only its journal, migration verifies the empty state and clears that orphan instead of recreating the runner. A failed optional-runner migration leaves that runner unavailable and its exact status visible, but it does not roll back the main LilacMacro upgrade. Normal uninstall invokes `uninstall-cleanup` before deleting binaries. If cleanup fails, uninstall stops, reports unresolved resources, and can be retried after the reported Windows condition is corrected.
 
 Installer integration testing occurs only in disposable Windows VMs. Agents do not provision the owner's machine or operate Roblox.
 
-See [Local instance manager](LOCAL-SESSION.md) and [Testing](TESTING.md).
+See [Local instance manager](LOCAL-SESSION.md), [Testing](TESTING.md), and [Security](../SECURITY.md).

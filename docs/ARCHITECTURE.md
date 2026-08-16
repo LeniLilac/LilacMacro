@@ -130,7 +130,7 @@ Datasets are self-contained directories governed by [Dataset format](DATASET-FOR
 
 Core owns placement documents and validation. App owns map discovery, gallery state, route editing, map-coordinate transforms, timeline docking/popout, and a serialized autosave queue. Saved documents live under `%LOCALAPPDATA%\LilacMacro\placements`; source map images remain in the dataset root.
 
-Authoring and explicit owner-triggered playback through Setup and Runtime Lab are Prototype. Unattended scheduler integration remains Planned. See [Placement authoring](PLACEMENT-AUTHORING.md).
+Authoring and playback through Setup, Runtime Lab, the desktop scheduler, and managed-session runtime are Prototype. Each runtime owns the complete placement lease and cancellation boundary. See [Placement authoring](PLACEMENT-AUTHORING.md).
 
 ## Persistence and trust boundaries
 
@@ -148,8 +148,8 @@ The local instance manager preserves the same layer direction. Core owns version
 
 Machine readiness means exact-binary compatibility, loopback isolation, account/profile ACLs, endpoint credentials, and full-UI tasks are installed. Roblox/capture readiness belongs to each visible macro UI at run time, exactly as on the main desktop. Native compatibility is cached by exact binary hashes; disposable-VM certification still owns installer, multi-session, rollback, and removal acceptance. See [Local instance manager](LOCAL-SESSION.md).
 
-The owner UI coordinates updates rather than copying binaries into live runner profiles. Core validates one exact GitHub release/asset contract; App performs metadata checks, bounded downloads, hash/Authenticode verification, and records the exact macro PIDs and runner profiles to stop; the signed installer requests ordinary shutdown from every UI, refuses to overwrite an active or uninspectable process, installs once under Program Files, then the allowlisted elevated helper re-registers and launches every configured runner task. Managed runner UIs observe the same machine request and cannot initiate downloads or installation.
+The owner UI coordinates updates rather than copying binaries into live runner profiles. Core validates one exact six-asset GitHub release contract and the embedded Ed25519 release-trust key; App performs bounded exact-origin downloads, GitHub digest checks, detached project-signature verification, checksum comparison, and records the exact macro PIDs and runner profiles to stop. The intentionally non-Authenticode installer requests ordinary shutdown from every UI, refuses to overwrite an active or uninspectable process, installs once under Program Files, then the allowlisted elevated helper re-registers and launches every configured runner task. Managed runner UIs observe the same machine request and cannot initiate downloads or installation.
 
-## Planned runtime boundary
+## Runtime boundary
 
-The priority scheduler, private-server Lobby reset, shared team/navigation/match modules, placement playback, adaptive-anchor runtime integration, and terminal outcome loop are Planned. They must extend this layering rather than turn Debug code or WPF pages into a monolithic runner. See [Project status](PROJECT-STATUS.md) and [Macro architecture](MACRO-ARCHITECTURE.md).
+The priority scheduler, private-server Lobby reset, shared team/navigation/match modules, placement playback, and terminal outcome loop are Prototype and preserve the same layer direction. Personalized adaptive-anchor execution remains Planned. New runtime work must extend these cohesive owners rather than turn Debug code or WPF pages into a monolithic runner. See [Project status](PROJECT-STATUS.md) and [Macro architecture](MACRO-ARCHITECTURE.md).

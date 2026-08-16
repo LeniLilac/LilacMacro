@@ -25,6 +25,8 @@ internal sealed record PlanBlockSettingsSnapshot
 
     public int Difficulty { get; init; } = 1;
 
+    public int InfiniteWave { get; init; } = 140;
+
     public int BossesBeforeExtract { get; init; } = 1;
 
     public bool ExtractAtCheckpoint { get; init; } = true;
@@ -101,6 +103,7 @@ internal static class PlanPersistence
             Target = task.Target,
             DefeatRetries = task.DefeatRetries,
             Difficulty = task.Difficulty,
+            InfiniteWave = task.InfiniteWave,
             BossesBeforeExtract = task.BossesBeforeExtract,
             ExtractAtCheckpoint = task.ExtractAtCheckpoint,
             RewardTarget = task.RewardTarget,
@@ -138,6 +141,7 @@ internal static class PlanPersistence
                 snapshot.Target < 1 ||
                 snapshot.DefeatRetries is < 0 or > 20 ||
                 snapshot.Difficulty is < 1 or > 3 ||
+                snapshot.InfiniteWave is < 1 or > 999 ||
                 snapshot.BossesBeforeExtract is < 0 or > 99 ||
                 snapshot.Children.Count != 0)
             {
@@ -160,6 +164,7 @@ internal static class PlanPersistence
                 Target = snapshot.Target,
                 DefeatRetries = snapshot.DefeatRetries,
                 Difficulty = snapshot.Difficulty,
+                InfiniteWave = snapshot.InfiniteWave,
                 BossesBeforeExtract = snapshot.BossesBeforeExtract,
                 ExtractAtCheckpoint = snapshot.ExtractAtCheckpoint,
                 RewardTarget = snapshot.RewardTarget,

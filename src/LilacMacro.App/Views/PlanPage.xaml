@@ -252,6 +252,24 @@
                                 <RadioButton x:Name="UtilitiesModeButton" GroupName="TaskMode" Tag="Utilities" Content="UTILITIES" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
                             </UniformGrid>
                             <StackPanel x:Name="TaskSchedulePanel" Margin="0,10,0,0">
+                                <StackPanel x:Name="TaskStoryRoutePanel" Visibility="Collapsed">
+                                    <Border Style="{StaticResource PlanTaskOptionSectionStyle}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                            <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="MAP" />
+                                            <ComboBox x:Name="TaskStoryMapCombo" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right"
+                                                      SelectionChanged="TaskStoryRouteCombo_OnSelectionChanged" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Style="{StaticResource PlanTaskOptionSectionStyle}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                            <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="ACT" />
+                                            <ComboBox x:Name="TaskStoryActCombo" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right"
+                                                      SelectionChanged="TaskStoryRouteCombo_OnSelectionChanged" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
                                 <Border x:Name="TaskRoutePanel" Style="{StaticResource PlanTaskOptionSectionStyle}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -360,16 +378,22 @@
                                         </Grid>
                                     </Border>
                                 </StackPanel>
-                                <Border x:Name="TaskStoryPanel" Style="{StaticResource PlanTaskOptionSectionStyle}">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="STORY OPTIONS" />
-                                        <CheckBox x:Name="TaskHardModeCheck" Grid.Column="1" Margin="24,0,0,0" HorizontalAlignment="Right" Content="Hard mode" />
-                                    </Grid>
-                                </Border>
+                                <StackPanel x:Name="TaskStoryPanel">
+                                    <Border Style="{StaticResource PlanTaskOptionSectionStyle}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                            <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="DIFFICULTY" />
+                                            <CheckBox x:Name="TaskHardModeCheck" Grid.Column="1" Margin="24,0,0,0" HorizontalAlignment="Right" Content="Hard mode" />
+                                        </Grid>
+                                    </Border>
+                                    <Border x:Name="TaskInfiniteWavePanel" Style="{StaticResource PlanTaskOptionSectionStyle}" Visibility="Collapsed">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                            <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="RESET AT WAVE" />
+                                            <TextBox x:Name="TaskInfiniteWaveText" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right" Text="140" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -392,6 +416,11 @@
                     <StackPanel Margin="0,16,0,0" HorizontalAlignment="Right" Orientation="Horizontal"><Button Style="{StaticResource PlanCompactButtonStyle}" Click="CloseLoopEditor_OnClick" Content="CANCEL" /><Button Margin="7,0,0,0" Style="{StaticResource PlanCompactButtonStyle}" Background="{DynamicResource AccentBrush}" Click="ApplyLoopEditor_OnClick" Content="APPLY" /></StackPanel>
                 </StackPanel>
             </Border>
+        </Grid>
+
+        <Grid x:Name="ShareEditorOverlay" Grid.RowSpan="3" Panel.ZIndex="120" Visibility="Collapsed">
+            <Border Background="{DynamicResource CanvasBrush}" Opacity="0.58" />
+            <ContentControl x:Name="ShareEditorHost" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Grid>
     </Grid>
 </UserControl>

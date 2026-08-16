@@ -430,10 +430,18 @@ public partial class MacroDashboardPage : UserControl
                 ModeSupportsRepeat = modeSupportsRepeat,
                 SameTaskSelected = sameTaskSelected,
                 HasPendingCodes = hasPendingCodes,
-                Decision = shouldRepeat ? "repeat_stage" : "lobby_reset",
+                Decision = shouldRepeat
+                    ? result.RepeatedPrestartReady ? "verified_prestart" : "repeat_stage"
+                    : "lobby_reset",
             });
             if (shouldRepeat)
             {
+                if (result.RepeatedPrestartReady)
+                {
+                    AppendLog("INFINITE CONTINUATION | VERIFIED PRESTART | TEAM + CAMERA RETAINED");
+                    repeatedTask = task;
+                    continue;
+                }
                 try
                 {
                     await _runner.RepeatStageAsync(outcome, options, progress, cancellationToken);

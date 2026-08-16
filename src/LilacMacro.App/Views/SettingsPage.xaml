@@ -374,6 +374,10 @@
                                         <CheckBox IsChecked="True" Content="Capture frames on failure" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
                                         <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Include current run log" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
                                         <CheckBox x:Name="DeepDebugCheck" Margin="0,9,0,0" Content="Deep debug trace" Checked="DeepDebug_OnChanged" Unchecked="DeepDebug_OnChanged" />
+                                        <CheckBox x:Name="AutomaticCleanupCheck" Margin="0,9,0,0" Content="Keep only the 20 newest local Deep Debug archives"
+                                                  Checked="AutomaticCleanup_OnChanged" Unchecked="AutomaticCleanup_OnChanged" />
+                                        <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                                                   Text="Local cleanup is independent from automatic error reports and manual uploads." />
                                     </StackPanel>
                                 </Grid>
                                 <Grid Margin="0,12,0,0">

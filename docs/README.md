@@ -13,7 +13,7 @@
 | [Troubleshooting](TROUBLESHOOTING.md) | Local SDK, OCR, capture, hotkey, dataset, and log problems |
 | [Deep debug](DEEP-DEBUG.md) | Diagnostic archive contract, retention, privacy, and agent inspection |
 | [Local instance manager](LOCAL-SESSION.md) | Multi-runner account, isolation, full-UI, configuration, and cleanup contract |
-| [Installer](INSTALLER.md) | Signed installer build, upgrade, and uninstall contract |
+| [Installer](INSTALLER.md) | Project-signed installer trust, build, upgrade, and uninstall contract |
 
 ## Product and design
 
@@ -64,4 +64,4 @@ The root [AGENTS.md](../AGENTS.md) routes repository-wide work. More specific ru
 - [Project status](PROJECT-STATUS.md) decides whether a capability is Implemented, Prototype, Planned, or Unresolved.
 - Planned documents are design contracts, not claims that runtime code exists.
 
-Release, support, code-of-conduct, public security-reporting, and changelog documents are intentionally deferred until the project has corresponding workflows.
+Public release, support, conduct, and private vulnerability-reporting guidance live at the repository root alongside the pinned release workflow.

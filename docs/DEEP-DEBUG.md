@@ -11,6 +11,7 @@
 - Runtime Lab retains already-acquired PNG evidence for its complete operation and displays `DEEP DEBUG ON`; the frame-history setting applies to the main Macro and Dataset Builder only.
 - Archives are written to `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - Settings exposes `OPEN DEBUG FOLDER`.
+- Settings also exposes a default-on local-cleanup choice that keeps the 20 newest completed archives. It is independent from automatic reports and manual uploads; disabling cleanup never enables network transfer.
 - Settings exposes independent automatic-report and manual-upload choices. Manual upload remains default-off and requires an explicit `UPLOAD ARCHIVE` file selection. Automatic reports also default off; when enabled, a completed active Deep Debug archive is queued automatically and deleted only after the service accepts it. A failed transfer leaves the archive local.
 - Open `LilacMacro.DeepDebugViewer.exe`, choose `OPEN ARCHIVE`, or drop a ZIP onto the window. The viewer does not initialize OCR or Roblox.
 
@@ -43,7 +44,7 @@ PNG evidence reuses pixels already acquired by the operation. Deep debug does no
 
 - `events.jsonl` and `timeline.md` cover the complete operation.
 - Main Macro and Dataset Builder remove PNGs older than the configured rolling frame window before archival. Runtime Lab retains PNG evidence for the complete operation.
-- At most 20 completed archives are retained; oldest archives are deleted after a new archive succeeds.
+- When local cleanup is enabled, the 20 newest completed archives are retained and older archives are deleted after a new archive succeeds. When it is disabled, archive finalization does not prune completed ZIPs.
 - One session owns the recorder at a time.
 - A diagnostics writer or ZIP failure never changes the primary operation result. The staging directory is preserved with `finalization-error.txt` when possible.
 - App shutdown and unhandled WPF exceptions finalize an active session.

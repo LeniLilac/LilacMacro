@@ -143,6 +143,8 @@ public static class LocalSessionValidation
                 errors.Add($"Snapshot task {task.Id} has invalid Expedition difficulty.");
             if (task.Mode == RunnerTaskMode.Expedition && task.BossesBeforeExtract is < 0 or > 99)
                 errors.Add($"Snapshot task {task.Id} has invalid Expedition extraction target.");
+            if (task.Mode == RunnerTaskMode.Story && task.InfiniteWave is < 1 or > 999)
+                errors.Add($"Snapshot task {task.Id} has an invalid Infinite reset wave.");
             if (task.Mode == RunnerTaskMode.Expedition)
             {
                 try { _ = ExpeditionRewardPolicy.ParseResource(task.RewardTarget); }

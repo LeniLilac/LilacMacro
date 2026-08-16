@@ -13,6 +13,8 @@ internal sealed class StoryMatchRuntimeRunner(
 {
     private readonly PlacementPlaybackService _placements = new(workspace, ocr);
     private readonly MapPreparationService _mapPreparation = new(workspace);
+    private readonly MatchWaveService _waves = new(workspace, ocr);
+    private readonly ExpeditionSettingsService _settings = new(workspace, ocr);
     private readonly PlacementSetupStore _placementStore = new(ResolvePlacementRoot());
 
     public async Task<StoryWireTestResult> RunAsync(
@@ -57,6 +59,49 @@ internal sealed class StoryMatchRuntimeRunner(
                 .FirstOrDefault(candidate => candidate.Id == routeId)
                 ?? PlacementRouteCatalog.For(map).First(candidate => candidate.IsShared);
             PlacementRouteSetup route = PlacementRouteCatalog.EffectiveRoute(document, routeDefinition);
+            if (options.GameMode == WireGameMode.Story && options.Act == StoryAct.Infinite)
+            {
+                int executed = await _placements.RunSetupAsync(
+                    document,
+                    route,
+                    options.PlacementKeys,
+                    options.Device,
+                    message => progress.Report(new StoryWireProgress(
+                        StoryWireStage.MatchRuntime,
+                        StoryWireStageStatus.Running,
+                        message,
+                        [message])),
+                    cancellationToken);
+                await _waves.WaitForTargetAsync(
+                    options.InfiniteWave,
+                    options.Device,
+                    message => progress.Report(new StoryWireProgress(
+                        StoryWireStage.MatchRuntime,
+                        StoryWireStageStatus.Running,
+                        message,
+                        [message])),
+                    cancellationToken);
+                await _settings.RestartAsync(
+                    options.Device,
+                    message => progress.Report(new StoryWireProgress(
+                        StoryWireStage.MatchRuntime,
+                        StoryWireStageStatus.Running,
+                        message,
+                        [message])),
+                    cancellationToken);
+                string infiniteStatus = $"WAVE {options.InfiniteWave} RESET VERIFIED";
+                progress.Report(new StoryWireProgress(
+                    StoryWireStage.MatchRuntime,
+                    StoryWireStageStatus.Passed,
+                    infiniteStatus,
+                    [infiniteStatus, $"PLACEMENT STEPS {executed}"]));
+                return new StoryWireTestResult(
+                    true,
+                    StoryWireStage.MatchRuntime,
+                    infiniteStatus,
+                    Outcome: MatchTerminalOutcome.Victory,
+                    RepeatedPrestartReady: true);
+            }
             PlacementRuntimeResult result = await _placements.RunAsync(
                 document,
                 route,
@@ -83,7 +128,7 @@ internal sealed class StoryMatchRuntimeRunner(
                 status,
                 Outcome: result.Outcome);
         }
-        catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException)
+        catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or TimeoutException)
         {
             progress.Report(new StoryWireProgress(
                 StoryWireStage.MatchRuntime,

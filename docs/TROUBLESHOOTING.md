@@ -1,6 +1,10 @@
 # Troubleshooting
 
-**Status: Current local-development and prototype guidance.** A prototype installer definition exists, but there is no supported signed release artifact yet.
+**Status: Current public-beta and development guidance.** Official installers are published only through this repository's GitHub Releases page.
+
+## Windows says Unknown publisher or SmartScreen blocks setup
+
+This is expected for the official beta installer because LilacMacro does not use an Authenticode identity certificate. Confirm the download came from `https://github.com/LeniLilac/LilacMacro/releases`, compare its SHA-256 hash with `LilacMacro-Setup.exe.sha256`, and stop if either differs. Windows may place the Run action behind **More info**. The in-app updater performs the GitHub digest, Ed25519 manifest-signature, checksum, and final cached-file checks automatically. A project signature establishes continuity with the public repository key; it does not make an unknown source safe.
 
 ## SDK or restore fails
 
@@ -30,7 +34,7 @@ The latest unhandled WPF exception is written to `%LOCALAPPDATA%\LilacMacro\logs
 - Complete or stop the operation. The ZIP is finalized at operation end, cancellation, shutdown, or an unhandled WPF exception.
 - Open `%LOCALAPPDATA%\LilacMacro\diagnostics` from Settings with `OPEN DEBUG FOLDER`.
 - A `.deep-debug-*` directory with `finalization-error.txt` means ZIP creation failed and the uncompressed evidence was preserved.
-- Only 20 completed archives are retained. Copy an important archive elsewhere before extended testing.
+- With local cleanup enabled, only the 20 newest completed archives are retained. Disable that independent setting or copy an important archive elsewhere before extended testing; changing it does not enable an upload.
 
 Read [Deep debug](DEEP-DEBUG.md) before sharing or inspecting an archive. To render bounded frames:
 

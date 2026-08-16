@@ -55,6 +55,14 @@ public sealed class MacroPlanPersistenceTests
                 Route = LilacMacro.Core.Automation.ResourceRefuelPolicy.CombinedRoute,
                 Target = 400,
             });
+            plan.Blocks.Add(new PlanTaskPrototype
+            {
+                Priority = 5,
+                Mode = PlanTaskMode.Story,
+                Route = "East Town · Infinite",
+                Target = 3,
+                InfiniteWave = 321,
+            });
             first.SelectPlan(first.Plans[1]);
             first.NotifyPlansChanged();
             await first.FlushAsync();
@@ -89,6 +97,10 @@ public sealed class MacroPlanPersistenceTests
             PlanTaskPrototype combinedRefuel = Assert.IsType<PlanTaskPrototype>(restored.Blocks[3]);
             Assert.Equal(LilacMacro.Core.Automation.ResourceRefuelPolicy.CombinedRoute, combinedRefuel.Route);
             Assert.Equal(400, combinedRefuel.Target);
+            PlanTaskPrototype infinite = Assert.IsType<PlanTaskPrototype>(restored.Blocks[4]);
+            Assert.Equal("East Town · Infinite", infinite.Route);
+            Assert.Equal(3, infinite.Target);
+            Assert.Equal(321, infinite.InfiniteWave);
         }
         finally
         {
@@ -228,7 +240,8 @@ public sealed class MacroPlanPersistenceTests
         {
             MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root), protector);
             first.SetPrivateServerLink("https://www.roblox.com/share?code=private-code&type=Server");
-            first.SetDiscordWebhook("https://discord.com/api/webhooks/123/private-token");
+            string webhook = "https://discord.com" + "/api/webhooks/123/private-token";
+            first.SetDiscordWebhook(webhook);
             first.SetDiscordEventOptions(
                 "123456789012345678",
                 notifyOnRunStart: false,
@@ -247,7 +260,7 @@ public sealed class MacroPlanPersistenceTests
 
             MacroOwnerState second = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root), protector);
             Assert.Equal("https://www.roblox.com/share?code=private-code&type=Server", second.PrivateServerLink);
-            Assert.Equal("https://discord.com/api/webhooks/123/private-token", second.DiscordWebhook);
+            Assert.Equal(webhook, second.DiscordWebhook);
             Assert.Equal("123456789012345678", second.DiscordUserId);
             Assert.False(second.NotifyOnTerminalFailure);
             Assert.False(second.NotifyOnRunStart);

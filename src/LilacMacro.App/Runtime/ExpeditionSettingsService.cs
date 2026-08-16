@@ -88,7 +88,7 @@ internal sealed class ExpeditionSettingsService(
             TimeSpan.FromMilliseconds(300),
             cancellationToken).ConfigureAwait(false);
         if (!prestart.Evaluation.IsMatch)
-            throw new InvalidOperationException("Restart did not return to verified Expedition prestart.");
+            throw new InvalidOperationException("Restart did not return to verified match prestart.");
     }
 
     private async Task<UiScalePanelMatch> OpenAsync(CancellationToken cancellationToken)

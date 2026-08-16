@@ -30,6 +30,36 @@ function Get-PoolPhraseCount([object[]]$annotations) {
         } | Where-Object { $_.Length -gt 0 } | Sort-Object -Unique).Count
 }
 
+function Convert-ToPublicManifestValue([object]$value, [string]$propertyName = '') {
+    if ($null -eq $value) { return $null }
+    if ($value -is [string]) {
+        $public = $value `
+            -replace '(?i)[A-Z]:\\Users\\[^\\\r\n"]+', '<local-user-root>' `
+            -replace '(?i)[A-Z]:/Users/[^/\r\n"]+', '<local-user-root>'
+        if ($propertyName -match '(?i)_at_utc$') {
+            $parsed = [DateTimeOffset]::MinValue
+            if ([DateTimeOffset]::TryParse(
+                $public,
+                [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::RoundtripKind,
+                [ref]$parsed)) {
+                return $parsed.ToUniversalTime().ToString('O')
+            }
+        }
+        return $public
+    }
+    if ($value -is [Collections.IList]) {
+        for ($index = 0; $index -lt $value.Count; $index++) {
+            $value[$index] = Convert-ToPublicManifestValue $value[$index] $propertyName
+        }
+        return $value
+    }
+    foreach ($property in @($value.PSObject.Properties | Where-Object MemberType -eq 'NoteProperty')) {
+        $property.Value = Convert-ToPublicManifestValue $property.Value $property.Name
+    }
+    return $value
+}
+
 if ($spec.schema_version -ne 1) { throw 'Unsupported runtime-evidence specification.' }
 $resolvedRoot = [IO.Path]::GetFullPath($DatasetRoot)
 if (-not (Test-Path -LiteralPath $resolvedRoot -PathType Container)) {
@@ -48,6 +78,7 @@ foreach ($entry in $spec.datasets) {
 
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
     $selected = [Collections.Generic.List[object]]::new()
+    $sourceFrameValues = @($entry.source_frames | ForEach-Object { [int]$_ })
     foreach ($sourceFrame in @($entry.source_frames)) {
         $index = [int]$sourceFrame - 1
         if ($index -lt 0 -or $index -ge $manifest.frames.Count) {
@@ -70,7 +101,7 @@ foreach ($entry in $spec.datasets) {
         }
 
         $sourceFrame = [int]$label.source_frame
-        $selectedIndex = @($entry.source_frames).IndexOf($sourceFrame)
+        $selectedIndex = [Array]::IndexOf($sourceFrameValues, $sourceFrame)
         if ($selectedIndex -lt 0) { throw "$name label references unselected frame $sourceFrame." }
         $annotationIndex = [int]$label.annotation_index
         $annotations = @($selected[$selectedIndex].annotations)
@@ -85,7 +116,7 @@ foreach ($entry in $spec.datasets) {
     } else { @() }
     foreach ($addition in $additions) {
         $sourceFrame = [int]$addition.source_frame
-        $selectedIndex = @($entry.source_frames).IndexOf($sourceFrame)
+        $selectedIndex = [Array]::IndexOf($sourceFrameValues, $sourceFrame)
         if ($selectedIndex -lt 0) { throw "$name addition references unselected frame $sourceFrame." }
         $bounds = $addition.bounds
         $selected[$selectedIndex].annotations += [pscustomobject]@{
@@ -169,6 +200,7 @@ foreach ($entry in $spec.datasets) {
     $sourceFrames = (@($entry.source_frames) -join ', ')
     $manifest.notes = (($manifest.notes.Trim() + "`r`n`r`n" +
         "Bundled runtime evidence slice. Original dataset: $name. Source frames: $sourceFrames.").Trim())
+    $manifest = Convert-ToPublicManifestValue $manifest
 
     $destination = Join-Path $outputRoot $name
     $images = Join-Path $destination 'images'

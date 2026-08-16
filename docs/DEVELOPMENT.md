@@ -55,7 +55,7 @@ Validate the installer without mutating Windows:
 ./scripts/Test-Installer.ps1
 ```
 
-Building an installer additionally requires Inno Setup 6. A release build requires a code-signing certificate; `-UnsignedDevelopmentBuild` is local validation only. Do not run the elevated helper on the owner's machine during agent work unless the owner explicitly authorizes it for the current task. See [Installer](INSTALLER.md).
+Building a local installer additionally requires Inno Setup 6 and `-UnsignedDevelopmentBuild`; that artifact cannot be published. Official project-signed artifacts are produced only by the pinned GitHub Actions release workflow using its protected Ed25519 secret. No Authenticode certificate is used. Do not run the elevated helper on the owner's machine during agent work unless the owner explicitly authorizes it for the current task. See [Installer](INSTALLER.md).
 
 Run the current macro-shell prototype with:
 

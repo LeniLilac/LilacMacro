@@ -50,6 +50,7 @@ internal sealed class MacroTaskOptionsFactory(
             RunMatchRuntime: true,
             RepeatStage: false,
             ExpeditionDifficulty: task.Difficulty,
+            InfiniteWave: task.InfiniteWave,
             BossesBeforeExtract: task.BossesBeforeExtract,
             ExtractAtCheckpoint: task.ExtractAtCheckpoint,
             ExpeditionRewardTarget: task.RewardTarget);

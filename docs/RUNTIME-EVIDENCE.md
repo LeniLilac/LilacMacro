@@ -18,6 +18,8 @@ The repository policy rejects missing labels, duplicate matching labels, unregis
 
 `eng/runtime-evidence.json` is the allowlist for the curated public evidence bundle. `scripts/Sync-RuntimeEvidence.ps1` copies only the listed source frames and annotations into `src/LilacMacro.App/Assets/RuntimeEvidence`. App builds and publishes include that directory, so desktop and runner sessions use the same evidence without access to the owner's Documents folder.
 
+The sync normalizes timestamp fields to UTC and replaces any Windows user-profile prefix in copied text with `<local-user-root>`. The evidence policy rejects personal absolute paths in every bundled manifest. This sanitization is mandatory even when the source dataset remains private.
+
 The ordinary rule remains that owner datasets and captures stay local. The only repository exception is the explicitly reviewed, allowlisted runtime-evidence slice. Adding a source directory to the specification does not authorize copying the full source dataset.
 
 After changing the specification or an allowed source dataset, run:

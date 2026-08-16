@@ -76,6 +76,14 @@ internal static class RuntimeSearchRegionEvidenceCatalog
         "Restart Confirmation Search",
         "Read the paired Restart and Cancel actions.");
 
+    public static readonly RuntimeSearchRegionEvidence MatchWaveCounter = new(
+        "MatchWaveService.CounterSearch",
+        new PixelRect(561, 0, 110, 52),
+        "match-wave-roi-20260816-002856",
+        1,
+        "Match Wave Counter",
+        "Read the compact in-match wave capsule without depending on the surrounding map.");
+
     public static readonly RuntimeSearchRegionEvidence ExpeditionShopCatalog = new(
         "ShopPurchaseService.ExpeditionCatalogRegion",
         new PixelRect(623, 115, 709, 500),
@@ -94,6 +102,7 @@ internal static class RuntimeSearchRegionEvidenceCatalog
         ExpeditionNodeTooltip,
         ExpeditionRewards,
         RestartConfirmation,
+        MatchWaveCounter,
         ExpeditionShopCatalog,
     ];
 }

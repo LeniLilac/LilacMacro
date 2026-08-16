@@ -1,13 +1,14 @@
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Controls;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.Core.Placements;
 
 namespace LilacMacro.App.Views;
 
-public partial class PlanShareWindow : Window
+public partial class PlanSharePanel : UserControl
 {
     private readonly MacroOwnerState _ownerState;
     private readonly PlanPrototype _selectedPlan;
@@ -16,17 +17,22 @@ public partial class PlanShareWindow : Window
     private readonly PlacementSetupStore _placements = new(Path.Combine(
         MacroInstanceContext.Current.ConfigurationRoot,
         "placements"));
+    private bool _isBusy;
 
-    internal PlanShareWindow(MacroOwnerState ownerState, PlanPrototype selectedPlan)
+    internal PlanSharePanel(MacroOwnerState ownerState, PlanPrototype selectedPlan)
     {
         _ownerState = ownerState;
         _selectedPlan = selectedPlan;
         InitializeComponent();
     }
 
+    internal event EventHandler? CloseRequested;
+
     private async void Export_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        if (ExportPlanCheck.IsChecked != true && ExportPlacementsCheck.IsChecked != true)
+        bool includePlan = ExportPlanCheck.IsChecked == true;
+        bool includePlacements = ExportPlacementsCheck.IsChecked == true;
+        if (!includePlan && !includePlacements)
         {
             SetStatus("Select at least one item to export.");
             return;
@@ -37,10 +43,10 @@ public partial class PlanShareWindow : Window
             await _ownerState.FlushAsync();
             PlanShareBundle bundle = new()
             {
-                Plan = ExportPlanCheck.IsChecked == true
+                Plan = includePlan
                     ? PlanPersistence.CreateSnapshot([_selectedPlan]).Single()
                     : null,
-                Placements = ExportPlacementsCheck.IsChecked == true
+                Placements = includePlacements
                     ? await LoadPlacementsAsync()
                     : [],
             };
@@ -52,7 +58,9 @@ public partial class PlanShareWindow : Window
 
     private async void Import_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        if (ImportPlanCheck.IsChecked != true && ImportPlacementsCheck.IsChecked != true)
+        bool includePlan = ImportPlanCheck.IsChecked == true;
+        bool includePlacements = ImportPlacementsCheck.IsChecked == true;
+        if (!includePlan && !includePlacements)
         {
             SetStatus("Select at least one item to import.");
             return;
@@ -62,10 +70,10 @@ public partial class PlanShareWindow : Window
             await RequireOnlineFeaturesAsync();
             FetchedPlanShare fetched = await _client.GetAsync(ImportCodeText.Text);
             PlanShareBundle bundle = await Task.Run(() => PlanShareBundleCodec.Decode(fetched.Payload));
-            PlanPrototype? importedPlan = ImportPlanCheck.IsChecked == true && bundle.Plan is not null
+            PlanPrototype? importedPlan = includePlan && bundle.Plan is not null
                 ? RestorePlan(bundle.Plan)
                 : null;
-            PlacementSetupDocument[] importedPlacements = ImportPlacementsCheck.IsChecked == true
+            PlacementSetupDocument[] importedPlacements = includePlacements
                 ? bundle.Placements.ToArray()
                 : [];
             if (importedPlan is null && importedPlacements.Length == 0)
@@ -115,7 +123,7 @@ public partial class PlanShareWindow : Window
         return result;
     }
 
-    private PlanPrototype RestorePlan(PlanSettingsSnapshot snapshot)
+    private static PlanPrototype RestorePlan(PlanSettingsSnapshot snapshot)
     {
         if (!PlanPersistence.TryRestore([snapshot], out ObservableCollection<PlanPrototype>? plans))
             throw new InvalidDataException("The shared plan is invalid.");
@@ -124,8 +132,7 @@ public partial class PlanShareWindow : Window
 
     private string UniquePlanName(string requested)
     {
-        HashSet<string> names = _ownerState.Plans.Select(plan => plan.Name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> names = _ownerState.Plans.Select(plan => plan.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (!names.Contains(requested)) return requested;
         for (int suffix = 2; suffix <= 999; suffix++)
         {
@@ -143,20 +150,17 @@ public partial class PlanShareWindow : Window
 
     private async Task RunAsync(Func<Task> operation)
     {
-        ExportButton.IsEnabled = false;
-        ImportButton.IsEnabled = false;
+        SetBusy(true);
         SetStatus("WORKING...");
         try { await operation(); }
         catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException or ArgumentException or
-                                           IOException or UnauthorizedAccessException or HttpRequestException or
-                                           TaskCanceledException)
+                                           IOException or UnauthorizedAccessException or HttpRequestException or TaskCanceledException)
         {
             SetStatus(exception is TaskCanceledException ? "The sharing request timed out." : exception.Message);
         }
         finally
         {
-            ExportButton.IsEnabled = true;
-            ImportButton.IsEnabled = true;
+            SetBusy(false);
         }
     }
 
@@ -170,7 +174,28 @@ public partial class PlanShareWindow : Window
         }
     }
 
-    private void Close_OnClick(object sender, RoutedEventArgs eventArgs) => Close();
+    private void Close_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        if (_isBusy)
+        {
+            SetStatus("Wait for the current sharing request to finish.");
+            return;
+        }
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void SetBusy(bool value)
+    {
+        _isBusy = value;
+        ExportButton.IsEnabled = !value;
+        ImportButton.IsEnabled = !value;
+        ExportPlanCheck.IsEnabled = !value;
+        ExportPlacementsCheck.IsEnabled = !value;
+        ImportCodeText.IsEnabled = !value;
+        ImportPlanCheck.IsEnabled = !value;
+        ImportPlacementsCheck.IsEnabled = !value;
+        CopyCodeButton.IsEnabled = !value;
+    }
 
     private void SetStatus(string message) => StatusText.Text = message;
 }

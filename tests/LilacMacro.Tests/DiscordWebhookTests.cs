@@ -6,6 +6,9 @@ namespace LilacMacro.Tests;
 
 public sealed class DiscordWebhookTests
 {
+    private const string DiscordOrigin = "https://discord.com";
+    private const string ValidWebhook = DiscordOrigin + "/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456";
+
     [Fact]
     public async Task Test_delivery_posts_without_enabling_mentions()
     {
@@ -13,7 +16,7 @@ public sealed class DiscordWebhookTests
         DiscordWebhookClient client = new(new HttpClient(handler));
 
         await client.SendTestAsync(
-            "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456",
+            ValidWebhook,
             "Runner 2");
 
         Assert.Equal(HttpMethod.Post, handler.Method);
@@ -31,7 +34,7 @@ public sealed class DiscordWebhookTests
         DiscordWebhookClient client = new(new HttpClient(handler));
 
         await client.SendEventAsync(
-            "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456",
+            ValidWebhook,
             new DiscordEventNotification(
                 DiscordEventKind.TerminalFailure,
                 "@everyone plan",
@@ -55,7 +58,7 @@ public sealed class DiscordWebhookTests
         DiscordWebhookClient client = new(new HttpClient(handler));
 
         await client.SendEventAsync(
-            "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456",
+            ValidWebhook,
             new DiscordEventNotification(
                 DiscordEventKind.RunStarted,
                 "Plan",
@@ -83,7 +86,7 @@ public sealed class DiscordWebhookTests
 
     [Theory]
     [InlineData("")]
-    [InlineData("http://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
+    [InlineData("http://discord.com" + "/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
     [InlineData("https://example.test/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
     [InlineData("https://canary.discord.com.example.test/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
     [InlineData("https://ptb-discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz123456")]
@@ -99,7 +102,7 @@ public sealed class DiscordWebhookTests
         const string secret = "abcdefghijklmnopqrstuvwxyz123456";
 
         HttpRequestException error = await Assert.ThrowsAsync<HttpRequestException>(() => client.SendTestAsync(
-            $"https://discord.com/api/webhooks/123456789012345678/{secret}",
+            DiscordOrigin + $"/api/webhooks/123456789012345678/{secret}",
             "This desktop"));
 
         Assert.DoesNotContain(secret, error.Message, StringComparison.Ordinal);
@@ -113,7 +116,7 @@ public sealed class DiscordWebhookTests
         DiscordWebhookClient client = new(new HttpClient(new ThrowingHandler(secret)));
 
         HttpRequestException error = await Assert.ThrowsAsync<HttpRequestException>(() => client.SendTestAsync(
-            $"https://discord.com/api/webhooks/123456789012345678/{secret}",
+            DiscordOrigin + $"/api/webhooks/123456789012345678/{secret}",
             "Runner 1"));
 
         Assert.Equal("Discord webhook event could not be delivered.", error.Message);

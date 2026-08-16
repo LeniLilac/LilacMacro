@@ -4,7 +4,7 @@
 
 ## Root model
 
-Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story, Raid, Expedition, or Event selection may continue through Repeat Stage; any task, act, or mode change returns through verified Lobby.
+Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story, Raid, Expedition, or Event selection may continue through Repeat Stage; Story Infinite instead uses its verified in-match Restart and already returns to Match Prestart. Any task, act, or mode change returns through verified Lobby.
 
 ```mermaid
 flowchart TD
@@ -24,7 +24,7 @@ flowchart TD
     J -- "Changed, complete, Challenge, or Repeat unavailable" --> B
 ```
 
-Repeat Stage is a bounded fast path, not a competing scheduler. It is authorized only after a typed terminal outcome and a fresh priority decision select the exact same Story, Raid, Expedition, or Event task. The continuation verifies fresh Match Prestart/Start Game evidence and reruns mode-specific preparation without team selection or camera alignment because Roblox retains both. Resetting through Lobby remains mandatory for task/act/mode changes, completion, Challenge, Tower when implemented, and Repeat failure.
+Repeat Stage is a bounded fast path, not a competing scheduler. It is authorized only after a typed terminal outcome and a fresh priority decision select the exact same Story, Raid, Expedition, or Event task. The continuation verifies fresh Match Prestart/Start Game evidence and reruns mode-specific preparation without team selection or camera alignment because Roblox retains both. Story Infinite has no result-screen continuation: two fresh counter observations authorize the shared Settings Restart path, which verifies Match Prestart before the scheduler accounts a completed run and reevaluates. Resetting through Lobby remains mandatory for task/act/mode changes, completion, Challenge, Tower when implemented, and Repeat/Restart failure.
 
 ## Execution target
 
@@ -89,7 +89,9 @@ All arrows below mean a verified transition, not a timed blind click.
 
 ### Story — Prototype
 
-Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Story map -> Story act and Normal/Hard -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> exact same task: Repeat Stage -> verified Match Prestart with retained team/camera; otherwise private-server rejoin -> Lobby.
+Acts 1-5 and Mastery: Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Story map -> Story act and supported difficulty -> Match Preview -> Match Prestart -> prestart placements -> Start Game -> after-start placements -> Victory/Defeat -> exact same task: Repeat Stage -> verified Match Prestart with retained team/camera; otherwise private-server rejoin -> Lobby.
+
+Infinite: the same path through placements and Start Game -> bounded wave-counter observations -> two fresh structurally corroborated readings at or above the configured wave -> Settings -> Restart -> Confirm -> verified Match Prestart. One verified reset counts as one task run. If the same task remains eligible, playback continues from that prestart state with the retained team/camera; a changed or completed task returns through Lobby.
 
 ### Raid — Prototype
 

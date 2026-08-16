@@ -1,0 +1,66 @@
+<UserControl x:Class="LilacMacro.App.Views.PlanSharePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:LilacMacro.App.Controls">
+    <Border Width="720" MaxHeight="600" Padding="18" HorizontalAlignment="Center" VerticalAlignment="Center"
+            Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="5">
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid>
+                <TextBlock FontSize="17" FontWeight="Black" Text="SHARE CONFIGURATION" />
+                <Button x:Name="CloseButton" HorizontalAlignment="Right" Style="{DynamicResource PlanIconButtonStyle}" Click="Close_OnClick">
+                    <controls:LucideIcon Width="13" Height="13" Data="{StaticResource Lucide.X}" />
+                </Button>
+            </Grid>
+            <TextBlock Grid.Row="1" Margin="0,8,0,18" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                       Text="Create an expiring private code or import one. Shares never include private-server links, webhooks, run history, or other app settings." />
+            <Grid Grid.Row="2" Grid.IsSharedSizeScope="True">
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="14" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                <Border Padding="16" Background="{DynamicResource AppBackgroundBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="4">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="66" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="86" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock FontSize="15" FontWeight="Black" Text="EXPORT" />
+                        <TextBlock Grid.Row="1" Margin="0,7,0,12" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                                   Text="Upload an opaque copy and receive a private 20-character code. Codes expire after 30 days." />
+                        <TextBlock Grid.Row="2" Margin="0,0,0,6" Style="{StaticResource FieldLabelStyle}" Text="SHARE CODE" />
+                        <Grid Grid.Row="3">
+                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBox x:Name="ExportCodeText" IsReadOnly="True" FontFamily="Consolas" FontSize="17" FontWeight="Bold" />
+                            <Button x:Name="CopyCodeButton" Grid.Column="1" Margin="8,0,0,0" Style="{DynamicResource PlanCompactButtonStyle}" Click="CopyCode_OnClick" Content="COPY" />
+                        </Grid>
+                        <StackPanel Grid.Row="4" Margin="0,14,0,0">
+                            <CheckBox x:Name="ExportPlanCheck" IsChecked="True" Content="Selected plan" />
+                            <CheckBox x:Name="ExportPlacementsCheck" Margin="0,10,0,0" IsChecked="True" Content="Map placements + match settings" />
+                        </StackPanel>
+                        <Button x:Name="ExportButton" Grid.Row="5" Padding="12,9" Background="{DynamicResource AccentBrush}"
+                                Style="{DynamicResource PlanCompactButtonStyle}" Click="Export_OnClick" Content="CREATE CODE" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="2" Padding="16" Background="{DynamicResource AppBackgroundBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="4">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="66" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" /><RowDefinition Height="86" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock FontSize="15" FontWeight="Black" Text="IMPORT" />
+                        <TextBlock Grid.Row="1" Margin="0,7,0,12" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                                   Text="Add the shared plan as a new plan. Selected placements replace matching saved maps." />
+                        <TextBlock Grid.Row="2" Margin="0,0,0,6" Style="{StaticResource FieldLabelStyle}" Text="SHARE CODE" />
+                        <TextBox x:Name="ImportCodeText" Grid.Row="3" MaxLength="23" CharacterCasing="Upper" FontFamily="Consolas" FontSize="17" FontWeight="Bold" />
+                        <StackPanel Grid.Row="4" Margin="0,14,0,0">
+                            <CheckBox x:Name="ImportPlanCheck" IsChecked="True" Content="Import plan" />
+                            <CheckBox x:Name="ImportPlacementsCheck" Margin="0,10,0,0" IsChecked="True" Content="Import map placements + settings" />
+                        </StackPanel>
+                        <Button x:Name="ImportButton" Grid.Row="5" Padding="12,9" Background="{DynamicResource AccentBrush}"
+                                Style="{DynamicResource PlanCompactButtonStyle}" Click="Import_OnClick" Content="IMPORT CODE" />
+                    </Grid>
+                </Border>
+            </Grid>
+            <TextBlock x:Name="StatusText" Grid.Row="3" Margin="0,16,0,0" MinHeight="18"
+                       Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap" />
+        </Grid>
+    </Border>
+</UserControl>

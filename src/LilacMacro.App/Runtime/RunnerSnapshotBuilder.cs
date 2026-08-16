@@ -94,6 +94,7 @@ internal sealed class RunnerSnapshotBuilder
         RunStat = task.RunStat,
         RunSprite = task.RunSprite,
         Difficulty = task.Difficulty,
+        InfiniteWave = task.InfiniteWave,
         BossesBeforeExtract = task.BossesBeforeExtract,
         ExtractAtCheckpoint = task.ExtractAtCheckpoint,
         RewardTarget = task.RewardTarget,
