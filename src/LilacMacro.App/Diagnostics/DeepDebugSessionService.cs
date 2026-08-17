@@ -167,6 +167,9 @@ public sealed partial class DeepDebugSessionService
         Enqueue(session, category, action, data, null, null);
     }
 
+    public void RecordRuntimeLog(string message) =>
+        RecordEvent("macro", "log", new { Message = message });
+
     public void RecordInput(string action, object? data = null)
     {
         DeepDebugSession? session = ActiveSession();

@@ -34,6 +34,8 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 
 Events include window discovery and observed client size, resize results, capture ownership, dataset frame identity, OCR model/device/cache and timing fields, OCR text and boxes, state evaluations, visual-profile scores and coordinates, requested Windows input, cancellation, exceptions, and terminal outcome.
 
+While a Main Macro session is active, every dashboard trace-log line is also recorded as a `macro/log` event with the original message. This preserves intermediate progress and failure details—such as a missing physical selection proof—alongside the later generic recovery outcome.
+
 An OCR-owned visual-profile refresh records `vision/profile_refresh_failed` with the exception type and sanitized message when persistence or comparison fails. A registered profile whose locator is unavailable marks the archive manifest's writer failure instead of silently omitting the locator from the snapshot.
 
 Visual-profile snapshots are usage-scoped rather than a copy of the user's profile library. A session retains at most 64 referenced revisions, 32 files and 8 MiB per revision, and 32 MiB total. JSON paths are redacted; PGM assets remain exact so another machine can reproduce the recorded matcher input.

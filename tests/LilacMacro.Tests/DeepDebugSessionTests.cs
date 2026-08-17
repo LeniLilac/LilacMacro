@@ -57,6 +57,26 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
+    public async Task RuntimeLogIsIncludedInArchive()
+    {
+        DeepDebugSessionService service = new(_root);
+        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "macro runtime",
+            new DeepDebugOperationContext("main-macro"));
+
+        const string message = "MATCH RUNTIME | Upgrade target did not produce physical selection proof.";
+        service.RecordRuntimeLog(message);
+        await scope!.CompleteAsync("stopped");
+
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
+        string events = await ReadAsync(archive, "events.jsonl");
+        Assert.Contains(message, events, StringComparison.Ordinal);
+        Assert.Contains("\"category\":\"macro\"", events, StringComparison.Ordinal);
+        Assert.Contains("\"action\":\"log\"", events, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DisabledRecorderDoesNotCreateSession()
     {
         DeepDebugSessionService service = new(_root);

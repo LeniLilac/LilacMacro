@@ -60,6 +60,7 @@ public partial class MacroDashboardPage
 
     private void AppendLog(string message)
     {
+        _deepDebug.RecordRuntimeLog(message);
         if (!Dispatcher.CheckAccess())
         {
             if (!Dispatcher.HasShutdownStarted)
