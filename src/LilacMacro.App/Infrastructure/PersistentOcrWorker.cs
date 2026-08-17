@@ -5,7 +5,7 @@ using LilacMacro.Core.Geometry;
 
 namespace LilacMacro.App.Infrastructure;
 
-internal sealed class PersistentOcrWorker(Func<ProcessStartInfo> createStartInfo) : IDisposable
+internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> createStartInfo) : IDisposable
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _errorLock = new();
@@ -52,7 +52,7 @@ internal sealed class PersistentOcrWorker(Func<ProcessStartInfo> createStartInfo
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            Process process = EnsureWorker();
+            Process process = EnsureWorker(preloadModel: null, preloadDevice: device);
             string requestId = Guid.NewGuid().ToString("N");
             string requestPath = Path.Combine(_channel!, $"request-{requestId}.json");
             string responsePath = Path.Combine(_channel!, $"response-{requestId}.json");
@@ -145,7 +145,7 @@ internal sealed class PersistentOcrWorker(Func<ProcessStartInfo> createStartInfo
         lock (_errorLock) _errorTail.Clear();
         string channel = Path.Combine(Path.GetTempPath(), "LilacMacro", $"worker-{Guid.NewGuid():N}");
         Directory.CreateDirectory(channel);
-        ProcessStartInfo startInfo = createStartInfo();
+        ProcessStartInfo startInfo = createStartInfo(preloadDevice);
         startInfo.ArgumentList.Add("--serve");
         startInfo.ArgumentList.Add("--channel");
         startInfo.ArgumentList.Add(channel);

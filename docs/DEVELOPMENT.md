@@ -7,7 +7,7 @@
 - Windows 10 version 1903 or later, or Windows 11
 - The .NET SDK pinned by [`global.json`](../global.json)
 - PowerShell 7 for exact CI parity; repository scripts also support Windows PowerShell 5.1
-- Optional Python 3.12 and NVIDIA driver/CUDA support for OCR work
+- Python 3.12 is required when building the bundled OCR runtime; NVIDIA driver/CUDA support is optional for GPU OCR work
 
 ## Repository layout
 
@@ -143,7 +143,7 @@ Every semantic detector search area must be owned by a named bundled dataset ann
 | Macro settings | `%LOCALAPPDATA%\LilacMacro\macro-settings.json` before local-instance setup; `%ProgramData%\LilacMacro\Configurations\shared` afterward | Schema-versioned, cross-process-serialized atomic replacement for display/update preferences, keybinds, Plan snapshots/selection/reporting options, and DPAPI ciphertext for private-server/webhook values; `privacy-choices.json` independently owns the authoritative monotonic consent generation so stale ordinary saves cannot re-enable a choice; the shared ProgramData root uses machine-scope DPAPI plus an owner/runner ACL |
 | Placement authoring | Active configuration root under `placements` | Validated snapshots, serialized save queue, atomic replacement; shared and isolated runner modes select different roots |
 | Local instance profiles | `%ProgramData%\LilacMacro\Profiles` | Owner-journaled runner identity/policy receipts; one ACL-restricted directory per runner |
-| OCR runtime | `%LOCALAPPDATA%\LilacMacro\ocr` | Isolated Python environment and device marker |
+| OCR runtime | Installed `ocr\python` plus `%LOCALAPPDATA%\LilacMacro\ocr` | Read-only bundled CPU runtime; per-user GPU environment, model cache, and device markers |
 | Crash logging | `%LOCALAPPDATA%\LilacMacro\logs\latest-crash.txt` | Latest unhandled WPF exception |
 | Deep debug | `%LOCALAPPDATA%\LilacMacro\diagnostics` | Bounded ZIP archives plus transient staging; settings use atomic replacement |
 | Application updates | `%LOCALAPPDATA%\LilacMacro\updates`; coordinated request under `%ProgramData%\LilacMacro\Updates` | Public metadata and owner-approved downloads stay per owner; the machine request contains only exact version/hash/process/session/profile coordination data and is cleared after install/relaunch |

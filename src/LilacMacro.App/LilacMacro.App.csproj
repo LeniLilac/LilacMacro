@@ -21,6 +21,8 @@
     <Compile Remove="Infrastructure\OcrWorkerResponseReader.cs" />
     <Compile Remove="Infrastructure\OcrWorkerResult.cs" />
     <Compile Remove="Infrastructure\PersistentOcrWorker.cs" />
+    <Compile Remove="Infrastructure\OcrGpuInfo.cs" />
+    <Compile Remove="Infrastructure\OcrRunner.Setup.cs" />
     <Compile Remove="Workspace\CaptureProgress.cs" />
     <Compile Remove="Workspace\CrossProcessRobloxInputGate.cs" />
     <Compile Remove="Workspace\WorkspaceController.cs" />

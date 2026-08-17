@@ -85,13 +85,16 @@ public partial class MacroDashboardPage : UserControl
         InitializeComponent();
         InitializeDiscordEvents();
         _runtimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _runtimeTimer.Tick += (_, _) => RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+        _runtimeTimer.Tick += (_, _) => RuntimeText.Text = FormatRuntime(_runtime.Elapsed);
         StatsChart.SetPoints(_runStats);
         PlanCombo.DisplayMemberPath = nameof(PlanPrototype.Name);
         PlanCombo.ItemsSource = ownerState.Plans;
         PlanCombo.SelectedItem = ownerState.SelectedPlan;
         ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
         ApplyLayoutProfile(ownerState.LayoutProfile);
+        _ocrReady = _ocr.IsDeviceReady(OcrRunner.GpuDevice) || _ocr.IsDeviceReady(OcrRunner.CpuDevice);
+        _ocrSetupFailed = !_ocrReady;
+        UpdateStartButtonState();
     }
 
     internal void ApplyLayoutProfile(MacroLayoutProfile profile)
@@ -157,13 +160,26 @@ public partial class MacroDashboardPage : UserControl
             PlanCombo.SelectedItem = _ownerState.SelectedPlan;
     }
 
-    private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs) => await StartMacroAsync();
+    private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        if (!_ocrReady)
+        {
+            await EnsureOcrReadyAsync();
+            return;
+        }
+        await StartMacroAsync();
+    }
 
     internal void ToggleRunFromHotkey()
     {
         if (_runTask is not null || _runStarting)
         {
             _runCancellation?.Cancel();
+            return;
+        }
+        if (!_ocrReady)
+        {
+            AppToastService.ShowError("OCR SETUP REQUIRED", "Use SET UP OCR before starting the Macro.");
             return;
         }
         _ = StartMacroAsync();
@@ -176,7 +192,11 @@ public partial class MacroDashboardPage : UserControl
         UpdateStartButtonState();
         try
         {
-            if (!_ocrReady && !await EnsureOcrReadyAsync()) return;
+            if (!_ocrReady)
+            {
+                AppToastService.ShowError("OCR SETUP REQUIRED", "Use SET UP OCR before starting the Macro.");
+                return;
+            }
             if (!_control.CanStart(out string unavailableMessage))
             {
                 AppToastService.ShowError(
@@ -368,7 +388,7 @@ public partial class MacroDashboardPage : UserControl
             Progress<StoryWireProgress> progress = new(value =>
             {
                 AppendLog($"{StoryWireTestRunner.Format(value.Stage)} | {value.Detail}");
-                RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+                RuntimeText.Text = FormatRuntime(_runtime.Elapsed);
             });
             StoryWireTestResult result = repeatedEntry
                 ? await _runner.RunRepeatedAsync(options, progress, cancellationToken)

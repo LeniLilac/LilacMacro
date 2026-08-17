@@ -2,7 +2,7 @@
 
 LilacMacro is a free, noncommercial, source-available Windows .NET/WPF app for building and running inspectable Anime Expeditions automation through ordinary screen capture and Windows input. The public beta includes the Macro shell, Plan and placement authoring, Story/Raid/Challenge/Expedition/Event and utility workflows, a Dataset Builder, and a Runtime Lab for explicit OCR/vision tests.
 
-Download the current public beta from [GitHub Releases](https://github.com/LeniLilac/LilacMacro/releases). The installer is intentionally not Authenticode-signed, so Windows may show **Unknown publisher** or a Microsoft Defender SmartScreen prompt. Only use the installer from this repository's release page. Every official release includes a SHA-256 checksum and an Ed25519 project-signed manifest; the built-in updater verifies both before launch. The project signature proves continuity with the public LilacMacro key, not a verified legal identity.
+Download the current public beta from [GitHub Releases](https://github.com/LeniLilac/LilacMacro/releases). The latest release is [v1.0.144](https://github.com/LeniLilac/LilacMacro/releases/tag/v1.0.144). The installer is intentionally not Authenticode-signed, so Windows may show **Unknown publisher** or a Microsoft Defender SmartScreen prompt. Only use the installer from this repository's release page. Every official release includes a SHA-256 checksum and an Ed25519 project-signed manifest; the built-in updater verifies both before launch. The project signature proves continuity with the public LilacMacro key, not a verified legal identity.
 
 ## Requirements
 
@@ -10,7 +10,7 @@ Download the current public beta from [GitHub Releases](https://github.com/LeniL
 - .NET SDK version pinned by [`global.json`](global.json)
 - Roblox running in windowed mode for capture or Runtime Lab work
 - 100% Windows display scale on the monitor containing Roblox
-- Internet access on first launch so LilacMacro can bootstrap its isolated OCR runtime
+- Internet access when optional GPU OCR setup is requested
 
 ## Contributor quick start
 
@@ -51,3 +51,5 @@ Start with the [documentation index](docs/README.md). Contributors and coding ag
 The project is noncommercial; see [LICENSE.md](LICENSE.md), [NOTICE.md](NOTICE.md), and [PRIVACY.md](PRIVACY.md).
 
 The local instance manager and project-signed installer boundaries are documented in [Local instance manager](docs/LOCAL-SESSION.md) and [Installer](docs/INSTALLER.md).
+
+See [the changelog](CHANGELOG.md) for release-specific changes and known beta boundaries.

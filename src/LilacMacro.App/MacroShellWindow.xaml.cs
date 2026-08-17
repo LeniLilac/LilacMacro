@@ -95,7 +95,6 @@ public partial class MacroShellWindow : Window
         _telemetry.Start();
         _controlTask ??= RunControlPollingAsync();
         await _settingsPage.CheckOnStartupAsync();
-        await _macroPage.EnsureOcrReadyAsync();
         if (_ownerState.EffectiveMinimizeBehavior == MacroMinimizeBehavior.OnApplicationStart)
             WindowState = WindowState.Minimized;
     }

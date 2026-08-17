@@ -4,14 +4,14 @@
 
 ## Current OCR pipeline
 
-LilacMacro installs OCR into an isolated Python 3.12 environment at `%LOCALAPPDATA%\LilacMacro\ocr`. The Macro shell performs this setup automatically on first launch, bootstrapping Python through Windows App Installer when needed. The setup script pins PaddlePaddle 3.3.0 and PaddleOCR 3.7.0. It installs one runtime at a time:
+Official installers bundle a read-only Python 3.12 CPU runtime, PaddlePaddle 3.3.0, PaddleOCR 3.7.0, and the two supported model pairs. The bundled CPU runtime is used directly from the install directory; per-user state and model cache remain under `%LOCALAPPDATA%\LilacMacro\ocr`. After the first-run privacy choices are saved, a supported NVIDIA GPU can trigger a separate visible setup screen that installs only its matching GPU runtime into a per-user environment. The setup script no longer installs Python through Windows App Installer and does not install NVIDIA drivers. Development machines without the bundle may still use the script's existing Python 3.12 discovery path. It installs one user-selected GPU runtime at a time:
 
 ```powershell
 ./scripts/Setup-Ocr.ps1 -Device cpu
 ./scripts/Setup-Ocr.ps1 -Device gpu
 ```
 
-GPU setup queries NVIDIA GPU 0 through `nvidia-smi`, rejects hardware older than compute capability 6.0, and selects the official package by architecture: CUDA 11.8 for Pascal and Volta; CUDA 12.6 for Turing, Ampere, and Ada; CUDA 12.9 for Hopper and Blackwell. Setup verifies that Paddle sees a CUDA device and records the detected model, generation, capability, driver, and package feed in `runtime-profile.json`. Running setup for one device removes the other Paddle runtime, so the device marker, profile, and installed package remain consistent. AMD and Intel graphics use CPU OCR.
+GPU setup queries NVIDIA GPU 0 through `nvidia-smi`, rejects hardware older than compute capability 6.0, and selects the official package by architecture: CUDA 11.8 for Pascal and Volta; CUDA 12.6 for Turing, Ampere, and Ada; CUDA 12.9 for Hopper and Blackwell. Setup verifies that Paddle sees a CUDA device and records the detected model, generation, capability, driver, and package feed in `gpu\runtime-profile.json`. CPU and GPU environments are separate, so GPU setup never mutates the read-only bundled CPU runtime. AMD and Intel graphics use CPU OCR.
 
 The 3.3.0 GPU runtime has completed tensor and PP-OCRv6 small inference smoke tests on a hosted GTX 1080 Ti (Pascal, compute capability 6.1), a hosted Titan RTX (Turing), a Windows RTX 3070 (Ampere), a hosted RTX 4060 (Ada), and a hosted RTX 5060 (Blackwell). The Pascal qualification used the official CUDA 11.8 package path and recognized the synthetic `LILAC GPU OCR 12345` probe correctly. Each installed machine still performs the same setup-time device and import verification before its GPU runtime is accepted; untested GTX 10 models remain guarded by that device-local probe.
 

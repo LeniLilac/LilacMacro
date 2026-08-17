@@ -11,3 +11,5 @@ Interface icon geometry comes from Lucide. Lucide is Copyright (c) 2026 Lucide I
 The optional local runner bundles TermWrap v0.6 and its Zydis decoder dependency under their respective MIT licenses. See `third_party/termwrap/v0.6/LICENSE.txt` and `third_party/termwrap/v0.6/ZYDIS-LICENSE.txt`.
 
 Signed LilacMacro Services control snapshots are verified with Bouncy Castle Cryptography. Bouncy Castle is Copyright (c) 2000-2025 The Legion of the Bouncy Castle Inc. and is distributed under the MIT License. See `licenses/BOUNCY-CASTLE.md`.
+
+Official Windows installers bundle Python 3.12 from the Python Software Foundation under the Python Software Foundation License, plus PaddlePaddle 3.3.0 and PaddleOCR 3.7.0 and their model assets. See `licenses/OCR-RUNTIME.md` and the installed `ocr` directory for the corresponding third-party notices. Optional GPU runtimes are downloaded separately under their respective licenses.

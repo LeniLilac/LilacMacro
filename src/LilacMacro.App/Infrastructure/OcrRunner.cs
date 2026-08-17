@@ -7,7 +7,7 @@ using LilacMacro.Runtime.Services;
 
 namespace LilacMacro.App.Infrastructure;
 
-public sealed class OcrRunner : IDisposable
+public sealed partial class OcrRunner : IDisposable
 {
     public const string SmallModel = "PP-OCRv6_small_rec";
     public const string TinyModel = "PP-OCRv6_tiny_rec";
@@ -17,10 +17,14 @@ public sealed class OcrRunner : IDisposable
     private static readonly HashSet<string> SupportedDevices = [CpuDevice, GpuDevice];
     private readonly string _ocrRoot;
     private readonly string _pythonPath;
+    private readonly string _gpuRoot;
     private readonly string _runtimeMarkerPath;
+    private readonly string _gpuRuntimeMarkerPath;
+    private readonly object _modelCacheGate = new();
     private readonly PersistentOcrWorker _persistentWorker;
     private bool _keepLoaded;
     private bool _disposed;
+    private bool _modelCachePrepared;
     private readonly DeepDebugSessionService _deepDebug;
 
     public OcrRunner(DeepDebugSessionService deepDebug, string? ocrRoot = null)
@@ -31,20 +35,17 @@ public sealed class OcrRunner : IDisposable
             "LilacMacro",
             "ocr"));
         _pythonPath = Path.Combine(_ocrRoot, "venv", "Scripts", "python.exe");
+        _gpuRoot = Path.Combine(_ocrRoot, "gpu");
         _runtimeMarkerPath = Path.Combine(_ocrRoot, "runtime-device.txt");
+        _gpuRuntimeMarkerPath = Path.Combine(_gpuRoot, "runtime-device.txt");
         _persistentWorker = new PersistentOcrWorker(CreateWorkerStartInfo);
     }
 
-    public bool IsInstalled => File.Exists(_pythonPath) && ReadRuntimeDevice() is "cpu" or "gpu";
+    public bool IsInstalled => IsDeviceReady(CpuDevice) || IsDeviceReady(GpuDevice);
 
-    public bool SupportsGpu => File.Exists(_pythonPath) && ReadRuntimeDevice() == "gpu";
+    public bool SupportsGpu => IsDeviceReady(GpuDevice);
 
-    public bool IsDeviceReady(string device) => device switch
-    {
-        CpuDevice => IsInstalled,
-        GpuDevice => SupportsGpu,
-        _ => false,
-    };
+    public bool IsDeviceReady(string device) => RuntimePythonPath(device) is not null;
 
     public async Task<string> EnsureReadyAsync(CancellationToken cancellationToken = default)
     {
@@ -67,83 +68,6 @@ public sealed class OcrRunner : IDisposable
             if (_keepLoaded == value) return;
             _keepLoaded = value;
             if (!value) _persistentWorker.Stop();
-        }
-    }
-
-    public async Task SetupAsync(string device, CancellationToken cancellationToken = default)
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (!SupportedDevices.Contains(device)) throw new ArgumentOutOfRangeException(nameof(device));
-        Stopwatch setupTimer = Stopwatch.StartNew();
-        int? processExitCode = null;
-        try
-        {
-            _persistentWorker.Stop();
-            string script = ResolveBundledFile("scripts", "Setup-Ocr.ps1");
-            ProcessStartInfo startInfo = new("powershell.exe")
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            };
-            startInfo.ArgumentList.Add("-NoProfile");
-            startInfo.ArgumentList.Add("-ExecutionPolicy");
-            startInfo.ArgumentList.Add("Bypass");
-            startInfo.ArgumentList.Add("-File");
-            startInfo.ArgumentList.Add(script);
-            startInfo.ArgumentList.Add("-Device");
-            startInfo.ArgumentList.Add(device == GpuDevice ? "gpu" : "cpu");
-            startInfo.ArgumentList.Add("-InstallRoot");
-            startInfo.ArgumentList.Add(_ocrRoot);
-
-            using Process process = Process.Start(startInfo)
-                ?? throw new InvalidOperationException("Could not start the OCR setup process.");
-            string standardOutput;
-            string standardError;
-            try
-            {
-                Task<string> output = process.StandardOutput.ReadToEndAsync(cancellationToken);
-                Task<string> error = process.StandardError.ReadToEndAsync(cancellationToken);
-                await process.WaitForExitAsync(cancellationToken);
-                standardOutput = await output;
-                standardError = await error;
-            }
-            catch (OperationCanceledException)
-            {
-                if (!process.HasExited)
-                {
-                    try { process.Kill(entireProcessTree: true); }
-                    catch (InvalidOperationException) { }
-                }
-                throw;
-            }
-            if (process.ExitCode != 0 || !IsDeviceReady(device))
-            {
-                processExitCode = process.ExitCode;
-                throw new InvalidOperationException(
-                    string.IsNullOrWhiteSpace(standardError) ? standardOutput.Trim() : standardError.Trim());
-            }
-            if (KeepLoaded) await WarmUpAsync(SmallModel, device, cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception error) when (error is not ArgumentOutOfRangeException and not ObjectDisposedException)
-        {
-            string code = OcrSetupFailurePolicy.Classify(error.Message, device, processExitCode);
-            _deepDebug.RecordEvent("ocr_setup", "setup_failed", new OcrSetupFailureObservation(
-                device,
-                code,
-                OcrSetupFailurePolicy.Stage(code),
-                OcrSetupFailurePolicy.BoundedDuration(setupTimer.Elapsed),
-                OcrSetupFailurePolicy.BoundedExitCode(processExitCode),
-                OcrSetupFailurePolicy.IsCommandAvailableOnPath("py.exe"),
-                OcrSetupFailurePolicy.IsCommandAvailableOnPath("winget.exe"),
-                File.Exists(_pythonPath),
-                File.Exists(_runtimeMarkerPath)));
-            throw;
         }
     }
 
@@ -283,7 +207,7 @@ public sealed class OcrRunner : IDisposable
         CancellationToken cancellationToken,
         int scale)
     {
-        ProcessStartInfo startInfo = CreateWorkerStartInfo();
+        ProcessStartInfo startInfo = CreateWorkerStartInfo(device);
         startInfo.ArgumentList.Add("--input");
         startInfo.ArgumentList.Add(imagePath);
         startInfo.ArgumentList.Add("--crop");
@@ -337,10 +261,12 @@ public sealed class OcrRunner : IDisposable
             ?? throw new InvalidDataException("OCR worker returned an empty result.");
     }
 
-    private ProcessStartInfo CreateWorkerStartInfo()
+    private ProcessStartInfo CreateWorkerStartInfo(string? device)
     {
         string worker = ResolveBundledFile("tools", "ocr_worker.py");
-        ProcessStartInfo startInfo = new(_pythonPath)
+        string python = RuntimePythonPath(device)
+            ?? throw new InvalidOperationException($"OCR {device ?? "requested device"} is not set up yet.");
+        ProcessStartInfo startInfo = new(python)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -352,24 +278,35 @@ public sealed class OcrRunner : IDisposable
         startInfo.ArgumentList.Add(worker);
         startInfo.Environment["PADDLE_PDX_MODEL_SOURCE"] = "BOS";
         startInfo.Environment["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True";
+        startInfo.Environment["PYTHONDONTWRITEBYTECODE"] = "1";
+        PrepareBundledModelCache();
+        startInfo.Environment["PADDLE_PDX_CACHE_HOME"] = Path.Combine(_ocrRoot, "model-cache");
         return startInfo;
     }
 
-    private string? ReadRuntimeDevice()
+    private void PrepareBundledModelCache()
     {
-        try
+        if (_modelCachePrepared) return;
+        lock (_modelCacheGate)
         {
-            return File.Exists(_runtimeMarkerPath)
-                ? File.ReadAllText(_runtimeMarkerPath).Trim().ToLowerInvariant()
-                : null;
-        }
-        catch (IOException)
-        {
-            return null;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return null;
+            if (_modelCachePrepared) return;
+            string sourceRoot = Path.Combine(AppContext.BaseDirectory, "ocr", "models", "official_models");
+            if (!Directory.Exists(sourceRoot))
+            {
+                _modelCachePrepared = true;
+                return;
+            }
+
+            string targetRoot = Path.Combine(_ocrRoot, "model-cache", "official_models");
+            Directory.CreateDirectory(targetRoot);
+            foreach (string source in Directory.EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories))
+            {
+                string relative = Path.GetRelativePath(sourceRoot, source);
+                string target = Path.Combine(targetRoot, relative);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                if (!File.Exists(target)) File.Copy(source, target);
+            }
+            _modelCachePrepared = true;
         }
     }
 
