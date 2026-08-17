@@ -21,9 +21,19 @@ public sealed class UnitPanelLayoutTests
         Assert.Equal(new PixelRect(436, 434, 68, 47), layout.UpgradeMaxedReference);
         Assert.True(UnitPanelLayout.IsPhysicalDps("DPS 0/s"));
         Assert.True(UnitPanelLayout.IsPhysicalDps("DPS Q/s"));
+        Assert.True(UnitPanelLayout.IsPhysicalDps("DPS 3,786"));
+        Assert.True(UnitPanelLayout.IsPhysicalDps("DPS 1,262/"));
         Assert.False(UnitPanelLayout.IsPhysicalDps("DPS ???"));
         Assert.True(UnitPanelLayout.IsPhantomDps("DPS ???"));
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("DPS")]
+    [InlineData("DPS ? ? ?")]
+    [InlineData("Damage 3,786/s")]
+    public void PhysicalDpsRequiresNonPhantomDpsEvidence(string text) =>
+        Assert.False(UnitPanelLayout.IsPhysicalDps(text));
 
     [Fact]
     public void TrackerRequiresThreeConsistentObservations()

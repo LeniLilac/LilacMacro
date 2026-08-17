@@ -20,6 +20,12 @@ internal sealed class UnitPanelEvidenceService(
     private const int DismissAttempts = 8;
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
     private PanelReference? _reference;
+    private UnitPanelLayout? _dpsCalibratedLayout;
+    private UnitPanelDpsCapturePlan? _dpsCapturePlan;
+    private UnitPanelDpsFingerprintBuilder? _dpsFingerprintBuilder;
+    private UnitPanelDpsKind? _lastDpsKind;
+    private RgbImage? _pendingDpsSample;
+    private int _stableDpsSamples;
     private RgbImage? _maxedReference;
 
     public async Task<UnitPanelLayout> CalibrateAsync(
@@ -41,13 +47,33 @@ internal sealed class UnitPanelEvidenceService(
             if (layout is not null && (physical || phantom) &&
                 tracker.Observe(layout) is { } stable)
             {
+                _dpsCalibratedLayout = stable;
+                UnitPanelDpsCapturePlan capturePlan = UnitPanelDpsCapturePlan.Create(
+                    stable, DebugWorkflowCatalog.ClientSize);
+                _dpsCapturePlan = capturePlan;
+                _dpsFingerprintBuilder = new(
+                    capturePlan,
+                    new PixelSize(capturePlan.Region.Width, capturePlan.Region.Height));
+                _lastDpsKind = null;
+                _pendingDpsSample = null;
+                _stableDpsSamples = 0;
                 IReadOnlyList<CapturedRgbRegion> reference = await workspace.CaptureRgbRegionsAsync(
                     DebugWorkflowCatalog.ClientSize,
-                    [stable.PriorityControl, stable.SellControl],
+                    [
+                        stable.PriorityControl,
+                        stable.SellControl,
+                        capturePlan.Region,
+                    ],
                     cancellationToken);
                 _reference = new PanelReference(reference[0].Image, reference[1].Image);
+                RecordDpsSample(
+                    phantom ? UnitPanelDpsKind.Phantom : UnitPanelDpsKind.Physical,
+                    reference[2].Image);
                 _maxedReference = null;
-                status?.Invoke($"UNIT PANEL CALIBRATED {stable.UpgradeControl} {(phantom ? "PHANTOM" : "PHYSICAL")}");
+                status?.Invoke(
+                    $"UNIT PANEL CALIBRATED {stable.UpgradeControl} " +
+                    (phantom ? "PHANTOM" : "PHYSICAL") +
+                    $" DPS ROI {capturePlan.Region}");
                 return stable;
             }
             status?.Invoke($"UNIT PANEL CALIBRATION {observation}/8");
@@ -67,7 +93,8 @@ internal sealed class UnitPanelEvidenceService(
         while (DateTimeOffset.UtcNow <= deadline || stable > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            PanelObservation observation = await ObservePanelAsync(layout, device, cancellationToken);
+            PanelObservation observation = await ObservePanelAsync(
+                layout, device, status, cancellationToken);
             stable = observation.Physical || observation.Phantom ? stable + 1 : 0;
             if (stable >= 2)
             {
@@ -93,7 +120,8 @@ internal sealed class UnitPanelEvidenceService(
         while (DateTimeOffset.UtcNow <= deadline || stable > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            PanelObservation observation = await ObservePanelAsync(layout, device, cancellationToken);
+            PanelObservation observation = await ObservePanelAsync(
+                layout, device, status, cancellationToken);
             if (observation.Phantom)
             {
                 status?.Invoke("PHANTOM PLACEMENT REJECTED: DPS ???");
@@ -228,12 +256,15 @@ internal sealed class UnitPanelEvidenceService(
     private async Task<PanelObservation> ObservePanelAsync(
         UnitPanelLayout layout,
         string device,
+        Action<string>? status,
         CancellationToken cancellationToken)
     {
-        PixelRect dps = Inflate(layout.DpsText, 8, DebugWorkflowCatalog.ClientSize);
+        EnsureDpsCalibration(layout);
+        UnitPanelDpsCapturePlan dps = _dpsCapturePlan
+            ?? throw new InvalidOperationException("DPS capture plan was not calibrated.");
         IReadOnlyList<CapturedRgbRegion> captures = await workspace.CaptureRgbRegionsAsync(
             DebugWorkflowCatalog.ClientSize,
-            [layout.PriorityControl, layout.SellControl, dps],
+            [layout.PriorityControl, layout.SellControl, dps.Region],
             cancellationToken);
         PanelReference reference = _reference
             ?? throw new InvalidOperationException("Selected-unit panel image reference was not calibrated.");
@@ -244,10 +275,31 @@ internal sealed class UnitPanelEvidenceService(
                 captures[1].Image).IsMatch)
             return new PanelObservation(false, false);
 
+        if (_dpsFingerprintBuilder?.Fingerprint is { } fingerprint)
+        {
+            UnitPanelDpsImageMatch imageMatch = fingerprint.Match(captures[2].Image);
+            if (imageMatch.IsExact)
+            {
+                status?.Invoke(
+                    $"DPS IMAGE FAST PATH EXACT 1.00 " +
+                    $"({imageMatch.MatchingPixels}/{imageMatch.ComparedPixels})");
+                return new PanelObservation(false, true);
+            }
+            status?.Invoke($"DPS IMAGE FAST PATH MISS {imageMatch.ExactFraction:F3}; OCR FALLBACK");
+        }
+
         OcrWorkerResult result = await RunTinyOcrAsync(captures[2].Image, device, cancellationToken);
         string text = string.Join(' ', result.Regions.Select(region => region.Text).Prepend(result.Text));
         bool phantom = UnitPanelLayout.IsPhantomDps(text);
-        return new PanelObservation(!phantom && UnitPanelLayout.IsPhysicalDps(text), phantom);
+        bool physical = !phantom && UnitPanelLayout.IsPhysicalDps(text);
+        if (phantom || physical)
+        {
+            RecordDpsSample(
+                phantom ? UnitPanelDpsKind.Phantom : UnitPanelDpsKind.Physical,
+                captures[2].Image);
+            status?.Invoke(phantom ? "DPS OCR FALLBACK PHANTOM" : "DPS OCR FALLBACK PHYSICAL");
+        }
+        return new PanelObservation(physical, phantom);
     }
 
     private async Task<OcrWorkerResult> RunTinyOcrAsync(
@@ -273,13 +325,45 @@ internal sealed class UnitPanelEvidenceService(
         }
     }
 
-    private static PixelRect Inflate(PixelRect region, int amount, PixelSize bounds)
+    private void EnsureDpsCalibration(UnitPanelLayout layout)
     {
-        int left = Math.Max(0, region.X - amount);
-        int top = Math.Max(0, region.Y - amount);
-        int right = Math.Min(bounds.Width, region.Right + amount);
-        int bottom = Math.Min(bounds.Height, region.Bottom + amount);
-        return new PixelRect(left, top, right - left, bottom - top);
+        if (_dpsCapturePlan is not null &&
+            _dpsCalibratedLayout is { } calibrated && calibrated.IsCloseTo(layout))
+            return;
+
+        _dpsCalibratedLayout = layout;
+        UnitPanelDpsCapturePlan capturePlan = UnitPanelDpsCapturePlan.Create(
+            layout, DebugWorkflowCatalog.ClientSize);
+        _dpsCapturePlan = capturePlan;
+        _dpsFingerprintBuilder = new(
+            capturePlan,
+            new PixelSize(capturePlan.Region.Width, capturePlan.Region.Height));
+        _lastDpsKind = null;
+        _pendingDpsSample = null;
+        _stableDpsSamples = 0;
+    }
+
+    private void RecordDpsSample(UnitPanelDpsKind kind, RgbImage image)
+    {
+        if (_lastDpsKind != kind)
+        {
+            _lastDpsKind = kind;
+            _stableDpsSamples = 1;
+            _pendingDpsSample = image;
+            return;
+        }
+
+        _stableDpsSamples++;
+        if (_stableDpsSamples == 2 && _pendingDpsSample is { } pending)
+        {
+            _dpsFingerprintBuilder?.AddSample(kind, pending);
+            _dpsFingerprintBuilder?.AddSample(kind, image);
+            _pendingDpsSample = null;
+            return;
+        }
+
+        if (_stableDpsSamples > 2)
+            _dpsFingerprintBuilder?.AddSample(kind, image);
     }
 
     private sealed record PanelObservation(bool Physical, bool Phantom);

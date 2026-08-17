@@ -80,11 +80,9 @@ public sealed record UnitPanelLayout(
 
     public static bool IsPhysicalDps(string text)
     {
+        if (IsPhantomDps(text)) return false;
         string normalized = OcrPhraseMatcher.Normalize(text);
-        if (!normalized.StartsWith("dps", StringComparison.Ordinal) || normalized.Contains("???", StringComparison.Ordinal))
-            return false;
-        string suffix = normalized[3..];
-        return suffix.EndsWith('s') && suffix[..^1].Any(character => char.IsAsciiDigit(character) || character is 'q' or 'o');
+        return normalized.StartsWith("dps", StringComparison.Ordinal) && normalized.Length > 3;
     }
 
     public static bool IsPhantomDps(string text) => text.Contains("???", StringComparison.Ordinal);
