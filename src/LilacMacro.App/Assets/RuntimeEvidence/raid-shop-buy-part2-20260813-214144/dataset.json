@@ -1,136 +1,134 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "abe89a7c-2401-4e96-a7d3-30e23553bc90",
-    "name":  "Raid Shop Buy Part2",
-    "notes":  "same flow as gold shop, confirm ui open using the 2 top left buttons \r\n\r\nsame item/buy position derrivation and stuff\r\n\r\nBundled runtime evidence slice. Original dataset: raid-shop-buy-part2-20260813-214144. Source frames: 3.",
-    "created_at_utc":  "2026-08-13T21:41:44.3396273+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  22968,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-13T21:41:59.9027681+00:00",
-                       "sha256":  "1bc55256c772df0c93e1add22f7eb79589e6f2a2999e48a679c028f9e65556fc",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "24f09b9f-ebea-49ec-97c3-cdcbda731973",
-                                               "global_group_id":  "29f6834e-d915-4a79-b713-2de897ce29c0",
-                                               "bounds":  {
-                                                              "x":  202,
-                                                              "y":  118,
-                                                              "width":  306,
-                                                              "height":  169
-                                                          },
-                                               "label":  "Raid Shop UI Confirm",
-                                               "notes":  "confirms that ui of the shop is open",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "General\nG\nGeneral\nSpirit City",
-                                                                      "confidence":  0.9696276187896729,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  33,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-13T21:42:59.3706126+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  369,
-                                                                                                         "y":  162,
-                                                                                                         "width":  63,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "General",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999504685401917,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  489,
-                                                                                                         "y":  182,
-                                                                                                         "width":  16,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "G",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9043227434158325,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  411,
-                                                                                                         "y":  211,
-                                                                                                         "width":  43,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "General",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999117910861969,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  404,
-                                                                                                         "y":  243,
-                                                                                                         "width":  56,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Spirit City",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9751193523406982,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "60a9b9b1-0cd2-4af6-ba10-70a4b5a4cc97",
-                                               "global_group_id":  "8ce16cbb-dd40-4f10-bda4-f55a1df384b3",
-                                               "bounds":  {
-                                                              "x":  424,
-                                                              "y":  134,
-                                                              "width":  433,
-                                                              "height":  498
-                                                          },
-                                               "label":  "Item search area",
-                                               "notes":  "item/scroll search area, view the more detailed gold shop sets that have this same area",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "abe89a7c-2401-4e96-a7d3-30e23553bc90",
+  "name": "Raid Shop Buy Part2",
+  "notes": "same flow as gold shop, confirm ui open using the 2 top left buttons \r\n\r\nsame item/buy position derrivation and stuff\r\n\r\nBundled runtime evidence slice. Original dataset: raid-shop-buy-part2-20260813-214144. Source frames: 3.",
+  "created_at_utc": "2026-08-13T21:41:44.3396273Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 22968,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-13T21:41:59.9027681Z",
+      "sha256": "1bc55256c772df0c93e1add22f7eb79589e6f2a2999e48a679c028f9e65556fc",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "24f09b9f-ebea-49ec-97c3-cdcbda731973",
+          "global_group_id": "29f6834e-d915-4a79-b713-2de897ce29c0",
+          "bounds": {
+            "x": 202,
+            "y": 118,
+            "width": 306,
+            "height": 169
+          },
+          "label": "Raid Shop UI Confirm",
+          "notes": "confirms that ui of the shop is open",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "General\nG\nGeneral\nSpirit City",
+              "confidence": 0.9696276187896729,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 33,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-13T21:42:59.3706126Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 369,
+                    "y": 162,
+                    "width": 63,
+                    "height": 19
+                  },
+                  "text": "General",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999504685401917,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 489,
+                    "y": 182,
+                    "width": 16,
+                    "height": 19
+                  },
+                  "text": "G",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9043227434158325,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 411,
+                    "y": 211,
+                    "width": 43,
+                    "height": 12
+                  },
+                  "text": "General",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999117910861969,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost"
+                },
+                {
+                  "bounds": {
+                    "x": 404,
+                    "y": 243,
+                    "width": 56,
+                    "height": 19
+                  },
+                  "text": "Spirit City",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9751193523406982,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "60a9b9b1-0cd2-4af6-ba10-70a4b5a4cc97",
+          "global_group_id": "8ce16cbb-dd40-4f10-bda4-f55a1df384b3",
+          "bounds": {
+            "x": 424,
+            "y": 134,
+            "width": 433,
+            "height": 498
+          },
+          "label": "Item search area",
+          "notes": "item/scroll search area, view the more detailed gold shop sets that have this same area",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

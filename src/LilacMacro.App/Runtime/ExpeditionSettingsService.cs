@@ -1,6 +1,7 @@
 using LilacMacro.App.Debugging;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
 using LilacMacro.Core.Datasets;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Imaging;
@@ -81,11 +82,9 @@ internal sealed class ExpeditionSettingsService(
 
         if (!waitForPrestart) return;
 
-        DebugOcrSnapshot prestart = await _states.WaitForMatchAsync(
+        DebugOcrSnapshot prestart = await _states.WaitForMatchUntilDeadlineAsync(
             DebugWorkflowCatalog.MatchPrestart,
             device,
-            45,
-            TimeSpan.FromMilliseconds(300),
             cancellationToken).ConfigureAwait(false);
         if (!prestart.Evaluation.IsMatch)
             throw new InvalidOperationException("Restart did not return to verified match prestart.");

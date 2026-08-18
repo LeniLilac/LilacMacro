@@ -3,7 +3,6 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Automation;
-using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Placements;
 
 namespace LilacMacro.App.Debugging;
@@ -12,7 +11,6 @@ internal sealed class ExpeditionMatchRuntimeRunner(
     WorkspaceController workspace,
     OcrRunner ocr)
 {
-    private static readonly PixelPoint IdleRewardPoint = new(1009, 345);
     private readonly PlacementPlaybackService _placements = new(workspace, ocr);
     private readonly PlacementSetupStore _placementStore = new(ResolvePlacementRoot());
     private readonly ExpeditionNodeEvidenceService _nodes = new(workspace, ocr);
@@ -22,6 +20,7 @@ internal sealed class ExpeditionMatchRuntimeRunner(
     private readonly ExpeditionRewardProfileStore _rewardProfiles = new();
     private readonly ExpeditionSettingsService _settings = new(workspace, ocr);
     private readonly MatchTerminalService _terminal = new(workspace, ocr);
+    private readonly ExpeditionRewardPopupService _rewardPopup = new(workspace, ocr);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
     public async Task<StoryWireTestResult> RunAsync(
@@ -75,6 +74,12 @@ internal sealed class ExpeditionMatchRuntimeRunner(
                     options.Device, cancellationToken).ConfigureAwait(false);
                 if (terminal is MatchTerminalOutcome outcome) return Passed(outcome, progress);
 
+                if (await _rewardPopup.DismissAllAsync(
+                        options.Device, report, cancellationToken).ConfigureAwait(false))
+                {
+                    continue;
+                }
+
                 if (initialLiveControlProbe || liveControlProbe.ElapsedMilliseconds >=
                     ExpeditionLiveControlPolicy.ProbeIntervalMilliseconds)
                 {
@@ -94,7 +99,7 @@ internal sealed class ExpeditionMatchRuntimeRunner(
                         progressWatchdog.Restart();
                         if (checkpointAction == ExpeditionNodeAction.Extract)
                         {
-                            MatchTerminalOutcome extractionOutcome = await WaitTerminalWithIdleRewardAsync(
+                            MatchTerminalOutcome extractionOutcome = await WaitTerminalAsync(
                                 options.Device, report, cancellationToken).ConfigureAwait(false);
                             return Passed(extractionOutcome, progress);
                         }
@@ -176,15 +181,12 @@ internal sealed class ExpeditionMatchRuntimeRunner(
                     }
                     if (action == ExpeditionNodeAction.Extract)
                     {
-                        MatchTerminalOutcome extractionOutcome = await WaitTerminalWithIdleRewardAsync(
+                        MatchTerminalOutcome extractionOutcome = await WaitTerminalAsync(
                             options.Device, report, cancellationToken).ConfigureAwait(false);
                         return Passed(extractionOutcome, progress);
                     }
                 }
 
-                await workspace.ClickRobloxAsync(
-                    DebugWorkflowCatalog.ClientSize, IdleRewardPoint, cancellationToken).ConfigureAwait(false);
-                report("EXPEDITION IDLE REWARD CLICK");
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
             }
         }
@@ -205,11 +207,9 @@ internal sealed class ExpeditionMatchRuntimeRunner(
         CancellationToken cancellationToken)
     {
         report("WAITING FOR EXPEDITION MATCH ARRIVAL");
-        DebugOcrSnapshot prestart = await _states.WaitForMatchAsync(
+        DebugOcrSnapshot prestart = await _states.WaitForMatchUntilDeadlineAsync(
             DebugWorkflowCatalog.MatchPrestart,
             device,
-            maximumObservations: 120,
-            retryDelay: TimeSpan.FromSeconds(1),
             cancellationToken).ConfigureAwait(false);
         if (!prestart.Evaluation.IsMatch)
         {
@@ -340,11 +340,9 @@ internal sealed class ExpeditionMatchRuntimeRunner(
         CancellationToken cancellationToken)
     {
         report("WAITING FOR DEFENSE START GAME");
-        DebugOcrSnapshot prestart = await _states.WaitForMatchAsync(
+        DebugOcrSnapshot prestart = await _states.WaitForMatchUntilDeadlineAsync(
             DebugWorkflowCatalog.MatchPrestart,
             device,
-            ExpeditionDefenseStartPolicy.ArrivalMaximumObservations,
-            TimeSpan.FromMilliseconds(ExpeditionDefenseStartPolicy.ArrivalRetryMilliseconds),
             cancellationToken).ConfigureAwait(false);
         if (!prestart.Evaluation.IsMatch)
         {
@@ -354,7 +352,7 @@ internal sealed class ExpeditionMatchRuntimeRunner(
         report("DEFENSE START GAME VERIFIED; REPLAYING PLACEMENTS");
     }
 
-    private async Task<MatchTerminalOutcome> WaitTerminalWithIdleRewardAsync(
+    private async Task<MatchTerminalOutcome> WaitTerminalAsync(
         string device,
         Action<string> report,
         CancellationToken cancellationToken)
@@ -364,9 +362,8 @@ internal sealed class ExpeditionMatchRuntimeRunner(
             MatchTerminalOutcome? terminal = await _terminal.TryObserveAsync(device, cancellationToken)
                 .ConfigureAwait(false);
             if (terminal is MatchTerminalOutcome outcome) return outcome;
-            await workspace.ClickRobloxAsync(
-                DebugWorkflowCatalog.ClientSize, IdleRewardPoint, cancellationToken).ConfigureAwait(false);
-            report("EXPEDITION IDLE REWARD CLICK");
+            await _rewardPopup.DismissAllAsync(
+                device, report, cancellationToken).ConfigureAwait(false);
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
         }
         throw new TimeoutException("Expedition extraction did not reach Victory or Defeat within five minutes.");

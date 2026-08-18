@@ -80,7 +80,7 @@ public partial class StoryWireTestPage : UserControl, IStoppableWorkspacePage
         {
             StoryWireTestResult result = await _deepDebug.RunOperationAsync(
                 "story-wire-test",
-                new DeepDebugOperationContext("dataset-builder", options),
+                new DeepDebugOperationContext("runtime-lab", options),
                 token => _runner.RunAsync(
                     options,
                     new Progress<StoryWireProgress>(ShowProgress),

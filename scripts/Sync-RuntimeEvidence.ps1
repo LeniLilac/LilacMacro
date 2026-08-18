@@ -32,6 +32,12 @@ function Get-PoolPhraseCount([object[]]$annotations) {
 
 function Convert-ToPublicManifestValue([object]$value, [string]$propertyName = '') {
     if ($null -eq $value) { return $null }
+    if ($propertyName -match '(?i)_at_utc$' -and $value -is [DateTime]) {
+        return $value.ToUniversalTime().ToString('O', [Globalization.CultureInfo]::InvariantCulture)
+    }
+    if ($propertyName -match '(?i)_at_utc$' -and $value -is [DateTimeOffset]) {
+        return $value.ToUniversalTime().ToString('O', [Globalization.CultureInfo]::InvariantCulture)
+    }
     if ($value -is [string]) {
         $public = $value `
             -replace '(?i)[A-Z]:\\Users\\[^\\\r\n"]+', '<local-user-root>' `
@@ -52,7 +58,7 @@ function Convert-ToPublicManifestValue([object]$value, [string]$propertyName = '
         for ($index = 0; $index -lt $value.Count; $index++) {
             $value[$index] = Convert-ToPublicManifestValue $value[$index] $propertyName
         }
-        return $value
+        return ,$value
     }
     foreach ($property in @($value.PSObject.Properties | Where-Object MemberType -eq 'NoteProperty')) {
         $property.Value = Convert-ToPublicManifestValue $property.Value $property.Name

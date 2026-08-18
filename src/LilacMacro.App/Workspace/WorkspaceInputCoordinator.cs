@@ -89,8 +89,7 @@ internal sealed class WorkspaceInputCoordinator(
         Func<RobloxWindow, CancellationToken, Task> operation,
         CancellationToken cancellationToken)
     {
-        if (!await operationGate.WaitAsync(0, cancellationToken))
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        await operationGate.WaitAsync(cancellationToken);
         try
         {
             using IDisposable processLease = _crossProcessGate.Acquire();

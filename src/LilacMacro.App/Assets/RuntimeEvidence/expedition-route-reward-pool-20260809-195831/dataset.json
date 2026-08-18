@@ -1,47 +1,45 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "efec147b-25ad-456e-9160-ca327080f8fc",
-    "name":  "Expedition Route Reward Pool",
-    "notes":  "Bundled runtime evidence slice. Original dataset: expedition-route-reward-pool-20260809-195831. Source frames: 1.",
-    "created_at_utc":  "2026-08-09T19:58:31.2812915+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  27800,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-09T19:58:57.4148279+00:00",
-                       "sha256":  "ea2f21c0e9a3b386a4f167b1b2337d0636ffb23f2c7aa0b357f7c421bce7fa3a",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "e48d0368-4c38-4beb-8500-501e18de0b03",
-                                               "bounds":  {
-                                                              "x":  0,
-                                                              "y":  565,
-                                                              "width":  1356,
-                                                              "height":  135
-                                                          },
-                                               "label":  "Route Reward Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "efec147b-25ad-456e-9160-ca327080f8fc",
+  "name": "Expedition Route Reward Pool",
+  "notes": "Bundled runtime evidence slice. Original dataset: expedition-route-reward-pool-20260809-195831. Source frames: 1.",
+  "created_at_utc": "2026-08-09T19:58:31.2812915Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 27800,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-09T19:58:57.4148279Z",
+      "sha256": "ea2f21c0e9a3b386a4f167b1b2337d0636ffb23f2c7aa0b357f7c421bce7fa3a",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "e48d0368-4c38-4beb-8500-501e18de0b03",
+          "bounds": {
+            "x": 0,
+            "y": 565,
+            "width": 1356,
+            "height": 135
+          },
+          "label": "Route Reward Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

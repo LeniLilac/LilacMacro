@@ -1,81 +1,71 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "567f3f22-f682-4d0a-bd4f-21cc3b927617",
-    "name":  "Settings Option Normalizer",
-    "notes":  "reuse settings open/close path as ui scale\r\n\r\nBurst down on units settings to see the bottom ones\r\n\r\napply img/color detection on the rel position of each option\r\n\r\ndont ocr the each settings name/text etc, since the position/order never changes\r\n\r\nBundled runtime evidence slice. Original dataset: settings-option-normalizer-20260813-000739. Source frames: 1, 2, 3, 5, 6.",
-    "created_at_utc":  "2026-08-13T00:07:39.4816156+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  30328,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-13T00:07:41.9989712+00:00",
-                       "sha256":  "a2dfc87bfca02414b3975f206787685692a311f9e407c6bd8e9c95db6550a05c",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-13T00:07:44.1388691+00:00",
-                       "sha256":  "a9f52abca69aa087a5e4662b5fbe29867e216dcd1d5519034606c0dba61c6327",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-13T00:07:46.0359831+00:00",
-                       "sha256":  "948c3383db94ed1b875a36720f3c469b021b38f7da3e91d3e84c3b8effd45fb1",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0005.png",
-                       "captured_at_utc":  "2026-08-13T00:07:50.7656329+00:00",
-                       "sha256":  "6d7a290105373066f08432dcaa52418774adb80a7716bc99ee2f993dc33ffda3",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0006.png",
-                       "captured_at_utc":  "2026-08-13T00:07:53.9724685+00:00",
-                       "sha256":  "479594c020d1a8ae831e4961aa0bd0c9d2d6c4f2cc1f1f17571d570f98896185",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "567f3f22-f682-4d0a-bd4f-21cc3b927617",
+  "name": "Settings Option Normalizer",
+  "notes": "reuse settings open/close path as ui scale\r\n\r\nBurst down on units settings to see the bottom ones\r\n\r\napply img/color detection on the rel position of each option\r\n\r\ndont ocr the each settings name/text etc, since the position/order never changes\r\n\r\nBundled runtime evidence slice. Original dataset: settings-option-normalizer-20260813-000739. Source frames: 1, 2, 3, 5, 6.",
+  "created_at_utc": "2026-08-13T00:07:39.4816156Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 30328,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-13T00:07:41.9989712Z",
+      "sha256": "a2dfc87bfca02414b3975f206787685692a311f9e407c6bd8e9c95db6550a05c",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-13T00:07:44.1388691Z",
+      "sha256": "a9f52abca69aa087a5e4662b5fbe29867e216dcd1d5519034606c0dba61c6327",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-13T00:07:46.0359831Z",
+      "sha256": "948c3383db94ed1b875a36720f3c469b021b38f7da3e91d3e84c3b8effd45fb1",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0005.png",
+      "captured_at_utc": "2026-08-13T00:07:50.7656329Z",
+      "sha256": "6d7a290105373066f08432dcaa52418774adb80a7716bc99ee2f993dc33ffda3",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0006.png",
+      "captured_at_utc": "2026-08-13T00:07:53.9724685Z",
+      "sha256": "479594c020d1a8ae831e4961aa0bd0c9d2d6c4f2cc1f1f17571d570f98896185",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    }
+  ]
 }

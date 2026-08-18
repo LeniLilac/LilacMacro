@@ -1,102 +1,96 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "8d77d81c-cd28-4a9d-89a9-59c9369cc393",
-    "name":  "New start game button",
-    "notes":  "Bundled runtime evidence slice. Original dataset: new-start-game-button-20260814-082314. Source frames: 1, 2, 3.",
-    "created_at_utc":  "2026-08-14T08:23:14.6264762+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  56284,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-14T08:23:17.5184907+00:00",
-                       "sha256":  "77de1300b1dc90799517925a8876a73a632c5547821f3192e3e0ca1269f81eb8",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "99300cd7-497c-4ed3-abdc-a00a00b55d21",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  505,
-                                                              "y":  67,
-                                                              "width":  352,
-                                                              "height":  184
-                                                          },
-                                               "label":  "match prestart",
-                                               "notes":  "Current post-update Start Game state at the recorded UI scale; cloned from the previously verified Match Prestart search region.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-14T08:23:23.5128068+00:00",
-                       "sha256":  "6eed11270b4385a40df03e34564bd6e7bf2934b557d29bf424de2d5aa7f2790e",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "808de30a-d9bd-40e0-b06f-f1c913de1dc3",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  505,
-                                                              "y":  67,
-                                                              "width":  352,
-                                                              "height":  184
-                                                          },
-                                               "label":  "match prestart",
-                                               "notes":  "Current post-update Start Game state at the recorded UI scale; cloned from the previously verified Match Prestart search region.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-14T08:23:33.3444582+00:00",
-                       "sha256":  "297bdecb92d2bc07e4cdd0d7f605f29021d11d08c9642674bc4f7efec8a7765c",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "6d758d8a-919a-4887-aec4-f5a014d2a8ce",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  505,
-                                                              "y":  67,
-                                                              "width":  352,
-                                                              "height":  184
-                                                          },
-                                               "label":  "match prestart",
-                                               "notes":  "Current post-update Start Game state at the recorded UI scale; cloned from the previously verified Match Prestart search region.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "8d77d81c-cd28-4a9d-89a9-59c9369cc393",
+  "name": "New start game button",
+  "notes": "Bundled runtime evidence slice. Original dataset: new-start-game-button-20260814-082314. Source frames: 1, 2, 3.",
+  "created_at_utc": "2026-08-14T08:23:14.6264762Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 56284,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-14T08:23:17.5184907Z",
+      "sha256": "77de1300b1dc90799517925a8876a73a632c5547821f3192e3e0ca1269f81eb8",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "99300cd7-497c-4ed3-abdc-a00a00b55d21",
+          "global_group_id": null,
+          "bounds": {
+            "x": 505,
+            "y": 67,
+            "width": 352,
+            "height": 184
+          },
+          "label": "match prestart",
+          "notes": "Current post-update Start Game state at the recorded UI scale; cloned from the previously verified Match Prestart search region.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-14T08:23:23.5128068Z",
+      "sha256": "6eed11270b4385a40df03e34564bd6e7bf2934b557d29bf424de2d5aa7f2790e",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "808de30a-d9bd-40e0-b06f-f1c913de1dc3",
+          "global_group_id": null,
+          "bounds": {
+            "x": 505,
+            "y": 67,
+            "width": 352,
+            "height": 184
+          },
+          "label": "match prestart",
+          "notes": "Current post-update Start Game state at the recorded UI scale; cloned from the previously verified Match Prestart search region.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-14T08:23:33.3444582Z",
+      "sha256": "297bdecb92d2bc07e4cdd0d7f605f29021d11d08c9642674bc4f7efec8a7765c",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "6d758d8a-919a-4887-aec4-f5a014d2a8ce",
+          "global_group_id": null,
+          "bounds": {
+            "x": 505,
+            "y": 67,
+            "width": 352,
+            "height": 184
+          },
+          "label": "match prestart",
+          "notes": "Current post-update Start Game state at the recorded UI scale; cloned from the previously verified Match Prestart search region.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    }
+  ]
 }

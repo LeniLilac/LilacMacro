@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Automation;
@@ -44,6 +45,9 @@ internal sealed class ObservedStateTransitionRunner(
         int actionAttempts = 0;
         int indeterminateObservations = 0;
         ObservedStateTransitionActionResult? lastAction = null;
+        Stopwatch? retryWindow = budget.RetryWindow is not null
+            ? Stopwatch.StartNew()
+            : null;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -56,7 +60,10 @@ internal sealed class ObservedStateTransitionRunner(
                 observation.Outcome,
                 actionAttempts,
                 indeterminateObservations,
-                budget);
+                budget,
+                retryWindow is not null &&
+                budget.RetryWindow is TimeSpan retryWindowLimit &&
+                retryWindow.Elapsed >= retryWindowLimit);
             switch (decision)
             {
                 case ObservedStateTransitionDecision.Complete:
@@ -71,29 +78,58 @@ internal sealed class ObservedStateTransitionRunner(
                     if (lastAction.Succeeded)
                     {
                         indeterminateObservations = 0;
-                        await Task.Delay(PostActionDelay, cancellationToken);
+                        await Task.Delay(
+                            BoundedDelay(PostActionDelay, budget, retryWindow),
+                            cancellationToken);
                     }
                     else
                     {
                         indeterminateObservations++;
                         await Task.Delay(
-                            ObservedStateTransitionPolicy.ObservationDelay(
-                                indeterminateObservations - 1,
-                                budget),
+                            RetryDelay(indeterminateObservations - 1, budget, retryWindow),
                             cancellationToken);
                     }
                     break;
                 case ObservedStateTransitionDecision.ObserveAgain:
                     indeterminateObservations++;
                     await Task.Delay(
-                        ObservedStateTransitionPolicy.ObservationDelay(
-                            indeterminateObservations - 1,
-                            budget),
+                        RetryDelay(indeterminateObservations - 1, budget, retryWindow),
                         cancellationToken);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(decision));
             }
         }
+    }
+
+    private static TimeSpan RetryDelay(
+        int completedIndeterminateObservations,
+        ObservedStateTransitionBudget budget,
+        Stopwatch? retryWindow)
+    {
+        if (retryWindow is null || budget.RetryWindow is not TimeSpan window)
+            return ObservedStateTransitionPolicy.ObservationDelay(
+                completedIndeterminateObservations,
+                budget);
+
+        TimeSpan remaining = window - retryWindow.Elapsed;
+        if (remaining <= TimeSpan.Zero) return TimeSpan.Zero;
+        TimeSpan interval = TimeSpan.FromMilliseconds(
+            budget.RetryIntervalMilliseconds ??
+            ObservedStateTransitionBudget.DefaultInitialObservationDelayMilliseconds);
+        return interval < remaining ? interval : remaining;
+    }
+
+    private static TimeSpan BoundedDelay(
+        TimeSpan requested,
+        ObservedStateTransitionBudget budget,
+        Stopwatch? retryWindow)
+    {
+        if (retryWindow is null || budget.RetryWindow is not TimeSpan window)
+            return requested;
+
+        TimeSpan remaining = window - retryWindow.Elapsed;
+        if (remaining <= TimeSpan.Zero) return TimeSpan.Zero;
+        return remaining < requested ? remaining : requested;
     }
 }

@@ -36,7 +36,7 @@ The installer displays `TERMS.md` before installation while preserving the repos
 Local installer validation requires Inno Setup 6:
 
 ```powershell
-./scripts/Build-Installer.ps1 -Version 1.0.145 -UnsignedDevelopmentBuild
+./scripts/Build-Installer.ps1 -Version 1.0.149 -UnsignedDevelopmentBuild
 ```
 
 That switch deliberately omits the release manifest and signature, records `release_manifest_signed=false`, and cannot produce a publishable release.

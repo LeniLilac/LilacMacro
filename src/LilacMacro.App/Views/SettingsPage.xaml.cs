@@ -67,7 +67,8 @@ public partial class SettingsPage : UserControl
             ownerState.MinimizeBehavior);
         CheckUpdatesOnStartupCheck.IsChecked = ownerState.CheckForUpdatesOnStartup;
         IncludePrereleaseCheck.IsChecked = ownerState.IncludePrereleaseUpdates;
-        CaptureIntervalCombo.SelectedIndex = 1;
+        CaptureIntervalCombo.SelectedIndex = DeepDebugOptions.CaptureIntervalIndex(
+            _deepDebug.Options.CaptureIntervalMilliseconds);
         LocalInstancesPanel.Initialize(instanceManager, ownerState);
         KeyBindingsItems.ItemsSource = ownerState.KeyBindings.Items;
         PrivateServerText.Text = ownerState.PrivateServerLink;
@@ -146,9 +147,24 @@ public partial class SettingsPage : UserControl
         if (_initialized) GeneralStatusText.Text = "Changed in this session";
     }
 
-    private void SettingChanged_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
+    private async void CaptureInterval_OnSelectionChanged(
+        object sender,
+        SelectionChangedEventArgs eventArgs)
     {
-        if (_initialized) GeneralStatusText.Text = "Profile changed in this session";
+        if (!_initialized) return;
+        int interval = CaptureIntervalCombo.SelectedIndex switch
+        {
+            0 => 500,
+            2 => 2_000,
+            _ => 1_000,
+        };
+        await _deepDebug.UpdateOptionsAsync(
+            DeepDebugCheck.IsChecked == true,
+            _deepDebug.Options.FrameRetentionMinutes,
+            AutomaticCleanupCheck.IsChecked == true,
+            interval);
+        DiagnosticsStatusText.Text =
+            $"Deep debug capture interval saved · {interval / 1000.0:0.0} seconds";
     }
 
     internal async Task CheckOnStartupAsync()

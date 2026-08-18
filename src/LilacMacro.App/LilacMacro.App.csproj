@@ -42,8 +42,10 @@
     <Compile Remove="Runtime\ExpeditionOcrService.cs" />
     <Compile Remove="Runtime\ExpeditionRewardPoolService.cs" />
     <Compile Remove="Runtime\ExpeditionRewardProfileStore.cs" />
+    <Compile Remove="Runtime\ExpeditionRewardPopupService.cs" />
     <Compile Remove="Runtime\ExpeditionSettingsService.cs" />
     <Compile Remove="Runtime\MatchTerminalService.cs" />
+    <Compile Remove="Runtime\TerminalAwarePlacementSetup.cs" />
     <Compile Remove="Runtime\MatchWaveService.cs" />
     <Compile Remove="Runtime\MapPreparationService.cs" />
     <Compile Remove="Runtime\ModalActionLocator.cs" />

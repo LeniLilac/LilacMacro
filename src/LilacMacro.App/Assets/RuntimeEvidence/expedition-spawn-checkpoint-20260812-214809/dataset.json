@@ -1,222 +1,222 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "99eac979-2c52-41d9-b0c0-5644e1fdb396",
-    "name":  "Expedition Spawn Checkpoint",
-    "notes":  "Bundled runtime evidence slice. Original dataset: expedition-spawn-checkpoint-20260812-214809. Source frames: 5.",
-    "created_at_utc":  "2026-08-12T21:48:09.1997425+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  30328,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0005.png",
-                       "captured_at_utc":  "2026-08-12T21:48:36.6615507+00:00",
-                       "sha256":  "a6c28f25e50e6e9acdcb074c6a6071052efa422d6fc87b391bf1ab81af2acd35",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "2356c971-e5f0-4b76-ab56-d708b6b9f3c5",
-                                               "global_group_id":  "ade48304-3130-4c40-b40f-dc785254ca99",
-                                               "bounds":  {
-                                                              "x":  596,
-                                                              "y":  445,
-                                                              "width":  178,
-                                                              "height":  138
-                                                          },
-                                               "label":  "Continue Button",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Continue\n3,600\nLvl 50\nLvl 50",
-                                                                      "confidence":  0.9577100872993469,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  27,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-12T21:51:16.7393732+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  661,
-                                                                                                         "y":  470,
-                                                                                                         "width":  77,
-                                                                                                         "height":  22
-                                                                                                     },
-                                                                                          "text":  "Continue",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999976396560669,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  659,
-                                                                                                         "y":  527,
-                                                                                                         "width":  67,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "3,600",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999681711196899,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  596,
-                                                                                                         "y":  566,
-                                                                                                         "width":  35,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "Lvl 50",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.8699418902397156,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  686,
-                                                                                                         "y":  566,
-                                                                                                         "width":  43,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "Lvl 50",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9609538912773132,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "312f3db6-8f1d-4201-91a0-8e83ab3ecf7b",
-                                               "global_group_id":  "693581ca-a64c-4db5-9306-0403b16c793c",
-                                               "bounds":  {
-                                                              "x":  445,
-                                                              "y":  265,
-                                                              "width":  476,
-                                                              "height":  172
-                                                          },
-                                               "label":  "Continue Confirm",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Continue Expedition\nAre you sure you would like to leave this checkpoint?\nYou will immediately begin traveling to the next node!\nContinue\nCancel",
-                                                                      "confidence":  0.9931367635726929,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  98,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-12T21:51:31.012893+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  614,
-                                                                                                         "y":  278,
-                                                                                                         "width":  164,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "Continue Expedition",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9946492910385132,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  462,
-                                                                                                         "y":  319,
-                                                                                                         "width":  440,
-                                                                                                         "height":  22
-                                                                                                     },
-                                                                                          "text":  "Are you sure you would like to leave this checkpoint?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9873936772346497,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  482,
-                                                                                                         "y":  342,
-                                                                                                         "width":  403,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "You will immediately begin traveling to the next node!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9839926958084106,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  531,
-                                                                                                         "y":  393,
-                                                                                                         "width":  75,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Continue",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999222755432129,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  769,
-                                                                                                         "y":  391,
-                                                                                                         "width":  60,
-                                                                                                         "height":  23
-                                                                                                     },
-                                                                                          "text":  "Cancel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999725878238678,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "99eac979-2c52-41d9-b0c0-5644e1fdb396",
+  "name": "Expedition Spawn Checkpoint",
+  "notes": "Bundled runtime evidence slice. Original dataset: expedition-spawn-checkpoint-20260812-214809. Source frames: 5.",
+  "created_at_utc": "2026-08-12T21:48:09.1997425Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 30328,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0005.png",
+      "captured_at_utc": "2026-08-12T21:48:36.6615507Z",
+      "sha256": "a6c28f25e50e6e9acdcb074c6a6071052efa422d6fc87b391bf1ab81af2acd35",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "2356c971-e5f0-4b76-ab56-d708b6b9f3c5",
+          "global_group_id": "ade48304-3130-4c40-b40f-dc785254ca99",
+          "bounds": {
+            "x": 596,
+            "y": 445,
+            "width": 178,
+            "height": 138
+          },
+          "label": "Continue Button",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Continue\n3,600\nLvl 50\nLvl 50",
+              "confidence": 0.9577100872993469,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 27,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-12T21:51:16.7393732Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 661,
+                    "y": 470,
+                    "width": 77,
+                    "height": 22
+                  },
+                  "text": "Continue",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999976396560669,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 659,
+                    "y": 527,
+                    "width": 67,
+                    "height": 27
+                  },
+                  "text": "3,600",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999681711196899,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 596,
+                    "y": 566,
+                    "width": 35,
+                    "height": 15
+                  },
+                  "text": "Lvl 50",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.8699418902397156,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 686,
+                    "y": 566,
+                    "width": 43,
+                    "height": 15
+                  },
+                  "text": "Lvl 50",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9609538912773132,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "312f3db6-8f1d-4201-91a0-8e83ab3ecf7b",
+          "global_group_id": "693581ca-a64c-4db5-9306-0403b16c793c",
+          "bounds": {
+            "x": 445,
+            "y": 265,
+            "width": 476,
+            "height": 172
+          },
+          "label": "Continue Confirm",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Continue Expedition\nAre you sure you would like to leave this checkpoint?\nYou will immediately begin traveling to the next node!\nContinue\nCancel",
+              "confidence": 0.9931367635726929,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 98,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-12T21:51:31.0128930Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 614,
+                    "y": 278,
+                    "width": 164,
+                    "height": 20
+                  },
+                  "text": "Continue Expedition",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9946492910385132,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 462,
+                    "y": 319,
+                    "width": 440,
+                    "height": 22
+                  },
+                  "text": "Are you sure you would like to leave this checkpoint?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9873936772346497,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 482,
+                    "y": 342,
+                    "width": 403,
+                    "height": 19
+                  },
+                  "text": "You will immediately begin traveling to the next node!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9839926958084106,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 531,
+                    "y": 393,
+                    "width": 75,
+                    "height": 19
+                  },
+                  "text": "Continue",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999222755432129,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 769,
+                    "y": 391,
+                    "width": 60,
+                    "height": 23
+                  },
+                  "text": "Cancel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999725878238678,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

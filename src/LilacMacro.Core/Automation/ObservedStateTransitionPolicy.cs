@@ -26,6 +26,8 @@ public sealed record ObservedStateTransitionBudget
     public int MaximumIndeterminateObservations { get; init; } = DefaultMaximumIndeterminateObservations;
     public int InitialObservationDelayMilliseconds { get; init; } = DefaultInitialObservationDelayMilliseconds;
     public int MaximumObservationDelayMilliseconds { get; init; } = DefaultMaximumObservationDelayMilliseconds;
+    public TimeSpan? RetryWindow { get; init; }
+    public int? RetryIntervalMilliseconds { get; init; }
 
     public void Validate()
     {
@@ -35,6 +37,10 @@ public sealed record ObservedStateTransitionBudget
         ArgumentOutOfRangeException.ThrowIfLessThan(
             MaximumObservationDelayMilliseconds,
             InitialObservationDelayMilliseconds);
+        if (RetryWindow is { } retryWindow && retryWindow <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(RetryWindow));
+        if (RetryIntervalMilliseconds is { } retryInterval && retryInterval < 1)
+            throw new ArgumentOutOfRangeException(nameof(RetryIntervalMilliseconds));
     }
 }
 
@@ -55,12 +61,19 @@ public static class ObservedStateTransitionPolicy
         ObservedStateTransitionOutcome outcome,
         int completedActionAttempts,
         int completedIndeterminateObservations,
-        ObservedStateTransitionBudget budget)
+        ObservedStateTransitionBudget budget,
+        bool retryWindowExpired = false)
     {
         ArgumentNullException.ThrowIfNull(budget);
         budget.Validate();
         ArgumentOutOfRangeException.ThrowIfNegative(completedActionAttempts);
         ArgumentOutOfRangeException.ThrowIfNegative(completedIndeterminateObservations);
+        if (budget.RetryWindow is not null && retryWindowExpired)
+            return outcome == ObservedStateTransitionOutcome.DestinationReached
+                ? ObservedStateTransitionDecision.Complete
+                : ObservedStateTransitionDecision.Exhausted;
+
+        bool canContinueObserving = budget.RetryWindow is not null;
 
         return outcome switch
         {
@@ -68,9 +81,11 @@ public static class ObservedStateTransitionPolicy
             ObservedStateTransitionOutcome.SourceRetained =>
                 completedActionAttempts < budget.MaximumActionAttempts
                     ? ObservedStateTransitionDecision.RetrySourceAction
-                    : ObservedStateTransitionDecision.Exhausted,
+                    : canContinueObserving
+                        ? ObservedStateTransitionDecision.ObserveAgain
+                        : ObservedStateTransitionDecision.Exhausted,
             ObservedStateTransitionOutcome.Indeterminate =>
-                completedIndeterminateObservations < budget.MaximumIndeterminateObservations
+                completedIndeterminateObservations < budget.MaximumIndeterminateObservations || canContinueObserving
                     ? ObservedStateTransitionDecision.ObserveAgain
                     : ObservedStateTransitionDecision.Exhausted,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome)),

@@ -76,7 +76,8 @@ if ($runtimeProject -notmatch 'EmbeddedResource\s+Include="\.\.\\\.\.\\eng\\runt
 
 $stateCatalogs = @(
     'src\LilacMacro.App\Debugging\DebugWorkflowCatalog.cs',
-    'src\LilacMacro.App\Debugging\ExpeditionCheckpointStateCatalog.cs'
+    'src\LilacMacro.App\Debugging\ExpeditionCheckpointStateCatalog.cs',
+    'src\LilacMacro.App\Debugging\ExpeditionRewardStateCatalog.cs'
 )
 $referencedDatasets = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 foreach ($relative in $stateCatalogs) {

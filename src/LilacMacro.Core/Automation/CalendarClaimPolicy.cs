@@ -7,8 +7,6 @@ namespace LilacMacro.Core.Automation;
 public static class CalendarClaimPolicy
 {
     public const int Passes = 3;
-    public static readonly PixelRect LauncherRegion = new(1247, 350, 119, 190);
-    public static readonly PixelRect CalendarRegion = new(247, 88, 864, 523);
 
     public static bool TryResolveClaimPoints(
         IReadOnlyList<OcrTextRegion> regions,

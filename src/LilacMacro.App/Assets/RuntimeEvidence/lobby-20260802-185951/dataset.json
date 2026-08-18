@@ -1,363 +1,363 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "96a9ae8f-3763-45b3-a69c-ac1fd63eca72",
-    "name":  "Lobby",
-    "notes":  "Bundled runtime evidence slice. Original dataset: lobby-20260802-185951. Source frames: 1.",
-    "created_at_utc":  "2026-08-02T18:59:51.4500647+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  36520,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-02T18:59:52.9103839+00:00",
-                       "sha256":  "9efc8404827859b5dfa2081a6872d7209d01aba24cf7d816046a6b5ba5fb2afb",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "612d0c79-0698-420b-ad68-d64e6889ac5d",
-                                               "global_group_id":  "e6bc98ab-cfb8-41b1-b2ef-3c89c792546d",
-                                               "bounds":  {
-                                                              "x":  0,
-                                                              "y":  157,
-                                                              "width":  209,
-                                                              "height":  425
-                                                          },
-                                               "label":  "Lobby State",
-                                               "notes":  "",
-                                               "minimum_pool_matches":  3,
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Store\nI\nH\nUnits\nItems\nQuests\nSummon\nAreas\nPlay\nEvents",
-                                                                      "confidence":  0.9301046639680862,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  96,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-02T19:00:25.9023889+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  92,
-                                                                                                         "y":  201,
-                                                                                                         "width":  56,
-                                                                                                         "height":  25
-                                                                                                     },
-                                                                                          "text":  "Store",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999585151672363,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  44,
-                                                                                                         "y":  235,
-                                                                                                         "width":  5,
-                                                                                                         "height":  6
-                                                                                                     },
-                                                                                          "text":  "I",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.307785302400589,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  17,
-                                                                                                         "y":  246,
-                                                                                                         "width":  19,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "H",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994094371795654,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  33,
-                                                                                                         "y":  311,
-                                                                                                         "width":  46,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Units",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999324083328247,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  119,
-                                                                                                         "y":  311,
-                                                                                                         "width":  48,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Items",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998343586921692,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  29,
-                                                                                                         "y":  397,
-                                                                                                         "width":  58,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Quests",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999184012413025,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  107,
-                                                                                                         "y":  397,
-                                                                                                         "width":  69,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Summon",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999018311500549,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  33,
-                                                                                                         "y":  482,
-                                                                                                         "width":  50,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Areas",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999003410339355,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  120,
-                                                                                                         "y":  477,
-                                                                                                         "width":  44,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "Play",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9945131540298462,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  87,
-                                                                                                         "y":  521,
-                                                                                                         "width":  66,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Events",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998928904533386,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  },
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Store\nI\nH\nUnits\nItems\nQuests\nSummon\nAreas\nPlay\nEvents",
-                                                                      "confidence":  0.9301046639680862,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  250,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-02T19:09:24.5268399+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  92,
-                                                                                                         "y":  201,
-                                                                                                         "width":  56,
-                                                                                                         "height":  25
-                                                                                                     },
-                                                                                          "text":  "Store",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999585151672363,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  44,
-                                                                                                         "y":  235,
-                                                                                                         "width":  5,
-                                                                                                         "height":  6
-                                                                                                     },
-                                                                                          "text":  "I",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.307785302400589,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  17,
-                                                                                                         "y":  246,
-                                                                                                         "width":  19,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "H",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994094371795654,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  33,
-                                                                                                         "y":  311,
-                                                                                                         "width":  46,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Units",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999324083328247,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  119,
-                                                                                                         "y":  311,
-                                                                                                         "width":  48,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Items",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998343586921692,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  29,
-                                                                                                         "y":  397,
-                                                                                                         "width":  58,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Quests",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999184012413025,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  107,
-                                                                                                         "y":  397,
-                                                                                                         "width":  69,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Summon",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999018311500549,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  33,
-                                                                                                         "y":  482,
-                                                                                                         "width":  50,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Areas",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999003410339355,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  120,
-                                                                                                         "y":  477,
-                                                                                                         "width":  44,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "Play",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9945131540298462,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  87,
-                                                                                                         "y":  521,
-                                                                                                         "width":  66,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Events",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998928904533386,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ]
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "96a9ae8f-3763-45b3-a69c-ac1fd63eca72",
+  "name": "Lobby",
+  "notes": "Bundled runtime evidence slice. Original dataset: lobby-20260802-185951. Source frames: 1.",
+  "created_at_utc": "2026-08-02T18:59:51.4500647Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 36520,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-02T18:59:52.9103839Z",
+      "sha256": "9efc8404827859b5dfa2081a6872d7209d01aba24cf7d816046a6b5ba5fb2afb",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "612d0c79-0698-420b-ad68-d64e6889ac5d",
+          "global_group_id": "e6bc98ab-cfb8-41b1-b2ef-3c89c792546d",
+          "bounds": {
+            "x": 0,
+            "y": 157,
+            "width": 209,
+            "height": 425
+          },
+          "label": "Lobby State",
+          "notes": "",
+          "minimum_pool_matches": 3,
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Store\nI\nH\nUnits\nItems\nQuests\nSummon\nAreas\nPlay\nEvents",
+              "confidence": 0.9301046639680862,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 96,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-02T19:00:25.9023889Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 92,
+                    "y": 201,
+                    "width": 56,
+                    "height": 25
+                  },
+                  "text": "Store",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999585151672363,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 44,
+                    "y": 235,
+                    "width": 5,
+                    "height": 6
+                  },
+                  "text": "I",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.307785302400589,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 17,
+                    "y": 246,
+                    "width": 19,
+                    "height": 17
+                  },
+                  "text": "H",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994094371795654,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 33,
+                    "y": 311,
+                    "width": 46,
+                    "height": 19
+                  },
+                  "text": "Units",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999324083328247,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 119,
+                    "y": 311,
+                    "width": 48,
+                    "height": 19
+                  },
+                  "text": "Items",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998343586921692,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 29,
+                    "y": 397,
+                    "width": 58,
+                    "height": 17
+                  },
+                  "text": "Quests",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999184012413025,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 107,
+                    "y": 397,
+                    "width": 69,
+                    "height": 17
+                  },
+                  "text": "Summon",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999018311500549,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 33,
+                    "y": 482,
+                    "width": 50,
+                    "height": 18
+                  },
+                  "text": "Areas",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999003410339355,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 120,
+                    "y": 477,
+                    "width": 44,
+                    "height": 27
+                  },
+                  "text": "Play",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9945131540298462,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 87,
+                    "y": 521,
+                    "width": 66,
+                    "height": 21
+                  },
+                  "text": "Events",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998928904533386,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            },
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Store\nI\nH\nUnits\nItems\nQuests\nSummon\nAreas\nPlay\nEvents",
+              "confidence": 0.9301046639680862,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 250,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-02T19:09:24.5268399Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 92,
+                    "y": 201,
+                    "width": 56,
+                    "height": 25
+                  },
+                  "text": "Store",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999585151672363,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 44,
+                    "y": 235,
+                    "width": 5,
+                    "height": 6
+                  },
+                  "text": "I",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.307785302400589,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 17,
+                    "y": 246,
+                    "width": 19,
+                    "height": 17
+                  },
+                  "text": "H",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994094371795654,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 33,
+                    "y": 311,
+                    "width": 46,
+                    "height": 19
+                  },
+                  "text": "Units",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999324083328247,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 119,
+                    "y": 311,
+                    "width": 48,
+                    "height": 19
+                  },
+                  "text": "Items",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998343586921692,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 29,
+                    "y": 397,
+                    "width": 58,
+                    "height": 17
+                  },
+                  "text": "Quests",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999184012413025,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 107,
+                    "y": 397,
+                    "width": 69,
+                    "height": 17
+                  },
+                  "text": "Summon",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999018311500549,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 33,
+                    "y": 482,
+                    "width": 50,
+                    "height": 18
+                  },
+                  "text": "Areas",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999003410339355,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 120,
+                    "y": 477,
+                    "width": 44,
+                    "height": 27
+                  },
+                  "text": "Play",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9945131540298462,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 87,
+                    "y": 521,
+                    "width": 66,
+                    "height": 21
+                  },
+                  "text": "Events",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998928904533386,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

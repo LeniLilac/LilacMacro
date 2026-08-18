@@ -1,312 +1,312 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "f4dcb6b9-7c27-4ef5-8276-08ac1f997419",
-    "name":  "areas ui",
-    "notes":  "Bundled runtime evidence slice. Original dataset: areas-ui-20260802-231943. Source frames: 1.",
-    "created_at_utc":  "2026-08-02T23:19:43.3696045+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  36520,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-02T23:19:50.0813467+00:00",
-                       "sha256":  "71e422b932ca39ff8fcf13a0fc15f6a875eb769d8d5b770dde999c075e52366e",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "f8e0f463-e4a9-4188-b13b-aca1dc3d3f30",
-                                               "bounds":  {
-                                                              "x":  165,
-                                                              "y":  54,
-                                                              "width":  311,
-                                                              "height":  598
-                                                          },
-                                               "label":  "Areas UI State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Areas\n久\nUpgrade\nUpgra\nGamemode\nLobby\nCrafting\nCraftvalual\ntheir poten\nShop\nExpedition\nStat Po\nReroll or Tra\nimprove th\nUpgrad\nEnhance yo\ntheir power\nGamer",
-                                                                      "confidence":  0.9464566633105278,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  268,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-02T23:21:08.528523+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  175,
-                                                                                                         "y":  54,
-                                                                                                         "width":  75,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "Areas",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997944831848145,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  198,
-                                                                                                         "y":  125,
-                                                                                                         "width":  22,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "久",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.23819254338741302,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  250,
-                                                                                                         "y":  123,
-                                                                                                         "width":  81,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "Upgrade",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998979568481445,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  387,
-                                                                                                         "y":  116,
-                                                                                                         "width":  89,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "Upgra",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999755859375,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  242,
-                                                                                                         "y":  178,
-                                                                                                         "width":  97,
-                                                                                                         "height":  24
-                                                                                                     },
-                                                                                          "text":  "Gamemode",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999593496322632,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  258,
-                                                                                                         "y":  229,
-                                                                                                         "width":  62,
-                                                                                                         "height":  29
-                                                                                                     },
-                                                                                          "text":  "Lobby",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999707937240601,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  400,
-                                                                                                         "y":  224,
-                                                                                                         "width":  76,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "Crafting",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998677968978882,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  400,
-                                                                                                         "y":  246,
-                                                                                                         "width":  76,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "Craftvalual",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9993696808815002,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  400,
-                                                                                                         "y":  260,
-                                                                                                         "width":  76,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "their poten",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9986169934272766,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  264,
-                                                                                                         "y":  283,
-                                                                                                         "width":  51,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "Shop",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9973673820495605,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  244,
-                                                                                                         "y":  339,
-                                                                                                         "width":  92,
-                                                                                                         "height":  24
-                                                                                                     },
-                                                                                          "text":  "Expedition",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999741315841675,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  399,
-                                                                                                         "y":  375,
-                                                                                                         "width":  77,
-                                                                                                         "height":  24
-                                                                                                     },
-                                                                                          "text":  "Stat Po",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9514668583869934,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  400,
-                                                                                                         "y":  397,
-                                                                                                         "width":  76,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Reroll or Tra",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9977444410324097,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  399,
-                                                                                                         "y":  410,
-                                                                                                         "width":  77,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "improve th",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9539969563484192,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  398,
-                                                                                                         "y":  520,
-                                                                                                         "width":  78,
-                                                                                                         "height":  32
-                                                                                                     },
-                                                                                          "text":  "Upgrad",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999843418598175,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  400,
-                                                                                                         "y":  544,
-                                                                                                         "width":  76,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "Enhance yo",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9427582025527954,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  401,
-                                                                                                         "y":  560,
-                                                                                                         "width":  75,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "their power",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9678651690483093,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  414,
-                                                                                                         "y":  599,
-                                                                                                         "width":  62,
-                                                                                                         "height":  24
-                                                                                                     },
-                                                                                          "text":  "Gamer",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9897779226303101,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "f4dcb6b9-7c27-4ef5-8276-08ac1f997419",
+  "name": "areas ui",
+  "notes": "Bundled runtime evidence slice. Original dataset: areas-ui-20260802-231943. Source frames: 1.",
+  "created_at_utc": "2026-08-02T23:19:43.3696045Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 36520,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-02T23:19:50.0813467Z",
+      "sha256": "71e422b932ca39ff8fcf13a0fc15f6a875eb769d8d5b770dde999c075e52366e",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "f8e0f463-e4a9-4188-b13b-aca1dc3d3f30",
+          "bounds": {
+            "x": 165,
+            "y": 54,
+            "width": 311,
+            "height": 598
+          },
+          "label": "Areas UI State",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Areas\n久\nUpgrade\nUpgra\nGamemode\nLobby\nCrafting\nCraftvalual\ntheir poten\nShop\nExpedition\nStat Po\nReroll or Tra\nimprove th\nUpgrad\nEnhance yo\ntheir power\nGamer",
+              "confidence": 0.9464566633105278,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 268,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-02T23:21:08.5285230Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 175,
+                    "y": 54,
+                    "width": 75,
+                    "height": 28
+                  },
+                  "text": "Areas",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997944831848145,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 198,
+                    "y": 125,
+                    "width": 22,
+                    "height": 21
+                  },
+                  "text": "久",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.23819254338741302,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 250,
+                    "y": 123,
+                    "width": 81,
+                    "height": 28
+                  },
+                  "text": "Upgrade",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998979568481445,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 387,
+                    "y": 116,
+                    "width": 89,
+                    "height": 28
+                  },
+                  "text": "Upgra",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999755859375,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 242,
+                    "y": 178,
+                    "width": 97,
+                    "height": 24
+                  },
+                  "text": "Gamemode",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999593496322632,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 258,
+                    "y": 229,
+                    "width": 62,
+                    "height": 29
+                  },
+                  "text": "Lobby",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999707937240601,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 400,
+                    "y": 224,
+                    "width": 76,
+                    "height": 28
+                  },
+                  "text": "Crafting",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998677968978882,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 400,
+                    "y": 246,
+                    "width": 76,
+                    "height": 20
+                  },
+                  "text": "Craftvalual",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9993696808815002,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 400,
+                    "y": 260,
+                    "width": 76,
+                    "height": 20
+                  },
+                  "text": "their poten",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9986169934272766,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 264,
+                    "y": 283,
+                    "width": 51,
+                    "height": 28
+                  },
+                  "text": "Shop",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9973673820495605,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 244,
+                    "y": 339,
+                    "width": 92,
+                    "height": 24
+                  },
+                  "text": "Expedition",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999741315841675,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 399,
+                    "y": 375,
+                    "width": 77,
+                    "height": 24
+                  },
+                  "text": "Stat Po",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9514668583869934,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 400,
+                    "y": 397,
+                    "width": 76,
+                    "height": 17
+                  },
+                  "text": "Reroll or Tra",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9977444410324097,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 399,
+                    "y": 410,
+                    "width": 77,
+                    "height": 19
+                  },
+                  "text": "improve th",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9539969563484192,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 398,
+                    "y": 520,
+                    "width": 78,
+                    "height": 32
+                  },
+                  "text": "Upgrad",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999843418598175,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 400,
+                    "y": 544,
+                    "width": 76,
+                    "height": 20
+                  },
+                  "text": "Enhance yo",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9427582025527954,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 401,
+                    "y": 560,
+                    "width": 75,
+                    "height": 17
+                  },
+                  "text": "their power",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9678651690483093,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 414,
+                    "y": 599,
+                    "width": 62,
+                    "height": 24
+                  },
+                  "text": "Gamer",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9897779226303101,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

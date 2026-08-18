@@ -65,10 +65,14 @@
              Link="Runtime\ExpeditionRewardPoolService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\ExpeditionRewardProfileStore.cs"
              Link="Runtime\ExpeditionRewardProfileStore.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\ExpeditionRewardPopupService.cs"
+             Link="Runtime\ExpeditionRewardPopupService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\ExpeditionSettingsService.cs"
              Link="Runtime\ExpeditionSettingsService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MatchTerminalService.cs"
              Link="Runtime\MatchTerminalService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\TerminalAwarePlacementSetup.cs"
+             Link="Runtime\TerminalAwarePlacementSetup.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MatchWaveService.cs"
              Link="Runtime\MatchWaveService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MapPreparationService.cs"

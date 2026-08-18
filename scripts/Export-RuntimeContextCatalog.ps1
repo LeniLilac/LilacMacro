@@ -16,6 +16,7 @@ if ([string]::IsNullOrWhiteSpace($OutputPath)) {
 }
 
 function Get-OptionalProperty([object]$Value, [string]$Name) {
+    if ($null -eq $Value) { return $null }
     $property = $Value.PSObject.Properties[$Name]
     if ($null -eq $property) { return $null }
     return $property.Value
@@ -35,10 +36,11 @@ $datasets = foreach ($directory in Get-ChildItem -LiteralPath $EvidenceRoot -Dir
     foreach ($frameRecord in @($manifest.frames)) {
         $frame++
         foreach ($annotation in @($frameRecord.annotations)) {
-            if (-not [string]::IsNullOrWhiteSpace([string]$annotation.label)) {
+            $label = Get-OptionalProperty $annotation 'label'
+            if (-not [string]::IsNullOrWhiteSpace([string]$label)) {
                 $annotations.Add([ordered]@{
                     Frame = $frame
-                    Label = [string]$annotation.label
+                    Label = [string]$label
                     Bounds = [ordered]@{
                         X = [int]$annotation.bounds.x
                         Y = [int]$annotation.bounds.y
@@ -48,8 +50,10 @@ $datasets = foreach ($directory in Get-ChildItem -LiteralPath $EvidenceRoot -Dir
                 })
             }
 
-            foreach ($trial in @($annotation.ocr_trials)) {
-                foreach ($region in @($trial.regions)) {
+            foreach ($trial in @(Get-OptionalProperty $annotation 'ocr_trials')) {
+                if ($null -eq $trial) { continue }
+                foreach ($region in @(Get-OptionalProperty $trial 'regions')) {
+                    if ($null -eq $region) { continue }
                     if ((Get-OptionalProperty $region 'is_visual_anchor') -ne $true -or
                         [string]::IsNullOrWhiteSpace([string](Get-OptionalProperty $region 'text'))) {
                         continue

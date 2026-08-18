@@ -18,6 +18,8 @@ public sealed partial class DeepDebugSessionService
     private readonly string _appDataRoot;
     private readonly string _diagnosticsRoot;
     private readonly DeepDebugOptionsStore _optionsStore;
+    private readonly Dictionary<string, DeepDebugFrameCaptureProvider> _frameCaptureProviders =
+        new(StringComparer.OrdinalIgnoreCase);
     private DeepDebugSession? _active;
 
     public DeepDebugSessionService() : this(Path.Combine(
@@ -51,6 +53,17 @@ public sealed partial class DeepDebugSessionService
 
     public event EventHandler<string>? ArchiveSaved;
 
+    internal IDisposable RegisterFrameCaptureProvider(
+        string surface,
+        Func<CancellationToken, Task> capture)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(surface);
+        ArgumentNullException.ThrowIfNull(capture);
+        DeepDebugFrameCaptureProvider provider = new(surface, capture);
+        lock (_gate) _frameCaptureProviders[surface] = provider;
+        return new Registration(this, provider);
+    }
+
     public async Task CompleteActiveAsync(string outcome, Exception? error = null)
     {
         DeepDebugSession? session = ActiveSession();
@@ -68,13 +81,16 @@ public sealed partial class DeepDebugSessionService
     public async Task UpdateOptionsAsync(
         bool enabled,
         int frameRetentionMinutes,
-        bool? automaticCleanupEnabled = null)
+        bool? automaticCleanupEnabled = null,
+        int? captureIntervalMilliseconds = null)
     {
         Options = new DeepDebugOptions
         {
             Enabled = enabled,
             FrameRetentionMinutes = DeepDebugOptions.NormalizeFrameRetention(frameRetentionMinutes),
             AutomaticCleanupEnabled = automaticCleanupEnabled ?? Options.AutomaticCleanupEnabled,
+            CaptureIntervalMilliseconds = DeepDebugOptions.NormalizeCaptureInterval(
+                captureIntervalMilliseconds ?? Options.CaptureIntervalMilliseconds),
         };
         await _optionsStore.SaveAsync(Options);
         if (Options.AutomaticCleanupEnabled) PruneOldArchives();
@@ -130,6 +146,14 @@ public sealed partial class DeepDebugSessionService
             RecordEvent("configuration", "snapshot_failed", new { Error = error.ToString() });
         }
         RecordEvent("session", "started", new { operation, context.Surface });
+        DeepDebugFrameCaptureProvider? provider = GetFrameCaptureProvider(context.Surface);
+        session.FrameCaptureLoop = provider is null
+            ? null
+            : new DeepDebugFrameCaptureLoop(
+                this,
+                provider.Capture,
+                Options.CaptureIntervalMilliseconds);
+        session.FrameCaptureLoop?.Start();
         return new DeepDebugScope(this, session);
     }
 
@@ -236,6 +260,11 @@ public sealed partial class DeepDebugSessionService
     internal async Task CompleteAsync(DeepDebugSession session, string outcome, Exception? error)
     {
         if (!ReferenceEquals(ActiveSession(), session)) return;
+        if (session.FrameCaptureLoop is { } frameCaptureLoop)
+        {
+            await frameCaptureLoop.StopAsync();
+            session.FrameCaptureLoop = null;
+        }
         RecordEvent("session", "finished", new
         {
             Outcome = outcome,
@@ -430,8 +459,41 @@ public sealed partial class DeepDebugSessionService
         lock (_gate) return _active;
     }
 
-    private static string GetVersion() =>
-        Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "unknown";
+    private DeepDebugFrameCaptureProvider? GetFrameCaptureProvider(string surface)
+    {
+        lock (_gate)
+        {
+            return _frameCaptureProviders.TryGetValue(surface, out DeepDebugFrameCaptureProvider? provider)
+                ? provider
+                : null;
+        }
+    }
+
+    private void RemoveFrameCaptureProvider(DeepDebugFrameCaptureProvider provider)
+    {
+        lock (_gate)
+        {
+            if (_frameCaptureProviders.TryGetValue(provider.Surface, out DeepDebugFrameCaptureProvider? current) &&
+                ReferenceEquals(current, provider))
+            {
+                _frameCaptureProviders.Remove(provider.Surface);
+            }
+        }
+    }
+
+    private sealed class Registration(
+        DeepDebugSessionService service,
+        DeepDebugFrameCaptureProvider provider) : IDisposable
+    {
+        private int _disposed;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+                service.RemoveFrameCaptureProvider(provider);
+        }
+    }
+    private static string GetVersion() => Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "unknown";
 
     private static string SafeName(string value)
     {
@@ -478,30 +540,4 @@ public sealed partial class DeepDebugSessionService
         WriteIndented = writeIndented,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
-}
-
-public sealed class DeepDebugScope
-{
-    private readonly DeepDebugSessionService _service;
-    private readonly DeepDebugSession _session;
-    private int _completed;
-
-    internal DeepDebugScope(DeepDebugSessionService service, DeepDebugSession session)
-    {
-        _service = service;
-        _session = session;
-    }
-
-    public async Task CompleteAsync(string outcome, Exception? error = null)
-    {
-        if (Interlocked.Exchange(ref _completed, 1) != 0) return;
-        try
-        {
-            await _service.CompleteAsync(_session, outcome, error);
-        }
-        catch (Exception finalizationError)
-        {
-            _service.PreserveFinalizationError(_session, finalizationError);
-        }
-    }
 }

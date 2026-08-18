@@ -40,6 +40,41 @@ public sealed class ObservedStateTransitionPolicyTests
                 new ObservedStateTransitionBudget()));
     }
 
+    [Fact]
+    public void TimedBudgetKeepsObservingAfterActionAndObservationCaps()
+    {
+        ObservedStateTransitionBudget budget = new()
+        {
+            MaximumActionAttempts = 1,
+            MaximumIndeterminateObservations = 1,
+            RetryWindow = TimeSpan.FromMinutes(2),
+            RetryIntervalMilliseconds = 250,
+        };
+
+        Assert.Equal(
+            ObservedStateTransitionDecision.ObserveAgain,
+            ObservedStateTransitionPolicy.Decide(
+                ObservedStateTransitionOutcome.SourceRetained,
+                completedActionAttempts: 1,
+                completedIndeterminateObservations: 0,
+                budget));
+        Assert.Equal(
+            ObservedStateTransitionDecision.ObserveAgain,
+            ObservedStateTransitionPolicy.Decide(
+                ObservedStateTransitionOutcome.Indeterminate,
+                completedActionAttempts: 1,
+                completedIndeterminateObservations: 1,
+                budget));
+        Assert.Equal(
+            ObservedStateTransitionDecision.Exhausted,
+            ObservedStateTransitionPolicy.Decide(
+                ObservedStateTransitionOutcome.SourceRetained,
+                completedActionAttempts: 1,
+                completedIndeterminateObservations: 1,
+                budget,
+                retryWindowExpired: true));
+    }
+
     [Theory]
     [InlineData(0, 300)]
     [InlineData(1, 600)]
@@ -66,6 +101,16 @@ public sealed class ObservedStateTransitionPolicyTests
                 0,
                 0,
                 budget));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            ObservedStateTransitionPolicy.Decide(
+                ObservedStateTransitionOutcome.SourceRetained,
+                0,
+                0,
+                new ObservedStateTransitionBudget
+                {
+                    RetryWindow = TimeSpan.FromSeconds(-1),
+                }));
     }
 
     [Fact]

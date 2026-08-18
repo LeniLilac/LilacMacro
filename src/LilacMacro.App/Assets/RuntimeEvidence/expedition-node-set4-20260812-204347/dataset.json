@@ -1,295 +1,269 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "b8b1e7a5-d22f-4dd3-9ee5-0315656202c9",
-    "name":  "Expedition Node Set4",
-    "notes":  "diff ui scales\r\n\r\nBundled runtime evidence slice. Original dataset: expedition-node-set4-20260812-204347. Source frames: 1, 2, 3, 4, 5, 6.",
-    "created_at_utc":  "2026-08-12T20:43:47.949882+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  30328,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-12T20:43:49.5160854+00:00",
-                       "sha256":  "5bbcdf477d12098ab2adfd78d46281977f9617c35652274abe13824c33fd8223",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "67ef134e-c8ca-46ee-a1b1-01de2ca46cd4",
-                                               "global_group_id":  "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
-                                               "bounds":  {
-                                                              "x":  348,
-                                                              "y":  61,
-                                                              "width":  660,
-                                                              "height":  55
-                                                          },
-                                               "label":  "Node Tooltip Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "21282c95-7b60-43a8-8774-598fcdb76ddd",
-                                               "global_group_id":  "3fa83931-4005-423a-9dd5-fd480bae4e33",
-                                               "bounds":  {
-                                                              "x":  300,
-                                                              "y":  73,
-                                                              "width":  746,
-                                                              "height":  3
-                                                          },
-                                               "label":  "Hover Line",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "c86c3352-53a8-446e-8746-d0a6700c4374",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  330,
-                                                              "y":  52,
-                                                              "width":  700,
-                                                              "height":  62
-                                                          },
-                                               "label":  "Node Bar Search",
-                                               "notes":  "Bounded current-node bar and marker raster used by the per-instance color hot path.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-12T20:43:50.7506422+00:00",
-                       "sha256":  "044948214ee93009e19e2725d800b05b9c79bbbd89903e6253680d97608da5c5",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "9a3ace9b-55b3-41d0-b265-dd3d7a46affa",
-                                               "global_group_id":  "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
-                                               "bounds":  {
-                                                              "x":  348,
-                                                              "y":  61,
-                                                              "width":  660,
-                                                              "height":  55
-                                                          },
-                                               "label":  "Node Tooltip Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "596d925f-e0c1-48cc-b396-d540d3a8245f",
-                                               "global_group_id":  "3fa83931-4005-423a-9dd5-fd480bae4e33",
-                                               "bounds":  {
-                                                              "x":  300,
-                                                              "y":  73,
-                                                              "width":  746,
-                                                              "height":  3
-                                                          },
-                                               "label":  "Hover Line",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-12T20:43:54.9676862+00:00",
-                       "sha256":  "2024a1b7e7d1becfd849e717cf5b95a735b0260feaac387e2da685b1d43453f0",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "7f2a8e42-fd71-4a04-ad0a-6d2be97d242f",
-                                               "global_group_id":  "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
-                                               "bounds":  {
-                                                              "x":  348,
-                                                              "y":  61,
-                                                              "width":  660,
-                                                              "height":  55
-                                                          },
-                                               "label":  "Node Tooltip Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "8bdd6bd8-d38a-47f4-948a-a173ebeeefbf",
-                                               "global_group_id":  "3fa83931-4005-423a-9dd5-fd480bae4e33",
-                                               "bounds":  {
-                                                              "x":  300,
-                                                              "y":  73,
-                                                              "width":  746,
-                                                              "height":  3
-                                                          },
-                                               "label":  "Hover Line",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0004.png",
-                       "captured_at_utc":  "2026-08-12T20:43:56.3610524+00:00",
-                       "sha256":  "8a1114f3cd238c53ebe10792aac2c6db2523110e7fe0ee76fc9c981190b76200",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "5d4efa9b-fb2a-4f0d-b9cb-703c4369639b",
-                                               "global_group_id":  "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
-                                               "bounds":  {
-                                                              "x":  348,
-                                                              "y":  61,
-                                                              "width":  660,
-                                                              "height":  55
-                                                          },
-                                               "label":  "Node Tooltip Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "4146c84f-adc0-4068-bd63-cd7bad013ae9",
-                                               "global_group_id":  "3fa83931-4005-423a-9dd5-fd480bae4e33",
-                                               "bounds":  {
-                                                              "x":  300,
-                                                              "y":  73,
-                                                              "width":  746,
-                                                              "height":  3
-                                                          },
-                                               "label":  "Hover Line",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0005.png",
-                       "captured_at_utc":  "2026-08-12T20:44:02.9419266+00:00",
-                       "sha256":  "eb9af810918e1c03c3f128f01a20548e6602badab19c97f5e050adcc7991d1c6",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "39f5ea1b-86c5-49b4-bd9e-8b4b64fb7abe",
-                                               "global_group_id":  "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
-                                               "bounds":  {
-                                                              "x":  348,
-                                                              "y":  61,
-                                                              "width":  660,
-                                                              "height":  55
-                                                          },
-                                               "label":  "Node Tooltip Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "e277eb87-cc98-4535-a6db-3676d8f630b9",
-                                               "global_group_id":  "3fa83931-4005-423a-9dd5-fd480bae4e33",
-                                               "bounds":  {
-                                                              "x":  300,
-                                                              "y":  73,
-                                                              "width":  746,
-                                                              "height":  3
-                                                          },
-                                               "label":  "Hover Line",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0006.png",
-                       "captured_at_utc":  "2026-08-12T20:44:04.0452769+00:00",
-                       "sha256":  "e4313fd8a5897c5721f716b11ce6dafe52876925d7daaa623047f579e94ebbd0",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "e2f02b60-1f63-4317-b73f-7f65e21c2ae0",
-                                               "global_group_id":  "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
-                                               "bounds":  {
-                                                              "x":  348,
-                                                              "y":  61,
-                                                              "width":  660,
-                                                              "height":  55
-                                                          },
-                                               "label":  "Node Tooltip Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "0f712782-d866-4917-b0aa-8e4fdcc38231",
-                                               "global_group_id":  "3fa83931-4005-423a-9dd5-fd480bae4e33",
-                                               "bounds":  {
-                                                              "x":  300,
-                                                              "y":  73,
-                                                              "width":  746,
-                                                              "height":  3
-                                                          },
-                                               "label":  "Hover Line",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "b8b1e7a5-d22f-4dd3-9ee5-0315656202c9",
+  "name": "Expedition Node Set4",
+  "notes": "diff ui scales\r\n\r\nBundled runtime evidence slice. Original dataset: expedition-node-set4-20260812-204347. Source frames: 1, 2, 3, 4, 5, 6.",
+  "created_at_utc": "2026-08-12T20:43:47.9498820Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 30328,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-12T20:43:49.5160854Z",
+      "sha256": "5bbcdf477d12098ab2adfd78d46281977f9617c35652274abe13824c33fd8223",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "67ef134e-c8ca-46ee-a1b1-01de2ca46cd4",
+          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "bounds": {
+            "x": 348,
+            "y": 61,
+            "width": 660,
+            "height": 55
+          },
+          "label": "Node Tooltip Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "21282c95-7b60-43a8-8774-598fcdb76ddd",
+          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "bounds": {
+            "x": 300,
+            "y": 73,
+            "width": 746,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "c86c3352-53a8-446e-8746-d0a6700c4374",
+          "global_group_id": null,
+          "bounds": {
+            "x": 330,
+            "y": 52,
+            "width": 700,
+            "height": 62
+          },
+          "label": "Node Bar Search",
+          "notes": "Bounded current-node bar and marker raster used by the per-instance color hot path.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-12T20:43:50.7506422Z",
+      "sha256": "044948214ee93009e19e2725d800b05b9c79bbbd89903e6253680d97608da5c5",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "9a3ace9b-55b3-41d0-b265-dd3d7a46affa",
+          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "bounds": {
+            "x": 348,
+            "y": 61,
+            "width": 660,
+            "height": 55
+          },
+          "label": "Node Tooltip Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "596d925f-e0c1-48cc-b396-d540d3a8245f",
+          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "bounds": {
+            "x": 300,
+            "y": 73,
+            "width": 746,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-12T20:43:54.9676862Z",
+      "sha256": "2024a1b7e7d1becfd849e717cf5b95a735b0260feaac387e2da685b1d43453f0",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "7f2a8e42-fd71-4a04-ad0a-6d2be97d242f",
+          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "bounds": {
+            "x": 348,
+            "y": 61,
+            "width": 660,
+            "height": 55
+          },
+          "label": "Node Tooltip Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "8bdd6bd8-d38a-47f4-948a-a173ebeeefbf",
+          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "bounds": {
+            "x": 300,
+            "y": 73,
+            "width": 746,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0004.png",
+      "captured_at_utc": "2026-08-12T20:43:56.3610524Z",
+      "sha256": "8a1114f3cd238c53ebe10792aac2c6db2523110e7fe0ee76fc9c981190b76200",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "5d4efa9b-fb2a-4f0d-b9cb-703c4369639b",
+          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "bounds": {
+            "x": 348,
+            "y": 61,
+            "width": 660,
+            "height": 55
+          },
+          "label": "Node Tooltip Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "4146c84f-adc0-4068-bd63-cd7bad013ae9",
+          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "bounds": {
+            "x": 300,
+            "y": 73,
+            "width": 746,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0005.png",
+      "captured_at_utc": "2026-08-12T20:44:02.9419266Z",
+      "sha256": "eb9af810918e1c03c3f128f01a20548e6602badab19c97f5e050adcc7991d1c6",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "39f5ea1b-86c5-49b4-bd9e-8b4b64fb7abe",
+          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "bounds": {
+            "x": 348,
+            "y": 61,
+            "width": 660,
+            "height": 55
+          },
+          "label": "Node Tooltip Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "e277eb87-cc98-4535-a6db-3676d8f630b9",
+          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "bounds": {
+            "x": 300,
+            "y": 73,
+            "width": 746,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0006.png",
+      "captured_at_utc": "2026-08-12T20:44:04.0452769Z",
+      "sha256": "e4313fd8a5897c5721f716b11ce6dafe52876925d7daaa623047f579e94ebbd0",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "e2f02b60-1f63-4317-b73f-7f65e21c2ae0",
+          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "bounds": {
+            "x": 348,
+            "y": 61,
+            "width": 660,
+            "height": 55
+          },
+          "label": "Node Tooltip Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "0f712782-d866-4917-b0aa-8e4fdcc38231",
+          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "bounds": {
+            "x": 300,
+            "y": 73,
+            "width": 746,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

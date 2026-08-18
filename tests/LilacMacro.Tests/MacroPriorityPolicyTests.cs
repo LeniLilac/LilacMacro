@@ -66,6 +66,43 @@ public sealed class MacroPriorityPolicyTests
     }
 
     [Fact]
+    public void OpportunisticSelectionReturnsOnlyQuarantinedEnabledUtilities()
+    {
+        PlanTaskPrototype utility = Task(PlanTaskMode.Utilities, 1, 400);
+        PlanTaskPrototype story = Task(PlanTaskMode.Story, 2, 1);
+        PlanPrototype plan = new("test", [utility, story]);
+        Dictionary<PlanTaskPrototype, int> victories = [];
+        Dictionary<PlanLoopPrototype, int> completedRuns = [];
+        DateTimeOffset observedAt = new(2026, 8, 17, 12, 0, 0, TimeSpan.Zero);
+
+        Assert.Same(
+            utility,
+            MacroPriorityPolicy.SelectOpportunisticUtilityAt(
+                plan,
+                victories,
+                completedRuns,
+                new HashSet<PlanTaskPrototype> { utility },
+                observedAt,
+                (_, _) => true));
+        Assert.Null(
+            MacroPriorityPolicy.SelectOpportunisticUtilityAt(
+                plan,
+                victories,
+                completedRuns,
+                new HashSet<PlanTaskPrototype>(),
+                observedAt,
+                (_, _) => true));
+        Assert.Null(
+            MacroPriorityPolicy.SelectOpportunisticUtilityAt(
+                plan,
+                victories,
+                completedRuns,
+                new HashSet<PlanTaskPrototype> { utility },
+                observedAt,
+                (_, _) => false));
+    }
+
+    [Fact]
     public void EligibleSelectionUsesOneSharedObservationTime()
     {
         PlanTaskPrototype expedition = Task(PlanTaskMode.Expedition, 1, 15_000);

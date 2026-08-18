@@ -9,7 +9,7 @@ public sealed partial class WorkspaceController
 
     public async Task<byte[]?> CaptureWebhookScreenshotAsync(CancellationToken cancellationToken = default)
     {
-        if (!await _operationGate.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false))
+        if (!await _operationGate.WaitAsync(0, cancellationToken).ConfigureAwait(false))
             return null;
         try
         {

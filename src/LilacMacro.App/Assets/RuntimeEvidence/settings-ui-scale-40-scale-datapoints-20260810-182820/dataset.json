@@ -1,81 +1,71 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "61fe8244-2d1f-43f4-99d4-c66bda3c863f",
-    "name":  "Settings UI Scale, 40 scale datapoints",
-    "notes":  "0.80 to 1.20\r\n\r\nRefer to expeditions macro to see how it checked if ui scale was correct\r\n\r\ni think it edge detected the settings ui border and used that size to check?\r\n\r\nBundled runtime evidence slice. Original dataset: settings-ui-scale-40-scale-datapoints-20260810-182820. Source frames: 1, 10, 20, 30, 40.",
-    "created_at_utc":  "2026-08-10T18:28:20.3615182+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  10548,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-10T18:28:23.5340323+00:00",
-                       "sha256":  "809ef23ebeec1801f31a5f8b18828fcea877534a2275610193e917f23d6a2155",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0010.png",
-                       "captured_at_utc":  "2026-08-10T18:28:50.3125285+00:00",
-                       "sha256":  "93c37481b2ee8b9a452667a57604e8375257d73e1760d52a2848108c69940948",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0020.png",
-                       "captured_at_utc":  "2026-08-10T18:29:25.199091+00:00",
-                       "sha256":  "07f75d218c06f6c72dde12ea464b963e5ecfa8d93a9f2a45821da2be370dd8dd",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0030.png",
-                       "captured_at_utc":  "2026-08-10T18:29:52.3529985+00:00",
-                       "sha256":  "88ee717ff318849abe3c3059c788b3a35606f66cf476ee1f8f683f4d9fd119b9",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0040.png",
-                       "captured_at_utc":  "2026-08-10T18:30:18.8195687+00:00",
-                       "sha256":  "c06b250094735ffce9e9c60a23de239d138f6264516b5cfde7ad2863d2c4dff6",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "61fe8244-2d1f-43f4-99d4-c66bda3c863f",
+  "name": "Settings UI Scale, 40 scale datapoints",
+  "notes": "0.80 to 1.20\r\n\r\nRefer to expeditions macro to see how it checked if ui scale was correct\r\n\r\ni think it edge detected the settings ui border and used that size to check?\r\n\r\nBundled runtime evidence slice. Original dataset: settings-ui-scale-40-scale-datapoints-20260810-182820. Source frames: 1, 10, 20, 30, 40.",
+  "created_at_utc": "2026-08-10T18:28:20.3615182Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 10548,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-10T18:28:23.5340323Z",
+      "sha256": "809ef23ebeec1801f31a5f8b18828fcea877534a2275610193e917f23d6a2155",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0010.png",
+      "captured_at_utc": "2026-08-10T18:28:50.3125285Z",
+      "sha256": "93c37481b2ee8b9a452667a57604e8375257d73e1760d52a2848108c69940948",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0020.png",
+      "captured_at_utc": "2026-08-10T18:29:25.1990910Z",
+      "sha256": "07f75d218c06f6c72dde12ea464b963e5ecfa8d93a9f2a45821da2be370dd8dd",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0030.png",
+      "captured_at_utc": "2026-08-10T18:29:52.3529985Z",
+      "sha256": "88ee717ff318849abe3c3059c788b3a35606f66cf476ee1f8f683f4d9fd119b9",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0040.png",
+      "captured_at_utc": "2026-08-10T18:30:18.8195687Z",
+      "sha256": "c06b250094735ffce9e9c60a23de239d138f6264516b5cfde7ad2863d2c4dff6",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    }
+  ]
 }

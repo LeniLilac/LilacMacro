@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using LilacMacro.App.Debugging;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
@@ -146,8 +147,11 @@ internal sealed class ExpeditionRewardPoolService(
         string device,
         CancellationToken cancellationToken)
     {
-        for (int attempt = 0; attempt < 8; attempt++)
+        Stopwatch retryWindow = Stopwatch.StartNew();
+        int attempts = 0;
+        while (MatchLoadPolicy.IsWithinRetryWindow(retryWindow.Elapsed))
         {
+            attempts++;
             DebugRunReport prestart = await _debug.CheckMatchPrestartAsync(device, cancellationToken)
                 .ConfigureAwait(false);
             if (prestart.Succeeded) return;
@@ -156,17 +160,24 @@ internal sealed class ExpeditionRewardPoolService(
                 await workspace.ClickRobloxAsync(
                     DebugWorkflowCatalog.ClientSize, observation.BackPoint, cancellationToken).ConfigureAwait(false);
             }
-            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(
+                MatchLoadPolicy.RetryDelay(retryWindow.Elapsed),
+                cancellationToken).ConfigureAwait(false);
         }
-        throw new InvalidOperationException("Route Rewards did not return to verified match prestart.");
+        throw new InvalidOperationException(
+            $"Route Rewards did not return to verified match prestart within " +
+            $"{MatchLoadPolicy.RetryWindow.TotalSeconds:0} seconds after {attempts} fresh attempt(s).");
     }
 
     public async Task BackToPrestartAfterReadFailureAsync(
         string device,
         CancellationToken cancellationToken)
     {
-        for (int attempt = 0; attempt < 8; attempt++)
+        Stopwatch retryWindow = Stopwatch.StartNew();
+        int attempts = 0;
+        while (MatchLoadPolicy.IsWithinRetryWindow(retryWindow.Elapsed))
         {
+            attempts++;
             DebugRunReport prestart = await _debug.CheckMatchPrestartAsync(device, cancellationToken)
                 .ConfigureAwait(false);
             if (prestart.Succeeded) return;
@@ -176,27 +187,46 @@ internal sealed class ExpeditionRewardPoolService(
             if (back is not null)
                 await workspace.ClickRobloxAsync(
                     DebugWorkflowCatalog.ClientSize, back.Bounds.Center, cancellationToken).ConfigureAwait(false);
-            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(
+                MatchLoadPolicy.RetryDelay(retryWindow.Elapsed),
+                cancellationToken).ConfigureAwait(false);
         }
-        throw new InvalidOperationException("Route Rewards recovery did not reach verified match prestart.");
+        throw new InvalidOperationException(
+            $"Route Rewards recovery did not reach verified match prestart within " +
+            $"{MatchLoadPolicy.RetryWindow.TotalSeconds:0} seconds after {attempts} fresh attempt(s).");
     }
 
     public async Task StartGameForRouteAsync(
         string device,
         CancellationToken cancellationToken)
     {
-        for (int attempt = 0; attempt < 8; attempt++)
+        Stopwatch retryWindow = Stopwatch.StartNew();
+        int attempts = 0;
+        bool clickIssued = false;
+        while (MatchLoadPolicy.IsWithinRetryWindow(retryWindow.Elapsed))
         {
+            attempts++;
             DebugRunReport prestart = await _debug.CheckMatchPrestartAsync(device, cancellationToken)
                 .ConfigureAwait(false);
-            if (!prestart.Succeeded) return;
-            DebugRunReport start = await _debug.StartGameAsync(device, cancellationToken)
-                .ConfigureAwait(false);
-            if (!start.Succeeded)
-                throw new InvalidOperationException("Verified match prestart did not expose Start Game.");
-            await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
+            if (prestart.Succeeded)
+            {
+                DebugRunReport start = await _debug.StartGameAsync(device, cancellationToken)
+                    .ConfigureAwait(false);
+                clickIssued |= start.Succeeded;
+            }
+            else if (clickIssued)
+            {
+                return;
+            }
+
+            TimeSpan delay = MatchLoadPolicy.RetryDelay(retryWindow.Elapsed);
+            if (delay <= TimeSpan.Zero) break;
+            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
         }
-        throw new InvalidOperationException("Start Game remained at match prestart after bounded retries.");
+
+        throw new InvalidOperationException(
+            $"Start Game did not complete within {MatchLoadPolicy.RetryWindow.TotalSeconds:0} " +
+            $"seconds after {attempts} fresh attempt(s).");
     }
 
     private async Task<bool> IsBackVisibleAsync(string device, CancellationToken cancellationToken)

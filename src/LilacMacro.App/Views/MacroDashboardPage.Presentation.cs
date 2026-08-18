@@ -59,19 +59,25 @@ public partial class MacroDashboardPage
             _victories,
             _completedLoopRuns,
             DateTimeOffset.UtcNow,
-            EligibleAt);
+            EligibleAt,
+            _recovery.IsIndefinitelyQuarantined);
 
     private void AppendLog(string message)
     {
-        _deepDebug.RecordRuntimeLog(message);
+        string entry = $"{DateTime.Now:HH:mm:ss} {message}";
+        _deepDebug.RecordRuntimeLog(entry);
         if (!Dispatcher.CheckAccess())
         {
             if (!Dispatcher.HasShutdownStarted)
-                _ = Dispatcher.BeginInvoke(() => AppendLog(message));
+                _ = Dispatcher.BeginInvoke(() => AppendLogEntry(entry));
             return;
         }
 
-        string entry = $"{DateTime.Now:HH:mm:ss} {message}";
+        AppendLogEntry(entry);
+    }
+
+    private void AppendLogEntry(string entry)
+    {
         TraceLogText.Text = string.IsNullOrWhiteSpace(TraceLogText.Text) ||
             TraceLogText.Text == "Macro runtime is not connected."
                 ? entry

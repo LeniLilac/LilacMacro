@@ -1,5 +1,6 @@
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Debugging;
 
@@ -45,7 +46,10 @@ internal sealed class WireStateService(
         CancellationToken cancellationToken)
     {
         using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(StateTimeout);
+        timeout.CancelAfter(
+            ReferenceEquals(state, DebugWorkflowCatalog.MatchPrestart)
+                ? MatchLoadPolicy.RetryWindow
+                : StateTimeout);
         DebugRunReport? last = null;
         WireImageStateResult? lastImage = null;
         try

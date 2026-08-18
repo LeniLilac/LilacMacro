@@ -1,190 +1,190 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "4fb9b386-33fe-4743-9a16-8cfc2eb7201e",
-    "name":  "Gold Shop Buy Part3",
-    "notes":  "From the part2 dataset, click the buy button\r\n\r\nCheck for buy ui, wait like 1-2s since there is popup annimation and ui needs to settle\r\n\r\nDerrive the max button position (can also show min) and click (mix/max button like how mine/drill refuel has)\r\n\r\nthen derrive the buy button position and click buy\r\n\r\nIf no buy ui appears after clicking the buy button, then it means the user cannot afford it, or the it is out of stock for this reset cycle. So img the gray button so macro can determine without needing to click and check for future attempts.\r\n\r\nOnce all items that user has configured macro to buy has been bought/attempted to be bought. \r\n\r\ndo the reset flow:\r\nesc -\u003e r -\u003e enter\r\n\r\nto respawn and clear ui\r\n\r\nBundled runtime evidence slice. Original dataset: gold-shop-buy-part3-20260813-213107. Source frames: 3.",
-    "created_at_utc":  "2026-08-13T21:31:07.2926323+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  22968,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-13T21:31:18.2411448+00:00",
-                       "sha256":  "7fe0b424927e5bcaa0edf43b4aa40855eccad70302bd101eac58f8e3ae35efc0",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "2433dfc0-5132-4a33-a5d1-cfdb85db6e26",
-                                               "global_group_id":  "61a54892-2437-41b3-8338-d4047d87a48b",
-                                               "bounds":  {
-                                                              "x":  415,
-                                                              "y":  238,
-                                                              "width":  540,
-                                                              "height":  224
-                                                          },
-                                               "label":  "Shop Purchase Dialog State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "à\nBuy Amount\nHow much would you like to buy?\n(Buying 1x Red Flower)\n+\nMax\nBuy1x\n100\nCancel",
-                                                                      "confidence":  0.9600715107387967,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  386,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-13T21:32:41.7876578+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  619,
-                                                                                                         "y":  254,
-                                                                                                         "width":  21,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "à",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.8093720078468323,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  642,
-                                                                                                         "y":  254,
-                                                                                                         "width":  109,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Buy Amount",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9970067143440247,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  540,
-                                                                                                         "y":  296,
-                                                                                                         "width":  283,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "How much would you like to buy?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9979485869407654,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  597,
-                                                                                                         "y":  317,
-                                                                                                         "width":  172,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "(Buying 1x Red Flower)",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.972836434841156,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  831,
-                                                                                                         "y":  352,
-                                                                                                         "width":  23,
-                                                                                                         "height":  24
-                                                                                                     },
-                                                                                          "text":  "+",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.8664528131484985,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  880,
-                                                                                                         "y":  351,
-                                                                                                         "width":  45,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "Max",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997065663337708,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  433,
-                                                                                                         "y":  414,
-                                                                                                         "width":  61,
-                                                                                                         "height":  29
-                                                                                                     },
-                                                                                          "text":  "Buy1x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9977642893791199,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  596,
-                                                                                                         "y":  412,
-                                                                                                         "width":  37,
-                                                                                                         "height":  29
-                                                                                                     },
-                                                                                          "text":  "100",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999669194221497,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  785,
-                                                                                                         "y":  414,
-                                                                                                         "width":  62,
-                                                                                                         "height":  26
-                                                                                                     },
-                                                                                          "text":  "Cancel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9995892643928528,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "4fb9b386-33fe-4743-9a16-8cfc2eb7201e",
+  "name": "Gold Shop Buy Part3",
+  "notes": "From the part2 dataset, click the buy button\r\n\r\nCheck for buy ui, wait like 1-2s since there is popup annimation and ui needs to settle\r\n\r\nDerrive the max button position (can also show min) and click (mix/max button like how mine/drill refuel has)\r\n\r\nthen derrive the buy button position and click buy\r\n\r\nIf no buy ui appears after clicking the buy button, then it means the user cannot afford it, or the it is out of stock for this reset cycle. So img the gray button so macro can determine without needing to click and check for future attempts.\r\n\r\nOnce all items that user has configured macro to buy has been bought/attempted to be bought. \r\n\r\ndo the reset flow:\r\nesc -> r -> enter\r\n\r\nto respawn and clear ui\r\n\r\nBundled runtime evidence slice. Original dataset: gold-shop-buy-part3-20260813-213107. Source frames: 3.",
+  "created_at_utc": "2026-08-13T21:31:07.2926323Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 22968,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-13T21:31:18.2411448Z",
+      "sha256": "7fe0b424927e5bcaa0edf43b4aa40855eccad70302bd101eac58f8e3ae35efc0",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "2433dfc0-5132-4a33-a5d1-cfdb85db6e26",
+          "global_group_id": "61a54892-2437-41b3-8338-d4047d87a48b",
+          "bounds": {
+            "x": 415,
+            "y": 238,
+            "width": 540,
+            "height": 224
+          },
+          "label": "Shop Purchase Dialog State",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "à\nBuy Amount\nHow much would you like to buy?\n(Buying 1x Red Flower)\n+\nMax\nBuy1x\n100\nCancel",
+              "confidence": 0.9600715107387967,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 386,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-13T21:32:41.7876578Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 619,
+                    "y": 254,
+                    "width": 21,
+                    "height": 18
+                  },
+                  "text": "à",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.8093720078468323,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 642,
+                    "y": 254,
+                    "width": 109,
+                    "height": 21
+                  },
+                  "text": "Buy Amount",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9970067143440247,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 540,
+                    "y": 296,
+                    "width": 283,
+                    "height": 20
+                  },
+                  "text": "How much would you like to buy?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9979485869407654,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 597,
+                    "y": 317,
+                    "width": 172,
+                    "height": 20
+                  },
+                  "text": "(Buying 1x Red Flower)",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.972836434841156,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 831,
+                    "y": 352,
+                    "width": 23,
+                    "height": 24
+                  },
+                  "text": "+",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.8664528131484985,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 880,
+                    "y": 351,
+                    "width": 45,
+                    "height": 27
+                  },
+                  "text": "Max",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997065663337708,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 433,
+                    "y": 414,
+                    "width": 61,
+                    "height": 29
+                  },
+                  "text": "Buy1x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9977642893791199,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 596,
+                    "y": 412,
+                    "width": 37,
+                    "height": 29
+                  },
+                  "text": "100",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999669194221497,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 785,
+                    "y": 414,
+                    "width": 62,
+                    "height": 26
+                  },
+                  "text": "Cancel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9995892643928528,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

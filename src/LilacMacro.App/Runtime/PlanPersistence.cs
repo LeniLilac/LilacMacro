@@ -6,6 +6,8 @@ namespace LilacMacro.App.Runtime;
 
 internal sealed record PlanSettingsSnapshot
 {
+    public Guid RuntimeId { get; init; }
+
     public string Name { get; init; } = string.Empty;
 
     public List<PlanBlockSettingsSnapshot> Blocks { get; init; } = [];
@@ -13,6 +15,8 @@ internal sealed record PlanSettingsSnapshot
 
 internal sealed record PlanBlockSettingsSnapshot
 {
+    public Guid RuntimeId { get; init; }
+
     public string Kind { get; init; } = string.Empty;
 
     public string Mode { get; init; } = string.Empty;
@@ -65,9 +69,26 @@ internal static class PlanPersistence
     public static List<PlanSettingsSnapshot> CreateSnapshot(IEnumerable<PlanPrototype> plans) =>
         plans.Select(plan => new PlanSettingsSnapshot
         {
+            RuntimeId = plan.RuntimeId,
             Name = plan.Name,
             Blocks = plan.Blocks.Select(CreateBlockSnapshot).ToList(),
         }).ToList();
+
+    public static bool HasMissingRuntimeIds(IReadOnlyList<PlanSettingsSnapshot>? snapshots)
+    {
+        if (snapshots is null) return true;
+        return snapshots.Any(snapshot => snapshot is null ||
+            snapshot.RuntimeId == Guid.Empty ||
+            snapshot.Blocks is null ||
+            snapshot.Blocks.Any(HasMissingRuntimeId));
+    }
+
+    public static void ReassignRuntimeIds(PlanPrototype plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        plan.RuntimeId = Guid.NewGuid();
+        foreach (PlanBlockPrototype block in plan.Blocks) ReassignRuntimeId(block);
+    }
 
     public static bool TryRestore(
         IReadOnlyList<PlanSettingsSnapshot>? snapshots,
@@ -88,7 +109,10 @@ internal static class PlanPersistence
                 blocks.Add(restored);
             }
             Reindex(blocks);
-            plans.Add(new PlanPrototype(snapshot.Name, blocks));
+            plans.Add(new PlanPrototype(snapshot.Name, blocks)
+            {
+                RuntimeId = snapshot.RuntimeId == Guid.Empty ? Guid.NewGuid() : snapshot.RuntimeId,
+            });
         }
         return true;
     }
@@ -97,6 +121,7 @@ internal static class PlanPersistence
     {
         PlanTaskPrototype task => new PlanBlockSettingsSnapshot
         {
+            RuntimeId = task.RuntimeId,
             Kind = TaskKind,
             Mode = task.Mode.ToString(),
             Route = task.Route,
@@ -115,6 +140,7 @@ internal static class PlanPersistence
         },
         PlanLoopPrototype loop => new PlanBlockSettingsSnapshot
         {
+            RuntimeId = loop.RuntimeId,
             Kind = LoopKind,
             Label = loop.Label,
             Forever = loop.Forever,
@@ -159,6 +185,7 @@ internal static class PlanPersistence
             }
             restored = new PlanTaskPrototype
             {
+                RuntimeId = snapshot.RuntimeId == Guid.Empty ? Guid.NewGuid() : snapshot.RuntimeId,
                 Mode = mode,
                 Route = snapshot.Route,
                 Target = snapshot.Target,
@@ -185,6 +212,7 @@ internal static class PlanPersistence
         }
         PlanLoopPrototype loop = new()
         {
+            RuntimeId = snapshot.RuntimeId == Guid.Empty ? Guid.NewGuid() : snapshot.RuntimeId,
             Label = snapshot.Label,
             Forever = snapshot.Forever,
             RepeatCount = snapshot.RepeatCount,
@@ -201,6 +229,19 @@ internal static class PlanPersistence
 
     private static bool ValidText(string? value, int maximumLength) =>
         !string.IsNullOrWhiteSpace(value) && value.Length <= maximumLength;
+
+    private static bool HasMissingRuntimeId(PlanBlockSettingsSnapshot? snapshot) =>
+        snapshot is null ||
+        snapshot.RuntimeId == Guid.Empty ||
+        snapshot.Children is null ||
+        snapshot.Children.Any(HasMissingRuntimeId);
+
+    private static void ReassignRuntimeId(PlanBlockPrototype block)
+    {
+        block.RuntimeId = Guid.NewGuid();
+        if (block is PlanLoopPrototype loop)
+            foreach (PlanBlockPrototype child in loop.Children) ReassignRuntimeId(child);
+    }
 
     private static void Reindex(IEnumerable<PlanBlockPrototype> blocks)
     {

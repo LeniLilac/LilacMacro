@@ -32,10 +32,8 @@ public sealed class ExpeditionRuntimePolicyTests
     {
         Assert.True(ExpeditionDefenseStartPolicy.ArrivalMaximumObservations >= 120);
         Assert.InRange(ExpeditionDefenseStartPolicy.ArrivalRetryMilliseconds, 250, 1000);
-        Assert.True(ExpeditionDefenseStartPolicy.PostReplayStartAttempts >= 10);
-        Assert.True(
-            ExpeditionDefenseStartPolicy.PostReplayStartAttempts *
-            ExpeditionDefenseStartPolicy.PostReplayRetryMilliseconds >= 3000);
+        Assert.Equal(TimeSpan.FromMinutes(2), ExpeditionStartGamePolicy.RetryWindow);
+        Assert.Equal(250, ExpeditionStartGamePolicy.RetryMilliseconds);
     }
 
     [Fact]

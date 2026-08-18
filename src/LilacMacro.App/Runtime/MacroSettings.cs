@@ -11,7 +11,7 @@ internal enum PrivacyChoiceKind
 
 internal sealed record MacroSettings
 {
-    public const int CurrentSchemaVersion = 12;
+    public const int CurrentSchemaVersion = 13;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
