@@ -47,6 +47,24 @@ internal static class MacroPriorityPolicy
                     isEnabled(task, observedAt));
     }
 
+    public static PlanTaskPrototype? SelectOpportunisticUtilityAt(
+        PlanPrototype plan,
+        IReadOnlyDictionary<PlanTaskPrototype, int> victories,
+        IReadOnlyDictionary<PlanLoopPrototype, int> completedRuns,
+        IReadOnlySet<PlanTaskPrototype> quarantinedUtilities,
+        DateTimeOffset observedAt,
+        Func<PlanTaskPrototype, DateTimeOffset, bool> isEnabled)
+    {
+        ArgumentNullException.ThrowIfNull(completedRuns);
+        ArgumentNullException.ThrowIfNull(quarantinedUtilities);
+        ArgumentNullException.ThrowIfNull(isEnabled);
+        return Flatten(plan, completedRuns).FirstOrDefault(task =>
+            task.Mode == PlanTaskMode.Utilities &&
+            quarantinedUtilities.Contains(task) &&
+            IsPending(task, victories) &&
+            isEnabled(task, observedAt));
+    }
+
     public static PlanTaskPrototype? SelectEligibleAt(
         PlanPrototype plan,
         IReadOnlyDictionary<PlanTaskPrototype, int> victories,

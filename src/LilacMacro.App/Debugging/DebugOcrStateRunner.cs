@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Automation;
@@ -108,6 +109,23 @@ internal sealed class DebugOcrStateRunner(
         for (int attempt = 1; !snapshot.Evaluation.IsMatch && attempt < maximumObservations; attempt++)
         {
             await Task.Delay(retryDelay, cancellationToken);
+            snapshot = await RunAsync(state, device, cancellationToken);
+        }
+        return snapshot;
+    }
+
+    public async Task<DebugOcrSnapshot> WaitForMatchUntilDeadlineAsync(
+        DebugStateSpec state,
+        string device,
+        CancellationToken cancellationToken)
+    {
+        Stopwatch retryWindow = Stopwatch.StartNew();
+        DebugOcrSnapshot snapshot = await RunAsync(state, device, cancellationToken);
+        while (!snapshot.Evaluation.IsMatch && MatchLoadPolicy.IsWithinRetryWindow(retryWindow.Elapsed))
+        {
+            TimeSpan delay = MatchLoadPolicy.RetryDelay(retryWindow.Elapsed);
+            if (delay <= TimeSpan.Zero) break;
+            await Task.Delay(delay, cancellationToken);
             snapshot = await RunAsync(state, device, cancellationToken);
         }
         return snapshot;

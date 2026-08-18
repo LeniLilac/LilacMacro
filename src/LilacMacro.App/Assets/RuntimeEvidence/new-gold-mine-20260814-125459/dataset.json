@@ -1,228 +1,224 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "58c2cbaf-a59b-4328-9719-001232a4baed",
-    "name":  "New Gold Mine",
-    "notes":  "Click e\r\nwait 2s +2s per attempt\r\ncheck for add fuel button to confirm on ui\r\nup to 3 attempts\r\nclick add fuel button\r\n\r\nBundled runtime evidence slice. Original dataset: new-gold-mine-20260814-125459. Source frames: 1, 2, 3.",
-    "created_at_utc":  "2026-08-14T12:54:59.4802346+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  15088,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-14T12:55:09.2143297+00:00",
-                       "sha256":  "ca6c88d3ccf9c3bc6ef2bb608df766e95f18e7374a569e1e8bbb9151d6ba5444",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "054a08df-74b9-465d-9b87-3f9ebcac1eee",
-                                               "global_group_id":  "82d5ce81-50c3-4b1c-be10-a9b9392ce035",
-                                               "bounds":  {
-                                                              "x":  551,
-                                                              "y":  496,
-                                                              "width":  268,
-                                                              "height":  134
-                                                          },
-                                               "label":  "Gold Mine Add Fuel State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-14T12:55:14.0785324+00:00",
-                       "sha256":  "a3a5d72f64d50b32927004d65f788735e1a44b859237fcb228af8ebb3e6dec0e",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "c6268653-d102-436c-a68c-557e0770f33f",
-                                               "global_group_id":  "82d5ce81-50c3-4b1c-be10-a9b9392ce035",
-                                               "bounds":  {
-                                                              "x":  551,
-                                                              "y":  496,
-                                                              "width":  268,
-                                                              "height":  134
-                                                          },
-                                               "label":  "Gold Mine Add Fuel State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-14T12:55:19.3515717+00:00",
-                       "sha256":  "f05c39cdde7bc41b1c238273fc1e710c68680d2b001df33cf7ac2df9fe9e3a0b",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "dbd1d677-4b3c-4bc0-af05-e32ffa85fb50",
-                                               "global_group_id":  "82d5ce81-50c3-4b1c-be10-a9b9392ce035",
-                                               "bounds":  {
-                                                              "x":  551,
-                                                              "y":  496,
-                                                              "width":  268,
-                                                              "height":  134
-                                                          },
-                                               "label":  "Gold Mine Add Fuel State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Add Fuel\n2,456,559\n6,713\n575\nLv150\nLv150\nLv150\nLv150",
-                                                                      "confidence":  0.9792102873325348,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  625,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-14T13:00:30.4730635+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  657,
-                                                                                                         "y":  506,
-                                                                                                         "width":  54,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "Add Fuel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9794090986251831,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  551,
-                                                                                                         "y":  586,
-                                                                                                         "width":  65,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "2,456,559",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999858140945435,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  671,
-                                                                                                         "y":  584,
-                                                                                                         "width":  40,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "6,713",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999659657478333,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  766,
-                                                                                                         "y":  585,
-                                                                                                         "width":  28,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "575",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999956488609314,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  553,
-                                                                                                         "y":  610,
-                                                                                                         "width":  30,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "Lv150",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9718542098999023,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  619,
-                                                                                                         "y":  609,
-                                                                                                         "width":  30,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "Lv150",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9475520849227905,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  685,
-                                                                                                         "y":  610,
-                                                                                                         "width":  27,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Lv150",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9587464332580566,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  749,
-                                                                                                         "y":  610,
-                                                                                                         "width":  28,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Lv150",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9761730432510376,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "58c2cbaf-a59b-4328-9719-001232a4baed",
+  "name": "New Gold Mine",
+  "notes": "Click e\r\nwait 2s +2s per attempt\r\ncheck for add fuel button to confirm on ui\r\nup to 3 attempts\r\nclick add fuel button\r\n\r\nBundled runtime evidence slice. Original dataset: new-gold-mine-20260814-125459. Source frames: 1, 2, 3.",
+  "created_at_utc": "2026-08-14T12:54:59.4802346Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 15088,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-14T12:55:09.2143297Z",
+      "sha256": "ca6c88d3ccf9c3bc6ef2bb608df766e95f18e7374a569e1e8bbb9151d6ba5444",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "054a08df-74b9-465d-9b87-3f9ebcac1eee",
+          "global_group_id": "82d5ce81-50c3-4b1c-be10-a9b9392ce035",
+          "bounds": {
+            "x": 551,
+            "y": 496,
+            "width": 268,
+            "height": 134
+          },
+          "label": "Gold Mine Add Fuel State",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-14T12:55:14.0785324Z",
+      "sha256": "a3a5d72f64d50b32927004d65f788735e1a44b859237fcb228af8ebb3e6dec0e",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "c6268653-d102-436c-a68c-557e0770f33f",
+          "global_group_id": "82d5ce81-50c3-4b1c-be10-a9b9392ce035",
+          "bounds": {
+            "x": 551,
+            "y": 496,
+            "width": 268,
+            "height": 134
+          },
+          "label": "Gold Mine Add Fuel State",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-14T12:55:19.3515717Z",
+      "sha256": "f05c39cdde7bc41b1c238273fc1e710c68680d2b001df33cf7ac2df9fe9e3a0b",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "dbd1d677-4b3c-4bc0-af05-e32ffa85fb50",
+          "global_group_id": "82d5ce81-50c3-4b1c-be10-a9b9392ce035",
+          "bounds": {
+            "x": 551,
+            "y": 496,
+            "width": 268,
+            "height": 134
+          },
+          "label": "Gold Mine Add Fuel State",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Add Fuel\n2,456,559\n6,713\n575\nLv150\nLv150\nLv150\nLv150",
+              "confidence": 0.9792102873325348,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 625,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-14T13:00:30.4730635Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 657,
+                    "y": 506,
+                    "width": 54,
+                    "height": 15
+                  },
+                  "text": "Add Fuel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9794090986251831,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 551,
+                    "y": 586,
+                    "width": 65,
+                    "height": 15
+                  },
+                  "text": "2,456,559",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999858140945435,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 671,
+                    "y": 584,
+                    "width": 40,
+                    "height": 19
+                  },
+                  "text": "6,713",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999659657478333,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 766,
+                    "y": 585,
+                    "width": 28,
+                    "height": 17
+                  },
+                  "text": "575",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999956488609314,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 553,
+                    "y": 610,
+                    "width": 30,
+                    "height": 11
+                  },
+                  "text": "Lv150",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9718542098999023,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 619,
+                    "y": 609,
+                    "width": 30,
+                    "height": 14
+                  },
+                  "text": "Lv150",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9475520849227905,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 685,
+                    "y": 610,
+                    "width": 27,
+                    "height": 12
+                  },
+                  "text": "Lv150",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9587464332580566,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 749,
+                    "y": 610,
+                    "width": 28,
+                    "height": 12
+                  },
+                  "text": "Lv150",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9761730432510376,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

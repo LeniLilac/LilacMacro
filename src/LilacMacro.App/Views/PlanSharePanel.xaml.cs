@@ -127,7 +127,9 @@ public partial class PlanSharePanel : UserControl
     {
         if (!PlanPersistence.TryRestore([snapshot], out ObservableCollection<PlanPrototype>? plans))
             throw new InvalidDataException("The shared plan is invalid.");
-        return plans.Single();
+        PlanPrototype restored = plans.Single();
+        PlanPersistence.ReassignRuntimeIds(restored);
+        return restored;
     }
 
     private string UniquePlanName(string requested)

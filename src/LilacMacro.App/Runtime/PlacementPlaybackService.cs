@@ -15,6 +15,7 @@ internal sealed class PlacementPlaybackService(
     private readonly DebugOcrController _debug = new(workspace, ocr);
     private readonly UnitPanelEvidenceService _panel = new(workspace, ocr);
     private readonly MatchTerminalService _terminal = new(workspace, ocr);
+    private TerminalAwarePlacementSetup TerminalAware => new(_terminal);
 
     public async Task<PlacementRuntimeResult> RunAsync(
         PlacementSetupDocument document,
@@ -27,17 +28,17 @@ internal sealed class PlacementPlaybackService(
         Action<string>? status,
         CancellationToken cancellationToken)
     {
-        int executed = await RunSetupAsync(
+        TerminalAwarePlacementSetupResult setup = await RunSetupCoreAsync(
             document, route, keys, device, status, cancellationToken);
 
-        MatchTerminalOutcome outcome = await _terminal.WaitAsync(
+        MatchTerminalOutcome outcome = setup.TerminalOutcome ?? await _terminal.WaitAsync(
             device, terminalTimeout, dismissRaidDrops, status, cancellationToken);
         if (repeatStage)
         {
             await _terminal.RepeatAsync(outcome, device, cancellationToken);
             status?.Invoke("REPEAT STAGE VERIFIED + CLICKED");
         }
-        return new PlacementRuntimeResult(outcome, repeatStage, executed);
+        return new PlacementRuntimeResult(outcome, repeatStage, setup.ExecutedSteps);
     }
 
     public Task RepeatAsync(
@@ -54,27 +55,54 @@ internal sealed class PlacementPlaybackService(
         Action<string>? status,
         CancellationToken cancellationToken)
     {
+        return (await RunSetupCoreAsync(
+            document, route, keys, device, status, cancellationToken, monitorTerminal: false))
+            .ExecutedSteps;
+    }
+
+    private async Task<TerminalAwarePlacementSetupResult> RunSetupCoreAsync(
+        PlacementSetupDocument document,
+        PlacementRouteSetup route,
+        PlacementRuntimeKeys keys,
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken,
+        bool monitorTerminal = true)
+    {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(route);
         PlacementSetupRules.Validate(document);
         PlacementPlaybackPlan plan = PlacementPlaybackPlan.Create(route);
         Dictionary<Guid, PlacementExecutionState> placements = [];
         UnitPanelLayout? layout = null;
-        int executed = 0;
+        PlacementSetupExecution execution = new();
 
-        executed += await RunStepsAsync(
+        int beforeStart = await RunStepsAsync(
             plan.BeforeStart, document, route.BetweenUpgradeAttemptsMilliseconds, keys, device, placements,
-            () => layout, value => layout = value, status, cancellationToken);
+            () => layout, value => layout = value, status, cancellationToken, null);
+        execution.ExecutedSteps = beforeStart;
 
-        await SatisfyStartBoundaryAsync(device, status, cancellationToken);
+        await TerminalAware.SatisfyStartBoundaryAsync(
+            device, status, token => _debug.StartGameAsync(device, token), cancellationToken);
         status?.Invoke("START GAME VERIFIED + CLICKED");
-        executed++;
-        await Task.Delay(1000, cancellationToken);
+        execution.ExecutedSteps++;
 
-        executed += await RunStepsAsync(
-            plan.AfterStart, document, route.BetweenUpgradeAttemptsMilliseconds, keys, device, placements,
-            () => layout, value => layout = value, status, cancellationToken);
-        return executed;
+        async Task<int> RunAfterStartAsync(CancellationToken token)
+        {
+            await Task.Delay(1000, token);
+            return await RunStepsAsync(
+                plan.AfterStart, document, route.BetweenUpgradeAttemptsMilliseconds, keys, device, placements,
+                () => layout, value => layout = value, status, token, execution);
+        }
+
+        if (!monitorTerminal)
+        {
+            await RunAfterStartAsync(cancellationToken);
+            return new TerminalAwarePlacementSetupResult(execution.ExecutedSteps, null);
+        }
+
+        return await TerminalAware.RunAsync(
+            execution, device, status, RunAfterStartAsync, cancellationToken);
     }
 
     public async Task<ExpeditionPlacementSession> RunExpeditionInitialAsync(
@@ -94,7 +122,7 @@ internal sealed class PlacementPlaybackService(
         UnitPanelLayout? layout = null;
         await RunStepsAsync(
             steps, document, route.BetweenUpgradeAttemptsMilliseconds, keys, device, placements,
-            () => layout, value => layout = value, status, cancellationToken);
+            () => layout, value => layout = value, status, cancellationToken, null);
         status?.Invoke("EXPEDITION INITIAL PLACEMENT COMPLETE");
         return new ExpeditionPlacementSession(placements.Values.ToArray(), layout);
     }
@@ -150,34 +178,8 @@ internal sealed class PlacementPlaybackService(
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(session);
-        return SatisfyStartBoundaryAsync(
-            device,
-            status,
-            cancellationToken,
-            ExpeditionDefenseStartPolicy.PostReplayStartAttempts,
-            ExpeditionDefenseStartPolicy.PostReplayRetryMilliseconds);
-    }
-
-    private async Task SatisfyStartBoundaryAsync(
-        string device,
-        Action<string>? status,
-        CancellationToken cancellationToken,
-        int startAttempts = 20,
-        int retryMilliseconds = 250)
-    {
-        for (int attempt = 1; attempt <= startAttempts; attempt++)
-        {
-            DebugRunReport start = await _debug.StartGameAsync(device, cancellationToken);
-            if (start.Succeeded) return;
-            status?.Invoke($"START SCREEN ABSENT {attempt}/{startAttempts}");
-            if (attempt < startAttempts)
-            {
-                await Task.Delay(retryMilliseconds, cancellationToken);
-            }
-        }
-
-        throw new InvalidOperationException(
-            $"Start Game did not expose a verified action after {startAttempts} fresh observation(s).");
+        return TerminalAware.SatisfyStartBoundaryAsync(
+            device, status, token => _debug.StartGameAsync(device, token), cancellationToken);
     }
 
     private async Task<int> RunStepsAsync(
@@ -190,7 +192,8 @@ internal sealed class PlacementPlaybackService(
         Func<UnitPanelLayout?> getLayout,
         Action<UnitPanelLayout> setLayout,
         Action<string>? status,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        PlacementSetupExecution? execution)
     {
         int executed = 0;
         foreach (PlacementPlaybackGroup group in PlacementPlaybackPlan.Group(steps))
@@ -200,14 +203,17 @@ internal sealed class PlacementPlaybackService(
             {
                 executed += await RunPlacementGroupAsync(
                     group.Steps, document, keys, device, placements,
-                    getLayout, setLayout, status, cancellationToken);
+                    getLayout, setLayout, status, cancellationToken, execution);
                 continue;
             }
             PlacementStep step = group.Steps[0];
             if (await RunActionAsync(
                     step, betweenUpgradeAttemptsMilliseconds, keys, device, placements,
                     getLayout, status, cancellationToken))
+            {
                 executed++;
+                execution?.CountStep();
+            }
         }
         return executed;
     }
@@ -221,7 +227,8 @@ internal sealed class PlacementPlaybackService(
         Func<UnitPanelLayout?> getLayout,
         Action<UnitPanelLayout> setLayout,
         Action<string>? status,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        PlacementSetupExecution? execution)
     {
         int executed = 0;
         QuickPlacementPoint[] batch = steps.Select(step => ToQuickPoint(step, document)).ToArray();
@@ -278,6 +285,7 @@ internal sealed class PlacementPlaybackService(
             await ApplyConfigurationAsync(state, step.TargetingPriority, step.AutoUpgradePriority, keys, cancellationToken);
             await _panel.DismissAsync(layout, status, cancellationToken);
             executed++;
+            execution?.CountStep();
         }
         return executed;
     }

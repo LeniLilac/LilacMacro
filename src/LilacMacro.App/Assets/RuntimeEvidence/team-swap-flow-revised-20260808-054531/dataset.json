@@ -1,557 +1,557 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "1fab9f13-6ff5-4949-ac1a-129a102f4e13",
-    "name":  "Team Swap Flow, Revised",
-    "notes":  "Require the load team text, so macro doesnt save team by mistake.\r\n\r\nAlso if ocr sees save team, save the save team for img as negative evidence. (or like do this on first setup to get the negative evidence)\r\n\r\nIf on save team ui, click cancel then do scroll up burst to reset ui state back to inital state to then retry.\r\n\r\nBundled runtime evidence slice. Original dataset: team-swap-flow-revised-20260808-054531. Source frames: 1, 2, 3.",
-    "created_at_utc":  "2026-08-08T05:45:31.2629231+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  7464,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-08T05:45:36.5275723+00:00",
-                       "sha256":  "15644b31511f7d726466ae05133a7bb35b24c80d98c75bf45d1f8e32057f3d0f",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "0c9e7d22-0433-44dc-8ba7-d25fe4a1a1d7",
-                                               "global_group_id":  "1a2eea97-714a-4757-ad47-0cd6394b0b01",
-                                               "bounds":  {
-                                                              "x":  444,
-                                                              "y":  249,
-                                                              "width":  478,
-                                                              "height":  205
-                                                          },
-                                               "label":  "Team Modal State",
-                                               "notes":  "",
-                                               "minimum_pool_matches":  1,
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Save Team\nAre you sure you would like to save your equipped\nteam?\nYour saved team will be overwritten!\nConfirm\nCancel",
-                                                                      "confidence":  0.9941036701202393,
-                                                                      "model_load_milliseconds":  2183,
-                                                                      "inference_milliseconds":  678,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-08T05:46:39.9445779+00:00",
-                                                                      "model_was_cached":  false,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  638,
-                                                                                                         "y":  270,
-                                                                                                         "width":  90,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "Save Team",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9810587763786316,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  475,
-                                                                                                         "y":  312,
-                                                                                                         "width":  414,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Are you sure you would like to save your equipped",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9945367574691772,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  654,
-                                                                                                         "y":  329,
-                                                                                                         "width":  56,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "team?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997270703315735,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  547,
-                                                                                                         "y":  349,
-                                                                                                         "width":  272,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Your saved team will be overwritten!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9908908009529114,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  533,
-                                                                                                         "y":  396,
-                                                                                                         "width":  71,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "Confirm",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9989398717880249,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  768,
-                                                                                                         "y":  396,
-                                                                                                         "width":  61,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "Cancel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994687438011169,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  },
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Save Team\nAre you sure you would like to save your equipped\nteam?\nYour saved team will be overwritten!\nConfirm\nCancel",
-                                                                      "confidence":  0.9941036701202393,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  77,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-08T05:48:12.8516783+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  638,
-                                                                                                         "y":  270,
-                                                                                                         "width":  90,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "Save Team",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9810587763786316,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "topmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  475,
-                                                                                                         "y":  312,
-                                                                                                         "width":  414,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Are you sure you would like to save your equipped",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9945367574691772,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  654,
-                                                                                                         "y":  329,
-                                                                                                         "width":  56,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "team?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997270703315735,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  547,
-                                                                                                         "y":  349,
-                                                                                                         "width":  272,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Your saved team will be overwritten!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9908908009529114,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  533,
-                                                                                                         "y":  396,
-                                                                                                         "width":  71,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "Confirm",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9989398717880249,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  768,
-                                                                                                         "y":  396,
-                                                                                                         "width":  61,
-                                                                                                         "height":  27
-                                                                                                     },
-                                                                                          "text":  "Cancel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994687438011169,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-08T05:45:39.0607255+00:00",
-                       "sha256":  "a15f1bf731dd3d2b3adfd3aa6f78b251878b63fd73e5374e51b95028bd0fdd69",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "8f67c27a-b8a2-4484-b039-bafef97279d1",
-                                               "global_group_id":  "1a2eea97-714a-4757-ad47-0cd6394b0b01",
-                                               "bounds":  {
-                                                              "x":  444,
-                                                              "y":  249,
-                                                              "width":  478,
-                                                              "height":  205
-                                                          },
-                                               "label":  "Team Modal State",
-                                               "notes":  "",
-                                               "minimum_pool_matches":  1,
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "保日休6研日\nLoad Team\nAre you sure you would like to load this team?\nYour equipped team will be overwritten!\nConfirm\nCancel",
-                                                                      "confidence":  0.85809904585282,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  82,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-08T05:46:47.7554237+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  487,
-                                                                                                         "y":  249,
-                                                                                                         "width":  329,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "保日休6研日",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.23586685955524445,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  636,
-                                                                                                         "y":  278,
-                                                                                                         "width":  93,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Load Team",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9515544176101685,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "topmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  493,
-                                                                                                         "y":  322,
-                                                                                                         "width":  379,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Are you sure you would like to load this team?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9975895285606384,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  534,
-                                                                                                         "y":  342,
-                                                                                                         "width":  299,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "Your equipped team will be overwritten!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9934250116348267,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  534,
-                                                                                                         "y":  389,
-                                                                                                         "width":  68,
-                                                                                                         "height":  23
-                                                                                                     },
-                                                                                          "text":  "Confirm",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9706734418869019,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  769,
-                                                                                                         "y":  389,
-                                                                                                         "width":  59,
-                                                                                                         "height":  23
-                                                                                                     },
-                                                                                          "text":  "Cancel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994850158691406,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-08T05:45:43.81526+00:00",
-                       "sha256":  "68b52adfe91236404f0ae3d4fcabf32232f1db4722751ae7251104bf4dda88b6",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "a684e581-ed4c-4975-8930-40581e678641",
-                                               "global_group_id":  "1a2eea97-714a-4757-ad47-0cd6394b0b01",
-                                               "bounds":  {
-                                                              "x":  444,
-                                                              "y":  249,
-                                                              "width":  478,
-                                                              "height":  205
-                                                          },
-                                               "label":  "Team Modal State",
-                                               "notes":  "",
-                                               "minimum_pool_matches":  1,
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Include Equipment\nWould you like to equip your team\u0027s saved\nequipment?\nIf these equipment are equipped to other units, they will\nbe unequipped!\nInclude\nExclude\nCancel",
-                                                                      "confidence":  0.9981020838022232,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  104,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-08T05:50:36.1809353+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  608,
-                                                                                                         "y":  263,
-                                                                                                         "width":  151,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Include Equipment",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9974830746650696,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "topmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  508,
-                                                                                                         "y":  301,
-                                                                                                         "width":  349,
-                                                                                                         "height":  23
-                                                                                                     },
-                                                                                          "text":  "Would you like to equip your team\u0027s saved",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9988889098167419,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  630,
-                                                                                                         "y":  322,
-                                                                                                         "width":  105,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "equipment?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999297261238098,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  471,
-                                                                                                         "y":  343,
-                                                                                                         "width":  422,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "If these equipment are equipped to other units, they will",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9902136325836182,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "pool",
-                                                                                          "spatial_selector":  "leftmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  620,
-                                                                                                         "y":  358,
-                                                                                                         "width":  125,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "be unequipped!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9991611242294312,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  498,
-                                                                                                         "y":  406,
-                                                                                                         "width":  64,
-                                                                                                         "height":  23
-                                                                                                     },
-                                                                                          "text":  "Include",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996657371520996,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  650,
-                                                                                                         "y":  409,
-                                                                                                         "width":  65,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Exclude",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999731779098511,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  807,
-                                                                                                         "y":  406,
-                                                                                                         "width":  59,
-                                                                                                         "height":  23
-                                                                                                     },
-                                                                                          "text":  "Cancel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9995012879371643,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ]
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "1fab9f13-6ff5-4949-ac1a-129a102f4e13",
+  "name": "Team Swap Flow, Revised",
+  "notes": "Require the load team text, so macro doesnt save team by mistake.\r\n\r\nAlso if ocr sees save team, save the save team for img as negative evidence. (or like do this on first setup to get the negative evidence)\r\n\r\nIf on save team ui, click cancel then do scroll up burst to reset ui state back to inital state to then retry.\r\n\r\nBundled runtime evidence slice. Original dataset: team-swap-flow-revised-20260808-054531. Source frames: 1, 2, 3.",
+  "created_at_utc": "2026-08-08T05:45:31.2629231Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 7464,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-08T05:45:36.5275723Z",
+      "sha256": "15644b31511f7d726466ae05133a7bb35b24c80d98c75bf45d1f8e32057f3d0f",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "0c9e7d22-0433-44dc-8ba7-d25fe4a1a1d7",
+          "global_group_id": "1a2eea97-714a-4757-ad47-0cd6394b0b01",
+          "bounds": {
+            "x": 444,
+            "y": 249,
+            "width": 478,
+            "height": 205
+          },
+          "label": "Team Modal State",
+          "notes": "",
+          "minimum_pool_matches": 1,
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Save Team\nAre you sure you would like to save your equipped\nteam?\nYour saved team will be overwritten!\nConfirm\nCancel",
+              "confidence": 0.9941036701202393,
+              "model_load_milliseconds": 2183,
+              "inference_milliseconds": 678,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-08T05:46:39.9445779Z",
+              "model_was_cached": false,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 638,
+                    "y": 270,
+                    "width": 90,
+                    "height": 20
+                  },
+                  "text": "Save Team",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9810587763786316,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 475,
+                    "y": 312,
+                    "width": 414,
+                    "height": 18
+                  },
+                  "text": "Are you sure you would like to save your equipped",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9945367574691772,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 654,
+                    "y": 329,
+                    "width": 56,
+                    "height": 18
+                  },
+                  "text": "team?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997270703315735,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 547,
+                    "y": 349,
+                    "width": 272,
+                    "height": 19
+                  },
+                  "text": "Your saved team will be overwritten!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9908908009529114,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 533,
+                    "y": 396,
+                    "width": 71,
+                    "height": 27
+                  },
+                  "text": "Confirm",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9989398717880249,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 768,
+                    "y": 396,
+                    "width": 61,
+                    "height": 27
+                  },
+                  "text": "Cancel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994687438011169,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            },
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Save Team\nAre you sure you would like to save your equipped\nteam?\nYour saved team will be overwritten!\nConfirm\nCancel",
+              "confidence": 0.9941036701202393,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 77,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-08T05:48:12.8516783Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 638,
+                    "y": 270,
+                    "width": 90,
+                    "height": 20
+                  },
+                  "text": "Save Team",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9810587763786316,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "spatial_selector": "topmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 475,
+                    "y": 312,
+                    "width": 414,
+                    "height": 18
+                  },
+                  "text": "Are you sure you would like to save your equipped",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9945367574691772,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 654,
+                    "y": 329,
+                    "width": 56,
+                    "height": 18
+                  },
+                  "text": "team?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997270703315735,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 547,
+                    "y": 349,
+                    "width": 272,
+                    "height": 19
+                  },
+                  "text": "Your saved team will be overwritten!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9908908009529114,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 533,
+                    "y": 396,
+                    "width": 71,
+                    "height": 27
+                  },
+                  "text": "Confirm",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9989398717880249,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 768,
+                    "y": 396,
+                    "width": 61,
+                    "height": 27
+                  },
+                  "text": "Cancel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994687438011169,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-08T05:45:39.0607255Z",
+      "sha256": "a15f1bf731dd3d2b3adfd3aa6f78b251878b63fd73e5374e51b95028bd0fdd69",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "8f67c27a-b8a2-4484-b039-bafef97279d1",
+          "global_group_id": "1a2eea97-714a-4757-ad47-0cd6394b0b01",
+          "bounds": {
+            "x": 444,
+            "y": 249,
+            "width": 478,
+            "height": 205
+          },
+          "label": "Team Modal State",
+          "notes": "",
+          "minimum_pool_matches": 1,
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "保日休6研日\nLoad Team\nAre you sure you would like to load this team?\nYour equipped team will be overwritten!\nConfirm\nCancel",
+              "confidence": 0.85809904585282,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 82,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-08T05:46:47.7554237Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 487,
+                    "y": 249,
+                    "width": 329,
+                    "height": 17
+                  },
+                  "text": "保日休6研日",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.23586685955524445,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 636,
+                    "y": 278,
+                    "width": 93,
+                    "height": 21
+                  },
+                  "text": "Load Team",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9515544176101685,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "topmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 493,
+                    "y": 322,
+                    "width": 379,
+                    "height": 18
+                  },
+                  "text": "Are you sure you would like to load this team?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9975895285606384,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 534,
+                    "y": 342,
+                    "width": 299,
+                    "height": 15
+                  },
+                  "text": "Your equipped team will be overwritten!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9934250116348267,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 534,
+                    "y": 389,
+                    "width": 68,
+                    "height": 23
+                  },
+                  "text": "Confirm",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9706734418869019,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 769,
+                    "y": 389,
+                    "width": 59,
+                    "height": 23
+                  },
+                  "text": "Cancel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994850158691406,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-08T05:45:43.8152600Z",
+      "sha256": "68b52adfe91236404f0ae3d4fcabf32232f1db4722751ae7251104bf4dda88b6",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "a684e581-ed4c-4975-8930-40581e678641",
+          "global_group_id": "1a2eea97-714a-4757-ad47-0cd6394b0b01",
+          "bounds": {
+            "x": 444,
+            "y": 249,
+            "width": 478,
+            "height": 205
+          },
+          "label": "Team Modal State",
+          "notes": "",
+          "minimum_pool_matches": 1,
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Include Equipment\nWould you like to equip your team's saved\nequipment?\nIf these equipment are equipped to other units, they will\nbe unequipped!\nInclude\nExclude\nCancel",
+              "confidence": 0.9981020838022232,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 104,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-08T05:50:36.1809353Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 608,
+                    "y": 263,
+                    "width": 151,
+                    "height": 18
+                  },
+                  "text": "Include Equipment",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9974830746650696,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "topmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 508,
+                    "y": 301,
+                    "width": 349,
+                    "height": 23
+                  },
+                  "text": "Would you like to equip your team's saved",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9988889098167419,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 630,
+                    "y": 322,
+                    "width": 105,
+                    "height": 18
+                  },
+                  "text": "equipment?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999297261238098,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 471,
+                    "y": 343,
+                    "width": 422,
+                    "height": 15
+                  },
+                  "text": "If these equipment are equipped to other units, they will",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9902136325836182,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "pool",
+                  "spatial_selector": "leftmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 620,
+                    "y": 358,
+                    "width": 125,
+                    "height": 18
+                  },
+                  "text": "be unequipped!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9991611242294312,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 498,
+                    "y": 406,
+                    "width": 64,
+                    "height": 23
+                  },
+                  "text": "Include",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996657371520996,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 650,
+                    "y": 409,
+                    "width": 65,
+                    "height": 19
+                  },
+                  "text": "Exclude",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999731779098511,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 807,
+                    "y": 406,
+                    "width": 59,
+                    "height": 23
+                  },
+                  "text": "Cancel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9995012879371643,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

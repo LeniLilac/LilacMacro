@@ -1,467 +1,467 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "7a0cea15-f077-45e4-b16a-f356f26ff637",
-    "name":  "story map picker",
-    "notes":  "OCR + Screenshot the map names, annotations provided for the 3 map names on frame 2\r\n\r\nBundled runtime evidence slice. Original dataset: story-map-picker-20260802-192129. Source frames: 2.",
-    "created_at_utc":  "2026-08-02T19:21:29.7280107+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  36520,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-02T19:21:48.7797324+00:00",
-                       "sha256":  "cdd3d66a12d1377ce3521ac6804c0c9238e9dd58b401550b9d0e808b658073ac",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "10e59ee4-f46e-436b-a0a4-e03a60630c9a",
-                                               "global_group_id":  "a2ef9a58-9878-4b00-a6c4-95123f6de968",
-                                               "bounds":  {
-                                                              "x":  18,
-                                                              "y":  265,
-                                                              "width":  1348,
-                                                              "height":  181
-                                                          },
-                                               "label":  "Story Map State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Rose Kingdom\nFairy King Forest\nKing\u0027s Tomb\nCompletion Progress\n100%\nCompletion Progress\n100%\nCompletion Progress\n100%",
-                                                                      "confidence":  0.9984254042307535,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  90,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-02T19:22:34.6712569+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  165,
-                                                                                                         "y":  329,
-                                                                                                         "width":  164,
-                                                                                                         "height":  36
-                                                                                                     },
-                                                                                          "text":  "Rose Kingdom",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999682307243347,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  601,
-                                                                                                         "y":  331,
-                                                                                                         "width":  201,
-                                                                                                         "height":  33
-                                                                                                     },
-                                                                                          "text":  "Fairy King Forest",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999534487724304,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1080,
-                                                                                                         "y":  330,
-                                                                                                         "width":  143,
-                                                                                                         "height":  33
-                                                                                                     },
-                                                                                          "text":  "King\u0027s Tomb",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9968259334564209,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  92,
-                                                                                                         "y":  375,
-                                                                                                         "width":  148,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9966508746147156,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  371,
-                                                                                                         "y":  373,
-                                                                                                         "width":  39,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999364018440247,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  544,
-                                                                                                         "y":  375,
-                                                                                                         "width":  148,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9976215362548828,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  822,
-                                                                                                         "y":  373,
-                                                                                                         "width":  41,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998993277549744,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  994,
-                                                                                                         "y":  373,
-                                                                                                         "width":  149,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9950359463691711,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1275,
-                                                                                                         "y":  373,
-                                                                                                         "width":  39,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999369382858276,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  },
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "cpu",
-                                                                      "text":  "Rose Kingdom\nFairy King Forest\nKing\u0027s Tomb\nCompletion Progress\n100%\nCompletion Progress\n100%\nCompletion Progress\n100%",
-                                                                      "confidence":  0.998733229107327,
-                                                                      "model_load_milliseconds":  1753,
-                                                                      "inference_milliseconds":  610,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-05T17:07:19.0989883+00:00",
-                                                                      "model_was_cached":  false,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  165,
-                                                                                                         "y":  329,
-                                                                                                         "width":  164,
-                                                                                                         "height":  36
-                                                                                                     },
-                                                                                          "text":  "Rose Kingdom",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999681115150452,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  601,
-                                                                                                         "y":  331,
-                                                                                                         "width":  201,
-                                                                                                         "height":  33
-                                                                                                     },
-                                                                                          "text":  "Fairy King Forest",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999534487724304,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1081,
-                                                                                                         "y":  331,
-                                                                                                         "width":  143,
-                                                                                                         "height":  33
-                                                                                                     },
-                                                                                          "text":  "King\u0027s Tomb",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996361136436462,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  92,
-                                                                                                         "y":  375,
-                                                                                                         "width":  148,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9966350197792053,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  371,
-                                                                                                         "y":  373,
-                                                                                                         "width":  39,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999358654022217,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  544,
-                                                                                                         "y":  375,
-                                                                                                         "width":  148,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9976093173027039,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  822,
-                                                                                                         "y":  373,
-                                                                                                         "width":  41,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998983144760132,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  994,
-                                                                                                         "y":  373,
-                                                                                                         "width":  149,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9950265288352966,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1275,
-                                                                                                         "y":  373,
-                                                                                                         "width":  39,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999363422393799,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  },
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Rose Kingdom\nFairy King Forest\nKing\u0027s Tomb\nCompletion Progress\n100%\nCompletion Progress\n100%\nCompletion Progress\n100%",
-                                                                      "confidence":  0.9984254042307535,
-                                                                      "model_load_milliseconds":  2047,
-                                                                      "inference_milliseconds":  487,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-05T17:07:37.7848838+00:00",
-                                                                      "model_was_cached":  false,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  165,
-                                                                                                         "y":  329,
-                                                                                                         "width":  164,
-                                                                                                         "height":  36
-                                                                                                     },
-                                                                                          "text":  "Rose Kingdom",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999682307243347,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  601,
-                                                                                                         "y":  331,
-                                                                                                         "width":  201,
-                                                                                                         "height":  33
-                                                                                                     },
-                                                                                          "text":  "Fairy King Forest",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999534487724304,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1080,
-                                                                                                         "y":  330,
-                                                                                                         "width":  143,
-                                                                                                         "height":  33
-                                                                                                     },
-                                                                                          "text":  "King\u0027s Tomb",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9968259334564209,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  92,
-                                                                                                         "y":  375,
-                                                                                                         "width":  148,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9966508746147156,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  371,
-                                                                                                         "y":  373,
-                                                                                                         "width":  39,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999364018440247,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  544,
-                                                                                                         "y":  375,
-                                                                                                         "width":  148,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9976215362548828,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  822,
-                                                                                                         "y":  373,
-                                                                                                         "width":  41,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998993277549744,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  994,
-                                                                                                         "y":  373,
-                                                                                                         "width":  149,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "Completion Progress",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9950359463691711,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1275,
-                                                                                                         "y":  373,
-                                                                                                         "width":  39,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "100%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999369382858276,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "7a0cea15-f077-45e4-b16a-f356f26ff637",
+  "name": "story map picker",
+  "notes": "OCR + Screenshot the map names, annotations provided for the 3 map names on frame 2\r\n\r\nBundled runtime evidence slice. Original dataset: story-map-picker-20260802-192129. Source frames: 2.",
+  "created_at_utc": "2026-08-02T19:21:29.7280107Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 36520,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-02T19:21:48.7797324Z",
+      "sha256": "cdd3d66a12d1377ce3521ac6804c0c9238e9dd58b401550b9d0e808b658073ac",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "10e59ee4-f46e-436b-a0a4-e03a60630c9a",
+          "global_group_id": "a2ef9a58-9878-4b00-a6c4-95123f6de968",
+          "bounds": {
+            "x": 18,
+            "y": 265,
+            "width": 1348,
+            "height": 181
+          },
+          "label": "Story Map State",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Rose Kingdom\nFairy King Forest\nKing's Tomb\nCompletion Progress\n100%\nCompletion Progress\n100%\nCompletion Progress\n100%",
+              "confidence": 0.9984254042307535,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 90,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-02T19:22:34.6712569Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 165,
+                    "y": 329,
+                    "width": 164,
+                    "height": 36
+                  },
+                  "text": "Rose Kingdom",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999682307243347,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 601,
+                    "y": 331,
+                    "width": 201,
+                    "height": 33
+                  },
+                  "text": "Fairy King Forest",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999534487724304,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1080,
+                    "y": 330,
+                    "width": 143,
+                    "height": 33
+                  },
+                  "text": "King's Tomb",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9968259334564209,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 92,
+                    "y": 375,
+                    "width": 148,
+                    "height": 13
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9966508746147156,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 371,
+                    "y": 373,
+                    "width": 39,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999364018440247,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 544,
+                    "y": 375,
+                    "width": 148,
+                    "height": 13
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9976215362548828,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 822,
+                    "y": 373,
+                    "width": 41,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998993277549744,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 994,
+                    "y": 373,
+                    "width": 149,
+                    "height": 16
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9950359463691711,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1275,
+                    "y": 373,
+                    "width": 39,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999369382858276,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            },
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "cpu",
+              "text": "Rose Kingdom\nFairy King Forest\nKing's Tomb\nCompletion Progress\n100%\nCompletion Progress\n100%\nCompletion Progress\n100%",
+              "confidence": 0.998733229107327,
+              "model_load_milliseconds": 1753,
+              "inference_milliseconds": 610,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-05T17:07:19.0989883Z",
+              "model_was_cached": false,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 165,
+                    "y": 329,
+                    "width": 164,
+                    "height": 36
+                  },
+                  "text": "Rose Kingdom",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999681115150452,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 601,
+                    "y": 331,
+                    "width": 201,
+                    "height": 33
+                  },
+                  "text": "Fairy King Forest",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999534487724304,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1081,
+                    "y": 331,
+                    "width": 143,
+                    "height": 33
+                  },
+                  "text": "King's Tomb",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996361136436462,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 92,
+                    "y": 375,
+                    "width": 148,
+                    "height": 13
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9966350197792053,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 371,
+                    "y": 373,
+                    "width": 39,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999358654022217,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 544,
+                    "y": 375,
+                    "width": 148,
+                    "height": 13
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9976093173027039,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 822,
+                    "y": 373,
+                    "width": 41,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998983144760132,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 994,
+                    "y": 373,
+                    "width": 149,
+                    "height": 16
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9950265288352966,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1275,
+                    "y": 373,
+                    "width": 39,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999363422393799,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            },
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Rose Kingdom\nFairy King Forest\nKing's Tomb\nCompletion Progress\n100%\nCompletion Progress\n100%\nCompletion Progress\n100%",
+              "confidence": 0.9984254042307535,
+              "model_load_milliseconds": 2047,
+              "inference_milliseconds": 487,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-05T17:07:37.7848838Z",
+              "model_was_cached": false,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 165,
+                    "y": 329,
+                    "width": 164,
+                    "height": 36
+                  },
+                  "text": "Rose Kingdom",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999682307243347,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 601,
+                    "y": 331,
+                    "width": 201,
+                    "height": 33
+                  },
+                  "text": "Fairy King Forest",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999534487724304,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1080,
+                    "y": 330,
+                    "width": 143,
+                    "height": 33
+                  },
+                  "text": "King's Tomb",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9968259334564209,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 92,
+                    "y": 375,
+                    "width": 148,
+                    "height": 13
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9966508746147156,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 371,
+                    "y": 373,
+                    "width": 39,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999364018440247,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 544,
+                    "y": 375,
+                    "width": 148,
+                    "height": 13
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9976215362548828,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 822,
+                    "y": 373,
+                    "width": 41,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998993277549744,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 994,
+                    "y": 373,
+                    "width": 149,
+                    "height": 16
+                  },
+                  "text": "Completion Progress",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9950359463691711,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1275,
+                    "y": 373,
+                    "width": 39,
+                    "height": 15
+                  },
+                  "text": "100%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999369382858276,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

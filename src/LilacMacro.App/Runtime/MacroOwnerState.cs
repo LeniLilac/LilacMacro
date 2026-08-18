@@ -18,6 +18,7 @@ internal sealed class MacroOwnerState
     private Task _pendingSave = Task.CompletedTask;
     private bool _privacyCommitInProgress;
     private bool _saveRequestedDuringPrivacyCommit;
+    private bool _planIdentityNeedsPersistence;
     private string _encryptedPrivateServerLink;
     private string _encryptedDiscordWebhook;
     private long _privacyGeneration;
@@ -29,11 +30,13 @@ internal sealed class MacroOwnerState
         int selectedPlanIndex,
         ISecretProtector secretProtector,
         MacroSettings settings,
-        long privacyGeneration)
+        long privacyGeneration,
+        bool planIdentityNeedsPersistence)
     {
         _settingsStore = settingsStore;
         _secretProtector = secretProtector;
         _privacyGeneration = privacyGeneration;
+        _planIdentityNeedsPersistence = planIdentityNeedsPersistence;
         KeyBindings = keyBindings;
         Plans = plans;
         SelectedPlanIndex = Math.Clamp(selectedPlanIndex, 0, Plans.Count - 1);
@@ -79,6 +82,8 @@ internal sealed class MacroOwnerState
     public event EventHandler? AppearanceChanged;
 
     public event EventHandler? PrivacyOptionsChanged;
+
+    public event EventHandler? RuntimeProgressResetRequested;
 
     public ObservableCollection<PlanPrototype> Plans { get; }
 
@@ -152,16 +157,24 @@ internal sealed class MacroOwnerState
             .ConfigureAwait(false);
         MacroKeyBindings keyBindings = new();
         keyBindings.ApplyPersisted(settings.KeyBindings);
+        bool hasPersistedPlans = settings.Plans is { Count: > 0 };
+        bool savePlanIdentityMigration = false;
         if (!PlanPersistence.TryRestore(settings.Plans, out ObservableCollection<PlanPrototype>? plans))
+        {
             plans = PlanPrototypeFactory.CreatePlans();
-        return new MacroOwnerState(
+        }
+        else if (hasPersistedPlans)
+            savePlanIdentityMigration = PlanPersistence.HasMissingRuntimeIds(settings.Plans);
+        MacroOwnerState owner = new MacroOwnerState(
             store,
             keyBindings,
             plans,
             settings.SelectedPlanIndex,
             secretProtector ?? new DpapiSecretProtector(MacroInstanceContext.Current.UsesMachineProtectedSecrets),
             settings,
-            privacy?.Generation ?? 0);
+            privacy?.Generation ?? 0,
+            savePlanIdentityMigration || !hasPersistedPlans);
+        return owner;
     }
 
     public void SelectPlan(PlanPrototype plan)
@@ -175,6 +188,16 @@ internal sealed class MacroOwnerState
     }
 
     public void NotifyPlansChanged() => QueueSave();
+
+    internal void EnsurePlanIdentitiesPersisted()
+    {
+        if (!_planIdentityNeedsPersistence) return;
+        _planIdentityNeedsPersistence = false;
+        QueueSave();
+    }
+
+    public void RequestRuntimeProgressReset() =>
+        RuntimeProgressResetRequested?.Invoke(this, EventArgs.Empty);
 
     public void SetPrivateServerLink(string value)
     {

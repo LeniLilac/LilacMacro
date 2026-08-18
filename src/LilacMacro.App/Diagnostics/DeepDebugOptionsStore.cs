@@ -50,5 +50,7 @@ internal sealed class DeepDebugOptionsStore
     private static DeepDebugOptions Normalize(DeepDebugOptions options) => options with
     {
         FrameRetentionMinutes = DeepDebugOptions.NormalizeFrameRetention(options.FrameRetentionMinutes),
+        CaptureIntervalMilliseconds = DeepDebugOptions.NormalizeCaptureInterval(
+            options.CaptureIntervalMilliseconds),
     };
 }

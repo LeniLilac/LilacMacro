@@ -1,90 +1,90 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "13db98c1-ee7a-4cce-814a-3725fda79831",
-    "name":  "Expedition Shop UI Nav",
-    "notes":  "- press e once (clicking e when this ui is open will close it)\r\n- wait 2s add +2s per attempt\r\n- ocr for the description text\r\nrepeat up to 3 times\r\n\r\n- if found then click to get to shop ui (see next dataset for more steps)\r\n\r\n(cannot use \"expedition shop\" text as a confirmation b/c the npc title is also named that, so ocr could detect if name lable was in region and ui was closed)\r\n\r\nBundled runtime evidence slice. Original dataset: expedition-shop-ui-nav-20260814-003616. Source frames: 2.",
-    "created_at_utc":  "2026-08-14T00:36:16.2007807+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  35308,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-14T00:36:20.0370577+00:00",
-                       "sha256":  "e3cc5123eb00935f4ee1edf58655c6204c51bbeb4b4c53acfd385834de9fe1f8",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "fb663454-e67d-415f-9d50-4ae4ec95cd60",
-                                               "global_group_id":  "fbdbe9ca-5481-4577-9f3b-eeaa08d47f65",
-                                               "bounds":  {
-                                                              "x":  605,
-                                                              "y":  358,
-                                                              "width":  417,
-                                                              "height":  93
-                                                          },
-                                               "label":  "Expedition Shop Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "ExpeditionShop\nPurchase useful items using Expedition Coins!",
-                                                                      "confidence":  0.9964115917682648,
-                                                                      "model_load_milliseconds":  2117,
-                                                                      "inference_milliseconds":  388,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-14T00:40:02.0256672+00:00",
-                                                                      "model_was_cached":  false,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  645,
-                                                                                                         "y":  376,
-                                                                                                         "width":  134,
-                                                                                                         "height":  22
-                                                                                                     },
-                                                                                          "text":  "ExpeditionShop",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.99993497133255,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  647,
-                                                                                                         "y":  396,
-                                                                                                         "width":  258,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Purchase useful items using Expedition Coins!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9928882122039795,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "13db98c1-ee7a-4cce-814a-3725fda79831",
+  "name": "Expedition Shop UI Nav",
+  "notes": "- press e once (clicking e when this ui is open will close it)\r\n- wait 2s add +2s per attempt\r\n- ocr for the description text\r\nrepeat up to 3 times\r\n\r\n- if found then click to get to shop ui (see next dataset for more steps)\r\n\r\n(cannot use \"expedition shop\" text as a confirmation b/c the npc title is also named that, so ocr could detect if name lable was in region and ui was closed)\r\n\r\nBundled runtime evidence slice. Original dataset: expedition-shop-ui-nav-20260814-003616. Source frames: 2.",
+  "created_at_utc": "2026-08-14T00:36:16.2007807Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 35308,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-14T00:36:20.0370577Z",
+      "sha256": "e3cc5123eb00935f4ee1edf58655c6204c51bbeb4b4c53acfd385834de9fe1f8",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "fb663454-e67d-415f-9d50-4ae4ec95cd60",
+          "global_group_id": "fbdbe9ca-5481-4577-9f3b-eeaa08d47f65",
+          "bounds": {
+            "x": 605,
+            "y": 358,
+            "width": 417,
+            "height": 93
+          },
+          "label": "Expedition Shop Interaction Search",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "ExpeditionShop\nPurchase useful items using Expedition Coins!",
+              "confidence": 0.9964115917682648,
+              "model_load_milliseconds": 2117,
+              "inference_milliseconds": 388,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-14T00:40:02.0256672Z",
+              "model_was_cached": false,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 645,
+                    "y": 376,
+                    "width": 134,
+                    "height": 22
+                  },
+                  "text": "ExpeditionShop",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.99993497133255,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 647,
+                    "y": 396,
+                    "width": 258,
+                    "height": 12
+                  },
+                  "text": "Purchase useful items using Expedition Coins!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9928882122039795,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

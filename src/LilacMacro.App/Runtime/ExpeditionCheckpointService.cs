@@ -51,6 +51,7 @@ internal sealed class ExpeditionCheckpointService(
 {
     private static readonly TimeSpan ObservationDelay = TimeSpan.FromMilliseconds(300);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
+    private readonly ExpeditionRewardPopupService _rewardPopup = new(workspace, ocr);
 
     public Task ContinueAsync(string device, Action<string>? status, CancellationToken cancellationToken) =>
         RunAsync(
@@ -166,6 +167,15 @@ internal sealed class ExpeditionCheckpointService(
 
         while (CheckpointTransitionPolicy.CanObserve(indeterminateObservations))
         {
+            if (await _rewardPopup.DismissAllAsync(
+                    device, status, cancellationToken).ConfigureAwait(false))
+            {
+                indeterminateObservations = 0;
+                consecutiveSourceObservations = 0;
+                consecutiveClearObservations = 0;
+                continue;
+            }
+
             DebugOcrSnapshot confirmation = await _states.RunAsync(
                 confirmationState, device, cancellationToken).ConfigureAwait(false);
             DebugOcrSnapshot? source = null;
@@ -188,6 +198,17 @@ internal sealed class ExpeditionCheckpointService(
                 transitionStarted,
                 consecutiveSourceObservations,
                 consecutiveClearObservations);
+
+            if (decision is (CheckpointTransitionDecision.Confirm or
+                CheckpointTransitionDecision.OpenConfirmation) &&
+                await _rewardPopup.DismissAllAsync(
+                    device, status, cancellationToken).ConfigureAwait(false))
+            {
+                indeterminateObservations = 0;
+                consecutiveSourceObservations = 0;
+                consecutiveClearObservations = 0;
+                continue;
+            }
 
             if (decision is CheckpointTransitionDecision.Confirm or
                 CheckpointTransitionDecision.OpenConfirmation &&
@@ -256,6 +277,12 @@ internal sealed class ExpeditionCheckpointService(
              observation <= ExpeditionNodeArrivalPolicy.MaximumObservations;
              observation++)
         {
+            if (await _rewardPopup.DismissAllAsync(
+                    device, status, cancellationToken).ConfigureAwait(false))
+            {
+                continue;
+            }
+
             DebugOcrSnapshot confirmation = await _states.RunAsync(
                 confirmationState, device, cancellationToken).ConfigureAwait(false);
             if (confirmation.Evaluation.IsMatch)

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "ca8000cd-c8ef-4879-b473-e685dbe9e66e",
+  "name": "Expedition Reward Collect",
+  "notes": "Periodically ocr for reward popup (3x select upgrade) in expeditions mode\r\n\r\nwhen ocr finds a match, wait for 2s and reocr (there is reward animation so 2s to ensure it settles)\r\n\r\nthen save the select upgrade imgs for hotpath, should be stable bg for all rewards\r\n\r\nclick select reward and wait like 3s for select animation to finish and the reward screen should no longer show\r\n\r\ncan be multiple rewards in a row so seeings select reward still there after select attempt could just mean new reward popup, so just keep clicking until no more shown\r\n\r\nremove the exisitng periodic blind 1 coord click that happens on idle, that was the primitive solution that fails if reward popup shown in mid step action\r\n\r\nBundled runtime evidence slice. Original dataset: expedition-reward-collect-20260818-205321. Source frames: 19.",
+  "created_at_utc": "2026-08-18T20:53:21.8795326Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 10656,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0019.png",
+      "captured_at_utc": "2026-08-18T20:54:50.5303854Z",
+      "sha256": "3c467b6fe96c403ad2bd2e486ad62240ab0b36be1cf82ec6602e1e1b8e44efe7",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "f310160c-1ba2-4a0a-a4b5-d1c27bb27e3b",
+          "global_group_id": "9e9ba67b-36f4-4532-8b2f-13f8fbd8739e",
+          "bounds": {
+            "x": 143,
+            "y": 447,
+            "width": 1079,
+            "height": 93
+          },
+          "label": "Expedition Reward Popup Action Strip",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "SelectUpgrade\nSelectUpgrade\nSelect Upgrade",
+              "confidence": 0.9906801382700602,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 804,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-18T20:57:49.3277818Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 194,
+                    "y": 510,
+                    "width": 108,
+                    "height": 19
+                  },
+                  "text": "SelectUpgrade",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997084736824036,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required",
+                  "spatial_selector": "leftmost"
+                },
+                {
+                  "bounds": {
+                    "x": 610,
+                    "y": 509,
+                    "width": 107,
+                    "height": 19
+                  },
+                  "text": "SelectUpgrade",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996899962425232,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 1025,
+                    "y": 510,
+                    "width": 107,
+                    "height": 20
+                  },
+                  "text": "Select Upgrade",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9726419448852539,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required",
+                  "spatial_selector": "rightmost"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
+}

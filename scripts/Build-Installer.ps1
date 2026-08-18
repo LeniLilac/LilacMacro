@@ -34,7 +34,8 @@ if (-not $iscc) { throw 'Inno Setup 6 was not found.' }
 
 $artifact = Join-Path $repository "artifacts\macro-$Version-installer"
 if (Test-Path -LiteralPath $artifact) { throw "Artifact already exists: $artifact" }
-$temporary = Join-Path ([IO.Path]::GetTempPath()) ('LilacMacro-installer-' + [Guid]::NewGuid().ToString('N'))
+# Keep the publish root short enough for Inno Setup to process Python package paths.
+$temporary = Join-Path $env:USERPROFILE ('lilacmacro-' + [Guid]::NewGuid().ToString('N'))
 $publish = Join-Path $temporary 'publish'
 $output = Join-Path $temporary 'output'
 
@@ -52,6 +53,9 @@ try {
     Invoke-Publish 'src\LilacMacro.SessionSetup\LilacMacro.SessionSetup.csproj'
     Invoke-Publish 'src\LilacMacro.SessionWorker\LilacMacro.SessionWorker.csproj'
 
+    & (Join-Path $repository 'scripts\Build-OcrRuntime.ps1') -OutputRoot $publish
+    if ($LASTEXITCODE -ne 0) { throw 'Bundled OCR runtime build failed.' }
+
     $legacyEvidence = Join-Path $publish 'Assets\RuntimeEvidence'
     if (Test-Path -LiteralPath $legacyEvidence) {
         throw 'Published output contains repository-only runtime evidence datasets.'
@@ -68,6 +72,14 @@ try {
 
     foreach ($name in @('LilacMacro.exe', 'LilacMacro.SessionSetup.exe', 'LilacMacro.SessionWorker.exe')) {
         if (-not (Test-Path -LiteralPath (Join-Path $publish $name))) { throw "Missing published file: $name" }
+    }
+    foreach ($path in @(
+        'ocr\python\python.exe',
+        'ocr\cpu-runtime.json',
+        'ocr\models\official_models')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $publish $path))) {
+            throw "Missing bundled OCR runtime file: $path"
+        }
     }
 
     & $iscc "/DSourceRoot=$repository" "/DPublishRoot=$publish" `

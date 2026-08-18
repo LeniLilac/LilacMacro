@@ -42,6 +42,7 @@ Source: "{#SourceRoot}\LICENSE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceRoot}\NOTICE.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceRoot}\PRIVACY.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourceRoot}\TERMS.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceRoot}\licenses\OCR-RUNTIME.md"; DestDir: "{app}\licenses"; Flags: ignoreversion
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}\Assets\RuntimeEvidence"

@@ -1,6 +1,7 @@
 using LilacMacro.App.Debugging;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Runtime;
 
@@ -69,6 +70,33 @@ internal sealed class MatchTerminalService(
             : null;
     }
 
+    public async Task<MatchTerminalOutcome> WaitUntilTerminalAsync(
+        string device,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            try
+            {
+                MatchTerminalOutcome? outcome = await TryObserveAsync(
+                    device, cancellationToken).ConfigureAwait(false);
+                if (outcome is MatchTerminalOutcome terminal)
+                {
+                    status?.Invoke($"{terminal.ToString().ToUpperInvariant()} VERIFIED");
+                    return terminal;
+                }
+            }
+            catch (Exception error) when (
+                !cancellationToken.IsCancellationRequested && IsRecoverableObservationFailure(error))
+            {
+                status?.Invoke($"TERMINAL OBSERVATION RETRY | {error.Message}");
+            }
+
+            await Task.Delay(PollInterval, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     public async Task RepeatAsync(
         MatchTerminalOutcome outcome,
         string device,
@@ -83,7 +111,8 @@ internal sealed class MatchTerminalService(
             device,
             async token => ObservedStateTransitionActionResult.From(
                 await _results.RepeatAsync(state, device, token).ConfigureAwait(false)),
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            MatchLoadPolicy.TransitionBudget).ConfigureAwait(false);
         if (!transition.Succeeded)
         {
             throw new InvalidOperationException(
@@ -91,4 +120,8 @@ internal sealed class MatchTerminalService(
                 $"({transition.Observation.Outcome}).");
         }
     }
+
+    private static bool IsRecoverableObservationFailure(Exception error) =>
+        error is IOException or UnauthorizedAccessException or InvalidDataException or
+        InvalidOperationException or TimeoutException;
 }

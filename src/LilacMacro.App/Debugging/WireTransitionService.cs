@@ -47,7 +47,14 @@ internal sealed class WireTransitionService(
             Destination = destination.Name,
         });
         ObservedStateTransitionRunResult result = await _transitions.RunAsync(
-            source, destination, device, sourceAction, cancellationToken);
+            source,
+            destination,
+            device,
+            sourceAction,
+            cancellationToken,
+            stage == StoryWireStage.MatchPrestart
+                ? MatchLoadPolicy.TransitionBudget
+                : null);
         string status = result.Succeeded
             ? $"{destination.Name.ToUpperInvariant()} VERIFIED"
             : result.Observation.Outcome == ObservedStateTransitionOutcome.SourceRetained

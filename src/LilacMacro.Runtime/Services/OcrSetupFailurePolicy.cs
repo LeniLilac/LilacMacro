@@ -16,6 +16,8 @@ internal static class OcrSetupFailurePolicy
     internal static string Classify(string message, string device, int? processExitCode)
     {
         string text = message.Trim().ToLowerInvariant();
+        if (text.Contains("could not find its bundled python 3.12 runtime", StringComparison.Ordinal))
+            return "python312_missing";
         if (text.Contains("no suitable python runtime found", StringComparison.Ordinal))
             return "python312_missing";
         if (text.Contains("windows app installer is unavailable", StringComparison.Ordinal))

@@ -1,183 +1,171 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "c9eac746-ca87-4067-9d40-7d862be26273",
-    "name":  "New encounter Node Multi Ui Scales",
-    "notes":  "Bundled runtime evidence slice. Original dataset: new-encounter-node-multi-ui-scales-20260814-082727. Source frames: 1, 2, 3, 4, 5, 6.",
-    "created_at_utc":  "2026-08-14T08:27:27.0817187+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  56284,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-14T08:27:43.0988887+00:00",
-                       "sha256":  "25492a82e3af129dae7e8f5e5e09bfa62aa2e21f680529319bbf185dab5d61a6",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "6b4fa96f-af93-49b5-b4da-90637c2d7440",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  596,
-                                                              "y":  445,
-                                                              "width":  178,
-                                                              "height":  138
-                                                          },
-                                               "label":  "Continue Button",
-                                               "notes":  "Encounter source-state Continue owner at the recorded UI scale; separate from the confirmation modal and cloned from the verified checkpoint source geometry.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-14T08:27:44.8655481+00:00",
-                       "sha256":  "bd3daaf31a1a82b62284bf17d6eaf0c2c598161f2b2cc97f7c8f47f538f1beb3",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "c8eb1669-adc7-480b-9b49-a2411850ff5e",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  445,
-                                                              "y":  265,
-                                                              "width":  476,
-                                                              "height":  172
-                                                          },
-                                               "label":  "Continue Confirm",
-                                               "notes":  "Encounter destination confirmation-modal owner at the recorded UI scale; separate from the background source control.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-14T08:27:51.2894311+00:00",
-                       "sha256":  "0588d4a9d86bc485139a322272895f9e34c211131ea91734acc850cf94734e9a",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "931a7b1a-752e-4b5d-9cc8-a57945964906",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  596,
-                                                              "y":  445,
-                                                              "width":  178,
-                                                              "height":  138
-                                                          },
-                                               "label":  "Continue Button",
-                                               "notes":  "Encounter source-state Continue owner at the recorded UI scale; separate from the confirmation modal and cloned from the verified checkpoint source geometry.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0004.png",
-                       "captured_at_utc":  "2026-08-14T08:27:52.6026255+00:00",
-                       "sha256":  "8e1909e51ce6e60a9528edf2d307fdf2acc2585467bd771bf7fe69d7bd60fa94",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "e3d6f034-fd54-4aec-a776-58a505cc1f14",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  445,
-                                                              "y":  265,
-                                                              "width":  476,
-                                                              "height":  172
-                                                          },
-                                               "label":  "Continue Confirm",
-                                               "notes":  "Encounter destination confirmation-modal owner at the recorded UI scale; separate from the background source control.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0005.png",
-                       "captured_at_utc":  "2026-08-14T08:27:58.7083994+00:00",
-                       "sha256":  "5d63d3d80c2088c30e9043c8970f98958a529ffbf4de7902e8fc8be58bc3e600",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "0b730dd3-6b0d-4c68-a7fa-b48c38cc7441",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  596,
-                                                              "y":  445,
-                                                              "width":  178,
-                                                              "height":  138
-                                                          },
-                                               "label":  "Continue Button",
-                                               "notes":  "Encounter source-state Continue owner at the recorded UI scale; separate from the confirmation modal and cloned from the verified checkpoint source geometry.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0006.png",
-                       "captured_at_utc":  "2026-08-14T08:28:00.4876884+00:00",
-                       "sha256":  "3217640b3af6701ad3a1d788da6d1c83b7939353cb154149f141b84903279360",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "d4d4a1fd-8511-43dc-b238-78d8d559f0e9",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  445,
-                                                              "y":  265,
-                                                              "width":  476,
-                                                              "height":  172
-                                                          },
-                                               "label":  "Continue Confirm",
-                                               "notes":  "Encounter destination confirmation-modal owner at the recorded UI scale; separate from the background source control.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "c9eac746-ca87-4067-9d40-7d862be26273",
+  "name": "New encounter Node Multi Ui Scales",
+  "notes": "Bundled runtime evidence slice. Original dataset: new-encounter-node-multi-ui-scales-20260814-082727. Source frames: 1, 2, 3, 4, 5, 6.",
+  "created_at_utc": "2026-08-14T08:27:27.0817187Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 56284,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-14T08:27:43.0988887Z",
+      "sha256": "25492a82e3af129dae7e8f5e5e09bfa62aa2e21f680529319bbf185dab5d61a6",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "6b4fa96f-af93-49b5-b4da-90637c2d7440",
+          "global_group_id": null,
+          "bounds": {
+            "x": 596,
+            "y": 445,
+            "width": 178,
+            "height": 138
+          },
+          "label": "Continue Button",
+          "notes": "Encounter source-state Continue owner at the recorded UI scale; separate from the confirmation modal and cloned from the verified checkpoint source geometry.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-14T08:27:44.8655481Z",
+      "sha256": "bd3daaf31a1a82b62284bf17d6eaf0c2c598161f2b2cc97f7c8f47f538f1beb3",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "c8eb1669-adc7-480b-9b49-a2411850ff5e",
+          "global_group_id": null,
+          "bounds": {
+            "x": 445,
+            "y": 265,
+            "width": 476,
+            "height": 172
+          },
+          "label": "Continue Confirm",
+          "notes": "Encounter destination confirmation-modal owner at the recorded UI scale; separate from the background source control.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-14T08:27:51.2894311Z",
+      "sha256": "0588d4a9d86bc485139a322272895f9e34c211131ea91734acc850cf94734e9a",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "931a7b1a-752e-4b5d-9cc8-a57945964906",
+          "global_group_id": null,
+          "bounds": {
+            "x": 596,
+            "y": 445,
+            "width": 178,
+            "height": 138
+          },
+          "label": "Continue Button",
+          "notes": "Encounter source-state Continue owner at the recorded UI scale; separate from the confirmation modal and cloned from the verified checkpoint source geometry.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0004.png",
+      "captured_at_utc": "2026-08-14T08:27:52.6026255Z",
+      "sha256": "8e1909e51ce6e60a9528edf2d307fdf2acc2585467bd771bf7fe69d7bd60fa94",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "e3d6f034-fd54-4aec-a776-58a505cc1f14",
+          "global_group_id": null,
+          "bounds": {
+            "x": 445,
+            "y": 265,
+            "width": 476,
+            "height": 172
+          },
+          "label": "Continue Confirm",
+          "notes": "Encounter destination confirmation-modal owner at the recorded UI scale; separate from the background source control.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0005.png",
+      "captured_at_utc": "2026-08-14T08:27:58.7083994Z",
+      "sha256": "5d63d3d80c2088c30e9043c8970f98958a529ffbf4de7902e8fc8be58bc3e600",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "0b730dd3-6b0d-4c68-a7fa-b48c38cc7441",
+          "global_group_id": null,
+          "bounds": {
+            "x": 596,
+            "y": 445,
+            "width": 178,
+            "height": 138
+          },
+          "label": "Continue Button",
+          "notes": "Encounter source-state Continue owner at the recorded UI scale; separate from the confirmation modal and cloned from the verified checkpoint source geometry.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0006.png",
+      "captured_at_utc": "2026-08-14T08:28:00.4876884Z",
+      "sha256": "3217640b3af6701ad3a1d788da6d1c83b7939353cb154149f141b84903279360",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "d4d4a1fd-8511-43dc-b238-78d8d559f0e9",
+          "global_group_id": null,
+          "bounds": {
+            "x": 445,
+            "y": 265,
+            "width": 476,
+            "height": 172
+          },
+          "label": "Continue Confirm",
+          "notes": "Encounter destination confirmation-modal owner at the recorded UI scale; separate from the background source control.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    }
+  ]
 }

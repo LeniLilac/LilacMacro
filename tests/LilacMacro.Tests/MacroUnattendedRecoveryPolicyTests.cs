@@ -27,8 +27,33 @@ public sealed class MacroUnattendedRecoveryPolicyTests
         Assert.Equal(expected, MacroUnattendedRecoveryPolicy.ShouldQuarantineTask(failures));
 
     [Fact]
-    public void TaskQuarantineIsTemporary() =>
+    public void MatchTaskQuarantineIsTemporary() =>
         Assert.Equal(TimeSpan.FromMinutes(5), MacroUnattendedRecoveryPolicy.TaskQuarantineDuration);
+
+    [Theory]
+    [InlineData(PlanTaskMode.Utilities, 1, false)]
+    [InlineData(PlanTaskMode.Utilities, 2, false)]
+    [InlineData(PlanTaskMode.Utilities, 3, true)]
+    [InlineData(PlanTaskMode.Story, 3, false)]
+    public void UtilityOnlyUsesIndefiniteQuarantineAfterThreeFailures(
+        PlanTaskMode mode,
+        int failures,
+        bool expected) =>
+        Assert.Equal(expected, MacroUnattendedRecoveryPolicy.ShouldQuarantineIndefinitely(mode, failures));
+
+    [Theory]
+    [InlineData(PlanTaskMode.Utilities, true, 0, true)]
+    [InlineData(PlanTaskMode.Utilities, true, 1, false)]
+    [InlineData(PlanTaskMode.Utilities, false, 0, false)]
+    [InlineData(PlanTaskMode.Story, true, 0, false)]
+    public void OpportunisticUtilityRetryAllowsOnlyOneAttemptAtATaskBoundary(
+        PlanTaskMode mode,
+        bool taskSwitchAvailable,
+        int attempts,
+        bool expected) =>
+        Assert.Equal(
+            expected,
+            MacroUnattendedRecoveryPolicy.CanAttemptOpportunistically(mode, taskSwitchAvailable, attempts));
 
     [Fact]
     public async Task PreflightRejectsEmptyPlanBeforeTaskValidation()

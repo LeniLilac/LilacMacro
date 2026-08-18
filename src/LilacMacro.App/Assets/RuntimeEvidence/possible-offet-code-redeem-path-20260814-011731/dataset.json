@@ -1,48 +1,46 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "1fb575ac-13f8-4996-a9f8-172d88ab43dc",
-    "name":  "Possible Offet (code redeem path)",
-    "notes":  "you can see other icons can offset, this is prob best path:\r\n- use exisitng stable settings detect path\r\n- click based on offset for the button + redeem codes option since that is always the same relative to the setting gear icon\r\n\r\nBundled runtime evidence slice. Original dataset: possible-offet-code-redeem-path-20260814-011731. Source frames: 2.",
-    "created_at_utc":  "2026-08-14T01:17:31.7208728+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  35308,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-14T01:17:35.2165665+00:00",
-                       "sha256":  "e558c428e3093cf28a06ba4cef7b4bea56d4461e0f02700e44e8d680fa3527f8",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "0e5dd37e-4f44-4621-b74a-9b2ab4f05c07",
-                                               "global_group_id":  null,
-                                               "bounds":  {
-                                                              "x":  210,
-                                                              "y":  55,
-                                                              "width":  255,
-                                                              "height":  180
-                                                          },
-                                               "label":  "Codes Launcher State",
-                                               "notes":  "Bounded open three-dot launcher owner. The ellipsis is derived from the freshly detected Settings gear; input inside this region is authorized only after Join Friend, Redeem Codes, and Lobby Music are independently observed.",
-                                               "minimum_pool_matches":  0,
-                                               "ocr_trials":  [
-
-                                                              ]
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "1fb575ac-13f8-4996-a9f8-172d88ab43dc",
+  "name": "Possible Offet (code redeem path)",
+  "notes": "you can see other icons can offset, this is prob best path:\r\n- use exisitng stable settings detect path\r\n- click based on offset for the button + redeem codes option since that is always the same relative to the setting gear icon\r\n\r\nBundled runtime evidence slice. Original dataset: possible-offet-code-redeem-path-20260814-011731. Source frames: 2.",
+  "created_at_utc": "2026-08-14T01:17:31.7208728Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 35308,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-14T01:17:35.2165665Z",
+      "sha256": "e558c428e3093cf28a06ba4cef7b4bea56d4461e0f02700e44e8d680fa3527f8",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "0e5dd37e-4f44-4621-b74a-9b2ab4f05c07",
+          "global_group_id": null,
+          "bounds": {
+            "x": 210,
+            "y": 55,
+            "width": 255,
+            "height": 180
+          },
+          "label": "Codes Launcher State",
+          "notes": "Bounded open three-dot launcher owner. The ellipsis is derived from the freshly detected Settings gear; input inside this region is authorized only after Join Friend, Redeem Codes, and Lobby Music are independently observed.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    }
+  ]
 }

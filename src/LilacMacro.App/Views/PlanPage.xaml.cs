@@ -123,6 +123,7 @@ public partial class PlanPage : UserControl
     {
         _ = sender;
         _ = eventArgs;
+        _ownerState.RequestRuntimeProgressReset();
     }
 
     private void AddTask_OnClick(object sender, RoutedEventArgs eventArgs) => OpenTaskEditor(null);

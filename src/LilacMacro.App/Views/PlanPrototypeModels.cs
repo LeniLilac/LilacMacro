@@ -19,6 +19,8 @@ public abstract class PlanBlockPrototype : INotifyPropertyChanged
 {
     private bool _isSelected;
 
+    public Guid RuntimeId { get; internal set; } = Guid.NewGuid();
+
     public bool IsSelected
     {
         get => _isSelected;
@@ -181,6 +183,8 @@ public sealed class PlanPrototype
         Name = name;
         Blocks = new ObservableCollection<PlanBlockPrototype>(blocks);
     }
+
+    public Guid RuntimeId { get; internal set; } = Guid.NewGuid();
 
     public string Name { get; set; }
     public ObservableCollection<PlanBlockPrototype> Blocks { get; }

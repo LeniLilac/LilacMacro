@@ -180,6 +180,7 @@ public sealed class RuntimeEvidencePolicyTests
             .Where(field => field.FieldType == typeof(DebugStateSpec))
             .Select(field => Assert.IsType<DebugStateSpec>(field.GetValue(null)))
             .Concat(ExpeditionCheckpointStateCatalog.All())
+            .Concat(ExpeditionRewardStateCatalog.All())
             .Concat(DebugCodeWorkflowCatalog.All());
 
     private static PixelRect ReadOwner(string owner)

@@ -24,6 +24,10 @@
              Link="Infrastructure\AppSettingsStore.cs" />
     <Compile Include="..\LilacMacro.App\Infrastructure\OcrRunner.cs"
              Link="Infrastructure\OcrRunner.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\OcrGpuInfo.cs"
+             Link="Infrastructure\OcrGpuInfo.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\OcrRunner.Setup.cs"
+             Link="Infrastructure\OcrRunner.Setup.cs" />
     <Compile Include="..\LilacMacro.App\Infrastructure\OcrWorkerResponseReader.cs"
              Link="Infrastructure\OcrWorkerResponseReader.cs" />
     <Compile Include="..\LilacMacro.App\Infrastructure\OcrWorkerResult.cs"
@@ -61,10 +65,14 @@
              Link="Runtime\ExpeditionRewardPoolService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\ExpeditionRewardProfileStore.cs"
              Link="Runtime\ExpeditionRewardProfileStore.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\ExpeditionRewardPopupService.cs"
+             Link="Runtime\ExpeditionRewardPopupService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\ExpeditionSettingsService.cs"
              Link="Runtime\ExpeditionSettingsService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MatchTerminalService.cs"
              Link="Runtime\MatchTerminalService.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\TerminalAwarePlacementSetup.cs"
+             Link="Runtime\TerminalAwarePlacementSetup.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MatchWaveService.cs"
              Link="Runtime\MatchWaveService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MapPreparationService.cs"

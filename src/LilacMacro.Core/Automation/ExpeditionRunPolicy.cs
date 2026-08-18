@@ -18,12 +18,22 @@ public enum ExpeditionNodeAction
     Extract,
 }
 
+public static class ExpeditionStartGamePolicy
+{
+    public static readonly TimeSpan RetryWindow = MatchLoadPolicy.RetryWindow;
+    public const int RetryMilliseconds = MatchLoadPolicy.RetryMilliseconds;
+
+    public static bool IsWithinRetryWindow(TimeSpan elapsed) =>
+        MatchLoadPolicy.IsWithinRetryWindow(elapsed);
+
+    public static TimeSpan RetryDelay(TimeSpan elapsed) =>
+        MatchLoadPolicy.RetryDelay(elapsed);
+}
+
 public static class ExpeditionDefenseStartPolicy
 {
     public const int ArrivalMaximumObservations = 240;
     public const int ArrivalRetryMilliseconds = 500;
-    public const int PostReplayStartAttempts = 20;
-    public const int PostReplayRetryMilliseconds = 250;
 }
 
 public static class ExpeditionNodeArrivalPolicy

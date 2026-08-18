@@ -1,178 +1,168 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "dca6d191-e761-44d2-bf20-19867eab63c0",
-    "name":  "Expediton Shop Scroll multi ui scale",
-    "notes":  "I assume its possible to use the same/adjust the buy flow from gold/raid shop\r\n\r\n3 columns vs 2 columns on raid/gold\r\n\r\nBundled runtime evidence slice. Original dataset: expediton-shop-scroll-multi-ui-scale-20260814-083856. Source frames: 1, 6, 10.",
-    "created_at_utc":  "2026-08-14T08:38:56.3877001+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  56284,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-14T08:39:02.4339648+00:00",
-                       "sha256":  "766f489f355e253dc6d8b0a16c2bfbeffc9d0ca32cb4d88dc084d8ad4862f1d1",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "4e7540be-6db2-4fa7-80fe-42229516a547",
-                                               "global_group_id":  "f187bd33-2b9c-4d7c-bc53-a20be2380c5f",
-                                               "bounds":  {
-                                                              "x":  623,
-                                                              "y":  115,
-                                                              "width":  709,
-                                                              "height":  500
-                                                          },
-                                               "label":  "Shop+Scroll Area",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "6f35a718-4de0-444b-b44d-8fd490afa920",
-                                               "global_group_id":  "6b8b116b-bea2-4470-a4c0-1fa99f37cce1",
-                                               "bounds":  {
-                                                              "x":  18,
-                                                              "y":  630,
-                                                              "width":  197,
-                                                              "height":  65
-                                                          },
-                                               "label":  "Confirm expedition shop is open",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Back",
-                                                                      "confidence":  0.9999773502349854,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  399,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-14T08:41:11.9058013+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  95,
-                                                                                                         "y":  645,
-                                                                                                         "width":  43,
-                                                                                                         "height":  24
-                                                                                                     },
-                                                                                          "text":  "Back",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999773502349854,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0006.png",
-                       "captured_at_utc":  "2026-08-14T08:39:21.7514705+00:00",
-                       "sha256":  "b1cf0dbedc3ab70eeb31df9fbda735be010459542cd3c13d17b096443d831aff",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "af307ba0-6bbc-4feb-9923-8e434ba6dfbc",
-                                               "global_group_id":  "f187bd33-2b9c-4d7c-bc53-a20be2380c5f",
-                                               "bounds":  {
-                                                              "x":  623,
-                                                              "y":  115,
-                                                              "width":  709,
-                                                              "height":  500
-                                                          },
-                                               "label":  "Shop+Scroll Area",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "d1142d25-816a-46ad-8610-17988df1dca3",
-                                               "global_group_id":  "6b8b116b-bea2-4470-a4c0-1fa99f37cce1",
-                                               "bounds":  {
-                                                              "x":  18,
-                                                              "y":  630,
-                                                              "width":  197,
-                                                              "height":  65
-                                                          },
-                                               "label":  "Confirm expedition shop is open",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0010.png",
-                       "captured_at_utc":  "2026-08-14T08:39:30.1572489+00:00",
-                       "sha256":  "8589e409db8ae1d54cbaeaed6e2fc56c4f595d08f6a092002b6fe4ae58840276",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "bbbe9dcd-9b7d-441d-aee5-e0c218bfa82b",
-                                               "global_group_id":  "f187bd33-2b9c-4d7c-bc53-a20be2380c5f",
-                                               "bounds":  {
-                                                              "x":  623,
-                                                              "y":  115,
-                                                              "width":  709,
-                                                              "height":  500
-                                                          },
-                                               "label":  "Shop+Scroll Area",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "0090af91-b6db-435e-b019-f125beb21fb1",
-                                               "global_group_id":  "6b8b116b-bea2-4470-a4c0-1fa99f37cce1",
-                                               "bounds":  {
-                                                              "x":  18,
-                                                              "y":  630,
-                                                              "width":  197,
-                                                              "height":  65
-                                                          },
-                                               "label":  "Confirm expedition shop is open",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "dca6d191-e761-44d2-bf20-19867eab63c0",
+  "name": "Expediton Shop Scroll multi ui scale",
+  "notes": "I assume its possible to use the same/adjust the buy flow from gold/raid shop\r\n\r\n3 columns vs 2 columns on raid/gold\r\n\r\nBundled runtime evidence slice. Original dataset: expediton-shop-scroll-multi-ui-scale-20260814-083856. Source frames: 1, 6, 10.",
+  "created_at_utc": "2026-08-14T08:38:56.3877001Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 56284,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-14T08:39:02.4339648Z",
+      "sha256": "766f489f355e253dc6d8b0a16c2bfbeffc9d0ca32cb4d88dc084d8ad4862f1d1",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "4e7540be-6db2-4fa7-80fe-42229516a547",
+          "global_group_id": "f187bd33-2b9c-4d7c-bc53-a20be2380c5f",
+          "bounds": {
+            "x": 623,
+            "y": 115,
+            "width": 709,
+            "height": 500
+          },
+          "label": "Shop+Scroll Area",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "6f35a718-4de0-444b-b44d-8fd490afa920",
+          "global_group_id": "6b8b116b-bea2-4470-a4c0-1fa99f37cce1",
+          "bounds": {
+            "x": 18,
+            "y": 630,
+            "width": 197,
+            "height": 65
+          },
+          "label": "Confirm expedition shop is open",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Back",
+              "confidence": 0.9999773502349854,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 399,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-14T08:41:11.9058013Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 95,
+                    "y": 645,
+                    "width": 43,
+                    "height": 24
+                  },
+                  "text": "Back",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999773502349854,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0006.png",
+      "captured_at_utc": "2026-08-14T08:39:21.7514705Z",
+      "sha256": "b1cf0dbedc3ab70eeb31df9fbda735be010459542cd3c13d17b096443d831aff",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "af307ba0-6bbc-4feb-9923-8e434ba6dfbc",
+          "global_group_id": "f187bd33-2b9c-4d7c-bc53-a20be2380c5f",
+          "bounds": {
+            "x": 623,
+            "y": 115,
+            "width": 709,
+            "height": 500
+          },
+          "label": "Shop+Scroll Area",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "d1142d25-816a-46ad-8610-17988df1dca3",
+          "global_group_id": "6b8b116b-bea2-4470-a4c0-1fa99f37cce1",
+          "bounds": {
+            "x": 18,
+            "y": 630,
+            "width": 197,
+            "height": 65
+          },
+          "label": "Confirm expedition shop is open",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0010.png",
+      "captured_at_utc": "2026-08-14T08:39:30.1572489Z",
+      "sha256": "8589e409db8ae1d54cbaeaed6e2fc56c4f595d08f6a092002b6fe4ae58840276",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "bbbe9dcd-9b7d-441d-aee5-e0c218bfa82b",
+          "global_group_id": "f187bd33-2b9c-4d7c-bc53-a20be2380c5f",
+          "bounds": {
+            "x": 623,
+            "y": 115,
+            "width": 709,
+            "height": 500
+          },
+          "label": "Shop+Scroll Area",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "0090af91-b6db-435e-b019-f125beb21fb1",
+          "global_group_id": "6b8b116b-bea2-4470-a4c0-1fa99f37cce1",
+          "bounds": {
+            "x": 18,
+            "y": 630,
+            "width": 197,
+            "height": 65
+          },
+          "label": "Confirm expedition shop is open",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

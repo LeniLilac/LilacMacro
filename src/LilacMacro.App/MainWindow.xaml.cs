@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private readonly DebugKeySequenceCoordinator? _debugInput;
     private GlobalHotkeyRegistration? _timedCaptureHotkey;
     private GlobalHotkeyRegistration? _manualCaptureHotkey;
+    private readonly IDisposable _deepDebugFrameCaptureRegistration;
     private HwndSource? _windowSource;
     private PageKind _currentPage;
     private bool _closingAfterFlush;
@@ -39,6 +40,15 @@ public partial class MainWindow : Window
         _deepDebug = deepDebug;
         _workspace = new WorkspaceController(deepDebug);
         _profile = ToolShellProfile.Create(kind);
+        _deepDebugFrameCaptureRegistration = deepDebug.RegisterFrameCaptureProvider(
+            kind == ToolShellKind.DatasetBuilder ? "dataset-builder" : "runtime-lab",
+            async token =>
+            {
+                await _workspace.CaptureLiveFrameAsync(
+                    _workspace.TargetSize,
+                    token,
+                    "deep-debug-interval");
+            });
         _deepDebug.RetainAllFrames = _profile.RetainAllDeepDebugFrames;
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = _profile.KeepOcrLoaded };
         _currentPage = _profile.StartPage;
@@ -480,6 +490,7 @@ public partial class MainWindow : Window
             if (_windowSource is not null) _windowSource.RemoveHook(WindowMessageHook);
             _manualCaptureHotkey?.Dispose();
             _timedCaptureHotkey?.Dispose();
+            _deepDebugFrameCaptureRegistration.Dispose();
             _ocr.Dispose();
             _workspace.Dispose();
             _deepDebug.OptionsChanged -= DeepDebug_OnOptionsChanged;

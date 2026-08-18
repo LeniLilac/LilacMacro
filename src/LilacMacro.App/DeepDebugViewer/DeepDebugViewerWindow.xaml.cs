@@ -409,7 +409,9 @@ public partial class DeepDebugViewerWindow : Window
     }
 
     private static string Friendly(string value) => value.Replace('_', ' ').Replace('-', ' ').ToUpperInvariant();
-    private static string FormatRuntime(TimeSpan? value) => value is { } runtime ? runtime.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture) : "—";
+    private static string FormatRuntime(TimeSpan? value) => value is { } runtime
+        ? $"{(int)runtime.TotalHours:00}:{runtime.Minutes:00}:{runtime.Seconds:00}.{runtime.Milliseconds:000}"
+        : "—";
     private static string FormatBytes(long bytes) => bytes >= 1024L * 1024 * 1024
         ? $"{bytes / (1024d * 1024 * 1024):0.0} GB"
         : $"{bytes / (1024d * 1024):0} MB";

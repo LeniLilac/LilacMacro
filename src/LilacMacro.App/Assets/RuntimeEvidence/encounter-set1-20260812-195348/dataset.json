@@ -1,281 +1,269 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "e2527997-d0b9-4c8c-83f4-d614f819073d",
-    "name":  "Encounter Set1",
-    "notes":  "Bundled runtime evidence slice. Original dataset: encounter-set1-20260812-195348. Source frames: 1, 2, 3, 4, 5, 6, 7.",
-    "created_at_utc":  "2026-08-12T19:53:48.8038679+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  30328,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-12T19:53:51.2696846+00:00",
-                       "sha256":  "a531d7c85d64fd6d3eb7a1f02ab410059270828273562d1bf493a73d06699f1d",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "c56054dd-0022-4ca3-b82a-8365eb9154aa",
-                                               "global_group_id":  "623e0d55-c17d-4b4f-a761-17ad5e071783",
-                                               "bounds":  {
-                                                              "x":  367,
-                                                              "y":  550,
-                                                              "width":  630,
-                                                              "height":  92
-                                                          },
-                                               "label":  "Encounter Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-12T19:53:52.0176212+00:00",
-                       "sha256":  "2c5133b1434022803849994af10cdc2d4328815858c0182ea7821441ecf4df78",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "04a2c46f-5bce-4e1e-ba95-d97d71c66bc2",
-                                               "global_group_id":  "623e0d55-c17d-4b4f-a761-17ad5e071783",
-                                               "bounds":  {
-                                                              "x":  367,
-                                                              "y":  550,
-                                                              "width":  630,
-                                                              "height":  92
-                                                          },
-                                               "label":  "Encounter Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-12T19:53:52.8573752+00:00",
-                       "sha256":  "b7fe968baea385d81f459eb505e2163ff5264adc0bf557a648b86137cd7f57c9",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "7d930913-4585-4bae-9a08-6e330122a628",
-                                               "global_group_id":  "623e0d55-c17d-4b4f-a761-17ad5e071783",
-                                               "bounds":  {
-                                                              "x":  367,
-                                                              "y":  550,
-                                                              "width":  630,
-                                                              "height":  92
-                                                          },
-                                               "label":  "Encounter Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0004.png",
-                       "captured_at_utc":  "2026-08-12T19:53:54.5464701+00:00",
-                       "sha256":  "9b69c87c94a230dd07c0a61e4dfc80a243daa852e01cb70ca9bb70ae18aa10aa",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "6b512d75-ea46-4e49-a67a-554d5215ca3a",
-                                               "global_group_id":  "623e0d55-c17d-4b4f-a761-17ad5e071783",
-                                               "bounds":  {
-                                                              "x":  367,
-                                                              "y":  550,
-                                                              "width":  630,
-                                                              "height":  92
-                                                          },
-                                               "label":  "Encounter Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0005.png",
-                       "captured_at_utc":  "2026-08-12T19:53:57.0558526+00:00",
-                       "sha256":  "a214fdae0ea95b3e32ef66340a74be5e0471f2102d04e99dea8aa62bdf341b43",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "8608faae-c528-4d75-8ebe-fbd6fd2ca819",
-                                               "global_group_id":  "623e0d55-c17d-4b4f-a761-17ad5e071783",
-                                               "bounds":  {
-                                                              "x":  367,
-                                                              "y":  550,
-                                                              "width":  630,
-                                                              "height":  92
-                                                          },
-                                               "label":  "Encounter Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Discuss\nBarter\nEngage\nLeave",
-                                                                      "confidence":  0.9999532699584961,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  88,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-12T22:06:48.7780691+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  457,
-                                                                                                         "y":  590,
-                                                                                                         "width":  52,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Discuss",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999424815177917,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  591,
-                                                                                                         "y":  589,
-                                                                                                         "width":  50,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Barter",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999834895133972,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  722,
-                                                                                                         "y":  589,
-                                                                                                         "width":  55,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Engage",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999303817749023,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  859,
-                                                                                                         "y":  588,
-                                                                                                         "width":  47,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Leave",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999567270278931,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0006.png",
-                       "captured_at_utc":  "2026-08-12T19:54:06.7113891+00:00",
-                       "sha256":  "5ef8251a3c26d54a06e13a683022eccc80569cf7279db33fcd743274dfe63f39",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "a91ab08f-c767-41c5-abde-a559e6e7ac9a",
-                                               "global_group_id":  "623e0d55-c17d-4b4f-a761-17ad5e071783",
-                                               "bounds":  {
-                                                              "x":  367,
-                                                              "y":  550,
-                                                              "width":  630,
-                                                              "height":  92
-                                                          },
-                                               "label":  "Encounter Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0007.png",
-                       "captured_at_utc":  "2026-08-12T19:54:15.9879984+00:00",
-                       "sha256":  "cc388c2d1c737713271d23f983cb99ae3ec421c0cdd29de8fd26dd0a614ddb17",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "e8f405ce-f670-43c4-a8c5-9cf760e3c4a8",
-                                               "global_group_id":  "623e0d55-c17d-4b4f-a761-17ad5e071783",
-                                               "bounds":  {
-                                                              "x":  367,
-                                                              "y":  550,
-                                                              "width":  630,
-                                                              "height":  92
-                                                          },
-                                               "label":  "Encounter Interaction Search",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "e2527997-d0b9-4c8c-83f4-d614f819073d",
+  "name": "Encounter Set1",
+  "notes": "Bundled runtime evidence slice. Original dataset: encounter-set1-20260812-195348. Source frames: 1, 2, 3, 4, 5, 6, 7.",
+  "created_at_utc": "2026-08-12T19:53:48.8038679Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 30328,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-12T19:53:51.2696846Z",
+      "sha256": "a531d7c85d64fd6d3eb7a1f02ab410059270828273562d1bf493a73d06699f1d",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "c56054dd-0022-4ca3-b82a-8365eb9154aa",
+          "global_group_id": "623e0d55-c17d-4b4f-a761-17ad5e071783",
+          "bounds": {
+            "x": 367,
+            "y": 550,
+            "width": 630,
+            "height": 92
+          },
+          "label": "Encounter Interaction Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-12T19:53:52.0176212Z",
+      "sha256": "2c5133b1434022803849994af10cdc2d4328815858c0182ea7821441ecf4df78",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "04a2c46f-5bce-4e1e-ba95-d97d71c66bc2",
+          "global_group_id": "623e0d55-c17d-4b4f-a761-17ad5e071783",
+          "bounds": {
+            "x": 367,
+            "y": 550,
+            "width": 630,
+            "height": 92
+          },
+          "label": "Encounter Interaction Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-12T19:53:52.8573752Z",
+      "sha256": "b7fe968baea385d81f459eb505e2163ff5264adc0bf557a648b86137cd7f57c9",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "7d930913-4585-4bae-9a08-6e330122a628",
+          "global_group_id": "623e0d55-c17d-4b4f-a761-17ad5e071783",
+          "bounds": {
+            "x": 367,
+            "y": 550,
+            "width": 630,
+            "height": 92
+          },
+          "label": "Encounter Interaction Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0004.png",
+      "captured_at_utc": "2026-08-12T19:53:54.5464701Z",
+      "sha256": "9b69c87c94a230dd07c0a61e4dfc80a243daa852e01cb70ca9bb70ae18aa10aa",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "6b512d75-ea46-4e49-a67a-554d5215ca3a",
+          "global_group_id": "623e0d55-c17d-4b4f-a761-17ad5e071783",
+          "bounds": {
+            "x": 367,
+            "y": 550,
+            "width": 630,
+            "height": 92
+          },
+          "label": "Encounter Interaction Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0005.png",
+      "captured_at_utc": "2026-08-12T19:53:57.0558526Z",
+      "sha256": "a214fdae0ea95b3e32ef66340a74be5e0471f2102d04e99dea8aa62bdf341b43",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "8608faae-c528-4d75-8ebe-fbd6fd2ca819",
+          "global_group_id": "623e0d55-c17d-4b4f-a761-17ad5e071783",
+          "bounds": {
+            "x": 367,
+            "y": 550,
+            "width": 630,
+            "height": 92
+          },
+          "label": "Encounter Interaction Search",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Discuss\nBarter\nEngage\nLeave",
+              "confidence": 0.9999532699584961,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 88,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-12T22:06:48.7780691Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 457,
+                    "y": 590,
+                    "width": 52,
+                    "height": 17
+                  },
+                  "text": "Discuss",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999424815177917,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 591,
+                    "y": 589,
+                    "width": 50,
+                    "height": 18
+                  },
+                  "text": "Barter",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999834895133972,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 722,
+                    "y": 589,
+                    "width": 55,
+                    "height": 21
+                  },
+                  "text": "Engage",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999303817749023,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 859,
+                    "y": 588,
+                    "width": 47,
+                    "height": 21
+                  },
+                  "text": "Leave",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999567270278931,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0006.png",
+      "captured_at_utc": "2026-08-12T19:54:06.7113891Z",
+      "sha256": "5ef8251a3c26d54a06e13a683022eccc80569cf7279db33fcd743274dfe63f39",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "a91ab08f-c767-41c5-abde-a559e6e7ac9a",
+          "global_group_id": "623e0d55-c17d-4b4f-a761-17ad5e071783",
+          "bounds": {
+            "x": 367,
+            "y": 550,
+            "width": 630,
+            "height": 92
+          },
+          "label": "Encounter Interaction Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0007.png",
+      "captured_at_utc": "2026-08-12T19:54:15.9879984Z",
+      "sha256": "cc388c2d1c737713271d23f983cb99ae3ec421c0cdd29de8fd26dd0a614ddb17",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "e8f405ce-f670-43c4-a8c5-9cf760e3c4a8",
+          "global_group_id": "623e0d55-c17d-4b4f-a761-17ad5e071783",
+          "bounds": {
+            "x": 367,
+            "y": 550,
+            "width": 630,
+            "height": 92
+          },
+          "label": "Encounter Interaction Search",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

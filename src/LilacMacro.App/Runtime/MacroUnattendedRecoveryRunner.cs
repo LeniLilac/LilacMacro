@@ -13,8 +13,36 @@ internal sealed class MacroUnattendedRecoveryRunner(
     Action<PlanTaskPrototype?, TimeSpan> recoveryStarted)
 {
     private readonly Dictionary<PlanTaskPrototype, int> _taskFailures = [];
+    private readonly HashSet<PlanTaskPrototype> _indefinitelyQuarantinedUtilities = [];
+    private PlanTaskPrototype? _pendingOpportunisticHandoff;
 
-    public void MarkTaskSucceeded(PlanTaskPrototype task) => _taskFailures.Remove(task);
+    public IReadOnlySet<PlanTaskPrototype> IndefinitelyQuarantinedUtilities =>
+        _indefinitelyQuarantinedUtilities;
+
+    public bool IsIndefinitelyQuarantined(PlanTaskPrototype task) =>
+        _indefinitelyQuarantinedUtilities.Contains(task);
+
+    public void ResetForNewRun()
+    {
+        _taskFailures.Clear();
+        _indefinitelyQuarantinedUtilities.Clear();
+        _pendingOpportunisticHandoff = null;
+    }
+
+    public PlanTaskPrototype? TakeOpportunisticHandoff()
+    {
+        PlanTaskPrototype? task = _pendingOpportunisticHandoff;
+        _pendingOpportunisticHandoff = null;
+        return task;
+    }
+
+    public void MarkTaskSucceeded(PlanTaskPrototype task)
+    {
+        _taskFailures.Remove(task);
+        _indefinitelyQuarantinedUtilities.Remove(task);
+        if (ReferenceEquals(_pendingOpportunisticHandoff, task))
+            _pendingOpportunisticHandoff = null;
+    }
 
     public async Task RunAsync(
         PlanPrototype plan,
@@ -40,14 +68,19 @@ internal sealed class MacroUnattendedRecoveryRunner(
                 consecutiveFailures++;
                 PlanTaskPrototype? failedTask = currentTask();
                 clearCurrentTask();
-                QuarantineWhenRequired(failedTask);
+                int failedTaskFailures = QuarantineWhenRequired(failedTask);
                 TimeSpan delay = MacroUnattendedRecoveryPolicy.RetryDelay(consecutiveFailures);
                 appendLog($"RECOVERABLE ANOMALY | {error.Message}");
-                appendLog($"RESTART + REJOIN RETRY IN {delay.TotalSeconds:N0}S");
+                appendLog(failedTask is not null && _indefinitelyQuarantinedUtilities.Contains(failedTask)
+                    ? $"RESTART + REJOIN TO CONTINUE WITH NEXT TASK IN {delay.TotalSeconds:N0}S"
+                    : $"RESTART + REJOIN RETRY IN {delay.TotalSeconds:N0}S");
                 deepDebug.RecordEvent("macro", "runtime_recovery", new
                 {
                     Error = error.ToString(),
                     FailedTask = failedTask?.Name,
+                    FailedTaskFailures = failedTaskFailures,
+                    QuarantinedIndefinitely = failedTask is not null &&
+                        _indefinitelyQuarantinedUtilities.Contains(failedTask),
                     RetrySeconds = delay.TotalSeconds,
                 });
                 refreshTasks(plan);
@@ -57,16 +90,29 @@ internal sealed class MacroUnattendedRecoveryRunner(
         }
     }
 
-    private void QuarantineWhenRequired(PlanTaskPrototype? failedTask)
+    private int QuarantineWhenRequired(PlanTaskPrototype? failedTask)
     {
-        if (failedTask is null) return;
+        if (failedTask is null) return 0;
+        if (_indefinitelyQuarantinedUtilities.Contains(failedTask))
+            return MacroUnattendedRecoveryPolicy.TaskFailuresBeforeQuarantine;
         int failures = _taskFailures.GetValueOrDefault(failedTask) + 1;
         _taskFailures[failedTask] = failures;
-        if (!MacroUnattendedRecoveryPolicy.ShouldQuarantineTask(failures)) return;
+        if (!MacroUnattendedRecoveryPolicy.ShouldQuarantineTask(failures)) return failures;
+
+        if (MacroUnattendedRecoveryPolicy.ShouldQuarantineIndefinitely(failedTask.Mode, failures))
+        {
+            _indefinitelyQuarantinedUtilities.Add(failedTask);
+            _taskFailures.Remove(failedTask);
+            blockedUntil.Remove(failedTask);
+            _pendingOpportunisticHandoff = failedTask;
+            appendLog($"TASK QUARANTINED INDEFINITELY | OPPORTUNISTIC ONLY | {failedTask.Name}");
+            return failures;
+        }
 
         DateTimeOffset until = DateTimeOffset.UtcNow + MacroUnattendedRecoveryPolicy.TaskQuarantineDuration;
         blockedUntil[failedTask] = until;
         _taskFailures.Remove(failedTask);
         appendLog($"TASK QUARANTINED UNTIL {until:yyyy-MM-dd HH:mm:ss}Z | {failedTask.Name}");
+        return failures;
     }
 }

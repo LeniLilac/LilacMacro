@@ -7,7 +7,7 @@
   "id": "2ecff741-2bf4-443a-91ff-3f631f1bf036",
   "name": "Match Wave ROI",
   "notes": "Bundled runtime evidence slice. Original dataset: match-wave-roi-20260816-002856. Source frames: 1, 2, 3.",
-  "created_at_utc": "2026-08-16T00:28:56.6195089+00:00",
+  "created_at_utc": "2026-08-16T00:28:56.6195089Z",
   "source_window_title": "Roblox",
   "source_process_id": 26784,
   "client_width": 1366,
@@ -19,7 +19,7 @@
   "frames": [
     {
       "file_name": "frame-0001.png",
-      "captured_at_utc": "2026-08-16T00:28:57.7593625+00:00",
+      "captured_at_utc": "2026-08-16T00:28:57.7593625Z",
       "sha256": "d7f52bc47a6127b7992dd69df78064ee4b050d11814ce9b6dbfe50ad737260ab",
       "width": 1366,
       "height": 700,
@@ -47,7 +47,7 @@
               "model_load_milliseconds": 0,
               "inference_milliseconds": 781,
               "runtime_version": "3.7.0",
-              "ran_at_utc": "2026-08-16T00:30:00.4541543+00:00",
+              "ran_at_utc": "2026-08-16T00:30:00.4541543Z",
               "model_was_cached": true,
               "regions": [
                 {
@@ -87,7 +87,7 @@
     },
     {
       "file_name": "frame-0002.png",
-      "captured_at_utc": "2026-08-16T00:29:04.5831868+00:00",
+      "captured_at_utc": "2026-08-16T00:29:04.5831868Z",
       "sha256": "b8c17632bc460635b3d48ec9153008f2b19eed9f011f6b5f3b0168d0b78c2b9d",
       "width": 1366,
       "height": 700,
@@ -115,7 +115,7 @@
               "model_load_milliseconds": 0,
               "inference_milliseconds": 27,
               "runtime_version": "3.7.0",
-              "ran_at_utc": "2026-08-16T00:30:02.9008285+00:00",
+              "ran_at_utc": "2026-08-16T00:30:02.9008285Z",
               "model_was_cached": true,
               "regions": [
                 {
@@ -141,7 +141,7 @@
     },
     {
       "file_name": "frame-0003.png",
-      "captured_at_utc": "2026-08-16T00:29:08.5630724+00:00",
+      "captured_at_utc": "2026-08-16T00:29:08.5630724Z",
       "sha256": "a1dfeb905e01acf3585b19b927a6d5fcf9be56496353d53db0f2d56be7cd0524",
       "width": 1366,
       "height": 700,
@@ -169,7 +169,7 @@
               "model_load_milliseconds": 0,
               "inference_milliseconds": 33,
               "runtime_version": "3.7.0",
-              "ran_at_utc": "2026-08-16T00:30:04.4220798+00:00",
+              "ran_at_utc": "2026-08-16T00:30:04.4220798Z",
               "model_was_cached": true,
               "regions": [
                 {

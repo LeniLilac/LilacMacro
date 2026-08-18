@@ -1,104 +1,104 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "ee00c5dc-61a6-4ae7-9c48-0b60f074af58",
-    "name":  "match prestart",
-    "notes":  "fuzzy phrase rule the \"requires 50% to start the game.\" text\r\n\r\nBundled runtime evidence slice. Original dataset: match-prestart-20260802-212342. Source frames: 1.",
-    "created_at_utc":  "2026-08-02T21:23:42.8157568+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  36520,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-02T21:23:49.1315949+00:00",
-                       "sha256":  "7d4e2a93e36d50c9f7e689cc387bd44a6b807b54752b871799dd299562a23716",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "bd09abf6-0efa-47a9-abbb-f1a1b460f764",
-                                               "bounds":  {
-                                                              "x":  505,
-                                                              "y":  67,
-                                                              "width":  352,
-                                                              "height":  184
-                                                          },
-                                               "label":  "match prestart",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "cpu",
-                                                                      "text":  "Start Game?\nRequires 50% to start the game.\nStartGame",
-                                                                      "confidence":  0.9982589880625407,
-                                                                      "model_load_milliseconds":  675,
-                                                                      "inference_milliseconds":  466,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-02T21:24:27.9422161+00:00",
-                                                                      "model_was_cached":  false,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  634,
-                                                                                                         "y":  83,
-                                                                                                         "width":  96,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Start Game?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9978101849555969,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "topmost"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  578,
-                                                                                                         "y":  118,
-                                                                                                         "width":  209,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Requires 50% to start the game.",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9970425367355347,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  641,
-                                                                                                         "y":  213,
-                                                                                                         "width":  84,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "StartGame",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999242424964905,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "bottommost"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "ee00c5dc-61a6-4ae7-9c48-0b60f074af58",
+  "name": "match prestart",
+  "notes": "fuzzy phrase rule the \"requires 50% to start the game.\" text\r\n\r\nBundled runtime evidence slice. Original dataset: match-prestart-20260802-212342. Source frames: 1.",
+  "created_at_utc": "2026-08-02T21:23:42.8157568Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 36520,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-02T21:23:49.1315949Z",
+      "sha256": "7d4e2a93e36d50c9f7e689cc387bd44a6b807b54752b871799dd299562a23716",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "bd09abf6-0efa-47a9-abbb-f1a1b460f764",
+          "bounds": {
+            "x": 505,
+            "y": 67,
+            "width": 352,
+            "height": 184
+          },
+          "label": "match prestart",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "cpu",
+              "text": "Start Game?\nRequires 50% to start the game.\nStartGame",
+              "confidence": 0.9982589880625407,
+              "model_load_milliseconds": 675,
+              "inference_milliseconds": 466,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-02T21:24:27.9422161Z",
+              "model_was_cached": false,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 634,
+                    "y": 83,
+                    "width": 96,
+                    "height": 17
+                  },
+                  "text": "Start Game?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9978101849555969,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "spatial_selector": "topmost"
+                },
+                {
+                  "bounds": {
+                    "x": 578,
+                    "y": 118,
+                    "width": 209,
+                    "height": 18
+                  },
+                  "text": "Requires 50% to start the game.",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9970425367355347,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 641,
+                    "y": 213,
+                    "width": 84,
+                    "height": 20
+                  },
+                  "text": "StartGame",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999242424964905,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "spatial_selector": "bottommost"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

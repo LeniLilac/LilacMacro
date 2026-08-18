@@ -1,91 +1,91 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "07666ba7-1031-43a6-a944-dba575117c0b",
-    "name":  "Raid Shop Buy Part1",
-    "notes":  "same flow as gold shop\r\n\r\nclick e every 1s until shows the shop selection button, 30s timeout\r\n\r\nclick viewshop\r\n\r\nBundled runtime evidence slice. Original dataset: raid-shop-buy-part1-20260813-213958. Source frames: 2.",
-    "created_at_utc":  "2026-08-13T21:39:58.2616266+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  22968,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-13T21:40:14.5913717+00:00",
-                       "sha256":  "cdfe343af8d83369ef8ff9ae730d753bfd79e17e2ccfa545684db7aecb444dfb",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "41bd43a8-4296-416e-a614-43690946324e",
-                                               "global_group_id":  "20ce31f0-dd5f-48e2-a7eb-fe94cb167725",
-                                               "bounds":  {
-                                                              "x":  391,
-                                                              "y":  552,
-                                                              "width":  567,
-                                                              "height":  84
-                                                          },
-                                               "label":  "Raid Shop Selector State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "View Shop\nLeave",
-                                                                      "confidence":  0.9990229904651642,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  48,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-13T21:40:54.1060031+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  478,
-                                                                                                         "y":  562,
-                                                                                                         "width":  89,
-                                                                                                         "height":  29
-                                                                                                     },
-                                                                                          "text":  "View Shop",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.998092532157898,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  813,
-                                                                                                         "y":  564,
-                                                                                                         "width":  58,
-                                                                                                         "height":  26
-                                                                                                     },
-                                                                                          "text":  "Leave",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999534487724304,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "07666ba7-1031-43a6-a944-dba575117c0b",
+  "name": "Raid Shop Buy Part1",
+  "notes": "same flow as gold shop\r\n\r\nclick e every 1s until shows the shop selection button, 30s timeout\r\n\r\nclick viewshop\r\n\r\nBundled runtime evidence slice. Original dataset: raid-shop-buy-part1-20260813-213958. Source frames: 2.",
+  "created_at_utc": "2026-08-13T21:39:58.2616266Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 22968,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-13T21:40:14.5913717Z",
+      "sha256": "cdfe343af8d83369ef8ff9ae730d753bfd79e17e2ccfa545684db7aecb444dfb",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "41bd43a8-4296-416e-a614-43690946324e",
+          "global_group_id": "20ce31f0-dd5f-48e2-a7eb-fe94cb167725",
+          "bounds": {
+            "x": 391,
+            "y": 552,
+            "width": 567,
+            "height": 84
+          },
+          "label": "Raid Shop Selector State",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "View Shop\nLeave",
+              "confidence": 0.9990229904651642,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 48,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-13T21:40:54.1060031Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 478,
+                    "y": 562,
+                    "width": 89,
+                    "height": 29
+                  },
+                  "text": "View Shop",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.998092532157898,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 813,
+                    "y": 564,
+                    "width": 58,
+                    "height": 26
+                  },
+                  "text": "Leave",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999534487724304,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

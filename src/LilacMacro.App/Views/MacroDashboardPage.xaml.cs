@@ -39,6 +39,7 @@ public partial class MacroDashboardPage : UserControl
     private readonly List<RunStatsPoint> _runStats = [];
     private readonly DispatcherTimer _runtimeTimer;
     private DeepDebugScope? _debugScope;
+    private readonly IDisposable _deepDebugFrameCaptureRegistration;
     private CancellationTokenSource? _runCancellation;
     private Task? _runTask;
     private bool _runStarting;
@@ -59,6 +60,7 @@ public partial class MacroDashboardPage : UserControl
         _ownerState = ownerState;
         _control = new MacroControlCoordinator(control, () => ownerState.OnlineFeaturesEnabled);
         _workspace = new WorkspaceController(deepDebug);
+        _deepDebugFrameCaptureRegistration = RegisterDeepDebugFrameCaptureProvider();
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = true };
         _runner = new StoryWireTestRunner(_workspace, _ocr, deepDebug);
         _utilities = new UtilityTaskService(_workspace, _ocr);
@@ -83,15 +85,19 @@ public partial class MacroDashboardPage : UserControl
             deepDebug,
             NotifyDiscordRecovery);
         InitializeComponent();
+        InitializeRuntimeProgressPersistence();
         InitializeDiscordEvents();
         _runtimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _runtimeTimer.Tick += (_, _) => RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+        _runtimeTimer.Tick += (_, _) => RuntimeText.Text = FormatRuntime(_runtime.Elapsed);
         StatsChart.SetPoints(_runStats);
         PlanCombo.DisplayMemberPath = nameof(PlanPrototype.Name);
         PlanCombo.ItemsSource = ownerState.Plans;
         PlanCombo.SelectedItem = ownerState.SelectedPlan;
         ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
         ApplyLayoutProfile(ownerState.LayoutProfile);
+        _ocrReady = _ocr.IsDeviceReady(OcrRunner.GpuDevice) || _ocr.IsDeviceReady(OcrRunner.CpuDevice);
+        _ocrSetupFailed = !_ocrReady;
+        UpdateStartButtonState();
     }
 
     internal void ApplyLayoutProfile(MacroLayoutProfile profile)
@@ -105,44 +111,6 @@ public partial class MacroDashboardPage : UserControl
         StatsCard.SetValue(Grid.ColumnSpanProperty, dockAllowed ? 1 : 3);
         DashboardRoot.MinWidth = dockAllowed ? 1740 : 0;
     }
-
-    public bool SetDashboardActive(bool active, out string error)
-    {
-        if (!active && _runTask is not null)
-        {
-            error = "Stop the macro before leaving the Macro tab.";
-            return false;
-        }
-        return RobloxDock.SetDashboardActive(active, out error);
-    }
-
-    public bool TryPrepareForClose(out string error)
-    {
-        _runCancellation?.Cancel();
-        return RobloxDock.TryPrepareForClose(out error);
-    }
-
-    public async Task CompleteForCloseAsync()
-    {
-        _lifecycleCancellation.Cancel();
-        if (_ocrSetupTask is not null)
-        {
-            try { await _ocrSetupTask; }
-            catch (OperationCanceledException) { }
-        }
-        _runCancellation?.Cancel();
-        if (_runTask is not null)
-        {
-            try { await _runTask; }
-            catch (OperationCanceledException) { }
-        }
-        await CompleteDebugAsync("closed");
-        await _discordEvents.DisposeAsync();
-        _ocr.Dispose();
-        _workspace.Dispose();
-        _lifecycleCancellation.Dispose();
-    }
-
     private void PlanCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
     {
         if (PlanCombo.SelectedItem is not PlanPrototype plan || UpcomingTasksList is null) return;
@@ -150,20 +118,30 @@ public partial class MacroDashboardPage : UserControl
         _currentTask = null;
         RefreshUpcomingTasks(plan);
     }
-
     private void OwnerState_OnSelectedPlanChanged(object? sender, EventArgs eventArgs)
     {
         if (!ReferenceEquals(PlanCombo.SelectedItem, _ownerState.SelectedPlan))
             PlanCombo.SelectedItem = _ownerState.SelectedPlan;
     }
-
-    private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs) => await StartMacroAsync();
-
+    private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        if (!_ocrReady)
+        {
+            await EnsureOcrReadyAsync();
+            return;
+        }
+        await StartMacroAsync();
+    }
     internal void ToggleRunFromHotkey()
     {
         if (_runTask is not null || _runStarting)
         {
             _runCancellation?.Cancel();
+            return;
+        }
+        if (!_ocrReady)
+        {
+            AppToastService.ShowError("OCR SETUP REQUIRED", "Use SET UP OCR before starting the Macro.");
             return;
         }
         _ = StartMacroAsync();
@@ -176,7 +154,12 @@ public partial class MacroDashboardPage : UserControl
         UpdateStartButtonState();
         try
         {
-            if (!_ocrReady && !await EnsureOcrReadyAsync()) return;
+            await EnsureRuntimeProgressLoadedAsync();
+            if (!_ocrReady)
+            {
+                AppToastService.ShowError("OCR SETUP REQUIRED", "Use SET UP OCR before starting the Macro.");
+                return;
+            }
             if (!_control.CanStart(out string unavailableMessage))
             {
                 AppToastService.ShowError(
@@ -188,6 +171,7 @@ public partial class MacroDashboardPage : UserControl
             _configurationRunLease = _configurationGate.AcquireRunLease();
             await _ownerState.FlushAsync();
             _runCancellation = new CancellationTokenSource();
+            _recovery.ResetForNewRun();
             _debugScope = await _deepDebug.OpenSessionAsync(
                 "macro-runtime",
                 new DeepDebugOperationContext("main-macro", new
@@ -196,7 +180,6 @@ public partial class MacroDashboardPage : UserControl
                     Instance = MacroInstanceContext.Current.DisplayName,
                 }));
             _runtime.Restart();
-            _utilityDueAt.Clear();
             _runtimeTimer.Start();
             _runStats.Clear();
             StatsChart.SetPoints(_runStats);
@@ -263,6 +246,7 @@ public partial class MacroDashboardPage : UserControl
             _runCancellation = null;
             _configurationRunLease?.Dispose();
             _configurationRunLease = null;
+            await FlushRuntimeProgressAsync();
             await CompleteDebugAsync("stopped");
             RefreshRunState(false);
             _currentTask = null;
@@ -288,6 +272,7 @@ public partial class MacroDashboardPage : UserControl
             redeemedCodes,
             cancellationToken);
         if (normalizeStartupSettings) markStartupSettingsNormalized();
+        PlanTaskPrototype? lobbyHandoffFrom = _recovery.TakeOpportunisticHandoff();
         PlanTaskPrototype? repeatedTask = null;
         while (true)
         {
@@ -295,20 +280,23 @@ public partial class MacroDashboardPage : UserControl
             if (!_control.CanContinue(AppendLog)) return;
             DateTimeOffset now = DateTimeOffset.UtcNow;
             bool repeatedEntry = repeatedTask is not null;
-            PlanTaskPrototype? task = repeatedTask ?? MacroPriorityPolicy.SelectEligibleAt(
-                    plan,
-                    _victories,
-                    _completedLoopRuns,
-                    now,
-                    EligibleAt,
-                    _control.IsTaskEnabled);
+            PlanTaskPrototype? task = repeatedTask ?? SelectEligibleTask(plan, now);
             repeatedTask = null;
             if (task is null)
             {
-                PlanTaskPrototype[] pending = MacroPriorityPolicy.Flatten(plan, _completedLoopRuns)
+                PlanTaskPrototype[] allPending = MacroPriorityPolicy.Flatten(plan, _completedLoopRuns)
                     .Where(candidate => MacroPriorityPolicy.IsPending(candidate, _victories))
                     .ToArray();
-                if (pending.Length == 0) return;
+                if (allPending.Length == 0) return;
+                PlanTaskPrototype[] pending = allPending
+                    .Where(candidate => !_recovery.IsIndefinitelyQuarantined(candidate))
+                    .ToArray();
+                if (pending.Length == 0)
+                {
+                    AppendLog("WAIT | ALL PENDING UTILITIES QUARANTINED");
+                    await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+                    continue;
+                }
                 if (!pending.Any(candidate =>
                         _control.IsTaskEnabled(candidate, now)))
                 {
@@ -327,6 +315,18 @@ public partial class MacroDashboardPage : UserControl
             }
             if (!MacroPriorityPolicy.Supported(task))
                 throw new InvalidOperationException($"{task.ModeLabel} runtime is not implemented; priority evaluation stopped.");
+
+            if (lobbyHandoffFrom is PlanTaskPrototype previousTask)
+            {
+                lobbyHandoffFrom = null;
+                await RunLobbyHandoffOpportunityAsync(
+                    plan,
+                    previousTask,
+                    task,
+                    device,
+                    madeProgress,
+                    cancellationToken);
+            }
 
             _currentTask = task;
             NotifyDiscordTaskChanged(plan, task);
@@ -347,8 +347,10 @@ public partial class MacroDashboardPage : UserControl
                 _utilityDueAt[task] = _control.NextUtilityDue(task, DateTimeOffset.UtcNow);
                 _recovery.MarkTaskSucceeded(task);
                 madeProgress();
+                QueueRuntimeProgressSave();
                 AppendLog($"UTILITY COMPLETE | NEXT {_utilityDueAt[task]:yyyy-MM-dd HH:mm:ss}Z");
                 _currentTask = null;
+                lobbyHandoffFrom = task;
                 RefreshUpcomingTasks(plan);
                 continue;
             }
@@ -368,7 +370,7 @@ public partial class MacroDashboardPage : UserControl
             Progress<StoryWireProgress> progress = new(value =>
             {
                 AppendLog($"{StoryWireTestRunner.Format(value.Stage)} | {value.Detail}");
-                RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+                RuntimeText.Text = FormatRuntime(_runtime.Elapsed);
             });
             StoryWireTestResult result = repeatedEntry
                 ? await _runner.RunRepeatedAsync(options, progress, cancellationToken)
@@ -381,6 +383,7 @@ public partial class MacroDashboardPage : UserControl
                 _blockedUntil[task] = unavailableUntil;
                 AppendLog(result.Status);
                 _currentTask = null;
+                lobbyHandoffFrom = task;
                 RefreshUpcomingTasks(plan);
                 await _lobbyReset.ResetAsync(
                     device,
@@ -413,6 +416,7 @@ public partial class MacroDashboardPage : UserControl
             if (victory && MacroLoopProgressReporter.AdvanceAndReport(
                     plan, _victories, _completedLoopRuns, _deepDebug, AppendLog))
                 RefreshUpcomingTasks(plan);
+            QueueRuntimeProgressSave();
 
             DateTimeOffset terminalDecisionAt = DateTimeOffset.UtcNow;
             PlanTaskPrototype? nextTask = MacroPriorityPolicy.SelectEligibleAt(
@@ -421,7 +425,7 @@ public partial class MacroDashboardPage : UserControl
                 _completedLoopRuns,
                 terminalDecisionAt,
                 EligibleAt,
-                _control.IsTaskEnabled);
+                IsTaskEnabledForSelection);
             bool modeSupportsRepeat = MacroTaskRepeatPolicy.Supports(task.Mode);
             bool sameTaskSelected = ReferenceEquals(task, nextTask);
             bool hasPendingCodes = _lobbyReset.HasPendingCodes(redeemedCodes, terminalDecisionAt);
@@ -475,22 +479,8 @@ public partial class MacroDashboardPage : UserControl
                 normalizeStartupSettings: false,
                 redeemedCodes,
                 cancellationToken);
+            lobbyHandoffFrom = task;
         }
-    }
-
-    private string SelectOcrDevice()
-    {
-        if (_ocr.IsDeviceReady(OcrRunner.GpuDevice)) return OcrRunner.GpuDevice;
-        if (_ocr.IsDeviceReady(OcrRunner.CpuDevice)) return OcrRunner.CpuDevice;
-        throw new InvalidOperationException("Automatic OCR setup did not complete. Retry OCR setup before starting the macro.");
-    }
-
-    private DateTimeOffset EligibleAt(PlanTaskPrototype task, DateTimeOffset fallback)
-    {
-        DateTimeOffset eligible = _blockedUntil.GetValueOrDefault(task, fallback);
-        if (_utilityDueAt.TryGetValue(task, out DateTimeOffset utilityDue) && utilityDue > eligible)
-            eligible = utilityDue;
-        return eligible;
     }
 
 }

@@ -20,22 +20,23 @@ Release integrity is instead bound to a repository-controlled Ed25519 key. `eng/
 The installer contains:
 
 - the self-contained x64 desktop application;
+- a read-only Python 3.12 CPU OCR runtime, PaddlePaddle/PaddleOCR packages, and the supported PP-OCRv6 model pairs;
 - the elevated session-setup helper;
 - the windowless profile-policy bootstrap retained for local-instance setup compatibility;
 - the pinned TermWrap payload, hash manifest, license, and notices.
 
 The versioned native payload is install-once. Upgrades do not overwrite loaded native files; Repair verifies their exact pinned hashes and fails closed on drift. A future native payload must use a new versioned directory and an explicitly certified migration.
 
-Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local instances, Set Up and approve UAC. The initial setup creates Runner 1; additional shared/separate runners use the same allowlisted elevated helper.
+Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local instances, Set Up and approve UAC for runner provisioning. After the first-run privacy choices are saved, a supported NVIDIA GPU receives a separate per-user OCR setup screen; it downloads the matching GPU package without installing a driver or requesting another elevation. The initial setup creates Runner 1; additional shared/separate runners use the same allowlisted elevated helper.
 
-The installer displays `TERMS.md` before installation while preserving the repository-license page, and installs both `TERMS.md` and `PRIVACY.md` beside the executable. The application—not the elevated installer—owns the versioned first-run privacy choices so the same screen applies to new installs, existing profiles receiving a changed notice, and managed configuration roots. No choice-covered request occurs before that screen is saved.
+The installer displays `TERMS.md` before installation while preserving the repository-license page, and installs both `TERMS.md` and `PRIVACY.md` beside the executable. The application—not the elevated installer—owns the versioned first-run privacy choices so the same screen applies to new installs, existing profiles receiving a changed notice, and managed configuration roots. No choice-covered request occurs before that screen is saved; GPU OCR setup begins only after the user saves those choices.
 
 ## Build and publish
 
 Local installer validation requires Inno Setup 6:
 
 ```powershell
-./scripts/Build-Installer.ps1 -Version 1.0.140 -UnsignedDevelopmentBuild
+./scripts/Build-Installer.ps1 -Version 1.0.149 -UnsignedDevelopmentBuild
 ```
 
 That switch deliberately omits the release manifest and signature, records `release_manifest_signed=false`, and cannot produce a publishable release.

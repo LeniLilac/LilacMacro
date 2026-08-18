@@ -27,26 +27,29 @@ public partial class MacroDashboardPage
 
     private void RefreshRunState(bool running)
     {
-        StartButton.IsEnabled = !running && !_runStarting && !_ocrSetupInProgress && (_ocrReady || _ocrSetupFailed);
+        StartButton.IsEnabled = !running && !_runStarting && !_ocrSetupInProgress;
         StopButton.IsEnabled = running;
         PlanCombo.IsEnabled = !running;
         StartButtonText.Text = _ocrReady
             ? "START"
             : _ocrSetupInProgress
                 ? "SETTING UP OCR"
-                : "RETRY OCR SETUP";
-        RuntimeText.Text = _runtime.Elapsed.ToString(@"hh\:mm\:ss");
+                : _ocrSetupFailed ? "RETRY OCR SETUP" : "SET UP OCR";
+        RuntimeText.Text = FormatRuntime(_runtime.Elapsed);
         RunningChanged?.Invoke(running);
     }
 
+    private static string FormatRuntime(TimeSpan elapsed) =>
+        $"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}";
+
     private void UpdateStartButtonState()
     {
-        StartButton.IsEnabled = !_runStarting && _runTask is null && !_ocrSetupInProgress && (_ocrReady || _ocrSetupFailed);
+        StartButton.IsEnabled = !_runStarting && _runTask is null && !_ocrSetupInProgress;
         StartButtonText.Text = _ocrReady
             ? "START"
             : _ocrSetupInProgress
                 ? "SETTING UP OCR"
-                : "RETRY OCR SETUP";
+                : _ocrSetupFailed ? "RETRY OCR SETUP" : "SET UP OCR";
     }
 
     private void RefreshUpcomingTasks(PlanPrototype plan) =>
@@ -56,19 +59,25 @@ public partial class MacroDashboardPage
             _victories,
             _completedLoopRuns,
             DateTimeOffset.UtcNow,
-            EligibleAt);
+            EligibleAt,
+            _recovery.IsIndefinitelyQuarantined);
 
     private void AppendLog(string message)
     {
-        _deepDebug.RecordRuntimeLog(message);
+        string entry = $"{DateTime.Now:HH:mm:ss} {message}";
+        _deepDebug.RecordRuntimeLog(entry);
         if (!Dispatcher.CheckAccess())
         {
             if (!Dispatcher.HasShutdownStarted)
-                _ = Dispatcher.BeginInvoke(() => AppendLog(message));
+                _ = Dispatcher.BeginInvoke(() => AppendLogEntry(entry));
             return;
         }
 
-        string entry = $"{DateTime.Now:HH:mm:ss} {message}";
+        AppendLogEntry(entry);
+    }
+
+    private void AppendLogEntry(string entry)
+    {
         TraceLogText.Text = string.IsNullOrWhiteSpace(TraceLogText.Text) ||
             TraceLogText.Text == "Macro runtime is not connected."
                 ? entry

@@ -8,6 +8,7 @@
 - Dataset Builder: click the `DEEP DEBUG` pill in the title bar.
 - Runtime Lab: click the `DEEP DEBUG` pill in the title bar.
 - Set `FRAME HISTORY, MIN` from 1 to 120. The value and enabled state persist locally.
+- Set `CAPTURE INTERVAL` to 0.5, 1.0, or 2.0 seconds. While a session is active, its registered Roblox surface captures one full client frame at that interval; the interval is persisted independently from frame history.
 - Runtime Lab retains already-acquired PNG evidence for its complete operation and displays `DEEP DEBUG ON`; the frame-history setting applies to the main Macro and Dataset Builder only.
 - Archives are written to `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - Settings exposes `OPEN DEBUG FOLDER`.
@@ -34,17 +35,18 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 
 Events include window discovery and observed client size, resize results, capture ownership, dataset frame identity, OCR model/device/cache and timing fields, OCR text and boxes, state evaluations, visual-profile scores and coordinates, requested Windows input, cancellation, exceptions, and terminal outcome.
 
-While a Main Macro session is active, every dashboard trace-log line is also recorded as a `macro/log` event with the original message. This preserves intermediate progress and failure details—such as a missing physical selection proof—alongside the later generic recovery outcome.
+While a Main Macro session is active, every dashboard trace-log line is also recorded as a `macro/log` event with the exact timestamped line shown in the temporary UI progress log. This preserves intermediate progress and failure details—such as a missing physical selection proof—alongside the later generic recovery outcome.
 
 An OCR-owned visual-profile refresh records `vision/profile_refresh_failed` with the exception type and sanitized message when persistence or comparison fails. A registered profile whose locator is unavailable marks the archive manifest's writer failure instead of silently omitting the locator from the snapshot.
 
 Visual-profile snapshots are usage-scoped rather than a copy of the user's profile library. A session retains at most 64 referenced revisions, 32 files and 8 MiB per revision, and 32 MiB total. JSON paths are redacted; PGM assets remain exact so another machine can reproduce the recorded matcher input.
 
-PNG evidence reuses pixels already acquired by the operation. Deep debug does not request a second desktop capture. Detector evidence contains only the compact requested region; live OCR and full-state evidence contains the already-required Roblox client or crop.
+PNG evidence includes pixels already acquired by the operation plus intentional periodic full-client samples for the configured capture interval. Periodic samples are recorded as `frame/live-client` with `CaptureReason: deep-debug-interval`; they are not used to authorize input. Detector evidence contains only the compact requested region; live OCR and full-state evidence contains the already-required Roblox client or crop.
 
 ## Retention and failure behavior
 
 - `events.jsonl` and `timeline.md` cover the complete operation.
+- `CAPTURE INTERVAL` controls sampling frequency; `FRAME HISTORY, MIN` controls how long PNG evidence remains in the rolling archive. Frame history is retention time, not a second capture scheduler.
 - Main Macro and Dataset Builder remove PNGs older than the configured rolling frame window before archival. Runtime Lab retains PNG evidence for the complete operation.
 - When local cleanup is enabled, the 20 newest completed archives are retained and older archives are deleted after a new archive succeeds. When it is disabled, archive finalization does not prune completed ZIPs.
 - One session owns the recorder at a time.

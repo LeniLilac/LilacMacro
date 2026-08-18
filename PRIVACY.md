@@ -1,8 +1,8 @@
 # Privacy
 
-**Status: Implemented behavior. Notice version 2, effective August 16, 2026.**
+**Status: Implemented behavior. Notice version 3, effective August 16, 2026.**
 
-LilacMacro is a local Windows tool. Before its first Macro session, it presents three independently saved choices: online features and product telemetry are initially shown on, while automatic error reports are initially off. The user must durably save that screen before any request covered by those choices can occur, and all three choices remain editable in Settings. Later telemetry and automatic-report opt-outs revoke their consent generation immediately; turning online features off prevents new service and update-check requests, although one already in flight can finish and update its local public cache. Opt-ins activate only after the atomic settings write succeeds. Failed writes are retried and shown as unsaved while affected paths remain off. Other network access is limited to explicit OCR setup/model downloads, owner-approved update downloads, a runner's first-use Roblox login/installer bootstrap, and a separately enabled manual diagnostic upload.
+LilacMacro is a local Windows tool. Before its first Macro session, it presents three independently saved choices: online features and product telemetry are initially shown on, while automatic error reports are initially off. The user must durably save that screen before any request covered by those choices can occur, and all three choices remain editable in Settings. Later telemetry and automatic-report opt-outs revoke their consent generation immediately; turning online features off prevents new service and update-check requests, although one already in flight can finish and update its local public cache. Opt-ins activate only after the atomic settings write succeeds. Failed writes are retried and shown as unsaved while affected paths remain off. After the first-run choices are saved, a supported NVIDIA GPU may trigger the separately identified GPU OCR setup screen; that setup downloads only the matching OCR package for the current Windows user. Other network access is limited to later explicit OCR setup/model downloads, owner-approved update downloads, a runner's first-use Roblox login/installer bootstrap, and a separately enabled manual diagnostic upload.
 
 ## Current local data
 
@@ -12,8 +12,8 @@ LilacMacro is a local Windows tool. Before its first Macro session, it presents 
 | Non-secret capture settings | `%LOCALAPPDATA%\LilacMacro\settings.json` | Target size, capture schedule/mode, and dataset root. Written atomically. |
 | Macro settings | Active local/shared/isolated configuration root | Non-secret configured keys, Plan definitions/selection, and Discord event choices plus DPAPI ciphertext for private-server/webhook secrets. Local roots use current-user DPAPI; ACL-restricted ProgramData roots use machine-scope DPAPI. Writes are cross-process serialized and atomic; stale ordinary saves merge the separate authoritative privacy record. |
 | Placement setups | `%LOCALAPPDATA%\LilacMacro\placements` | Per-map route defaults and ordered placement timelines. Written atomically. |
-| OCR environment | `%LOCALAPPDATA%\LilacMacro\ocr` | Private Python environment and selected runtime marker. |
-| Paddle model cache | Paddle's local user cache | Model files download on first use and are not copied into the repository. |
+| OCR environment | Installed `ocr\python` plus `%LOCALAPPDATA%\LilacMacro\ocr` | Official installers bundle a read-only CPU Python/Paddle runtime and models. GPU packages, per-user virtual environments, selected runtime markers, and the writable model cache remain in the current Windows profile. |
+| Paddle model cache | `%LOCALAPPDATA%\LilacMacro\ocr\model-cache` | Bundled CPU models are copied into this per-user cache on first OCR use; GPU setup reuses the same model cache. |
 | Crash details | `%LOCALAPPDATA%\LilacMacro\logs\latest-crash.txt` | Latest unhandled WPF exception; may contain local paths or runtime details. |
 | Temporary OCR crops | OS temporary storage under `LilacMacro` | Deleted after each run when normal cleanup succeeds. |
 | Agent dataset views | Dataset-local `.agent-view` directory or an explicit output directory | May reproduce private imagery and metadata; never publish or commit them. |
@@ -73,7 +73,7 @@ shared publicly.
 
 ## External software
 
-OCR setup installs pinned PaddlePaddle and PaddleOCR packages into the local LilacMacro environment. Those packages and their model downloads are governed by their own licenses and services. See [NOTICE.md](NOTICE.md) and the files under [`licenses`](licenses/) for bundled attributions.
+Official installers bundle Python 3.12, the pinned CPU PaddlePaddle/PaddleOCR runtime, and the allowlisted OCR models. Optional GPU setup downloads the matching pinned Paddle GPU package into the current user's local OCR environment; it does not install a Python distribution or NVIDIA driver. Those packages, models, and their download services are governed by their own licenses and terms. See [NOTICE.md](NOTICE.md) and the files under [`licenses`](licenses/) for bundled attributions.
 
 The prototype installer also bundles pinned TermWrap v0.6 binaries and notices. It never downloads or replaces native session components at runtime. Managed instances use only loopback RDP and disable clipboard, drive, printer, smart-card, microphone, and device redirection. See [Local instance manager](docs/LOCAL-SESSION.md).
 

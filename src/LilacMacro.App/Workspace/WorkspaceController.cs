@@ -93,10 +93,7 @@ public sealed partial class WorkspaceController : IDisposable
         PixelSize target,
         CancellationToken cancellationToken = default)
     {
-        if (!await _operationGate.WaitAsync(0, cancellationToken))
-        {
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
-        }
+        await _operationGate.WaitAsync(cancellationToken);
         try
         {
             RobloxWindow window = RobloxWindow ?? _windows.FindBest()
@@ -121,12 +118,10 @@ public sealed partial class WorkspaceController : IDisposable
 
     public async Task<CapturedPng> CaptureLiveFrameAsync(
         PixelSize requiredSize,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string captureReason = "state-observation")
     {
-        if (!await _operationGate.WaitAsync(0, cancellationToken))
-        {
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
-        }
+        await _operationGate.WaitAsync(cancellationToken);
         try
         {
             RobloxWindow window = RobloxWindow ?? _windows.FindBest()
@@ -149,6 +144,7 @@ public sealed partial class WorkspaceController : IDisposable
                 image.Size,
                 RequiredSize = requiredSize,
                 ObservedClientSize,
+                CaptureReason = captureReason,
             });
             Changed?.Invoke(this, EventArgs.Empty);
             return image;
@@ -166,10 +162,7 @@ public sealed partial class WorkspaceController : IDisposable
     {
         ArgumentNullException.ThrowIfNull(regions);
         if (regions.Count == 0) return [];
-        if (!await _operationGate.WaitAsync(0, cancellationToken))
-        {
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
-        }
+        await _operationGate.WaitAsync(cancellationToken);
         try
         {
             RobloxWindow window = RobloxWindow ?? _windows.FindBest()
@@ -213,8 +206,7 @@ public sealed partial class WorkspaceController : IDisposable
     {
         ArgumentNullException.ThrowIfNull(regions);
         if (regions.Count == 0) return [];
-        if (!await _operationGate.WaitAsync(0, cancellationToken))
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
+        await _operationGate.WaitAsync(cancellationToken);
         try
         {
             RobloxWindow window = RobloxWindow ?? _windows.FindBest()
@@ -338,10 +330,7 @@ public sealed partial class WorkspaceController : IDisposable
         {
             throw new InvalidOperationException("Finish the manual capture before starting a timed dataset.");
         }
-        if (!await _operationGate.WaitAsync(0, cancellationToken))
-        {
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
-        }
+        await _operationGate.WaitAsync(cancellationToken);
         try
         {
             RobloxWindow window = RobloxWindow ?? _windows.FindBest()
@@ -414,10 +403,7 @@ public sealed partial class WorkspaceController : IDisposable
 
     public async Task<DatasetLocation> StartManualCaptureAsync(CancellationToken cancellationToken = default)
     {
-        if (!await _operationGate.WaitAsync(0, cancellationToken))
-        {
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
-        }
+        await _operationGate.WaitAsync(cancellationToken);
         try
         {
             if (_manualCaptureDataset is not null)
@@ -454,10 +440,7 @@ public sealed partial class WorkspaceController : IDisposable
 
     public async Task<DatasetFrame> CaptureManualFrameAsync(CancellationToken cancellationToken = default)
     {
-        if (!await _operationGate.WaitAsync(0, cancellationToken))
-        {
-            throw new InvalidOperationException("Another LilacMacro operation is already running.");
-        }
+        await _operationGate.WaitAsync(cancellationToken);
         try
         {
             DatasetLocation location = _manualCaptureDataset

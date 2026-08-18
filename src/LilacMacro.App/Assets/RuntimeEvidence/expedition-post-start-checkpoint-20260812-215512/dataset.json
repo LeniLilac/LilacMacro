@@ -1,397 +1,393 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "fcb58c86-9287-4965-b06c-8f91af4a680b",
-    "name":  "Expedition Post Start Checkpoint",
-    "notes":  "Bundled runtime evidence slice. Original dataset: expedition-post-start-checkpoint-20260812-215512. Source frames: 4, 5.",
-    "created_at_utc":  "2026-08-12T21:55:12.5072331+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  30328,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0004.png",
-                       "captured_at_utc":  "2026-08-12T21:55:34.8563442+00:00",
-                       "sha256":  "d6e0a65ccc60061b420d697266f9022c1345a39917c3988b6b3361de5beb4cb6",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "757ce4ad-9bac-4c05-b779-46a0ba4a1ef8",
-                                               "global_group_id":  "445c3d90-ea49-4b71-9c12-218c903c2a8e",
-                                               "bounds":  {
-                                                              "x":  511,
-                                                              "y":  447,
-                                                              "width":  346,
-                                                              "height":  135
-                                                          },
-                                               "label":  "Button Area",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "x\nExtract\nContinue\n603",
-                                                                      "confidence":  0.8641606196761131,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  45,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-12T21:58:53.0399613+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  519,
-                                                                                                         "y":  468,
-                                                                                                         "width":  27,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.4567185938358307,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  579,
-                                                                                                         "y":  471,
-                                                                                                         "width":  67,
-                                                                                                         "height":  22
-                                                                                                     },
-                                                                                          "text":  "Extract",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999606013298035,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  746,
-                                                                                                         "y":  470,
-                                                                                                         "width":  81,
-                                                                                                         "height":  22
-                                                                                                     },
-                                                                                          "text":  "Continue",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999969482421875,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "bottommost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  669,
-                                                                                                         "y":  526,
-                                                                                                         "width":  47,
-                                                                                                         "height":  29
-                                                                                                     },
-                                                                                          "text":  "603",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999938011169434,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "93f979db-6ac0-4186-8296-2fb4795aa3bb",
-                                               "global_group_id":  "23ad91f7-2375-4123-8a9b-2ba83f0a4539",
-                                               "bounds":  {
-                                                              "x":  448,
-                                                              "y":  217,
-                                                              "width":  474,
-                                                              "height":  263
-                                                          },
-                                               "label":  "Confirm Area",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0005.png",
-                       "captured_at_utc":  "2026-08-12T21:55:36.5135107+00:00",
-                       "sha256":  "cc8e791fa0b24f295e1baed99c833affd6f1d43fce3cda91a056b2f2c477e4ad",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "035aab99-c307-4c48-9b16-c0be2cd7f72e",
-                                               "global_group_id":  "445c3d90-ea49-4b71-9c12-218c903c2a8e",
-                                               "bounds":  {
-                                                              "x":  511,
-                                                              "y":  447,
-                                                              "width":  346,
-                                                              "height":  135
-                                                          },
-                                               "label":  "Button Area",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           },
-                                           {
-                                               "id":  "9ad9a2d2-1a00-4350-bd05-2f79da8f413a",
-                                               "global_group_id":  "23ad91f7-2375-4123-8a9b-2ba83f0a4539",
-                                               "bounds":  {
-                                                              "x":  448,
-                                                              "y":  217,
-                                                              "width":  474,
-                                                              "height":  263
-                                                          },
-                                               "label":  "Confirm Area",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Extraction\nAre you sure you would like to end this run?\nYou will receive all of the following rewards!\n61x\n80x\n7x\nPLAYER\nEXP\nExpedition\nCoin\nPlayer EXP\nFuel Cell\nExtract\nCancel",
-                                                                      "confidence":  0.9870047058377948,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  172,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-12T21:59:59.4942124+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  625,
-                                                                                                         "y":  230,
-                                                                                                         "width":  117,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Extraction",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999445080757141,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  501,
-                                                                                                         "y":  275,
-                                                                                                         "width":  362,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Are you sure you would like to end this run?",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997299313545227,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  521,
-                                                                                                         "y":  296,
-                                                                                                         "width":  324,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "You will receive all of the following rewards!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9869437217712402,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  551,
-                                                                                                         "y":  319,
-                                                                                                         "width":  29,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "61x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.8497152924537659,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  642,
-                                                                                                         "y":  321,
-                                                                                                         "width":  30,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "80x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999413788318634,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  731,
-                                                                                                         "y":  320,
-                                                                                                         "width":  22,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "7x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9992395639419556,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  652,
-                                                                                                         "y":  343,
-                                                                                                         "width":  60,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "PLAYER",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998042583465576,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  653,
-                                                                                                         "y":  358,
-                                                                                                         "width":  60,
-                                                                                                         "height":  26
-                                                                                                     },
-                                                                                          "text":  "EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9988788962364197,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  566,
-                                                                                                         "y":  372,
-                                                                                                         "width":  64,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Expedition",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999046325683594,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  599,
-                                                                                                         "y":  383,
-                                                                                                         "width":  31,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Coin",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9956665635108948,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  656,
-                                                                                                         "y":  382,
-                                                                                                         "width":  64,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Player EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9988912343978882,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  759,
-                                                                                                         "y":  383,
-                                                                                                         "width":  50,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Fuel Cell",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9901913404464722,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  538,
-                                                                                                         "y":  440,
-                                                                                                         "width":  62,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Extract",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999671578407288,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "topmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  770,
-                                                                                                         "y":  437,
-                                                                                                         "width":  58,
-                                                                                                         "height":  22
-                                                                                                     },
-                                                                                          "text":  "Cancel",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997749924659729,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required",
-                                                                                          "spatial_selector":  "topmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "fcb58c86-9287-4965-b06c-8f91af4a680b",
+  "name": "Expedition Post Start Checkpoint",
+  "notes": "Bundled runtime evidence slice. Original dataset: expedition-post-start-checkpoint-20260812-215512. Source frames: 4, 5.",
+  "created_at_utc": "2026-08-12T21:55:12.5072331Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 30328,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0004.png",
+      "captured_at_utc": "2026-08-12T21:55:34.8563442Z",
+      "sha256": "d6e0a65ccc60061b420d697266f9022c1345a39917c3988b6b3361de5beb4cb6",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "757ce4ad-9bac-4c05-b779-46a0ba4a1ef8",
+          "global_group_id": "445c3d90-ea49-4b71-9c12-218c903c2a8e",
+          "bounds": {
+            "x": 511,
+            "y": 447,
+            "width": 346,
+            "height": 135
+          },
+          "label": "Button Area",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "x\nExtract\nContinue\n603",
+              "confidence": 0.8641606196761131,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 45,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-12T21:58:53.0399613Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 519,
+                    "y": 468,
+                    "width": 27,
+                    "height": 28
+                  },
+                  "text": "x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.4567185938358307,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 579,
+                    "y": 471,
+                    "width": 67,
+                    "height": 22
+                  },
+                  "text": "Extract",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999606013298035,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 746,
+                    "y": 470,
+                    "width": 81,
+                    "height": 22
+                  },
+                  "text": "Continue",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999969482421875,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 669,
+                    "y": 526,
+                    "width": 47,
+                    "height": 29
+                  },
+                  "text": "603",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999938011169434,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "93f979db-6ac0-4186-8296-2fb4795aa3bb",
+          "global_group_id": "23ad91f7-2375-4123-8a9b-2ba83f0a4539",
+          "bounds": {
+            "x": 448,
+            "y": 217,
+            "width": 474,
+            "height": 263
+          },
+          "label": "Confirm Area",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0005.png",
+      "captured_at_utc": "2026-08-12T21:55:36.5135107Z",
+      "sha256": "cc8e791fa0b24f295e1baed99c833affd6f1d43fce3cda91a056b2f2c477e4ad",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "035aab99-c307-4c48-9b16-c0be2cd7f72e",
+          "global_group_id": "445c3d90-ea49-4b71-9c12-218c903c2a8e",
+          "bounds": {
+            "x": 511,
+            "y": 447,
+            "width": 346,
+            "height": 135
+          },
+          "label": "Button Area",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "9ad9a2d2-1a00-4350-bd05-2f79da8f413a",
+          "global_group_id": "23ad91f7-2375-4123-8a9b-2ba83f0a4539",
+          "bounds": {
+            "x": 448,
+            "y": 217,
+            "width": 474,
+            "height": 263
+          },
+          "label": "Confirm Area",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Extraction\nAre you sure you would like to end this run?\nYou will receive all of the following rewards!\n61x\n80x\n7x\nPLAYER\nEXP\nExpedition\nCoin\nPlayer EXP\nFuel Cell\nExtract\nCancel",
+              "confidence": 0.9870047058377948,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 172,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-12T21:59:59.4942124Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 625,
+                    "y": 230,
+                    "width": 117,
+                    "height": 21
+                  },
+                  "text": "Extraction",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999445080757141,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 501,
+                    "y": 275,
+                    "width": 362,
+                    "height": 19
+                  },
+                  "text": "Are you sure you would like to end this run?",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997299313545227,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 521,
+                    "y": 296,
+                    "width": 324,
+                    "height": 18
+                  },
+                  "text": "You will receive all of the following rewards!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9869437217712402,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 551,
+                    "y": 319,
+                    "width": 29,
+                    "height": 19
+                  },
+                  "text": "61x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.8497152924537659,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 642,
+                    "y": 321,
+                    "width": 30,
+                    "height": 15
+                  },
+                  "text": "80x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999413788318634,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 731,
+                    "y": 320,
+                    "width": 22,
+                    "height": 17
+                  },
+                  "text": "7x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9992395639419556,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 652,
+                    "y": 343,
+                    "width": 60,
+                    "height": 19
+                  },
+                  "text": "PLAYER",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998042583465576,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 653,
+                    "y": 358,
+                    "width": 60,
+                    "height": 26
+                  },
+                  "text": "EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9988788962364197,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 566,
+                    "y": 372,
+                    "width": 64,
+                    "height": 18
+                  },
+                  "text": "Expedition",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999046325683594,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 599,
+                    "y": 383,
+                    "width": 31,
+                    "height": 17
+                  },
+                  "text": "Coin",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9956665635108948,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 656,
+                    "y": 382,
+                    "width": 64,
+                    "height": 18
+                  },
+                  "text": "Player EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9988912343978882,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 759,
+                    "y": 383,
+                    "width": 50,
+                    "height": 17
+                  },
+                  "text": "Fuel Cell",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9901913404464722,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 538,
+                    "y": 440,
+                    "width": 62,
+                    "height": 18
+                  },
+                  "text": "Extract",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999671578407288,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "topmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 770,
+                    "y": 437,
+                    "width": 58,
+                    "height": 22
+                  },
+                  "text": "Cancel",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997749924659729,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "topmost",
+                  "spatial_selector_overridden": true
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

@@ -93,12 +93,48 @@ public sealed class DeepDebugSessionTests : IDisposable
     public async Task OptionsAreNormalizedAndPersisted()
     {
         DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 999);
+        await service.UpdateOptionsAsync(
+            enabled: true,
+            frameRetentionMinutes: 999,
+            captureIntervalMilliseconds: 2_000);
 
         DeepDebugSessionService restored = new(_root);
 
         Assert.True(restored.Options.Enabled);
         Assert.Equal(120, restored.Options.FrameRetentionMinutes);
+        Assert.Equal(2_000, restored.Options.CaptureIntervalMilliseconds);
+    }
+
+    [Fact]
+    public async Task ConfiguredIntervalRecordsPeriodicFullClientFrames()
+    {
+        DeepDebugSessionService service = new(_root);
+        await service.UpdateOptionsAsync(
+            enabled: true,
+            frameRetentionMinutes: 15,
+            captureIntervalMilliseconds: 500);
+        using IDisposable registration = service.RegisterFrameCaptureProvider(
+            "test",
+            token =>
+            {
+                service.RecordPng(
+                    PngEncoder.Encode(new RgbImage(1, 1, [1, 2, 3], takeOwnership: true)),
+                    "live-client",
+                    new { CaptureReason = "deep-debug-interval" });
+                return Task.CompletedTask;
+            });
+
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "periodic capture",
+            new DeepDebugOperationContext("test"));
+        await Task.Delay(1_300);
+        await scope!.CompleteAsync("success");
+
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
+        Assert.True(archive.Entries.Count(entry =>
+            entry.FullName.Contains("-live-client.png", StringComparison.Ordinal)) >= 2);
+        string configuration = await ReadAsync(archive, "configuration/deep-debug-options.json");
+        Assert.Contains("\"captureIntervalMilliseconds\": 500", configuration, StringComparison.Ordinal);
     }
 
     [Fact]

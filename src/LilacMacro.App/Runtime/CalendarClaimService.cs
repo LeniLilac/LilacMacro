@@ -14,6 +14,10 @@ internal sealed class CalendarClaimService(
     UtilityRespawnService respawn)
 {
     private static readonly PixelSize ClientSize = DebugWorkflowCatalog.ClientSize;
+    internal static readonly PixelRect LauncherSearch =
+        RuntimeSearchRegionEvidenceCatalog.CalendarLauncher.Bounds;
+    internal static readonly PixelRect RewardGrid =
+        RuntimeSearchRegionEvidenceCatalog.CalendarRewardGrid.Bounds;
     private static readonly TimeSpan ObservationDelay = TimeSpan.FromMilliseconds(300);
     private readonly ExpeditionOcrService _observations = new(workspace, ocr);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
@@ -61,10 +65,11 @@ internal sealed class CalendarClaimService(
         CancellationToken cancellationToken)
     {
         IReadOnlyList<OcrTextRegion> regions = await _observations.ObserveAsync(
-            CalendarClaimPolicy.LauncherRegion, device, cancellationToken).ConfigureAwait(false);
+            LauncherSearch,
+            device,
+            cancellationToken).ConfigureAwait(false);
         bool calendar = OcrRuleEngine.FindExactTarget(new OcrTargetRule("Calendar", "calendar"), regions) is not null;
-        bool profile = OcrRuleEngine.FindExactTarget(new OcrTargetRule("Profile", "profile"), regions) is not null;
-        return calendar && profile
+        return calendar
             ? regions
             : throw new InvalidOperationException("Calendar launcher was not freshly verified in Lobby.");
     }
@@ -76,7 +81,9 @@ internal sealed class CalendarClaimService(
         for (int attempt = 0; attempt < 12; attempt++)
         {
             IReadOnlyList<OcrTextRegion> regions = await _observations.ObserveAsync(
-                CalendarClaimPolicy.CalendarRegion, device, cancellationToken).ConfigureAwait(false);
+                RewardGrid,
+                device,
+                cancellationToken).ConfigureAwait(false);
             if (IsCalendar(regions)) return regions;
             await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
         }
@@ -90,7 +97,9 @@ internal sealed class CalendarClaimService(
         for (int attempt = 0; attempt < 6; attempt++)
         {
             IReadOnlyList<OcrTextRegion> regions = await _observations.ObserveAsync(
-                CalendarClaimPolicy.CalendarRegion, device, cancellationToken).ConfigureAwait(false);
+                RewardGrid,
+                device,
+                cancellationToken).ConfigureAwait(false);
             if (IsCalendar(regions)) return regions;
             await Task.Delay(ObservationDelay, cancellationToken).ConfigureAwait(false);
         }

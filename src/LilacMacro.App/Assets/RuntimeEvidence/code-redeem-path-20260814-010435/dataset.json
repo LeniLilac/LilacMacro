@@ -1,316 +1,316 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "1e477f50-eef5-4322-b97a-e10cfc54432a",
-    "name":  "Code redeem path",
-    "notes":  "Bundled runtime evidence slice. Original dataset: code-redeem-path-20260814-010435. Source frames: 3, 10.",
-    "created_at_utc":  "2026-08-14T01:04:35.8845773+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  35308,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-14T01:04:51.225074+00:00",
-                       "sha256":  "b13177dfe95b1ba39492dd9a932560eca8c189da4cd3087a35adfc8cc2eac2d1",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "- click enter code... to select input box\r\n- type code (case sens)\r\n- click redeem code button 3x times, 1s interval\r\n\r\n- do the area ui + respawn path thing",
-                       "annotations":  [
-                                           {
-                                               "id":  "ae114e39-a409-4fb4-81e9-e1fa51432c74",
-                                               "global_group_id":  "b7411536-d098-45b8-8eaf-fc312921ba88",
-                                               "bounds":  {
-                                                              "x":  398,
-                                                              "y":  194,
-                                                              "width":  560,
-                                                              "height":  319
-                                                          },
-                                               "label":  "Codes Panel State",
-                                               "notes":  "",
-                                               "minimum_pool_matches":  1,
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "Codes\n×\nJoin the official Discord server and Roblox group for\nexclusive codes!\nRedeem codes for AMAZING rewards!\nEnter Code...\nRedeem Code",
-                                                                      "confidence":  0.960753721850259,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  631,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-14T01:19:23.6659337+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  419,
-                                                                                                         "y":  203,
-                                                                                                         "width":  71,
-                                                                                                         "height":  26
-                                                                                                     },
-                                                                                          "text":  "Codes",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999951958656311,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  914,
-                                                                                                         "y":  197,
-                                                                                                         "width":  34,
-                                                                                                         "height":  36
-                                                                                                     },
-                                                                                          "text":  "×",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.7641233205795288,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  456,
-                                                                                                         "y":  278,
-                                                                                                         "width":  450,
-                                                                                                         "height":  19
-                                                                                                     },
-                                                                                          "text":  "Join the official Discord server and Roblox group for",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994499683380127,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  613,
-                                                                                                         "y":  298,
-                                                                                                         "width":  141,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "exclusive codes!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9735702276229858,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  505,
-                                                                                                         "y":  330,
-                                                                                                         "width":  355,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "Redeem codes for AMAZING rewards!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996970295906067,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "pool"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  463,
-                                                                                                         "y":  376,
-                                                                                                         "width":  112,
-                                                                                                         "height":  23
-                                                                                                     },
-                                                                                          "text":  "Enter Code...",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9935134053230286,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  627,
-                                                                                                         "y":  455,
-                                                                                                         "width":  112,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Redeem Code",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9949701428413391,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "exact",
-                                                                                          "evidence_role":  "required"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ]
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0010.png",
-                       "captured_at_utc":  "2026-08-14T01:05:36.5572662+00:00",
-                       "sha256":  "04446e23a556844cf4e005a5e4346d8ef4665822000e80a7c732b9eb21dc580c",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "95839e7e-d1cd-4f62-afbb-4b575343562e",
-                                               "global_group_id":  "b7411536-d098-45b8-8eaf-fc312921ba88",
-                                               "bounds":  {
-                                                              "x":  398,
-                                                              "y":  194,
-                                                              "width":  560,
-                                                              "height":  319
-                                                          },
-                                               "label":  "Codes Panel State",
-                                               "notes":  "",
-                                               "minimum_pool_matches":  1,
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "意\nCodes\nX\nJoin the official Discord server and Roblox group for\nexclusive codes!\nRedeem codes for AMAZING rewards!\nEnter Codle...\nRedeem Code",
-                                                                      "confidence":  0.854735279455781,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  90,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-14T01:20:17.4324846+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  802,
-                                                                                                         "y":  194,
-                                                                                                         "width":  37,
-                                                                                                         "height":  26
-                                                                                                     },
-                                                                                          "text":  "意",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.12714602053165436,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  509,
-                                                                                                         "y":  252,
-                                                                                                         "width":  47,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Codes",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9999845623970032,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  842,
-                                                                                                         "y":  255,
-                                                                                                         "width":  13,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "X",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.8004170060157776,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  526,
-                                                                                                         "y":  302,
-                                                                                                         "width":  312,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "Join the official Discord server and Roblox group for",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9765725135803223,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  634,
-                                                                                                         "y":  316,
-                                                                                                         "width":  100,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "exclusive codes!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9728294014930725,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  573,
-                                                                                                         "y":  337,
-                                                                                                         "width":  221,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "Redeem codes for AMAZING rewards!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9687308073043823,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  536,
-                                                                                                         "y":  367,
-                                                                                                         "width":  83,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Enter Codle...",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9925090670585632,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  642,
-                                                                                                         "y":  418,
-                                                                                                         "width":  83,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Redeem Code",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996928572654724,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ]
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "1e477f50-eef5-4322-b97a-e10cfc54432a",
+  "name": "Code redeem path",
+  "notes": "Bundled runtime evidence slice. Original dataset: code-redeem-path-20260814-010435. Source frames: 3, 10.",
+  "created_at_utc": "2026-08-14T01:04:35.8845773Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 35308,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-14T01:04:51.2250740Z",
+      "sha256": "b13177dfe95b1ba39492dd9a932560eca8c189da4cd3087a35adfc8cc2eac2d1",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "- click enter code... to select input box\r\n- type code (case sens)\r\n- click redeem code button 3x times, 1s interval\r\n\r\n- do the area ui + respawn path thing",
+      "annotations": [
+        {
+          "id": "ae114e39-a409-4fb4-81e9-e1fa51432c74",
+          "global_group_id": "b7411536-d098-45b8-8eaf-fc312921ba88",
+          "bounds": {
+            "x": 398,
+            "y": 194,
+            "width": 560,
+            "height": 319
+          },
+          "label": "Codes Panel State",
+          "notes": "",
+          "minimum_pool_matches": 1,
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Codes\n×\nJoin the official Discord server and Roblox group for\nexclusive codes!\nRedeem codes for AMAZING rewards!\nEnter Code...\nRedeem Code",
+              "confidence": 0.960753721850259,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 631,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-14T01:19:23.6659337Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 419,
+                    "y": 203,
+                    "width": 71,
+                    "height": 26
+                  },
+                  "text": "Codes",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999951958656311,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 914,
+                    "y": 197,
+                    "width": 34,
+                    "height": 36
+                  },
+                  "text": "×",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.7641233205795288,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 456,
+                    "y": 278,
+                    "width": 450,
+                    "height": 19
+                  },
+                  "text": "Join the official Discord server and Roblox group for",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994499683380127,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": false,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 613,
+                    "y": 298,
+                    "width": 141,
+                    "height": 17
+                  },
+                  "text": "exclusive codes!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9735702276229858,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": false,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 505,
+                    "y": 330,
+                    "width": 355,
+                    "height": 20
+                  },
+                  "text": "Redeem codes for AMAZING rewards!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996970295906067,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": false,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "pool"
+                },
+                {
+                  "bounds": {
+                    "x": 463,
+                    "y": 376,
+                    "width": 112,
+                    "height": 23
+                  },
+                  "text": "Enter Code...",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9935134053230286,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 627,
+                    "y": 455,
+                    "width": 112,
+                    "height": 21
+                  },
+                  "text": "Redeem Code",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9949701428413391,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0010.png",
+      "captured_at_utc": "2026-08-14T01:05:36.5572662Z",
+      "sha256": "04446e23a556844cf4e005a5e4346d8ef4665822000e80a7c732b9eb21dc580c",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "95839e7e-d1cd-4f62-afbb-4b575343562e",
+          "global_group_id": "b7411536-d098-45b8-8eaf-fc312921ba88",
+          "bounds": {
+            "x": 398,
+            "y": 194,
+            "width": 560,
+            "height": 319
+          },
+          "label": "Codes Panel State",
+          "notes": "",
+          "minimum_pool_matches": 1,
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "意\nCodes\nX\nJoin the official Discord server and Roblox group for\nexclusive codes!\nRedeem codes for AMAZING rewards!\nEnter Codle...\nRedeem Code",
+              "confidence": 0.854735279455781,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 90,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-14T01:20:17.4324846Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 802,
+                    "y": 194,
+                    "width": 37,
+                    "height": 26
+                  },
+                  "text": "意",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.12714602053165436,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 509,
+                    "y": 252,
+                    "width": 47,
+                    "height": 18
+                  },
+                  "text": "Codes",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999845623970032,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 842,
+                    "y": 255,
+                    "width": 13,
+                    "height": 13
+                  },
+                  "text": "X",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.8004170060157776,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 526,
+                    "y": 302,
+                    "width": 312,
+                    "height": 14
+                  },
+                  "text": "Join the official Discord server and Roblox group for",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9765725135803223,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 634,
+                    "y": 316,
+                    "width": 100,
+                    "height": 13
+                  },
+                  "text": "exclusive codes!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9728294014930725,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 573,
+                    "y": 337,
+                    "width": 221,
+                    "height": 14
+                  },
+                  "text": "Redeem codes for AMAZING rewards!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9687308073043823,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 536,
+                    "y": 367,
+                    "width": 83,
+                    "height": 17
+                  },
+                  "text": "Enter Codle...",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9925090670585632,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 642,
+                    "y": 418,
+                    "width": 83,
+                    "height": 17
+                  },
+                  "text": "Redeem Code",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996928572654724,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

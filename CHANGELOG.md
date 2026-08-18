@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Bundled Python 3.12, the CPU OCR runtime, and the supported OCR model pairs in the Windows installer.
+- Added a consent-gated GPU OCR setup screen with streamed progress and logs; GPU packages install per user and never replace the bundled CPU runtime.
+- Removed the separate Python installer fallback that could show an unexpected Python UAC prompt.
+
+## 1.0.144 — Public beta
+
+- Added a scale-relative DPS image fast path for phantom placement evidence with OCR fallback.
+- Bounded failed placement selection to three reselection attempts and continued with the next authored step after exhaustion.
+
 ## 1.0.143 — Public beta
 
 - Fixed first-run OCR setup when the Windows Python launcher exists without Python 3.12, allowing the automatic App Installer fallback to run.

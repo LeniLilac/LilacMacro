@@ -1,71 +1,65 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "c551f10a-c7ae-4684-bdf8-f3aca44ab3fe",
-    "name":  "Teleport To spawn via settings",
-    "notes":  "use the exisitng settings dataset/scale detector and click the rel pos of the teleport to spawn button\r\n\r\nthen close settings button via the gear icon after clicking\r\n\r\nBundled runtime evidence slice. Original dataset: teleport-to-spawn-via-settings-20260812-221818. Source frames: 1, 2, 3.",
-    "created_at_utc":  "2026-08-12T22:18:18.7847504+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  30328,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-12T22:18:20.5567281+00:00",
-                       "sha256":  "6993c5b25f13f31fc16c9668b1db16c7e74e4ca3b4b4a7dab634c2e2d7e1d379",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "e44194f7-b0d9-4120-990e-68e0d0b6b239",
-                                               "bounds":  {
-                                                              "x":  1046,
-                                                              "y":  343,
-                                                              "width":  52,
-                                                              "height":  48
-                                                          },
-                                               "label":  "the teleport to spawn button",
-                                               "notes":  "VISUAL EXAMPLE ONLY",
-                                               "ocr_trials":  [
-
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0002.png",
-                       "captured_at_utc":  "2026-08-12T22:18:33.8966293+00:00",
-                       "sha256":  "9465bafa7730eca4cc598095383a033bf7845902574b5de1edd3bcc811b4c7e2",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   },
-                   {
-                       "file_name":  "frame-0003.png",
-                       "captured_at_utc":  "2026-08-12T22:18:37.3626467+00:00",
-                       "sha256":  "bea66f87b6b668c3b2a4ca34c186c0078e2f50d0450f162539b0bd875d37b7c9",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "c551f10a-c7ae-4684-bdf8-f3aca44ab3fe",
+  "name": "Teleport To spawn via settings",
+  "notes": "use the exisitng settings dataset/scale detector and click the rel pos of the teleport to spawn button\r\n\r\nthen close settings button via the gear icon after clicking\r\n\r\nBundled runtime evidence slice. Original dataset: teleport-to-spawn-via-settings-20260812-221818. Source frames: 1, 2, 3.",
+  "created_at_utc": "2026-08-12T22:18:18.7847504Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 30328,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-12T22:18:20.5567281Z",
+      "sha256": "6993c5b25f13f31fc16c9668b1db16c7e74e4ca3b4b4a7dab634c2e2d7e1d379",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "e44194f7-b0d9-4120-990e-68e0d0b6b239",
+          "bounds": {
+            "x": 1046,
+            "y": 343,
+            "width": 52,
+            "height": 48
+          },
+          "label": "the teleport to spawn button",
+          "notes": "VISUAL EXAMPLE ONLY",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-12T22:18:33.8966293Z",
+      "sha256": "9465bafa7730eca4cc598095383a033bf7845902574b5de1edd3bcc811b4c7e2",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    },
+    {
+      "file_name": "frame-0003.png",
+      "captured_at_utc": "2026-08-12T22:18:37.3626467Z",
+      "sha256": "bea66f87b6b668c3b2a4ca34c186c0078e2f50d0450f162539b0bd875d37b7c9",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": []
+    }
+  ]
 }

@@ -42,7 +42,8 @@ public partial class App : Application
         {
             Runtime.MacroOwnerState ownerState = await Runtime.MacroOwnerState.LoadAsync();
             AppThemeManager.Apply(ownerState.ThemeMode, ownerState.ColorTheme);
-            if (!ownerState.HasAcceptedCurrentPrivacyChoices)
+            bool firstRunPrivacy = !ownerState.HasAcceptedCurrentPrivacyChoices;
+            if (firstRunPrivacy)
             {
                 ShutdownMode previousMode = ShutdownMode;
                 ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -56,6 +57,8 @@ public partial class App : Application
                     return;
                 }
             }
+            if (firstRunPrivacy && !MacroInstanceContext.Current.IsManagedRunner)
+                await ShowFirstRunGpuSetupAsync();
             startupWindow = new MacroShellWindow(_deepDebug, ownerState);
         }
         else
@@ -99,6 +102,28 @@ public partial class App : Application
         {
             Notifications.AppToastService.ShowError("RUNNER SETUP INCOMPLETE", exception.Message);
         }
+    }
+
+    private async Task ShowFirstRunGpuSetupAsync()
+    {
+        using OcrRunner setupOcr = new(_deepDebug);
+        OcrGpuInfo? gpu;
+        try
+        {
+            gpu = await setupOcr.ProbeGpuAsync();
+        }
+        catch
+        {
+            return;
+        }
+        if (gpu is null || setupOcr.IsDeviceReady(OcrRunner.GpuDevice)) return;
+
+        ShutdownMode previousMode = ShutdownMode;
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        GpuOcrSetupWindow setupWindow = new(setupOcr, gpu);
+        MainWindow = setupWindow;
+        setupWindow.ShowDialog();
+        ShutdownMode = previousMode;
     }
 
     protected override void OnExit(ExitEventArgs eventArgs)

@@ -14,6 +14,7 @@ internal sealed class PlacementSetupTestService : IDisposable
     private readonly OcrRunner _ocr;
     private readonly PlacementPlaybackService _playback;
     private readonly MapPreparationService _mapPreparation;
+    private readonly IDisposable _deepDebugFrameCaptureRegistration;
     private bool _initialized;
     private bool _disposed;
 
@@ -24,6 +25,15 @@ internal sealed class PlacementSetupTestService : IDisposable
         _deepDebug = deepDebug;
         _ownerState = ownerState;
         _workspace = new WorkspaceController(deepDebug);
+        _deepDebugFrameCaptureRegistration = deepDebug.RegisterFrameCaptureProvider(
+            "main-setup",
+            async token =>
+            {
+                await _workspace.CaptureLiveFrameAsync(
+                    DebugWorkflowCatalog.ClientSize,
+                    token,
+                    "deep-debug-interval");
+            });
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = true };
         _playback = new PlacementPlaybackService(_workspace, _ocr);
         _mapPreparation = new MapPreparationService(_workspace);
@@ -103,6 +113,7 @@ internal sealed class PlacementSetupTestService : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        _deepDebugFrameCaptureRegistration.Dispose();
         _ocr.Dispose();
         _workspace.Dispose();
     }

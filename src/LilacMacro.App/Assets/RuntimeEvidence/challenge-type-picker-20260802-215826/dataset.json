@@ -1,1119 +1,1119 @@
-﻿{
-    "$schema":  "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
-    "format":  "lilacmacro.dataset",
-    "coordinate_space":  "roblox_client_pixels_half_open",
-    "image_root":  "images",
-    "schema_version":  1,
-    "id":  "df846a52-9bea-4eb0-a6b4-916e8bbdccd9",
-    "name":  "Challenge type picker",
-    "notes":  "The following text changes color if challenges on cooldown or not:\r\n- Challenge (the header)\r\n- Regular Challenge\r\n- Daily Challenge\r\n- Weekly Challenge\r\n\r\nThe following text does not change color and is stable:\r\n- You can complete all avalible challenges of this type... etc.\r\n(fuzzy phrase rule this)\r\n\r\nBundled runtime evidence slice. Original dataset: challenge-type-picker-20260802-215826. Source frames: 1.",
-    "created_at_utc":  "2026-08-02T21:58:26.9001171+00:00",
-    "source_window_title":  "Roblox",
-    "source_process_id":  36520,
-    "client_width":  1366,
-    "client_height":  700,
-    "capture_mode":  "manual",
-    "requested_frame_count":  0,
-    "requested_duration_seconds":  0,
-    "is_finalized":  true,
-    "frames":  [
-                   {
-                       "file_name":  "frame-0001.png",
-                       "captured_at_utc":  "2026-08-02T21:58:29.6450447+00:00",
-                       "sha256":  "ab8baaa66342f0695a950b94ec7a63597fe8c40f3c2f8c21c0e4268365fb14eb",
-                       "width":  1366,
-                       "height":  700,
-                       "verdict":  "unreviewed",
-                       "notes":  "",
-                       "annotations":  [
-                                           {
-                                               "id":  "f4943674-398f-43af-8203-b0f4f7e64b67",
-                                               "bounds":  {
-                                                              "x":  135,
-                                                              "y":  36,
-                                                              "width":  1087,
-                                                              "height":  622
-                                                          },
-                                               "label":  "Challenge Type State",
-                                               "notes":  "",
-                                               "ocr_trials":  [
-                                                                  {
-                                                                      "model_name":  "PP-OCRv6_small_rec",
-                                                                      "detector_model_name":  "PP-OCRv6_small_det",
-                                                                      "device":  "gpu:0",
-                                                                      "text":  "H\nChallenges\nx\n+100% Rewards!\n一\nYou can complete all available challenges of this type before the next reset!\nRegular Challenge\nUnavailable\nRegular Challenge#1\nFairy King Forest - Act 4\nResets in 02:01:29\nHard Mode\n6\n2,000%\n1,000x\n145x\n+100% Rewards!\nEXP\nTUNITA\nPLAYER\nDaily Challenge\nTrait\nEplayer\nDaily Limit 0/10\nCrystal\nGem\nUnit EXP\nEXP\nUnavailable\nRegularChallenge#2\nResets in 02:01:29\nKing\u0027s Tomb - Act 5\nHard Mode\nWeekly Challenge\nUnavailable\n6x\n6\n6x\n1,000x\n145x\nEquipme\nEquipme\nStat\nEXP\nEplayer\nDaily Limit 0/10\nnt Lock\nnt Reroll\nStat Lock\nReroll\nUnit EXP\nEXP\nResets in 74:01:29\nRegular Challenge #3\nSchoolGrounds-Act 2\nHard Mode\n4x\n4x\n1,000x\n1,000x\nUNIT\nSpri\nSpri\nSpri\nSpri\nSpri\nEXP\nDaily Limit 0/10\n(Blue)\n(Green)\n(Purple)\n(Red)\n(Yellow)\nGold\nUnit EXP",
-                                                                      "confidence":  0.9761390733718872,
-                                                                      "model_load_milliseconds":  0,
-                                                                      "inference_milliseconds":  618,
-                                                                      "runtime_version":  "3.7.0",
-                                                                      "ran_at_utc":  "2026-08-02T21:59:27.5651824+00:00",
-                                                                      "model_was_cached":  true,
-                                                                      "regions":  [
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  173,
-                                                                                                         "y":  37,
-                                                                                                         "width":  15,
-                                                                                                         "height":  8
-                                                                                                     },
-                                                                                          "text":  "H",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9558416604995728,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  150,
-                                                                                                         "y":  50,
-                                                                                                         "width":  131,
-                                                                                                         "height":  34
-                                                                                                     },
-                                                                                          "text":  "Challenges",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999932587146759,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "topmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1186,
-                                                                                                         "y":  53,
-                                                                                                         "width":  25,
-                                                                                                         "height":  25
-                                                                                                     },
-                                                                                          "text":  "x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.5221415162086487,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  173,
-                                                                                                         "y":  122,
-                                                                                                         "width":  125,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "+100% Rewards!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9872505068778992,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  430,
-                                                                                                         "y":  116,
-                                                                                                         "width":  15,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "一",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.5500849485397339,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  451,
-                                                                                                         "y":  115,
-                                                                                                         "width":  625,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "You can complete all available challenges of this type before the next reset!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9933912754058838,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  true,
-                                                                                          "match_mode":  "fuzzy_phrase",
-                                                                                          "evidence_role":  "required"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  171,
-                                                                                                         "y":  140,
-                                                                                                         "width":  183,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "Regular Challenge",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9991813898086548,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "leftmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  172,
-                                                                                                         "y":  163,
-                                                                                                         "width":  91,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Unavailable",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997674822807312,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  650,
-                                                                                                         "y":  156,
-                                                                                                         "width":  144,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "Regular Challenge#1",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9743707776069641,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  648,
-                                                                                                         "y":  173,
-                                                                                                         "width":  235,
-                                                                                                         "height":  25
-                                                                                                     },
-                                                                                          "text":  "Fairy King Forest - Act 4",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9722611308097839,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  195,
-                                                                                                         "y":  208,
-                                                                                                         "width":  131,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Resets in 02:01:29",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9635031223297119,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  648,
-                                                                                                         "y":  201,
-                                                                                                         "width":  82,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Hard Mode",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.987860381603241,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  666,
-                                                                                                         "y":  241,
-                                                                                                         "width":  10,
-                                                                                                         "height":  9
-                                                                                                     },
-                                                                                          "text":  "6",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9951019287109375,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  719,
-                                                                                                         "y":  234,
-                                                                                                         "width":  56,
-                                                                                                         "height":  22
-                                                                                                     },
-                                                                                          "text":  "2,000%",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9300470948219299,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  781,
-                                                                                                         "y":  238,
-                                                                                                         "width":  41,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "1,000x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9991692900657654,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  843,
-                                                                                                         "y":  239,
-                                                                                                         "width":  28,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "145x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998461604118347,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  172,
-                                                                                                         "y":  256,
-                                                                                                         "width":  125,
-                                                                                                         "height":  20
-                                                                                                     },
-                                                                                          "text":  "+100% Rewards!",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9962500333786011,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  786,
-                                                                                                         "y":  261,
-                                                                                                         "width":  40,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9984467029571533,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  789,
-                                                                                                         "y":  253,
-                                                                                                         "width":  35,
-                                                                                                         "height":  10
-                                                                                                     },
-                                                                                          "text":  "TUNITA",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.8044489026069641,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  849,
-                                                                                                         "y":  253,
-                                                                                                         "width":  37,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "PLAYER",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998679757118225,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  171,
-                                                                                                         "y":  273,
-                                                                                                         "width":  156,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "Daily Challenge",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9959871172904968,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "leftmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  683,
-                                                                                                         "y":  266,
-                                                                                                         "width":  28,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Trait",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9988374710083008,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  848,
-                                                                                                         "y":  264,
-                                                                                                         "width":  44,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Eplayer",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9601388573646545,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  463,
-                                                                                                         "y":  278,
-                                                                                                         "width":  114,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Daily Limit 0/10",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9904595613479614,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  673,
-                                                                                                         "y":  277,
-                                                                                                         "width":  36,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Crystal",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9979451894760132,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  745,
-                                                                                                         "y":  276,
-                                                                                                         "width":  26,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "Gem",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997765421867371,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  785,
-                                                                                                         "y":  276,
-                                                                                                         "width":  44,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Unit EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9995200634002686,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  867,
-                                                                                                         "y":  275,
-                                                                                                         "width":  23,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996194839477539,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  172,
-                                                                                                         "y":  297,
-                                                                                                         "width":  91,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Unavailable",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999691903591156,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  650,
-                                                                                                         "y":  332,
-                                                                                                         "width":  147,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "RegularChallenge#2",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9810387492179871,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  195,
-                                                                                                         "y":  343,
-                                                                                                         "width":  131,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Resets in 02:01:29",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9685382843017578,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  647,
-                                                                                                         "y":  349,
-                                                                                                         "width":  187,
-                                                                                                         "height":  28
-                                                                                                     },
-                                                                                          "text":  "King\u0027s Tomb - Act 5",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.983692467212677,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  649,
-                                                                                                         "y":  378,
-                                                                                                         "width":  82,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Hard Mode",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.981041669845581,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  169,
-                                                                                                         "y":  389,
-                                                                                                         "width":  178,
-                                                                                                         "height":  30
-                                                                                                     },
-                                                                                          "text":  "Weekly Challenge",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9985389709472656,
-                                                                                          "is_ocr_evidence":  true,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact",
-                                                                                          "spatial_selector":  "leftmost",
-                                                                                          "spatial_selector_overridden":  true
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  172,
-                                                                                                         "y":  415,
-                                                                                                         "width":  91,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Unavailable",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996662139892578,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  664,
-                                                                                                         "y":  416,
-                                                                                                         "width":  15,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "6x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.994025707244873,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  725,
-                                                                                                         "y":  417,
-                                                                                                         "width":  11,
-                                                                                                         "height":  9
-                                                                                                     },
-                                                                                          "text":  "6",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9970381259918213,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  843,
-                                                                                                         "y":  416,
-                                                                                                         "width":  16,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "6x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9941849708557129,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  901,
-                                                                                                         "y":  413,
-                                                                                                         "width":  42,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "1,000x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9992179274559021,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  962,
-                                                                                                         "y":  413,
-                                                                                                         "width":  30,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "145x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998359680175781,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  665,
-                                                                                                         "y":  444,
-                                                                                                         "width":  44,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "Equipme",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998844861984253,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  724,
-                                                                                                         "y":  444,
-                                                                                                         "width":  45,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "Equipme",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.999852180480957,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  867,
-                                                                                                         "y":  443,
-                                                                                                         "width":  23,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "Stat",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9988701343536377,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  908,
-                                                                                                         "y":  438,
-                                                                                                         "width":  39,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9910144805908203,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  967,
-                                                                                                         "y":  440,
-                                                                                                         "width":  43,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Eplayer",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.991519033908844,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  463,
-                                                                                                         "y":  454,
-                                                                                                         "width":  113,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Daily Limit 0/10",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9898187518119812,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  672,
-                                                                                                         "y":  452,
-                                                                                                         "width":  38,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "nt Lock",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9990739822387695,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  724,
-                                                                                                         "y":  452,
-                                                                                                         "width":  45,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "nt Reroll",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9983534216880798,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  783,
-                                                                                                         "y":  452,
-                                                                                                         "width":  47,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Stat Lock",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9989774227142334,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  857,
-                                                                                                         "y":  452,
-                                                                                                         "width":  32,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Reroll",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9998987317085266,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  905,
-                                                                                                         "y":  452,
-                                                                                                         "width":  45,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "Unit EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994264841079712,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  988,
-                                                                                                         "y":  451,
-                                                                                                         "width":  22,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9995806217193604,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  195,
-                                                                                                         "y":  479,
-                                                                                                         "width":  130,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "Resets in 74:01:29",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9860622882843018,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  650,
-                                                                                                         "y":  502,
-                                                                                                         "width":  146,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "Regular Challenge #3",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9694941639900208,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  649,
-                                                                                                         "y":  522,
-                                                                                                         "width":  222,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "SchoolGrounds-Act 2",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.946890652179718,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  649,
-                                                                                                         "y":  549,
-                                                                                                         "width":  82,
-                                                                                                         "height":  18
-                                                                                                     },
-                                                                                          "text":  "Hard Mode",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9861592054367065,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  904,
-                                                                                                         "y":  589,
-                                                                                                         "width":  16,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "4x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9944382309913635,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  964,
-                                                                                                         "y":  589,
-                                                                                                         "width":  16,
-                                                                                                         "height":  13
-                                                                                                     },
-                                                                                          "text":  "4x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9941654205322266,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1022,
-                                                                                                         "y":  588,
-                                                                                                         "width":  39,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "1,000x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9977670311927795,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1082,
-                                                                                                         "y":  587,
-                                                                                                         "width":  39,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "1,000x",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997101426124573,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1088,
-                                                                                                         "y":  602,
-                                                                                                         "width":  37,
-                                                                                                         "height":  14
-                                                                                                     },
-                                                                                          "text":  "UNIT",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9616745710372925,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  679,
-                                                                                                         "y":  617,
-                                                                                                         "width":  21,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "Spri",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9992790222167969,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  737,
-                                                                                                         "y":  617,
-                                                                                                         "width":  23,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "Spri",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996459484100342,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  856,
-                                                                                                         "y":  617,
-                                                                                                         "width":  24,
-                                                                                                         "height":  11
-                                                                                                     },
-                                                                                          "text":  "Spri",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9995633959770203,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  915,
-                                                                                                         "y":  614,
-                                                                                                         "width":  37,
-                                                                                                         "height":  17
-                                                                                                     },
-                                                                                          "text":  "Spri",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9954686164855957,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  976,
-                                                                                                         "y":  615,
-                                                                                                         "width":  26,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "Spri",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9836924076080322,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1086,
-                                                                                                         "y":  610,
-                                                                                                         "width":  42,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9991877675056458,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  441,
-                                                                                                         "y":  630,
-                                                                                                         "width":  135,
-                                                                                                         "height":  21
-                                                                                                     },
-                                                                                          "text":  "Daily Limit 0/10",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9980216026306152,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  679,
-                                                                                                         "y":  624,
-                                                                                                         "width":  31,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "(Blue)",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.996268093585968,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  731,
-                                                                                                         "y":  625,
-                                                                                                         "width":  40,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "(Green)",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9996020197868347,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  848,
-                                                                                                         "y":  625,
-                                                                                                         "width":  41,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "(Purple)",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9967207312583923,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  920,
-                                                                                                         "y":  625,
-                                                                                                         "width":  31,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "(Red)",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9974589347839355,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  968,
-                                                                                                         "y":  626,
-                                                                                                         "width":  40,
-                                                                                                         "height":  12
-                                                                                                     },
-                                                                                          "text":  "(Yellow)",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9761924743652344,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1044,
-                                                                                                         "y":  624,
-                                                                                                         "width":  29,
-                                                                                                         "height":  16
-                                                                                                     },
-                                                                                          "text":  "Gold",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9997200965881348,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      },
-                                                                                      {
-                                                                                          "bounds":  {
-                                                                                                         "x":  1084,
-                                                                                                         "y":  625,
-                                                                                                         "width":  47,
-                                                                                                         "height":  15
-                                                                                                     },
-                                                                                          "text":  "Unit EXP",
-                                                                                          "detection_confidence":  null,
-                                                                                          "recognition_confidence":  0.9994178414344788,
-                                                                                          "is_ocr_evidence":  false,
-                                                                                          "is_visual_anchor":  false,
-                                                                                          "match_mode":  "exact"
-                                                                                      }
-                                                                                  ]
-                                                                  }
-                                                              ],
-                                               "minimum_pool_matches":  0
-                                           }
-                                       ]
-                   }
-               ]
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "df846a52-9bea-4eb0-a6b4-916e8bbdccd9",
+  "name": "Challenge type picker",
+  "notes": "The following text changes color if challenges on cooldown or not:\r\n- Challenge (the header)\r\n- Regular Challenge\r\n- Daily Challenge\r\n- Weekly Challenge\r\n\r\nThe following text does not change color and is stable:\r\n- You can complete all avalible challenges of this type... etc.\r\n(fuzzy phrase rule this)\r\n\r\nBundled runtime evidence slice. Original dataset: challenge-type-picker-20260802-215826. Source frames: 1.",
+  "created_at_utc": "2026-08-02T21:58:26.9001171Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 36520,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-02T21:58:29.6450447Z",
+      "sha256": "ab8baaa66342f0695a950b94ec7a63597fe8c40f3c2f8c21c0e4268365fb14eb",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "f4943674-398f-43af-8203-b0f4f7e64b67",
+          "bounds": {
+            "x": 135,
+            "y": 36,
+            "width": 1087,
+            "height": 622
+          },
+          "label": "Challenge Type State",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "H\nChallenges\nx\n+100% Rewards!\n一\nYou can complete all available challenges of this type before the next reset!\nRegular Challenge\nUnavailable\nRegular Challenge#1\nFairy King Forest - Act 4\nResets in 02:01:29\nHard Mode\n6\n2,000%\n1,000x\n145x\n+100% Rewards!\nEXP\nTUNITA\nPLAYER\nDaily Challenge\nTrait\nEplayer\nDaily Limit 0/10\nCrystal\nGem\nUnit EXP\nEXP\nUnavailable\nRegularChallenge#2\nResets in 02:01:29\nKing's Tomb - Act 5\nHard Mode\nWeekly Challenge\nUnavailable\n6x\n6\n6x\n1,000x\n145x\nEquipme\nEquipme\nStat\nEXP\nEplayer\nDaily Limit 0/10\nnt Lock\nnt Reroll\nStat Lock\nReroll\nUnit EXP\nEXP\nResets in 74:01:29\nRegular Challenge #3\nSchoolGrounds-Act 2\nHard Mode\n4x\n4x\n1,000x\n1,000x\nUNIT\nSpri\nSpri\nSpri\nSpri\nSpri\nEXP\nDaily Limit 0/10\n(Blue)\n(Green)\n(Purple)\n(Red)\n(Yellow)\nGold\nUnit EXP",
+              "confidence": 0.9761390733718872,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 618,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-02T21:59:27.5651824Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 173,
+                    "y": 37,
+                    "width": 15,
+                    "height": 8
+                  },
+                  "text": "H",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9558416604995728,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 150,
+                    "y": 50,
+                    "width": 131,
+                    "height": 34
+                  },
+                  "text": "Challenges",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999932587146759,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact",
+                  "spatial_selector": "topmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 1186,
+                    "y": 53,
+                    "width": 25,
+                    "height": 25
+                  },
+                  "text": "x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.5221415162086487,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 173,
+                    "y": 122,
+                    "width": 125,
+                    "height": 20
+                  },
+                  "text": "+100% Rewards!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9872505068778992,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 430,
+                    "y": 116,
+                    "width": 15,
+                    "height": 13
+                  },
+                  "text": "一",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.5500849485397339,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 451,
+                    "y": 115,
+                    "width": 625,
+                    "height": 17
+                  },
+                  "text": "You can complete all available challenges of this type before the next reset!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9933912754058838,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "evidence_role": "required"
+                },
+                {
+                  "bounds": {
+                    "x": 171,
+                    "y": 140,
+                    "width": 183,
+                    "height": 28
+                  },
+                  "text": "Regular Challenge",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9991813898086548,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact",
+                  "spatial_selector": "leftmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 172,
+                    "y": 163,
+                    "width": 91,
+                    "height": 18
+                  },
+                  "text": "Unavailable",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997674822807312,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 650,
+                    "y": 156,
+                    "width": 144,
+                    "height": 14
+                  },
+                  "text": "Regular Challenge#1",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9743707776069641,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 648,
+                    "y": 173,
+                    "width": 235,
+                    "height": 25
+                  },
+                  "text": "Fairy King Forest - Act 4",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9722611308097839,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 195,
+                    "y": 208,
+                    "width": 131,
+                    "height": 17
+                  },
+                  "text": "Resets in 02:01:29",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9635031223297119,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 648,
+                    "y": 201,
+                    "width": 82,
+                    "height": 18
+                  },
+                  "text": "Hard Mode",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.987860381603241,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 666,
+                    "y": 241,
+                    "width": 10,
+                    "height": 9
+                  },
+                  "text": "6",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9951019287109375,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 719,
+                    "y": 234,
+                    "width": 56,
+                    "height": 22
+                  },
+                  "text": "2,000%",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9300470948219299,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 781,
+                    "y": 238,
+                    "width": 41,
+                    "height": 15
+                  },
+                  "text": "1,000x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9991692900657654,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 843,
+                    "y": 239,
+                    "width": 28,
+                    "height": 13
+                  },
+                  "text": "145x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998461604118347,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 172,
+                    "y": 256,
+                    "width": 125,
+                    "height": 20
+                  },
+                  "text": "+100% Rewards!",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9962500333786011,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 786,
+                    "y": 261,
+                    "width": 40,
+                    "height": 15
+                  },
+                  "text": "EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9984467029571533,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 789,
+                    "y": 253,
+                    "width": 35,
+                    "height": 10
+                  },
+                  "text": "TUNITA",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.8044489026069641,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 849,
+                    "y": 253,
+                    "width": 37,
+                    "height": 11
+                  },
+                  "text": "PLAYER",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998679757118225,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 171,
+                    "y": 273,
+                    "width": 156,
+                    "height": 28
+                  },
+                  "text": "Daily Challenge",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9959871172904968,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact",
+                  "spatial_selector": "leftmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 683,
+                    "y": 266,
+                    "width": 28,
+                    "height": 13
+                  },
+                  "text": "Trait",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9988374710083008,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 848,
+                    "y": 264,
+                    "width": 44,
+                    "height": 17
+                  },
+                  "text": "Eplayer",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9601388573646545,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 463,
+                    "y": 278,
+                    "width": 114,
+                    "height": 18
+                  },
+                  "text": "Daily Limit 0/10",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9904595613479614,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 673,
+                    "y": 277,
+                    "width": 36,
+                    "height": 12
+                  },
+                  "text": "Crystal",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9979451894760132,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 745,
+                    "y": 276,
+                    "width": 26,
+                    "height": 13
+                  },
+                  "text": "Gem",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997765421867371,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 785,
+                    "y": 276,
+                    "width": 44,
+                    "height": 12
+                  },
+                  "text": "Unit EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9995200634002686,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 867,
+                    "y": 275,
+                    "width": 23,
+                    "height": 13
+                  },
+                  "text": "EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996194839477539,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 172,
+                    "y": 297,
+                    "width": 91,
+                    "height": 18
+                  },
+                  "text": "Unavailable",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999691903591156,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 650,
+                    "y": 332,
+                    "width": 147,
+                    "height": 14
+                  },
+                  "text": "RegularChallenge#2",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9810387492179871,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 195,
+                    "y": 343,
+                    "width": 131,
+                    "height": 17
+                  },
+                  "text": "Resets in 02:01:29",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9685382843017578,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 647,
+                    "y": 349,
+                    "width": 187,
+                    "height": 28
+                  },
+                  "text": "King's Tomb - Act 5",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.983692467212677,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 649,
+                    "y": 378,
+                    "width": 82,
+                    "height": 17
+                  },
+                  "text": "Hard Mode",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.981041669845581,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 169,
+                    "y": 389,
+                    "width": 178,
+                    "height": 30
+                  },
+                  "text": "Weekly Challenge",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9985389709472656,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact",
+                  "spatial_selector": "leftmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 172,
+                    "y": 415,
+                    "width": 91,
+                    "height": 17
+                  },
+                  "text": "Unavailable",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996662139892578,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 664,
+                    "y": 416,
+                    "width": 15,
+                    "height": 12
+                  },
+                  "text": "6x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.994025707244873,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 725,
+                    "y": 417,
+                    "width": 11,
+                    "height": 9
+                  },
+                  "text": "6",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9970381259918213,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 843,
+                    "y": 416,
+                    "width": 16,
+                    "height": 12
+                  },
+                  "text": "6x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9941849708557129,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 901,
+                    "y": 413,
+                    "width": 42,
+                    "height": 16
+                  },
+                  "text": "1,000x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9992179274559021,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 962,
+                    "y": 413,
+                    "width": 30,
+                    "height": 16
+                  },
+                  "text": "145x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998359680175781,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 665,
+                    "y": 444,
+                    "width": 44,
+                    "height": 11
+                  },
+                  "text": "Equipme",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998844861984253,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 724,
+                    "y": 444,
+                    "width": 45,
+                    "height": 11
+                  },
+                  "text": "Equipme",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999852180480957,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 867,
+                    "y": 443,
+                    "width": 23,
+                    "height": 11
+                  },
+                  "text": "Stat",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9988701343536377,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 908,
+                    "y": 438,
+                    "width": 39,
+                    "height": 14
+                  },
+                  "text": "EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9910144805908203,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 967,
+                    "y": 440,
+                    "width": 43,
+                    "height": 17
+                  },
+                  "text": "Eplayer",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.991519033908844,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 463,
+                    "y": 454,
+                    "width": 113,
+                    "height": 18
+                  },
+                  "text": "Daily Limit 0/10",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9898187518119812,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 672,
+                    "y": 452,
+                    "width": 38,
+                    "height": 12
+                  },
+                  "text": "nt Lock",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9990739822387695,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 724,
+                    "y": 452,
+                    "width": 45,
+                    "height": 12
+                  },
+                  "text": "nt Reroll",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9983534216880798,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 783,
+                    "y": 452,
+                    "width": 47,
+                    "height": 12
+                  },
+                  "text": "Stat Lock",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9989774227142334,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 857,
+                    "y": 452,
+                    "width": 32,
+                    "height": 12
+                  },
+                  "text": "Reroll",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998987317085266,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 905,
+                    "y": 452,
+                    "width": 45,
+                    "height": 12
+                  },
+                  "text": "Unit EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994264841079712,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 988,
+                    "y": 451,
+                    "width": 22,
+                    "height": 13
+                  },
+                  "text": "EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9995806217193604,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 195,
+                    "y": 479,
+                    "width": 130,
+                    "height": 14
+                  },
+                  "text": "Resets in 74:01:29",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9860622882843018,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 650,
+                    "y": 502,
+                    "width": 146,
+                    "height": 15
+                  },
+                  "text": "Regular Challenge #3",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9694941639900208,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 649,
+                    "y": 522,
+                    "width": 222,
+                    "height": 21
+                  },
+                  "text": "SchoolGrounds-Act 2",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.946890652179718,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 649,
+                    "y": 549,
+                    "width": 82,
+                    "height": 18
+                  },
+                  "text": "Hard Mode",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9861592054367065,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 904,
+                    "y": 589,
+                    "width": 16,
+                    "height": 13
+                  },
+                  "text": "4x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9944382309913635,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 964,
+                    "y": 589,
+                    "width": 16,
+                    "height": 13
+                  },
+                  "text": "4x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9941654205322266,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1022,
+                    "y": 588,
+                    "width": 39,
+                    "height": 15
+                  },
+                  "text": "1,000x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9977670311927795,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1082,
+                    "y": 587,
+                    "width": 39,
+                    "height": 16
+                  },
+                  "text": "1,000x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997101426124573,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1088,
+                    "y": 602,
+                    "width": 37,
+                    "height": 14
+                  },
+                  "text": "UNIT",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9616745710372925,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 679,
+                    "y": 617,
+                    "width": 21,
+                    "height": 11
+                  },
+                  "text": "Spri",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9992790222167969,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 737,
+                    "y": 617,
+                    "width": 23,
+                    "height": 11
+                  },
+                  "text": "Spri",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996459484100342,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 856,
+                    "y": 617,
+                    "width": 24,
+                    "height": 11
+                  },
+                  "text": "Spri",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9995633959770203,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 915,
+                    "y": 614,
+                    "width": 37,
+                    "height": 17
+                  },
+                  "text": "Spri",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9954686164855957,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 976,
+                    "y": 615,
+                    "width": 26,
+                    "height": 15
+                  },
+                  "text": "Spri",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9836924076080322,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1086,
+                    "y": 610,
+                    "width": 42,
+                    "height": 21
+                  },
+                  "text": "EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9991877675056458,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 441,
+                    "y": 630,
+                    "width": 135,
+                    "height": 21
+                  },
+                  "text": "Daily Limit 0/10",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9980216026306152,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 679,
+                    "y": 624,
+                    "width": 31,
+                    "height": 16
+                  },
+                  "text": "(Blue)",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.996268093585968,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 731,
+                    "y": 625,
+                    "width": 40,
+                    "height": 15
+                  },
+                  "text": "(Green)",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9996020197868347,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 848,
+                    "y": 625,
+                    "width": 41,
+                    "height": 15
+                  },
+                  "text": "(Purple)",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9967207312583923,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 920,
+                    "y": 625,
+                    "width": 31,
+                    "height": 15
+                  },
+                  "text": "(Red)",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9974589347839355,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 968,
+                    "y": 626,
+                    "width": 40,
+                    "height": 12
+                  },
+                  "text": "(Yellow)",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9761924743652344,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1044,
+                    "y": 624,
+                    "width": 29,
+                    "height": 16
+                  },
+                  "text": "Gold",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997200965881348,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1084,
+                    "y": 625,
+                    "width": 47,
+                    "height": 15
+                  },
+                  "text": "Unit EXP",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9994178414344788,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
 }

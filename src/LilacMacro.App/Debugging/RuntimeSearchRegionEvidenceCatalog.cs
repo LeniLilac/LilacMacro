@@ -84,6 +84,22 @@ internal static class RuntimeSearchRegionEvidenceCatalog
         "Match Wave Counter",
         "Read the compact in-match wave capsule without depending on the surrounding map.");
 
+    public static readonly RuntimeSearchRegionEvidence CalendarLauncher = new(
+        "CalendarClaimService.LauncherSearch",
+        new PixelRect(1271, 435, 95, 91),
+        "calendar-claim-20260813-210034",
+        1,
+        "Calendar Launcher Search",
+        "Find the live Calendar launcher button in the verified Lobby.");
+
+    public static readonly RuntimeSearchRegionEvidence CalendarRewardGrid = new(
+        "CalendarClaimService.RewardGrid",
+        new PixelRect(247, 88, 864, 523),
+        "calendar-claim-20260813-210034",
+        1,
+        "Calendar Reward Grid",
+        "Read the complete seven-day Reward Calendar grid.");
+
     public static readonly RuntimeSearchRegionEvidence ExpeditionShopCatalog = new(
         "ShopPurchaseService.ExpeditionCatalogRegion",
         new PixelRect(623, 115, 709, 500),
@@ -103,6 +119,8 @@ internal static class RuntimeSearchRegionEvidenceCatalog
         ExpeditionRewards,
         RestartConfirmation,
         MatchWaveCounter,
+        CalendarLauncher,
+        CalendarRewardGrid,
         ExpeditionShopCatalog,
     ];
 }

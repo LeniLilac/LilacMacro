@@ -34,6 +34,7 @@ public sealed class OcrSetupTests
     }
 
     [Theory]
+    [InlineData("LilacMacro could not find its bundled Python 3.12 runtime.", "cpu", null, "python312_missing", "python-bootstrap")]
     [InlineData("LilacMacro could not automatically install Python 3.12 because Windows App Installer is unavailable.", "cpu", null, "winget_unavailable", "python-bootstrap")]
     [InlineData("NVIDIA GPU has compute capability 5.0; current Paddle GPU packages require 6.0 or newer.", "gpu:0", null, "gpu_runtime_invalid", "gpu-runtime")]
     [InlineData("Could not install PaddleOCR.", "cpu", 1, "paddleocr_install_failed", "paddleocr")]
