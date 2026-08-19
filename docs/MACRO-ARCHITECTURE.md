@@ -61,6 +61,8 @@ The current Prototype preflights every configured task and placement route befor
 
 “Indefinitely available” never means infinite clicking, an unbounded wait inside one state owner, stale evidence, or bypassing a safety gate. Each observation window, input attempt, transition, restart, and cleanup remains capped. Fresh evidence must authorize every input, cancellation must interrupt every layer, and held keys/buttons must be released before any retry, restart, quarantine, or wait. Recovery history, task quarantine, and the active escalation level must remain visible in diagnostics.
 
+Before each plan or recovery attempt, the Prototype scheduler checks the Windows internet-availability signal. If it reports offline, the scheduler logs the pause and waits without closing or relaunching Roblox until connectivity returns. This is an OS signal rather than an additional online request; a Roblox-specific outage while general internet remains available continues through the normal bounded Lobby timeout and recovery ladder.
+
 ## Shared modules
 
 | Module | Planned owner |
@@ -147,6 +149,8 @@ OCR, image detection, and timers may suggest a state. None may authorize input w
 **Prototype:** Plan edits, selection, Discord failure options, and the default-off diagnostic-upload consent autosave through a serialized queue to a schema-versioned atomic settings file; invalid plan payloads fail closed to the built-in defaults without discarding separately valid settings. Private-server and webhook values are masked in Settings and persisted only as current-user DPAPI ciphertext. Validated web/share links are reduced to bounded share/link codes and launched through the registered `roblox://` protocol without a browser intermediary. Test Webhook performs a bounded, mention-free delivery to the validated Discord endpoint. Terminal failure notifications always include failure details; runtime-triggered delivery remains Planned. Persisted secrets remain redacted from diagnostics, logs, tests, and captures. Diagnostic consent permits only a new explicit archive selection and never schedules automatic upload.
 
 The Main Macro also atomically persists per-plan runtime progress in an instance-scoped progress file. Victory/defeat counters, Forever/finite loop completion counts, and utility due timestamps are restored after Macro Stop/Start and application close/reopen. The elapsed timer and run chart intentionally reset at every Macro start. RESET PROGRESS is available only while stopped and clears both in-memory and saved progress. Runtime progress is keyed by persisted plan/task/loop identities; changing a plan identity creates a new progress record. **Planned:** runtime webhook delivery and explicit recovery UX for DPAPI data that cannot be decrypted.
+
+Fresh or invalidated Macro settings create exactly one empty plan named `Plan 1`. Existing valid persisted plans are restored as-is; installing or reopening the application does not add sample plans.
 
 ## Unresolved design work
 

@@ -32,12 +32,14 @@ public partial class MacroDashboardPage
             try { await _runTask; }
             catch (OperationCanceledException) { }
         }
+        StopRunLogTimer();
         await FlushRuntimeProgressAsync();
         await CompleteDebugAsync("closed");
         await _discordEvents.DisposeAsync();
         _deepDebugFrameCaptureRegistration.Dispose();
         _ocr.Dispose();
         _workspace.Dispose();
+        _ownerState.PlansChanged -= OwnerState_OnPlansChanged;
         _ownerState.RuntimeProgressResetRequested -= OwnerState_OnRuntimeProgressResetRequested;
         _lifecycleCancellation.Dispose();
     }

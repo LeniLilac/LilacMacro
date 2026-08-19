@@ -66,23 +66,22 @@ public partial class MacroDashboardPage
     {
         string entry = $"{DateTime.Now:HH:mm:ss} {message}";
         _deepDebug.RecordRuntimeLog(entry);
-        if (!Dispatcher.CheckAccess())
-        {
-            if (!Dispatcher.HasShutdownStarted)
-                _ = Dispatcher.BeginInvoke(() => AppendLogEntry(entry));
-            return;
-        }
-
-        AppendLogEntry(entry);
+        _runLog.Add(entry);
     }
 
-    private void AppendLogEntry(string entry)
+    private void RunLogTimer_OnTick(object? sender, EventArgs eventArgs)
     {
-        TraceLogText.Text = string.IsNullOrWhiteSpace(TraceLogText.Text) ||
-            TraceLogText.Text == "Macro runtime is not connected."
-                ? entry
-                : TraceLogText.Text + Environment.NewLine + entry;
+        _ = sender;
+        _ = eventArgs;
+        if (!_runLog.TryGetUpdatedText(out string text)) return;
+        TraceLogText.Text = text;
         TraceLogText.ScrollToEnd();
+    }
+
+    private void StopRunLogTimer()
+    {
+        _runLogTimer.Stop();
+        RunLogTimer_OnTick(null, EventArgs.Empty);
     }
 
     private async Task CompleteDebugAsync(string outcome)

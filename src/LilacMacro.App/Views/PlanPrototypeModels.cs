@@ -176,17 +176,31 @@ public sealed class PlanLoopPrototype : PlanBlockPrototype
     }
 }
 
-public sealed class PlanPrototype
+public sealed class PlanPrototype : INotifyPropertyChanged
 {
+    private string _name;
+
     public PlanPrototype(string name, IEnumerable<PlanBlockPrototype> blocks)
     {
-        Name = name;
+        _name = name;
         Blocks = new ObservableCollection<PlanBlockPrototype>(blocks);
     }
 
     public Guid RuntimeId { get; internal set; } = Guid.NewGuid();
 
-    public string Name { get; set; }
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (string.Equals(_name, value, StringComparison.Ordinal)) return;
+            _name = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     public ObservableCollection<PlanBlockPrototype> Blocks { get; }
 
     public PlanPrototype Clone(string name) => new(name, Blocks.Select(block => block.Clone()));
@@ -198,34 +212,6 @@ public static class PlanPrototypeFactory
 {
     public static ObservableCollection<PlanPrototype> CreatePlans() =>
     [
-        new("Daily rotation",
-        [
-            Task(PlanTaskMode.Utilities, "Gold Mine refuel", 400),
-            Task(PlanTaskMode.Utilities, "Resource Drill refuel", 400),
-            Loop("Loop 1",
-            [
-                Task(PlanTaskMode.Event, "Villain Invasion · Act 1", 150),
-                Task(PlanTaskMode.Expedition, "School Grounds", 15),
-            ]),
-        ]),
-        new("Weekend push",
-        [
-            Task(PlanTaskMode.Story, "King's Tomb · Mastery", 25),
-            Task(PlanTaskMode.Raid, "Spirit City · Act 3", 20),
-        ]),
+        new("Plan 1", []),
     ];
-
-    private static PlanTaskPrototype Task(PlanTaskMode mode, string route, int target) => new()
-    {
-        Mode = mode,
-        Route = route,
-        Target = target,
-    };
-
-    private static PlanLoopPrototype Loop(string label, IEnumerable<PlanTaskPrototype> tasks)
-    {
-        PlanLoopPrototype loop = new() { Label = label };
-        foreach (PlanTaskPrototype task in tasks) loop.Children.Add(task);
-        return loop;
-    }
 }

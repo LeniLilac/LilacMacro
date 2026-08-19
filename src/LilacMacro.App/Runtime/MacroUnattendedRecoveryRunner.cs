@@ -10,6 +10,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
     Action<string> appendLog,
     Action<PlanPrototype> refreshTasks,
     DeepDebugSessionService deepDebug,
+    Func<CancellationToken, Task> waitForInternet,
     Action<PlanTaskPrototype?, TimeSpan> recoveryStarted)
 {
     private readonly Dictionary<PlanTaskPrototype, int> _taskFailures = [];
@@ -52,6 +53,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
         int consecutiveFailures = 0;
         while (true)
         {
+            await waitForInternet(cancellationToken).ConfigureAwait(false);
             bool madeProgress = false;
             try
             {
@@ -84,6 +86,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
                     RetrySeconds = delay.TotalSeconds,
                 });
                 refreshTasks(plan);
+                await waitForInternet(cancellationToken).ConfigureAwait(false);
                 recoveryStarted(failedTask, delay);
                 await Task.Delay(delay, cancellationToken);
             }

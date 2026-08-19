@@ -118,8 +118,7 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
             DockedWindowState state = new(
                 source,
                 originalStyle,
-                NativeWindowProperties.Read(handle, NativeMethods.GwlExStyle),
-                ReadBounds(handle));
+                NativeWindowProperties.Read(handle, NativeMethods.GwlExStyle));
             try
             {
                 MaintainDockCore(state, screenBounds, forceFrameChanged: true);
@@ -187,6 +186,8 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
 
     public void Dispose() => _ = TryUndock(out _);
 
+    internal static WindowBounds BoundsAfterRelease(WindowBounds currentBounds) => currentBounds;
+
     internal static long BuildDockedStyle(long originalStyle)
     {
         long normalized = unchecked((uint)originalStyle);
@@ -233,6 +234,7 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
 
     private static void Restore(DockedWindowState state, bool showRestoredWindow)
     {
+        WindowBounds currentBounds = BoundsAfterRelease(ReadBounds(state.Source.Handle));
         NativeWindowProperties.Write(state.Source.Handle, NativeMethods.GwlStyle, state.OriginalStyle);
         NativeWindowProperties.Write(state.Source.Handle, NativeMethods.GwlExStyle, state.OriginalExtendedStyle);
         uint flags = NativeMethods.SwpNoActivate | NativeMethods.SwpFrameChanged;
@@ -240,10 +242,10 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
         if (!NativeMethods.SetWindowPos(
                 state.Source.Handle,
                 HwndNotTopmost,
-                state.OriginalBounds.X,
-                state.OriginalBounds.Y,
-                state.OriginalBounds.Width,
-                state.OriginalBounds.Height,
+                currentBounds.X,
+                currentBounds.Y,
+                currentBounds.Width,
+                currentBounds.Height,
                 flags))
         {
             throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not restore the Roblox window bounds.");
@@ -355,6 +357,5 @@ public sealed class RobloxWindowDockService(RobloxWindowService windows) : IDisp
     private sealed record DockedWindowState(
         RobloxWindow Source,
         nint OriginalStyle,
-        nint OriginalExtendedStyle,
-        WindowBounds OriginalBounds);
+        nint OriginalExtendedStyle);
 }

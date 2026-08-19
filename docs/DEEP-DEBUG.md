@@ -35,7 +35,7 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 
 Events include window discovery and observed client size, resize results, capture ownership, dataset frame identity, OCR model/device/cache and timing fields, OCR text and boxes, state evaluations, visual-profile scores and coordinates, requested Windows input, cancellation, exceptions, and terminal outcome.
 
-While a Main Macro session is active, every dashboard trace-log line is also recorded as a `macro/log` event with the exact timestamped line shown in the temporary UI progress log. This preserves intermediate progress and failure details—such as a missing physical selection proof—alongside the later generic recovery outcome.
+While a Main Macro session is active, every dashboard trace-log line is also recorded as a `macro/log` event with the exact timestamped line produced for the UI. The dashboard displays only the newest 1,000 lines and refreshes that bounded window in batches so long runs remain responsive; the archive still preserves every recorded `macro/log` event. This preserves intermediate progress and failure details—such as a missing physical selection proof—alongside the later generic recovery outcome.
 
 An OCR-owned visual-profile refresh records `vision/profile_refresh_failed` with the exception type and sanitized message when persistence or comparison fails. A registered profile whose locator is unavailable marks the archive manifest's writer failure instead of silently omitting the locator from the snapshot.
 

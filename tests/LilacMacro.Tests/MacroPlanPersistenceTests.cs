@@ -8,6 +8,46 @@ namespace LilacMacro.Tests;
 public sealed class MacroPlanPersistenceTests
 {
     [Fact]
+    public async Task FreshSettingsCreateOneEmptyPlan()
+    {
+        string root = TemporaryRoot();
+        try
+        {
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+
+            PlanPrototype plan = Assert.Single(owner.Plans);
+            Assert.Equal("Plan 1", plan.Name);
+            Assert.Empty(plan.Blocks);
+        }
+        finally
+        {
+            Delete(root);
+        }
+    }
+
+    [Fact]
+    public async Task NotifyPlansChangedRaisesLiveUpdateEvent()
+    {
+        string root = TemporaryRoot();
+        try
+        {
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+            bool raised = false;
+            owner.PlansChanged += (_, _) => raised = true;
+
+            owner.Plans[0].Blocks.Add(new PlanTaskPrototype());
+            owner.NotifyPlansChanged();
+
+            Assert.True(raised);
+            await owner.FlushAsync();
+        }
+        finally
+        {
+            Delete(root);
+        }
+    }
+
+    [Fact]
     public async Task OwnerStateRoundTripsPlansOrderFieldsAndSelection()
     {
         string root = TemporaryRoot();
@@ -63,6 +103,7 @@ public sealed class MacroPlanPersistenceTests
                 Target = 3,
                 InfiniteWave = 321,
             });
+            first.Plans.Add(new PlanPrototype("Second plan", []));
             first.SelectPlan(first.Plans[1]);
             first.NotifyPlansChanged();
             await first.FlushAsync();
@@ -142,8 +183,8 @@ public sealed class MacroPlanPersistenceTests
             MacroOwnerState restored = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
 
             Assert.Equal(0x77, restored.KeyBindings.Snapshot().MacroToggle);
-            Assert.Equal("Daily rotation", restored.Plans[0].Name);
-            Assert.NotEmpty(restored.Plans[0].Blocks);
+            Assert.Equal("Plan 1", restored.Plans[0].Name);
+            Assert.Empty(restored.Plans[0].Blocks);
         }
         finally
         {
@@ -169,7 +210,7 @@ public sealed class MacroPlanPersistenceTests
                 """);
 
             MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
-            Assert.Equal("Daily rotation", owner.Plans[0].Name);
+            Assert.Equal("Plan 1", owner.Plans[0].Name);
             Assert.Equal(0x77, owner.KeyBindings.Snapshot().MacroToggle);
 
             owner.NotifyPlansChanged();
@@ -177,7 +218,9 @@ public sealed class MacroPlanPersistenceTests
             MacroSettings saved = await new MacroSettingsStore(root).LoadAsync();
 
             Assert.Equal(MacroSettings.CurrentSchemaVersion, saved.SchemaVersion);
-            Assert.NotEmpty(saved.Plans);
+            PlanSettingsSnapshot savedPlan = Assert.Single(saved.Plans);
+            Assert.Equal("Plan 1", savedPlan.Name);
+            Assert.Empty(savedPlan.Blocks);
         }
         finally
         {

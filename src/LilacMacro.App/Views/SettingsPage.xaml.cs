@@ -254,8 +254,13 @@ public partial class SettingsPage : UserControl
         MacroLayoutProfile layout = LayoutProfileCombo.SelectedIndex == 1
             ? MacroLayoutProfile.Compact1366x768
             : MacroLayoutProfile.Full1920x1080;
-        MacroMinimizeBehavior minimize = (MacroMinimizeBehavior)Math.Clamp(MinimizeBehaviorCombo.SelectedIndex, 0, 2);
-        if (layout == MacroLayoutProfile.Compact1366x768) minimize = MacroMinimizeBehavior.WhileRunning;
+        MacroMinimizeBehavior selectedMinimize =
+            (MacroMinimizeBehavior)Math.Clamp(MinimizeBehaviorCombo.SelectedIndex, 0, 2);
+        MacroMinimizeBehavior minimize = MacroDisplayPolicy.ConfiguredMinimizeBehaviorForSelection(
+            _ownerState.LayoutProfile,
+            layout,
+            selectedMinimize,
+            _ownerState.MinimizeBehavior);
         _ownerState.SetDisplayOptions(layout, minimize);
         RefreshDisplayControls();
         GeneralStatusText.Text = "Display options saved";
@@ -267,7 +272,9 @@ public partial class SettingsPage : UserControl
         try
         {
             bool compact = LayoutProfileCombo.SelectedIndex == 1;
-            if (compact) MinimizeBehaviorCombo.SelectedIndex = (int)MacroMinimizeBehavior.WhileRunning;
+            MinimizeBehaviorCombo.SelectedIndex = compact
+                ? (int)MacroMinimizeBehavior.WhileRunning
+                : (int)_ownerState.MinimizeBehavior;
             bool managedRunner = MacroInstanceContext.Current.IsManagedRunner;
             LayoutProfileCombo.IsEnabled = !managedRunner;
             MinimizeBehaviorCombo.IsEnabled = !managedRunner && !compact;

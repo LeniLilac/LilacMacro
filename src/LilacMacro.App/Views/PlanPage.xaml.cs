@@ -83,7 +83,6 @@ public partial class PlanPage : UserControl
         string name = PlanNameText.Text.Trim();
         if (name.Length == 0 || string.Equals(name, _selectedPlan.Name, StringComparison.Ordinal)) return;
         _selectedPlan.Name = name;
-        PlanSelector.Items.Refresh();
         _ownerState.NotifyPlansChanged();
     }
 

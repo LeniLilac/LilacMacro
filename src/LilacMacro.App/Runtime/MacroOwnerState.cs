@@ -77,6 +77,8 @@ internal sealed class MacroOwnerState
 
     public event EventHandler? SelectedPlanChanged;
 
+    public event EventHandler? PlansChanged;
+
     public event EventHandler? DisplayOptionsChanged;
 
     public event EventHandler? AppearanceChanged;
@@ -187,7 +189,11 @@ internal sealed class MacroOwnerState
         SelectedPlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public void NotifyPlansChanged() => QueueSave();
+    public void NotifyPlansChanged()
+    {
+        QueueSave();
+        PlansChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     internal void EnsurePlanIdentitiesPersisted()
     {

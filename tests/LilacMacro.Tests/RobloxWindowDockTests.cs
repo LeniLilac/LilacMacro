@@ -14,6 +14,14 @@ public sealed class RobloxWindowDockTests
     }
 
     [Fact]
+    public void BoundsAfterRelease_KeepsTheLastDockedGeometry()
+    {
+        WindowBounds docked = new(100, 200, 1366, 700);
+
+        Assert.Equal(docked, RobloxWindowDockService.BoundsAfterRelease(docked));
+    }
+
+    [Fact]
     public void DockedStyle_RemainsTopLevelAndRemovesFrame()
     {
         const long visible = 0x10000000L;

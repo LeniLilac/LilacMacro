@@ -156,15 +156,26 @@ public sealed class ApplicationUpdateTests
         bool allowed) =>
         Assert.Equal(allowed, RunnerFirstLaunchBootstrap.IsTrustedInstallerUri(new Uri(value), redirected));
 
-    [Fact]
-    public async Task Update_and_display_options_persist_and_compact_mode_forces_minimize()
+    [Theory]
+    [InlineData((int)MacroMinimizeBehavior.KeepVisible)]
+    [InlineData((int)MacroMinimizeBehavior.WhileRunning)]
+    [InlineData((int)MacroMinimizeBehavior.OnApplicationStart)]
+    public async Task Update_and_display_options_persist_and_compact_mode_restores_full_dock_preference(
+        int configuredBehaviorValue)
     {
+        MacroMinimizeBehavior configuredBehavior = (MacroMinimizeBehavior)configuredBehaviorValue;
         string root = Path.Combine(Path.GetTempPath(), $"lilac-update-options-{Guid.NewGuid():N}");
         try
         {
             MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
             first.SetUpdateOptions(checkOnStartup: false, includePrerelease: true);
-            first.SetDisplayOptions(MacroLayoutProfile.Compact1366x768, MacroMinimizeBehavior.KeepVisible);
+            first.SetDisplayOptions(MacroLayoutProfile.Full1920x1080, configuredBehavior);
+            MacroMinimizeBehavior compactMinimize = MacroDisplayPolicy.ConfiguredMinimizeBehaviorForSelection(
+                first.LayoutProfile,
+                MacroLayoutProfile.Compact1366x768,
+                MacroMinimizeBehavior.WhileRunning,
+                first.MinimizeBehavior);
+            first.SetDisplayOptions(MacroLayoutProfile.Compact1366x768, compactMinimize);
             first.SetRunnerLayoutProfile("runner-1", MacroLayoutProfile.Compact1366x768);
             await first.FlushAsync();
 
@@ -172,6 +183,7 @@ public sealed class ApplicationUpdateTests
             Assert.False(restored.CheckForUpdatesOnStartup);
             Assert.True(restored.IncludePrereleaseUpdates);
             Assert.Equal(MacroLayoutProfile.Compact1366x768, restored.LayoutProfile);
+            Assert.Equal(configuredBehavior, restored.MinimizeBehavior);
             Assert.Equal(MacroMinimizeBehavior.WhileRunning, restored.EffectiveMinimizeBehavior);
             Assert.False(MacroDisplayPolicy.AllowsDock(restored.LayoutProfile));
             Assert.Equal((1366d, 768d), MacroDisplayPolicy.TargetSize(restored.LayoutProfile));
@@ -179,6 +191,17 @@ public sealed class ApplicationUpdateTests
             Assert.Equal(MacroLayoutProfile.Full1920x1080, restored.RunnerLayoutProfile("runner-2"));
             Assert.Equal(MacroLayoutProfile.Compact1366x768, MacroDisplayPolicy.ManagedViewportLayout(1366, 768));
             Assert.Equal(MacroLayoutProfile.Full1920x1080, MacroDisplayPolicy.ManagedViewportLayout(1920, 1080));
+
+            MacroMinimizeBehavior fullMinimize = MacroDisplayPolicy.ConfiguredMinimizeBehaviorForSelection(
+                restored.LayoutProfile,
+                MacroLayoutProfile.Full1920x1080,
+                MacroMinimizeBehavior.WhileRunning,
+                restored.MinimizeBehavior);
+            restored.SetDisplayOptions(MacroLayoutProfile.Full1920x1080, fullMinimize);
+            Assert.Equal(MacroLayoutProfile.Full1920x1080, restored.LayoutProfile);
+            Assert.Equal(configuredBehavior, restored.MinimizeBehavior);
+            Assert.Equal(configuredBehavior, restored.EffectiveMinimizeBehavior);
+            await restored.FlushAsync();
         }
         finally
         {

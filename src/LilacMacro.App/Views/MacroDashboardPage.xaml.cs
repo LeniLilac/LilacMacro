@@ -14,6 +14,7 @@ using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Placements;
 using LilacMacro.Runtime.Normalization;
 using LilacMacro.Runtime.Services;
+using LilacMacro.Windows;
 
 namespace LilacMacro.App.Views;
 
@@ -38,6 +39,8 @@ public partial class MacroDashboardPage : UserControl
     private readonly ConfigurationMutationGate _configurationGate = ConfigurationMutationGate.CreateDefault();
     private readonly List<RunStatsPoint> _runStats = [];
     private readonly DispatcherTimer _runtimeTimer;
+    private readonly DispatcherTimer _runLogTimer;
+    private readonly RunLogBuffer _runLog = new();
     private DeepDebugScope? _debugScope;
     private readonly IDisposable _deepDebugFrameCaptureRegistration;
     private CancellationTokenSource? _runCancellation;
@@ -83,17 +86,27 @@ public partial class MacroDashboardPage : UserControl
             AppendLog,
             RefreshUpcomingTasks,
             deepDebug,
+            new MacroInternetConnectivityGate(
+                new InternetConnectivityProbe().IsAvailable,
+                AppendLog).WaitUntilAvailableAsync,
             NotifyDiscordRecovery);
         InitializeComponent();
         InitializeRuntimeProgressPersistence();
         InitializeDiscordEvents();
         _runtimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _runtimeTimer.Tick += (_, _) => RuntimeText.Text = FormatRuntime(_runtime.Elapsed);
+        _runLogTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(100),
+        };
+        _runLogTimer.Tick += RunLogTimer_OnTick;
+        _runLogTimer.Start();
         StatsChart.SetPoints(_runStats);
         PlanCombo.DisplayMemberPath = nameof(PlanPrototype.Name);
         PlanCombo.ItemsSource = ownerState.Plans;
         PlanCombo.SelectedItem = ownerState.SelectedPlan;
         ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
+        ownerState.PlansChanged += OwnerState_OnPlansChanged;
         ApplyLayoutProfile(ownerState.LayoutProfile);
         _ocrReady = _ocr.IsDeviceReady(OcrRunner.GpuDevice) || _ocr.IsDeviceReady(OcrRunner.CpuDevice);
         _ocrSetupFailed = !_ocrReady;
@@ -122,6 +135,13 @@ public partial class MacroDashboardPage : UserControl
     {
         if (!ReferenceEquals(PlanCombo.SelectedItem, _ownerState.SelectedPlan))
             PlanCombo.SelectedItem = _ownerState.SelectedPlan;
+    }
+    private void OwnerState_OnPlansChanged(object? sender, EventArgs eventArgs)
+    {
+        if (PlanCombo.SelectedItem is not PlanPrototype plan) return;
+        PlanCombo.Items.Refresh();
+        PlanCombo.SelectedItem = null;
+        PlanCombo.SelectedItem = plan;
     }
     private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs)
     {

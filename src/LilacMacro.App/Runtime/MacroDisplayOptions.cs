@@ -27,6 +27,16 @@ internal static class MacroDisplayPolicy
             ? MacroMinimizeBehavior.WhileRunning
             : configured;
 
+    public static MacroMinimizeBehavior ConfiguredMinimizeBehaviorForSelection(
+        MacroLayoutProfile currentLayout,
+        MacroLayoutProfile selectedLayout,
+        MacroMinimizeBehavior selectedBehavior,
+        MacroMinimizeBehavior configuredBehavior) =>
+        currentLayout == MacroLayoutProfile.Full1920x1080
+            && selectedLayout == MacroLayoutProfile.Full1920x1080
+            ? selectedBehavior
+            : configuredBehavior;
+
     public static bool AllowsDock(MacroLayoutProfile layout) =>
         layout == MacroLayoutProfile.Full1920x1080;
 
