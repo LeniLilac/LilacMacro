@@ -33,6 +33,15 @@ public sealed class OcrSetupTests
         }
     }
 
+    [Fact]
+    public void BundledCpuWorkerDisablesMklDnnAcceleration()
+    {
+        string worker = File.ReadAllText(Path.Combine(RepositoryRoot(), "tools", "ocr_worker.py"));
+
+        Assert.Contains("if device == \"cpu\":", worker);
+        Assert.Contains("options[\"enable_mkldnn\"] = False", worker);
+    }
+
     [Theory]
     [InlineData("LilacMacro could not find its bundled Python 3.12 runtime.", "cpu", null, "python312_missing", "python-bootstrap")]
     [InlineData("LilacMacro could not automatically install Python 3.12 because Windows App Installer is unavailable.", "cpu", null, "winget_unavailable", "python-bootstrap")]
@@ -52,5 +61,17 @@ public sealed class OcrSetupTests
         Assert.Equal(expectedStage, OcrSetupFailurePolicy.Stage(code));
         Assert.True(ProductTelemetryPolicy.IsOcrSetupFailureCode(code));
         Assert.True(ProductTelemetryPolicy.IsOcrSetupStage(OcrSetupFailurePolicy.Stage(code)));
+    }
+
+    private static string RepositoryRoot()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "eng", "runtime-evidence.json")))
+                return directory.FullName;
+            directory = directory.Parent;
+        }
+        throw new DirectoryNotFoundException("Could not locate the LilacMacro repository root.");
     }
 }

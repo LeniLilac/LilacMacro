@@ -43,14 +43,20 @@ def parse_args() -> argparse.Namespace:
 def create_pipeline(model_name: str, device: str) -> Any:
     from paddleocr import PaddleOCR
 
-    return PaddleOCR(
-        text_detection_model_name=MODEL_PAIRS[model_name],
-        text_recognition_model_name=model_name,
-        use_doc_orientation_classify=False,
-        use_doc_unwarping=False,
-        use_textline_orientation=False,
-        device=device,
-    )
+    options: dict[str, Any] = {
+        "text_detection_model_name": MODEL_PAIRS[model_name],
+        "text_recognition_model_name": model_name,
+        "use_doc_orientation_classify": False,
+        "use_doc_unwarping": False,
+        "use_textline_orientation": False,
+        "device": device,
+    }
+    if device == "cpu":
+        # PaddlePaddle 3.3.0's bundled CPU oneDNN path crashes in PP-OCRv6
+        # detection on some Windows CPUs. Keep CPU inference on the plain
+        # Paddle engine; GPU keeps its existing accelerated path.
+        options["enable_mkldnn"] = False
+    return PaddleOCR(**options)
 
 
 def run_ocr(

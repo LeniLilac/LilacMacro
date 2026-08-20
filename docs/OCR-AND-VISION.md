@@ -4,7 +4,7 @@
 
 ## Current OCR pipeline
 
-Official installers bundle a read-only Python 3.12 CPU runtime, PaddlePaddle 3.3.0, PaddleOCR 3.7.0, and the two supported model pairs. The bundled CPU runtime is used directly from the install directory; per-user state and model cache remain under `%LOCALAPPDATA%\LilacMacro\ocr`. After the first-run privacy choices are saved, a supported NVIDIA GPU can trigger a separate visible setup screen that installs only its matching GPU runtime into a per-user environment. The setup script no longer installs Python through Windows App Installer and does not install NVIDIA drivers. Development machines without the bundle may still use the script's existing Python 3.12 discovery path. It installs one user-selected GPU runtime at a time:
+Official installers bundle a read-only Python 3.12 CPU runtime, PaddlePaddle 3.3.0, PaddleOCR 3.7.0, and the two supported model pairs. The bundled CPU worker explicitly disables Paddle's MKL-DNN/oneDNN acceleration because the bundled CPU build can reject a PP-OCRv6 PIR attribute during detection; GPU workers retain their accelerated path. The bundled CPU runtime is used directly from the install directory; per-user state and model cache remain under `%LOCALAPPDATA%\LilacMacro\ocr`. After the first-run privacy choices are saved, a supported NVIDIA GPU can trigger a separate visible setup screen that installs only its matching GPU runtime into a per-user environment. The setup script no longer installs Python through Windows App Installer and does not install NVIDIA drivers. Development machines without the bundle may still use the script's existing Python 3.12 discovery path. It installs one user-selected GPU runtime at a time:
 
 ```powershell
 ./scripts/Setup-Ocr.ps1 -Device cpu

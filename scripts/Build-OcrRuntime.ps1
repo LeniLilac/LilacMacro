@@ -115,7 +115,7 @@ try {
     try {
         Invoke-BundledPython @(
             '-c',
-            "from paddleocr import PaddleOCR; [PaddleOCR(text_detection_model_name=det, text_recognition_model_name=rec, use_doc_orientation_classify=False, use_doc_unwarping=False, use_textline_orientation=False, device='cpu') for det, rec in [('PP-OCRv6_small_det', 'PP-OCRv6_small_rec'), ('PP-OCRv6_tiny_det', 'PP-OCRv6_tiny_rec')]]"
+            "from paddleocr import PaddleOCR; [PaddleOCR(text_detection_model_name=det, text_recognition_model_name=rec, use_doc_orientation_classify=False, use_doc_unwarping=False, use_textline_orientation=False, device='cpu', enable_mkldnn=False) for det, rec in [('PP-OCRv6_small_det', 'PP-OCRv6_small_rec'), ('PP-OCRv6_tiny_det', 'PP-OCRv6_tiny_rec')]]"
         )
     }
     finally {

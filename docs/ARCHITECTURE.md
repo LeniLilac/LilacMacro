@@ -88,7 +88,7 @@ App maps the verified snapshot into scheduler policy. Game maintenance can preve
 
 ## OCR process boundary
 
-OCR is an optional local Python helper rather than an in-process dependency. The setup script creates an isolated environment under `%LOCALAPPDATA%\LilacMacro\ocr` and installs one pinned CPU or GPU Paddle runtime plus PaddleOCR.
+OCR is an optional local Python helper rather than an in-process dependency. The setup script creates an isolated environment under `%LOCALAPPDATA%\LilacMacro\ocr` and installs one pinned CPU or GPU Paddle runtime plus PaddleOCR. CPU workers disable MKL-DNN/oneDNN for the bundled PP-OCRv6 path because the bundled CPU build has an unsupported detection attribute in that backend; GPU workers retain their accelerated path.
 
 App writes one selected crop to a temporary PNG, invokes an allowlisted detector/recognizer pair on an allowlisted device, parses bounded JSON, shifts detected child boxes into original-frame coordinates, and removes the crop. One-shot mode exits per request. `KEEP LOADED` owns one child process and exchanges request/response files through a unique temporary channel with a hard deadline, worker-exit detection, and cleanup; the worker caches pipelines by model and device.
 
