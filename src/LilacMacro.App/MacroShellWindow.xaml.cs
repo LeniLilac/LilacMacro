@@ -72,7 +72,6 @@ public partial class MacroShellWindow : Window
             _ownerState,
             _instanceManager,
             _updates,
-            _diagnosticUploads,
             SetMacroHotkeyCaptureSuspended);
         _pages = new Dictionary<MacroShellPage, UserControl>
         {
@@ -219,7 +218,6 @@ public partial class MacroShellWindow : Window
         try
         {
             _controlCancellation.Cancel();
-            _settingsPage.CancelDiagnosticUpload();
             _setupPage.PrepareForClose();
             await _macroPage.CompleteForCloseAsync();
             await _setupPage.CompleteForCloseAsync();

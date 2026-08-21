@@ -6,7 +6,6 @@ public enum DiagnosticArchiveKind
 {
     DeepDebug,
     RuntimeLog,
-    InstallerLog,
     LiveDebug,
 }
 
@@ -29,14 +28,12 @@ public sealed record DiagnosticUploadProgress(
 public sealed record DiagnosticUploadResult(
     Guid UploadId,
     string Status,
-    DateTimeOffset ExpiresAt,
-    DateTimeOffset? AcceptanceDeadline);
+    DateTimeOffset ExpiresAt);
 
 public static partial class DiagnosticUploadPolicy
 {
     public const long OneGiB = 1024L * 1024 * 1024;
-    public const long RoutineLimitBytes = 3 * OneGiB;
-    public const long AbsoluteLimitBytes = 30 * OneGiB;
+    public const long MaximumArchiveBytes = 3 * OneGiB;
     public const int MaximumFileNameLength = 160;
     public const int MaximumResponseBytes = 64 * 1024;
     public static readonly Uri CreateEndpoint = new(
@@ -45,7 +42,7 @@ public static partial class DiagnosticUploadPolicy
     public static string ValidateArchive(string path, long sizeBytes)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        if (sizeBytes is <= 0 or > AbsoluteLimitBytes)
+        if (sizeBytes is <= 0 or > MaximumArchiveBytes)
             throw new InvalidDataException("Diagnostic archive size is outside the supported range.");
         string fileName = Path.GetFileName(path);
         if (fileName.Length is < 1 or > MaximumFileNameLength ||
@@ -60,17 +57,9 @@ public static partial class DiagnosticUploadPolicy
     {
         DiagnosticArchiveKind.DeepDebug => "deep-debug",
         DiagnosticArchiveKind.RuntimeLog => "runtime-log",
-        DiagnosticArchiveKind.InstallerLog => "installer-log",
         DiagnosticArchiveKind.LiveDebug => "live-debug",
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
-
-    public static void RequireLargeGrant(long sizeBytes, string? grant)
-    {
-        if (sizeBytes > RoutineLimitBytes && string.IsNullOrWhiteSpace(grant))
-            throw new InvalidDataException(
-                "Archives over 3 GiB require a short-lived administrator grant.");
-    }
 
     public static bool IsTrustedStorageUri(Uri uri) =>
         uri.IsAbsoluteUri &&

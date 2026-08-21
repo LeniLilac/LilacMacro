@@ -22,7 +22,7 @@ Official installers are hosted only on this repository's GitHub Releases page. T
 
 ## Privacy and diagnostics
 
-Data is processed only according to the choices and limits in the Privacy Notice. Users remain responsible for inspecting manually selected diagnostic archives and for avoiding secrets or third-party personal data. Hosted diagnostics may be deleted when their retention period ends or when required to protect the service.
+Data is processed only according to the choices and limits in the Privacy Notice. Users remain responsible for avoiding secrets or third-party personal data in game content visible to enabled automatic reports. Hosted diagnostics may be deleted when their retention period ends or when required to protect the service.
 
 ## No warranty and limitation
 

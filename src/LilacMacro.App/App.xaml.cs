@@ -57,8 +57,8 @@ public partial class App : Application
                     return;
                 }
             }
-            if (firstRunPrivacy && !MacroInstanceContext.Current.IsManagedRunner)
-                await ShowFirstRunGpuSetupAsync();
+            if (ShouldCheckGpuSetup(firstRunPrivacy, MacroInstanceContext.Current.IsManagedRunner))
+                await ShowGpuSetupIfNeededAsync();
             startupWindow = new MacroShellWindow(_deepDebug, ownerState);
         }
         else
@@ -104,9 +104,11 @@ public partial class App : Application
         }
     }
 
-    private async Task ShowFirstRunGpuSetupAsync()
+    private async Task ShowGpuSetupIfNeededAsync()
     {
         using OcrRunner setupOcr = new(_deepDebug);
+        if (setupOcr.IsDeviceReady(OcrRunner.GpuDevice)) return;
+
         OcrGpuInfo? gpu;
         try
         {
@@ -116,7 +118,7 @@ public partial class App : Application
         {
             return;
         }
-        if (gpu is null || setupOcr.IsDeviceReady(OcrRunner.GpuDevice)) return;
+        if (gpu is null) return;
 
         ShutdownMode previousMode = ShutdownMode;
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -125,6 +127,9 @@ public partial class App : Application
         setupWindow.ShowDialog();
         ShutdownMode = previousMode;
     }
+
+    internal static bool ShouldCheckGpuSetup(bool acceptedPrivacyThisLaunch, bool isManagedRunner) =>
+        acceptedPrivacyThisLaunch || isManagedRunner;
 
     protected override void OnExit(ExitEventArgs eventArgs)
     {

@@ -57,8 +57,8 @@
     <Grid x:Name="DashboardRoot" MinWidth="1740" Margin="24,18,24,22">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="3*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MaxHeight="190" />
         </Grid.RowDefinitions>
 
         <Grid Margin="0,0,0,14">

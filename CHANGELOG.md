@@ -5,6 +5,7 @@
 - Bundled Python 3.12, the CPU OCR runtime, and the supported OCR model pairs in the Windows installer.
 - Added a consent-gated GPU OCR setup screen with streamed progress and logs; GPU packages install per user and never replace the bundled CPU runtime.
 - Removed the separate Python installer fallback that could show an unexpected Python UAC prompt.
+- Removed recording-mode controls and the manual diagnostic-upload flow; automatic reports now use one 3 GiB service limit with no large-file grants.
 
 ## 1.0.144 — Public beta
 

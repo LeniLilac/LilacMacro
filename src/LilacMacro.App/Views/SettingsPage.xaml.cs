@@ -12,7 +12,6 @@ using LilacMacro.App.Notifications;
 using LilacMacro.App.Updates;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.Core.Updates;
-using LilacMacro.Runtime.Services;
 using LilacMacro.Windows;
 
 namespace LilacMacro.App.Views;
@@ -25,7 +24,6 @@ public partial class SettingsPage : UserControl
     private readonly Action<bool> _keyCaptureStateChanged;
     private readonly ApplicationUpdateService _updates;
     private readonly DiscordWebhookClient _discord = new();
-    private readonly DiagnosticUploadPanel _diagnosticUploadPanel;
     private readonly PrivacySettingsPanel _privacySettingsPanel;
     private MacroKeyBinding? _capturingBinding;
     private bool _updatingDisplayControls;
@@ -36,7 +34,6 @@ public partial class SettingsPage : UserControl
         MacroOwnerState ownerState,
         LocalInstanceManagerController instanceManager,
         ApplicationUpdateService updates,
-        IDiagnosticUploadTransport diagnosticUploads,
         Action<bool> keyCaptureStateChanged)
     {
         _deepDebug = deepDebug;
@@ -46,11 +43,6 @@ public partial class SettingsPage : UserControl
         InitializeComponent();
         _privacySettingsPanel = new PrivacySettingsPanel(ownerState);
         PrivacySettingsHost.Content = _privacySettingsPanel;
-        _diagnosticUploadPanel = new DiagnosticUploadPanel(
-            ownerState,
-            new DiagnosticInstallationStore(MacroInstanceContext.Current.ConfigurationRoot),
-            diagnosticUploads);
-        DiagnosticUploadHost.Content = _diagnosticUploadPanel;
         MacroVersionText.Text = BuildVersion();
         LayoutProfileCombo.ItemsSource = new[] { "1920 x 1080 - full dock", "1366 x 768 - compact" };
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on app start" };
@@ -85,6 +77,9 @@ public partial class SettingsPage : UserControl
         AutomaticCleanupCheck.IsChecked = _deepDebug.Options.AutomaticCleanupEnabled;
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
         FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
+        DiagnosticsStatusText.Text = _deepDebug.Options.Enabled
+            ? $"Deep debug enabled · {_deepDebug.Options.FrameRetentionMinutes} minute frame history"
+            : "Deep debug disabled";
         _initialized = true;
         RefreshDisplayControls();
         RefreshUpdateOwnership();
@@ -506,16 +501,4 @@ public partial class SettingsPage : UserControl
         Process.Start(new ProcessStartInfo(_deepDebug.DiagnosticsRoot) { UseShellExecute = true });
     }
 
-    internal void CancelDiagnosticUpload() => _diagnosticUploadPanel.Cancel();
-
-    private void ManualRecording_OnChanged(object sender, RoutedEventArgs eventArgs)
-    {
-        if (!_initialized) return;
-        bool enabled = ManualRecordingCheck.IsChecked == true;
-        RecordingNameText.IsEnabled = enabled;
-        DiagnosticsStatusText.Text = enabled ? "Recording controls enabled" : "No recording armed";
-    }
-
-    private void ArmRecording_OnClick(object sender, RoutedEventArgs eventArgs) =>
-        DiagnosticsStatusText.Text = ManualRecordingCheck.IsChecked == true ? $"Armed: {RecordingNameText.Text}" : "Enable recording controls first";
 }

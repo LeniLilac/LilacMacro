@@ -55,6 +55,8 @@ Any failure after mutation runs the rollback journal. Cleanup attempts every ind
 
 On the runner's first full-UI launch, LilacMacro opens the official Roblox Login page. When no Roblox player installation is visible to that account, it downloads the official Windows installer through a bounded Roblox-to-RBXCDN HTTPS redirect, validates trusted Authenticode, and runs the visible installer. The owner still completes installation/login in that viewport; LilacMacro never enters credentials. A per-profile marker prevents repeating the bootstrap after Roblox installation is verified.
 
+Each managed runner also checks its own profile-local OCR state before opening the Macro shell. When a supported NVIDIA GPU is available and that Windows account does not yet have a GPU OCR runtime, the runner shows the same visible GPU setup used by the owner desktop. A completed runtime is reused on later launches and selected ahead of the bundled CPU fallback. GPU packages, device markers, and model cache remain isolated under that runner account's `%LOCALAPPDATA%`.
+
 The RDP viewport must remain visibly connected while that instance captures Roblox. Minimizing, disconnecting, locking, or signing out can make Windows Graphics Capture unavailable; the local macro then follows its normal bounded recovery rather than accepting stale pixels. Multiple runner accounts may remain connected and run concurrently because each session owns its own Roblox process, input gate, macro UI, OCR state, diagnostics, and unique Credential Manager endpoint.
 
 ## Coordinated updates

@@ -39,13 +39,7 @@ internal sealed class UnitPanelEvidenceService(
             DebugOcrSnapshot snapshot = await _states.RunAsync(
                 DebugWorkflowCatalog.UnitPanel, device, cancellationToken);
             UnitPanelLayout? layout = UnitPanelLayout.TryCreate(snapshot.Regions, DebugWorkflowCatalog.ClientSize);
-            string? dps = layout is null
-                ? null
-                : snapshot.Regions.FirstOrDefault(region => region.Bounds == layout.DpsText)?.Text;
-            bool physical = dps is not null && UnitPanelLayout.IsPhysicalDps(dps);
-            bool phantom = dps is not null && UnitPanelLayout.IsPhantomDps(dps);
-            if (layout is not null && (physical || phantom) &&
-                tracker.Observe(layout) is { } stable)
+            if (layout is not null && tracker.Observe(layout) is { } stable)
             {
                 _dpsCalibratedLayout = stable;
                 UnitPanelDpsCapturePlan capturePlan = UnitPanelDpsCapturePlan.Create(
@@ -62,29 +56,21 @@ internal sealed class UnitPanelEvidenceService(
                     [
                         stable.PriorityControl,
                         stable.SellControl,
-                        capturePlan.Region,
                     ],
                     cancellationToken);
                 _reference = new PanelReference(reference[0].Image, reference[1].Image);
-                RecordDpsSample(
-                    phantom ? UnitPanelDpsKind.Phantom : UnitPanelDpsKind.Physical,
-                    reference[2].Image);
                 _maxedReference = null;
-                status?.Invoke(
-                    $"UNIT PANEL CALIBRATED {stable.UpgradeControl} " +
-                    (phantom ? "PHANTOM" : "PHYSICAL") +
-                    $" DPS ROI {capturePlan.Region}");
+                status?.Invoke($"UNIT PANEL CALIBRATED {stable.UpgradeControl} DPS ROI {capturePlan.Region}");
                 return stable;
             }
             status?.Invoke($"UNIT PANEL CALIBRATION {observation}/8");
             await Task.Delay(100, cancellationToken);
         }
-        throw new InvalidOperationException("Priority, Sell, and configurable DPS evidence did not stabilize.");
+        throw new InvalidOperationException("Priority, Sell, and DPS panel geometry did not stabilize.");
     }
 
-    public async Task<bool> WaitForConfigurableSelectionAsync(
+    public async Task<bool> WaitForSelectedPanelAsync(
         UnitPanelLayout layout,
-        string device,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
@@ -93,19 +79,16 @@ internal sealed class UnitPanelEvidenceService(
         while (DateTimeOffset.UtcNow <= deadline || stable > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            PanelObservation observation = await ObservePanelAsync(
-                layout, device, status, cancellationToken);
-            stable = observation.Physical || observation.Phantom ? stable + 1 : 0;
+            bool visible = await ObserveSelectedPanelAsync(layout, cancellationToken);
+            stable = visible ? stable + 1 : 0;
             if (stable >= 2)
             {
-                status?.Invoke(observation.Phantom
-                    ? "PHANTOM UNIT PANEL VERIFIED"
-                    : "PHYSICAL UNIT PANEL VERIFIED");
+                status?.Invoke("SELECTED UNIT PANEL VERIFIED");
                 return true;
             }
             await Task.Delay(100, cancellationToken);
         }
-        status?.Invoke("CONFIGURABLE UNIT PROOF TIMEOUT");
+        status?.Invoke("SELECTED UNIT PANEL PROOF TIMEOUT");
         return false;
     }
 
@@ -235,22 +218,29 @@ internal sealed class UnitPanelEvidenceService(
         int hidden = 0;
         while (DateTimeOffset.UtcNow <= deadline || hidden > 0)
         {
-            IReadOnlyList<CapturedRgbRegion> captures = await workspace.CaptureRgbRegionsAsync(
-                DebugWorkflowCatalog.ClientSize,
-                [layout.PriorityControl, layout.SellControl],
-                cancellationToken);
-            PanelReference reference = _reference
-                ?? throw new InvalidOperationException("Selected-unit panel image reference was not calibrated.");
-            bool visible = UnitPanelColorClassifier.MatchSelectedPanel(
-                reference.Priority,
-                reference.Sell,
-                captures[0].Image,
-                captures[1].Image).IsMatch;
+            bool visible = await ObserveSelectedPanelAsync(layout, cancellationToken);
             hidden = visible ? 0 : hidden + 1;
             if (hidden >= 2) return true;
             await Task.Delay(100, cancellationToken);
         }
         return false;
+    }
+
+    private async Task<bool> ObserveSelectedPanelAsync(
+        UnitPanelLayout layout,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyList<CapturedRgbRegion> captures = await workspace.CaptureRgbRegionsAsync(
+            DebugWorkflowCatalog.ClientSize,
+            [layout.PriorityControl, layout.SellControl],
+            cancellationToken);
+        PanelReference reference = _reference
+            ?? throw new InvalidOperationException("Selected-unit panel image reference was not calibrated.");
+        return UnitPanelColorClassifier.MatchSelectedPanel(
+            reference.Priority,
+            reference.Sell,
+            captures[0].Image,
+            captures[1].Image).IsMatch;
     }
 
     private async Task<PanelObservation> ObservePanelAsync(

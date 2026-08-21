@@ -7,5 +7,6 @@ public static class UnitPanelSelectionPolicy
         PlacementStepKind.Reconfigure or
         PlacementStepKind.Sell;
 
-    public static bool RequiresPhysical(PlacementStepKind kind) => kind == PlacementStepKind.Upgrade;
+    public static bool RequiresPhysicalDpsEvidence(PlacementStepKind kind) =>
+        kind == PlacementStepKind.Upgrade;
 }

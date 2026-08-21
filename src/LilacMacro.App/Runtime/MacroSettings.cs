@@ -41,8 +41,6 @@ internal sealed record MacroSettings
 
     public bool NotifyOnRecovery { get; init; } = true;
 
-    public bool EnableDiagnosticUploads { get; init; }
-
     public int PrivacyChoicesVersion { get; init; }
 
     public bool OnlineFeaturesEnabled { get; init; } = true;

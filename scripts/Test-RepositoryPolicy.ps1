@@ -72,7 +72,9 @@ try {
     foreach ($relativePath in $sourceFiles | Where-Object { $_.EndsWith('.xaml', [StringComparison]::OrdinalIgnoreCase) }) {
         $normalized = $relativePath.Replace('\', '/')
         if ($normalized -like 'src/LilacMacro.App/Themes/ThemeColors.*.xaml') { continue }
-        $contents = Get-Content -LiteralPath (Join-Path $repositoryRoot $relativePath) -Raw
+        $fullPath = Join-Path $repositoryRoot $relativePath
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { continue }
+        $contents = Get-Content -LiteralPath $fullPath -Raw
         if ($contents -match $themeBrushPattern) {
             $failures.Add("$normalized uses static theme brush '$($Matches[1])'; use DynamicResource so live theme changes propagate.")
         }
@@ -84,7 +86,9 @@ try {
     foreach ($relativePath in $sourceFiles | Where-Object { $_.EndsWith('.cs', [StringComparison]::OrdinalIgnoreCase) }) {
         $normalized = $relativePath.Replace('\', '/')
         if (!$normalized.StartsWith('src/LilacMacro.App/', [StringComparison]::OrdinalIgnoreCase)) { continue }
-        $contents = Get-Content -LiteralPath (Join-Path $repositoryRoot $relativePath) -Raw
+        $fullPath = Join-Path $repositoryRoot $relativePath
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { continue }
+        $contents = Get-Content -LiteralPath $fullPath -Raw
         if ($contents -match '\.(Background|Foreground|BorderBrush)\s*=\s*(?:\(Brush\)\s*)?(?:FindResource|TryFindResource)') {
             $failures.Add("$normalized assigns a resolved theme brush to $($Matches[1]); use SetResourceReference so live theme changes propagate.")
         }

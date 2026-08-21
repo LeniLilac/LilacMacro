@@ -204,7 +204,6 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
                 kind,
                 BuildVersion(),
                 installId,
-                largeUploadGrant: null,
                 progress: null,
                 consent.Token).ConfigureAwait(false);
             if (deleteAfterSuccess) DeleteUploadedDeepDebugOrMarkPending(archivePath);

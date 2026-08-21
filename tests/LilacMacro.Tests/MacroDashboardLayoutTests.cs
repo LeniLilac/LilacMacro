@@ -5,7 +5,7 @@ namespace LilacMacro.Tests;
 public sealed class MacroDashboardLayoutTests
 {
     [Fact]
-    public void Run_log_is_content_sized_without_forcing_dashboard_height()
+    public void Run_log_yields_height_to_the_fixed_dock_surface()
     {
         string repository = RepositoryRoot();
         XNamespace wpf = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
@@ -27,8 +27,9 @@ public sealed class MacroDashboardLayoutTests
 
         Assert.Equal(3, rows.Length);
         Assert.Equal("Auto", (string?)rows[0].Attribute("Height"));
-        Assert.Equal("3*", (string?)rows[1].Attribute("Height"));
-        Assert.Equal("Auto", (string?)rows[2].Attribute("Height"));
+        Assert.Equal("Auto", (string?)rows[1].Attribute("Height"));
+        Assert.Equal("*", (string?)rows[2].Attribute("Height"));
+        Assert.Equal("190", (string?)rows[2].Attribute("MaxHeight"));
         Assert.Null(rows[2].Attribute("MinHeight"));
 
         XElement logPanel = dashboard

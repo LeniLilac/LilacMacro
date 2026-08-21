@@ -9,15 +9,13 @@ internal sealed record CreateUploadRequest(
     [property: JsonPropertyName("sha256")] string Sha256,
     [property: JsonPropertyName("kind")] string Kind,
     [property: JsonPropertyName("explicitConsent")] bool ExplicitConsent,
-    [property: JsonPropertyName("appVersion")] string AppVersion,
-    [property: JsonPropertyName("largeUploadGrant")] string? LargeUploadGrant);
+    [property: JsonPropertyName("appVersion")] string AppVersion);
 
 internal sealed record CreateUploadResponse(
     [property: JsonPropertyName("id")] Guid Id,
     [property: JsonPropertyName("authorizationToken")] string AuthorizationToken,
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("expiresAt")] string ExpiresAt,
-    [property: JsonPropertyName("acceptanceDeadline")] string? AcceptanceDeadline,
     [property: JsonPropertyName("upload")] UploadDescriptor Upload);
 
 internal sealed record UploadDescriptor(

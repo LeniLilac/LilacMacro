@@ -714,7 +714,6 @@ public sealed class PrivacyTelemetryTests
             DiagnosticArchiveKind kind,
             string appVersion,
             Guid installId,
-            string? largeUploadGrant,
             IProgress<DiagnosticUploadProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
@@ -733,8 +732,7 @@ public sealed class PrivacyTelemetryTests
             return new DiagnosticUploadResult(
                 Guid.NewGuid(),
                 "Verifying",
-                DateTimeOffset.UtcNow.AddHours(1),
-                null);
+                DateTimeOffset.UtcNow.AddHours(1));
         }
     }
 
@@ -772,7 +770,6 @@ public sealed class PrivacyTelemetryTests
             DiagnosticArchiveKind kind,
             string appVersion,
             Guid installId,
-            string? largeUploadGrant,
             IProgress<DiagnosticUploadProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {

@@ -130,7 +130,6 @@ internal sealed class PlacementPlaybackService(
     public async Task ReplayExpeditionAsync(
         ExpeditionPlacementSession session,
         PlacementRuntimeKeys keys,
-        string device,
         Action<string>? status,
         CancellationToken cancellationToken)
     {
@@ -154,8 +153,8 @@ internal sealed class PlacementPlaybackService(
         {
             await workspace.ClickRobloxAsync(
                 DebugWorkflowCatalog.ClientSize, saved.LivePoint, cancellationToken);
-            if (!await _panel.WaitForConfigurableSelectionAsync(
-                    session.PanelLayout, device, status, cancellationToken))
+            if (!await _panel.WaitForSelectedPanelAsync(
+                    session.PanelLayout, status, cancellationToken))
             {
                 session.MarkRetainedPhysical(saved.Placement.Id);
                 status?.Invoke(
@@ -167,7 +166,7 @@ internal sealed class PlacementPlaybackService(
             await ApplyConfigurationAsync(
                 replacement, saved.Targeting, saved.AutoUpgrade, keys, cancellationToken);
             await _panel.DismissAsync(session.PanelLayout, status, cancellationToken);
-            status?.Invoke($"UNIT {saved.Placement.UnitSlot} PHANTOM REPLACED + CONFIGURED");
+            status?.Invoke($"UNIT {saved.Placement.UnitSlot} REPLAYED + CONFIGURED");
         }
     }
 
@@ -266,7 +265,7 @@ internal sealed class PlacementPlaybackService(
                 }
                 else
                 {
-                    selected = await _panel.WaitForConfigurableSelectionAsync(layout, device, status, cancellationToken);
+                    selected = await _panel.WaitForSelectedPanelAsync(layout, status, cancellationToken);
                 }
 
                 if (!selected && layout is not null)
@@ -324,7 +323,9 @@ internal sealed class PlacementPlaybackService(
             step, target.LivePoint, layout, device, status, cancellationToken);
         if (!selected)
         {
-            string required = UnitPanelSelectionPolicy.RequiresPhysical(step.Kind) ? "physical" : "configurable";
+            string required = UnitPanelSelectionPolicy.RequiresPhysicalDpsEvidence(step.Kind)
+                ? "physical"
+                : "selected-panel";
             status?.Invoke(
                 $"SKIPPED {step.Kind.ToString().ToUpperInvariant()} STEP; {required.ToUpperInvariant()} " +
                 $"SELECTION PROOF FAILED AFTER {PlacementSelectionRetryPolicy.MaximumAttempts} ATTEMPTS");
@@ -374,9 +375,9 @@ internal sealed class PlacementPlaybackService(
 
             await workspace.ClickRobloxAsync(
                 DebugWorkflowCatalog.ClientSize, point, cancellationToken);
-            bool selected = UnitPanelSelectionPolicy.AllowsPhantom(step.Kind)
-                ? await _panel.WaitForConfigurableSelectionAsync(layout, device, status, cancellationToken)
-                : await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken);
+            bool selected = UnitPanelSelectionPolicy.RequiresPhysicalDpsEvidence(step.Kind)
+                ? await _panel.WaitForPhysicalSelectionAsync(layout, device, status, cancellationToken)
+                : await _panel.WaitForSelectedPanelAsync(layout, status, cancellationToken);
             if (selected) return true;
 
             await _panel.DismissAsync(layout, status, cancellationToken);

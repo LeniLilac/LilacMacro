@@ -13,28 +13,7 @@ namespace LilacMacro.Tests;
 public sealed class DiagnosticUploadTests
 {
     [Fact]
-    public async Task DiagnosticUploadConsentDefaultsOffAndPersistsExplicitOptIn()
-    {
-        string root = NewTemporaryDirectory();
-        try
-        {
-            MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
-            Assert.False(first.EnableDiagnosticUploads);
-
-            first.SetDiagnosticUploadConsent(true);
-            await first.FlushAsync();
-
-            MacroOwnerState restored = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
-            Assert.True(restored.EnableDiagnosticUploads);
-        }
-        finally
-        {
-            Directory.Delete(root, recursive: true);
-        }
-    }
-
-    [Fact]
-    public void PolicyRejectsUntrustedDestinationsAndLargeUploadsWithoutGrant()
+    public void PolicyRejectsUntrustedDestinationsAndArchivesOverSingleSizeLimit()
     {
         Assert.True(DiagnosticUploadPolicy.IsTrustedStorageUri(new Uri(
             "https://s3.us-west-004.backblazeb2.com/bucket/diagnostics/2026/a.zip?X-Amz-Signature=test")));
@@ -42,12 +21,9 @@ public sealed class DiagnosticUploadTests
             "https://s3.us-west-004.backblazeb2.com.evil.example/bucket/diagnostics/a.zip?x=1")));
         Assert.False(DiagnosticUploadPolicy.IsTrustedStorageUri(new Uri(
             "https://s3.us-west-004.backblazeb2.com/bucket/other/a.zip?x=1")));
-        Assert.Throws<InvalidDataException>(() => DiagnosticUploadPolicy.RequireLargeGrant(
-            DiagnosticUploadPolicy.RoutineLimitBytes + 1,
-            null));
-        DiagnosticUploadPolicy.RequireLargeGrant(
-            DiagnosticUploadPolicy.RoutineLimitBytes + 1,
-            new string('a', 40));
+        Assert.Throws<InvalidDataException>(() => DiagnosticUploadPolicy.ValidateArchive(
+            "deep-debug.zip",
+            DiagnosticUploadPolicy.MaximumArchiveBytes + 1));
     }
 
     [Fact]
@@ -136,8 +112,7 @@ public sealed class DiagnosticUploadTests
                 path,
                 DiagnosticArchiveKind.DeepDebug,
                 "1.2.3",
-                Guid.NewGuid(),
-                null);
+                Guid.NewGuid());
 
             Assert.Equal(uploadId, result.UploadId);
             Assert.Equal("Verifying", result.Status);
@@ -190,8 +165,7 @@ public sealed class DiagnosticUploadTests
                     path,
                     DiagnosticArchiveKind.DeepDebug,
                     "1.2.3",
-                    Guid.NewGuid(),
-                    null));
+                    Guid.NewGuid()));
 
             Assert.Contains("completion state", failure.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -276,8 +250,7 @@ public sealed class DiagnosticUploadTests
                 path,
                 DiagnosticArchiveKind.LiveDebug,
                 "1.2.3",
-                Guid.NewGuid(),
-                null);
+                Guid.NewGuid());
 
             Assert.Equal(uploadId, result.UploadId);
             Assert.Equal(2, storageHandler.Requests.Count);

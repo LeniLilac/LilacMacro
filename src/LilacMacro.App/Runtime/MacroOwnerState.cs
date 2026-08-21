@@ -54,7 +54,6 @@ internal sealed class MacroOwnerState
         NotifyOnVictory = settings.NotifyOnVictory;
         NotifyOnDefeat = settings.NotifyOnDefeat;
         NotifyOnRecovery = settings.NotifyOnRecovery;
-        EnableDiagnosticUploads = settings.EnableDiagnosticUploads;
         PrivacyChoicesVersion = settings.PrivacyChoicesVersion;
         OnlineFeaturesEnabled = settings.OnlineFeaturesEnabled;
         TelemetryEnabled = settings.TelemetryEnabled;
@@ -116,8 +115,6 @@ internal sealed class MacroOwnerState
     public bool NotifyOnDefeat { get; private set; }
 
     public bool NotifyOnRecovery { get; private set; }
-
-    public bool EnableDiagnosticUploads { get; private set; }
 
     public int PrivacyChoicesVersion { get; private set; }
 
@@ -253,13 +250,6 @@ internal sealed class MacroOwnerState
         NotifyOnDefeat = notifyOnDefeat;
         NotifyOnRecovery = notifyOnRecovery;
         NotifyOnTerminalFailure = notifyOnTerminalFailure;
-        QueueSave();
-    }
-
-    public void SetDiagnosticUploadConsent(bool enabled)
-    {
-        if (enabled == EnableDiagnosticUploads) return;
-        EnableDiagnosticUploads = enabled;
         QueueSave();
     }
 
@@ -410,7 +400,6 @@ internal sealed class MacroOwnerState
         NotifyOnVictory = NotifyOnVictory,
         NotifyOnDefeat = NotifyOnDefeat,
         NotifyOnRecovery = NotifyOnRecovery,
-        EnableDiagnosticUploads = EnableDiagnosticUploads,
         PrivacyChoicesVersion = PrivacyChoicesVersion,
         OnlineFeaturesEnabled = OnlineFeaturesEnabled,
         TelemetryEnabled = TelemetryEnabled,

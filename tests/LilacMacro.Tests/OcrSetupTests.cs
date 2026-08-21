@@ -8,6 +8,21 @@ namespace LilacMacro.Tests;
 public sealed class OcrSetupTests
 {
     [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(false, false, false)]
+    [InlineData(true, true, true)]
+    [InlineData(false, true, true)]
+    public void Managed_instances_check_their_profile_local_gpu_runtime(
+        bool acceptedPrivacyThisLaunch,
+        bool isManagedRunner,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            global::LilacMacro.App.App.ShouldCheckGpuSetup(acceptedPrivacyThisLaunch, isManagedRunner));
+    }
+
+    [Theory]
     [InlineData(true, true, OcrRunner.GpuDevice)]
     [InlineData(false, true, OcrRunner.CpuDevice)]
     [InlineData(false, false, null)]

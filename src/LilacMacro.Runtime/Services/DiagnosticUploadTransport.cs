@@ -16,7 +16,6 @@ public interface IDiagnosticUploadTransport
         DiagnosticArchiveKind kind,
         string appVersion,
         Guid installId,
-        string? largeUploadGrant,
         IProgress<DiagnosticUploadProgress>? progress = null,
         CancellationToken cancellationToken = default);
 }
@@ -51,7 +50,6 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
         DiagnosticArchiveKind kind,
         string appVersion,
         Guid installId,
-        string? largeUploadGrant,
         IProgress<DiagnosticUploadProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
@@ -66,7 +64,6 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
         FileInfo archive = new(archivePath);
         if (!archive.Exists) throw new FileNotFoundException("Diagnostic archive was not found.");
         string fileName = DiagnosticUploadPolicy.ValidateArchive(archive.FullName, archive.Length);
-        DiagnosticUploadPolicy.RequireLargeGrant(archive.Length, largeUploadGrant);
         progress?.Report(new(DiagnosticUploadPhase.Preparing, 0, archive.Length));
         string sha256 = await HashSegmentAsync(
             archive.FullName,
@@ -88,8 +85,7 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
                 sha256,
                 DiagnosticUploadPolicy.KindValue(kind),
                 true,
-                parsedVersion.ToString(3),
-                string.IsNullOrWhiteSpace(largeUploadGrant) ? null : largeUploadGrant.Trim()),
+                parsedVersion.ToString(3)),
             null,
             cancellationToken).ConfigureAwait(false);
         ValidateGrant(grant);
@@ -125,8 +121,7 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
         return new DiagnosticUploadResult(
             grant.Id,
             "Verifying",
-            ParseTimestamp(grant.ExpiresAt),
-            grant.AcceptanceDeadline is null ? null : ParseTimestamp(grant.AcceptanceDeadline));
+            ParseTimestamp(grant.ExpiresAt));
     }
 
     public void Dispose()
@@ -393,7 +388,6 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
             throw new InvalidDataException("Diagnostic upload grant was invalid.");
         }
         _ = ParseTimestamp(grant.ExpiresAt);
-        if (grant.AcceptanceDeadline is not null) _ = ParseTimestamp(grant.AcceptanceDeadline);
     }
 
     private static Uri TrustedStorageUri(string? value)

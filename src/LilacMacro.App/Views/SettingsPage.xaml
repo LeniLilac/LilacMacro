@@ -377,7 +377,7 @@
                                         <CheckBox x:Name="AutomaticCleanupCheck" Margin="0,9,0,0" Content="Keep only the 20 newest local Deep Debug archives"
                                                   Checked="AutomaticCleanup_OnChanged" Unchecked="AutomaticCleanup_OnChanged" />
                                         <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
-                                                   Text="Local cleanup is independent from automatic error reports and manual uploads." />
+                                                   Text="Local cleanup is independent from automatic error reports." />
                                     </StackPanel>
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
@@ -400,33 +400,11 @@
                                         </StackPanel>
                                     </Button>
                                 </Grid>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <ContentControl x:Name="DiagnosticUploadHost" />
-                    <Border Style="{StaticResource SettingsCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                            <TextBlock FontSize="15" FontWeight="Bold" Text="Recording" />
-                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MANUAL CONTROLS" />
-                                    <CheckBox x:Name="ManualRecordingCheck" Grid.Column="1" Content="Enable manual recording controls" Checked="ManualRecording_OnChanged" Unchecked="ManualRecording_OnChanged" />
-                                </Grid>
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="RECORDING NAME" />
-                                    <Grid Grid.Column="1" HorizontalAlignment="Left">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="250" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                        <TextBox x:Name="RecordingNameText" Text="new route recording" />
-                                        <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Click="ArmRecording_OnClick" Content="ARM" />
-                                    </Grid>
-                                </Grid>
-                                <Grid Margin="0,8,0,0">
+                                <Grid Margin="0,10,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STATUS" />
-                                    <TextBlock x:Name="DiagnosticsStatusText" Grid.Column="1" FontSize="10" Foreground="{DynamicResource InkSoftBrush}" Text="No recording armed" />
+                                    <TextBlock x:Name="DiagnosticsStatusText" Grid.Column="1" FontSize="10"
+                                               Foreground="{DynamicResource InkSoftBrush}" />
                                 </Grid>
                             </StackPanel>
                         </Grid>

@@ -315,7 +315,7 @@ internal sealed class ExpeditionMatchRuntimeRunner(
                 await WaitForDefensePrestartAsync(options.Device, report, cancellationToken)
                     .ConfigureAwait(false);
                 await _placements.ReplayExpeditionAsync(
-                    placement, options.PlacementKeys, options.Device, report, cancellationToken).ConfigureAwait(false);
+                    placement, options.PlacementKeys, report, cancellationToken).ConfigureAwait(false);
                 await _placements.SatisfyExpeditionStartBoundaryAsync(
                     placement, options.Device, report, cancellationToken).ConfigureAwait(false);
                 report("EXPEDITION START GAME CLICKED");

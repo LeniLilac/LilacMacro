@@ -85,7 +85,7 @@ Live optimization requires the selected reward quantity to be stable across fres
 
 | Node | Intended behavior |
 |---|---|
-| Defense | First wait for fresh visible Start Game evidence; then replay placements not already retained as physical; a unit with no selection panel is retained and skipped on later Defense/Elite nodes, while a replacement phantom receives its saved Target and Auto Upgrade configuration and remains eligible for later replay; then reacquire and click Start Game |
+| Defense | First wait for fresh visible Start Game evidence; then replay placements not already retained as physical. The game moves physical units into the node area and deletes phantoms: no selected-unit panel at the saved point means the existing physical was moved and is skipped on later Defense/Elite nodes, while any selected-unit panel means replay placement succeeded as either phantom or affordable physical, receives its saved Target and Auto Upgrade configuration, and remains eligible for later replay. Replay does not classify DPS; then reacquire and click Start Game |
 | Elite | Same per-placement retention/replay policy as Defense |
 | Assault | Do not place; wait for node completion |
 | Boss | Do not place; wait for node completion and count the stable real Boss transition |

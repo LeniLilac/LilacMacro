@@ -36,6 +36,18 @@ public sealed class UnitPanelLayoutTests
         Assert.False(UnitPanelLayout.IsPhysicalDps(text));
 
     [Fact]
+    public void LayoutCalibrationNeedsDpsGeometryButNotPhysicalClassification()
+    {
+        UnitPanelLayout? layout = UnitPanelLayout.TryCreate(
+            [Region("Priority", 73, 427, 50, 17), Region("Sell", 188, 428, 29, 14), Region("DPS", 50, 344, 60, 18)],
+            new PixelSize(1366, 700));
+
+        Assert.NotNull(layout);
+        Assert.False(UnitPanelLayout.IsPhysicalDps("DPS"));
+        Assert.False(UnitPanelLayout.IsPhantomDps("DPS"));
+    }
+
+    [Fact]
     public void TrackerRequiresThreeConsistentObservations()
     {
         UnitPanelLayout layout = UnitPanelLayout.TryCreate(
@@ -55,13 +67,15 @@ public sealed class UnitPanelLayoutTests
     [InlineData(PlacementStepKind.Upgrade, false, true)]
     [InlineData(PlacementStepKind.Delay, false, false)]
     [InlineData(PlacementStepKind.StartGame, false, false)]
-    public void PhantomPolicyMatchesSupportedUnitPanelActions(
+    public void OnlyUpgradeRequiresPhysicalDpsSelectionEvidence(
         PlacementStepKind kind,
         bool allowsPhantom,
-        bool requiresPhysical)
+        bool requiresPhysicalDpsEvidence)
     {
         Assert.Equal(allowsPhantom, UnitPanelSelectionPolicy.AllowsPhantom(kind));
-        Assert.Equal(requiresPhysical, UnitPanelSelectionPolicy.RequiresPhysical(kind));
+        Assert.Equal(
+            requiresPhysicalDpsEvidence,
+            UnitPanelSelectionPolicy.RequiresPhysicalDpsEvidence(kind));
     }
 
     [Theory]
