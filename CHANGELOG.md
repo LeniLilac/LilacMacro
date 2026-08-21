@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.155 — Public beta
+
+- Retained the complete one-second Deep Debug frame stream below the 3 GiB archive-pressure threshold.
+- At the hard limit, evicted only enough low-priority evidence to stay near 3 GiB, removing old ordinary frames before transition and classified-error evidence.
+
 ## 1.0.154 — Public beta
 
 - Restored telemetry delivery across privacy-notice updates by sharing one supported version contract between consent and event validation.

@@ -2,7 +2,7 @@
 
 LilacMacro is a free, noncommercial, source-available Windows .NET/WPF app for building and running inspectable Anime Expeditions automation through ordinary screen capture and Windows input. The public beta includes the Macro shell, Plan and placement authoring, Story/Raid/Challenge/Expedition/Event and utility workflows, a Dataset Builder, and a Runtime Lab for explicit OCR/vision tests.
 
-Download the current public beta from [GitHub Releases](https://github.com/LeniLilac/LilacMacro/releases). The latest release is [v1.0.154](https://github.com/LeniLilac/LilacMacro/releases/tag/v1.0.154). The installer is intentionally not Authenticode-signed, so Windows may show **Unknown publisher** or a Microsoft Defender SmartScreen prompt. Only use the installer from this repository's release page. Every official release includes a SHA-256 checksum and an Ed25519 project-signed manifest; the built-in updater verifies both before launch. The project signature proves continuity with the public LilacMacro key, not a verified legal identity.
+Download the current public beta from [GitHub Releases](https://github.com/LeniLilac/LilacMacro/releases). The latest release is [v1.0.155](https://github.com/LeniLilac/LilacMacro/releases/tag/v1.0.155). The installer is intentionally not Authenticode-signed, so Windows may show **Unknown publisher** or a Microsoft Defender SmartScreen prompt. Only use the installer from this repository's release page. Every official release includes a SHA-256 checksum and an Ed25519 project-signed manifest; the built-in updater verifies both before launch. The project signature proves continuity with the public LilacMacro key, not a verified legal identity.
 
 ## Requirements
 

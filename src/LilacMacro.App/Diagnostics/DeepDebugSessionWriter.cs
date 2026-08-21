@@ -112,7 +112,7 @@ internal static class DeepDebugSessionWriter
             item.TimestampUtc,
             item.ArtifactBytes,
             string.Equals(item.Action, "live-client", StringComparison.Ordinal));
-        session.Evidence.TrimToBudget(session.Limits.FrameEvidenceBytes);
+        session.Evidence.OptimizeWhenAbove(session.Limits.MaximumArchiveBytes);
     }
 
     private static bool CanWrite(long writtenBytes, string value, long limit) =>

@@ -6,6 +6,7 @@ internal sealed class DeepDebugEvidenceRetention
     private readonly List<DeepDebugEvidenceWindow> _windows = [];
     private readonly List<string> _pendingTransitions = [];
     private int _nextWindowId;
+    private bool _optimized;
 
     public int RetainedFrameCount => _frames.Count(frame => !frame.Deleted);
     public int DiscardedFrameCount { get; private set; }
@@ -13,6 +14,7 @@ internal sealed class DeepDebugEvidenceRetention
     public int DiscardedWindowCount { get; private set; }
     public int TransitionFrameCount => _frames.Count(frame => !frame.Deleted && frame.Transitions.Count > 0);
     public long RetainedBytes => _frames.Where(frame => !frame.Deleted).Sum(frame => frame.Length);
+    public bool IsOptimized => _optimized;
 
     public void ObserveEvent(string category, string action, object? data, DateTimeOffset timestampUtc)
     {
@@ -21,7 +23,6 @@ internal sealed class DeepDebugEvidenceRetention
             BeginErrorWindow(error!);
         if (DeepDebugEvidencePolicy.TransitionSignature(category, action) is { } transition)
             MarkTransition(transition);
-        PruneExpiredPending(timestampUtc);
     }
 
     public void RecordFrame(
@@ -48,38 +49,24 @@ internal sealed class DeepDebugEvidenceRetention
             foreach (string transition in _pendingTransitions) frame.Transitions.Add(transition);
             _pendingTransitions.Clear();
         }
-        PruneExpiredPending(timestampUtc);
     }
 
-    public void Complete(DateTimeOffset completedAtUtc, long maximumFrameBytes)
+    public void Complete(long maximumFrameBytes)
     {
-        PruneExpiredPending(completedAtUtc + DeepDebugEvidencePolicy.ErrorWindowBefore);
-        foreach (DeepDebugEvidenceFrame frame in _frames.Where(frame =>
-                     !frame.Deleted && frame.WindowId is null && frame.Transitions.Count == 0))
-            Delete(frame);
-
-        HashSet<int> selectedWindows = SelectWindows(maximumFrameBytes);
-        foreach (DeepDebugEvidenceWindow window in _windows)
-        {
-            if (selectedWindows.Contains(window.Id)) continue;
-            DiscardedWindowCount++;
-            foreach (DeepDebugEvidenceFrame frame in window.Frames)
-                if (frame.Transitions.Count == 0) Delete(frame);
-        }
-
-        long retained = RetainedBytes;
-        foreach (DeepDebugEvidenceFrame frame in _frames
-                     .Where(frame => !frame.Deleted && frame.WindowId is null)
-                     .OrderByDescending(frame => frame.TimestampUtc))
-        {
-            if (retained <= maximumFrameBytes) break;
-            retained -= frame.Length;
-            Delete(frame);
-        }
+        if (RetainedBytes <= maximumFrameBytes) return;
+        _optimized = true;
+        TrimToBudget(maximumFrameBytes);
     }
 
     public bool DropLowestPriorityEvidence()
     {
+        foreach (DeepDebugEvidenceFrame ordinary in _frames
+            .Where(frame => !frame.Deleted && frame.WindowId is null && frame.Transitions.Count == 0)
+            .OrderBy(frame => frame.TimestampUtc))
+        {
+            if (Delete(ordinary)) return true;
+        }
+
         foreach (DeepDebugEvidenceFrame transition in _frames
             .Where(frame => !frame.Deleted && frame.WindowId is null)
             .OrderBy(frame => frame.TimestampUtc))
@@ -91,22 +78,42 @@ internal sealed class DeepDebugEvidenceRetention
             .Where(candidate => candidate.Frames.Any(frame => !frame.Deleted))
             .OrderBy(candidate => candidate.MaximumSeverity)
             .ThenBy(candidate => candidate.IsFirstOccurrence)
+            .ThenBy(candidate => RedundancyDistance(candidate))
             .ThenBy(candidate => candidate.StartUtc)
             .FirstOrDefault();
         if (window is null) return false;
-        bool deleted = false;
-        foreach (DeepDebugEvidenceFrame frame in window.Frames)
-            deleted |= Delete(frame);
-        if (!deleted) return false;
-        DiscardedWindowCount++;
+        DeepDebugEvidenceFrame? leastUsefulFrame = window.Frames
+            .Where(frame => !frame.Deleted)
+            .OrderByDescending(frame => window.Errors.Min(error =>
+                Math.Abs((frame.TimestampUtc - error.TimestampUtc).Ticks)))
+            .ThenBy(frame => frame.TimestampUtc)
+            .FirstOrDefault();
+        if (leastUsefulFrame is null || !Delete(leastUsefulFrame)) return false;
+        if (!window.Frames.Any(frame => !frame.Deleted)) DiscardedWindowCount++;
         return true;
     }
 
-    public void TrimToBudget(long maximumBytes)
+    public long DropLowestPriorityEvidence(long minimumBytes)
     {
-        while (RetainedBytes > maximumBytes && DropLowestPriorityEvidence())
+        long before = RetainedBytes;
+        while (before - RetainedBytes < minimumBytes && DropLowestPriorityEvidence()) { }
+        long discarded = before - RetainedBytes;
+        if (discarded > 0) _optimized = true;
+        return discarded;
+    }
+
+    public void OptimizeWhenAbove(long maximumFrameBytes)
+    {
+        if (RetainedBytes > maximumFrameBytes)
         {
+            _optimized = true;
+            TrimToBudget(maximumFrameBytes);
         }
+    }
+
+    private void TrimToBudget(long maximumBytes)
+    {
+        while (RetainedBytes > maximumBytes && DropLowestPriorityEvidence()) { }
     }
 
     private void BeginErrorWindow(DeepDebugErrorMarker marker)
@@ -145,71 +152,16 @@ internal sealed class DeepDebugEvidenceRetention
         else frame.Transitions.Add(signature);
     }
 
-    private HashSet<int> SelectWindows(long maximumBytes)
+    private int RedundancyDistance(DeepDebugEvidenceWindow candidate)
     {
-        HashSet<int> selected = [];
-        long retained = _frames.Where(frame => !frame.Deleted && frame.WindowId is null)
-            .Sum(frame => frame.Length);
-        List<DeepDebugEvidenceWindow> remaining = _windows
-            .OrderByDescending(window => window.MaximumSeverity)
-            .ThenByDescending(window => window.IsFirstOccurrence)
-            .ThenBy(window => window.StartUtc)
-            .ToList();
-        List<ulong> selectedHashes = [];
-
-        while (remaining.Count > 0)
-        {
-            DeepDebugEvidenceWindow candidate = remaining
-                .OrderByDescending(window => WindowPriority(window, selectedHashes))
-                .ThenByDescending(window => window.StartUtc)
-                .First();
-            remaining.Remove(candidate);
-            long additional = candidate.Frames
-                .Where(frame => !frame.Deleted && frame.WindowId == candidate.Id)
-                .Sum(frame => frame.Length);
-            if (retained + additional > maximumBytes) continue;
-            selected.Add(candidate.Id);
-            retained += additional;
-            selectedHashes.Add(candidate.RepresentativeHash);
-        }
-
-        if (selected.Count == 0 && _windows.Count > 0)
-        {
-            DeepDebugEvidenceWindow first = _windows
-                .OrderByDescending(window => window.MaximumSeverity)
-                .ThenByDescending(window => window.IsFirstOccurrence)
-                .First();
-            DeepDebugEvidenceFrame? representative = first.Frames
-                .Where(frame => !frame.Deleted)
-                .OrderBy(frame => Math.Abs((frame.TimestampUtc - first.FirstErrorAtUtc).Ticks))
-                .FirstOrDefault(frame => retained + frame.Length <= maximumBytes);
-            if (representative is not null)
-            {
-                representative.WindowId = null;
-                representative.Transitions.Add("error-window-representative");
-            }
-        }
-        return selected;
-    }
-
-    private static long WindowPriority(
-        DeepDebugEvidenceWindow window,
-        IReadOnlyList<ulong> selectedHashes)
-    {
-        int distance = selectedHashes.Count == 0
-            ? 64
-            : selectedHashes.Min(hash => DeepDebugPerceptualHash.Distance(hash, window.RepresentativeHash));
-        return ((long)window.MaximumSeverity * 1_000_000) +
-               (window.IsFirstOccurrence ? 100_000 : 0) + distance;
-    }
-
-    private void PruneExpiredPending(DateTimeOffset referenceUtc)
-    {
-        DateTimeOffset cutoff = referenceUtc - DeepDebugEvidencePolicy.ErrorWindowBefore;
-        foreach (DeepDebugEvidenceFrame frame in _frames.Where(frame =>
-                     !frame.Deleted && frame.TimestampUtc < cutoff &&
-                     frame.WindowId is null && frame.Transitions.Count == 0))
-            Delete(frame);
+        return _windows
+            .Where(window => window.Id != candidate.Id &&
+                             window.Frames.Any(frame => !frame.Deleted))
+            .Select(window => DeepDebugPerceptualHash.Distance(
+                candidate.RepresentativeHash,
+                window.RepresentativeHash))
+            .DefaultIfEmpty(64)
+            .Min();
     }
 
     private bool Delete(DeepDebugEvidenceFrame frame)
@@ -245,6 +197,7 @@ internal sealed class DeepDebugEvidenceWindow(
     public DeepDebugErrorSeverity MaximumSeverity => Errors.Max(error => error.Severity);
     public DateTimeOffset FirstErrorAtUtc => Errors.Min(error => error.TimestampUtc);
     public ulong RepresentativeHash => Frames
+        .Where(frame => !frame.Deleted)
         .OrderBy(frame => Math.Abs((frame.TimestampUtc - FirstErrorAtUtc).Ticks))
         .Select(frame => frame.PerceptualHash)
         .FirstOrDefault();

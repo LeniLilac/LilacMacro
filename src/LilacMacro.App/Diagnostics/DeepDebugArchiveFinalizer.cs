@@ -15,7 +15,7 @@ internal sealed class DeepDebugArchiveFinalizer(
         Exception? operationError,
         DateTimeOffset completedAtUtc)
     {
-        session.Evidence.Complete(completedAtUtc, session.Limits.FrameEvidenceBytes);
+        session.Evidence.Complete(session.Limits.MaximumArchiveBytes);
         int visualProfiles = WriteVisualProfiles(session);
         await CopyLatestCrashLogAsync(session);
         await WriteReadmeAsync(session.StagingDirectory);
@@ -44,7 +44,8 @@ internal sealed class DeepDebugArchiveFinalizer(
                 long length = new FileInfo(temporary).Length;
                 if (length <= session.Limits.MaximumArchiveBytes) break;
                 File.Delete(temporary);
-                if (!session.Evidence.DropLowestPriorityEvidence())
+                long excessBytes = length - session.Limits.MaximumArchiveBytes;
+                if (session.Evidence.DropLowestPriorityEvidence(excessBytes) <= 0)
                 {
                     throw new InvalidDataException(
                         $"Deep Debug archive exceeded its {session.Limits.MaximumArchiveBytes} byte hard limit after all optional frame evidence was removed.");
@@ -138,7 +139,9 @@ internal sealed class DeepDebugArchiveFinalizer(
             session.Evidence.RetainedBytes,
             session.Limits.MaximumArchiveBytes,
             visualProfiles,
-            "Events and actions cover the run subject only to explicit archive safety bounds. PNG evidence uses one-second captures around classified failures (10 seconds before and after), merged overlapping windows, and one frame at important state transitions. Lowest-priority repeated or visually similar windows are removed first when space is constrained.",
+            session.Evidence.IsOptimized
+                ? "Events and actions cover the run subject only to explicit archive safety bounds. The one-second PNG stream reached archive pressure and only enough low-priority evidence was removed to remain below the hard limit. Old ordinary frames are removed first, followed by transition frames and then redundant or lower-severity classified-failure windows."
+                : "Events and actions cover the run subject only to explicit archive safety bounds. The complete one-second PNG stream stayed below archive pressure and was retained without frame pruning.",
             session.WriterFailure is null
                 ? null
                 : DeepDebugRedactor.Redact(session.WriterFailure.ToString()),
@@ -162,8 +165,9 @@ internal sealed class DeepDebugArchiveFinalizer(
         Path.Combine(staging, "README.md"),
         "# LilacMacro Deep Debug\n\n" +
         "Start with `manifest.json`, then read `timeline.md` or `events.jsonl`. " +
-        "Frames are intentionally limited to classified failure windows and important state transitions; " +
-        "a timeline link can therefore refer to evidence removed by the retention policy. " +
+        "The complete one-second frame stream is retained until it reaches the archive limit. " +
+        "Under archive pressure, only enough low-priority frames are removed to stay below that limit, " +
+        "so a timeline link can then refer to evidence removed by the retention policy. " +
         "`visual-profiles/` contains bounded immutable revisions consulted by this run. " +
         "Coordinates are Roblox client-relative half-open rectangles.\n",
         new UTF8Encoding(false));

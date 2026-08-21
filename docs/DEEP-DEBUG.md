@@ -7,7 +7,7 @@
 - Main Macro: Settings, Diagnostics, `Enable Deep Debug Logs`.
 - Dataset Builder and Runtime Lab: click the title-bar `DEEP DEBUG` pill.
 - Capture is fixed at one full-client sample per second. It is diagnostic evidence only and never authorizes input.
-- Deep Debug keeps a rolling ten-second pre-error buffer. A classified error preserves frames from ten seconds before through ten seconds after it. Overlapping windows merge. Important state transitions retain one representative frame even when no error occurs.
+- Deep Debug retains the complete one-second frame stream while frame evidence remains below the 3 GiB archive-pressure threshold. If capture crosses that threshold, or the completed ZIP would exceed 3 GiB, it removes only enough evidence to fit: oldest ordinary frames first, then transition frames, then redundant or lower-severity classified-error windows. A classified error protects frames from ten seconds before through ten seconds after it, and overlapping windows merge.
 - After local-instance provisioning, the owner and every configured runner write to protected `%ProgramData%\LilacMacro\Diagnostics`. Without provisioning, the current profile uses `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - `MAX LOG STORAGE, GB` is one shared owner-and-runner archive budget. Its new-machine default is 3 GiB when free space is at most 50 GiB, 10 GiB above 50 GiB, and 30 GiB above 200 GiB. A configured value is lowered when completed logs plus remaining free space cannot support it.
 - When free space falls below 3 GiB, new Deep Debug sessions pause temporarily without changing the saved enabled choice. Capture resumes after space is available.
@@ -28,7 +28,7 @@ The retained-frame policy recognizes:
 - failed Setup, Runtime Lab, route-optimizer, or team-swap trials;
 - local-session provisioning, launch, or communication failures.
 
-Each error receives a deterministic signature from its workflow/state, failure code, action, and sanitized coarse error identity. When evidence must be reduced, retention prioritizes terminal failures, the first occurrence of each signature, visually distinct occurrences using a coarse perceptual hash, recent occurrences, and repeated near-identical failures in that order. Whole low-priority windows are discarded before higher-value evidence.
+Each error receives a deterministic signature from its workflow/state, failure code, action, and sanitized coarse error identity. When evidence must be reduced, retention prioritizes terminal failures, the first occurrence of each signature, visually distinct occurrences using a coarse perceptual hash, recent occurrences, and repeated near-identical failures in that order. Frames farthest from an error are removed first within the lowest-priority window, allowing the archive to remain close to its capacity instead of discarding a whole useful window for a small overage.
 
 ## Archive contract
 
@@ -41,7 +41,7 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 | `timeline.md` | Chronological event index; links can name frames intentionally removed by evidence retention |
 | `README.md` | Archive reading order and coordinate convention |
 | `configuration/` | Sanitized operation context, Deep Debug options, and environment |
-| `frames/` | One-second samples selected from classified error windows and important transitions |
+| `frames/` | Complete one-second samples below archive pressure; near the limit, the highest-value samples that fit |
 | `visual-profiles/` | Bounded immutable profile revisions and locators consulted by the run |
 | `latest-crash-sanitized.txt` | Bounded tail of the latest crash log when available |
 
@@ -49,7 +49,7 @@ Events include window discovery and observed client size, resize results, captur
 
 Events and the timeline normally cover the complete operation. Explicit 128 MiB event and 64 MiB timeline safety bounds prevent an abnormal producer from breaking the single-archive limit; truncation is recorded in the manifest and stream. Visual-profile snapshots remain usage-scoped: at most 64 referenced revisions, 32 files and 8 MiB per revision, and 32 MiB total.
 
-Every ZIP is verified after creation to remain at or below the 3 GiB upload and local-archive hard limit. Frame evidence targets at most 2.5 GiB, leaving headroom for structured events, configuration, visual profiles, manifest, and ZIP overhead. A finalization failure never changes the primary automation result; the staging directory is preserved with `finalization-error.txt` when possible.
+Every ZIP is verified after creation to remain at or below the 3 GiB upload and local-archive hard limit. Below archive pressure, all frames are retained. Once raw frame evidence crosses 3 GiB, the recorder evicts the lowest-priority frames only until the frame stream fits again; later frames continuously reuse that freed space. If structured data or ZIP overhead makes the completed archive too large, finalization removes approximately the measured excess and rebuilds until the ZIP fits. A finalization failure never changes the primary automation result; the staging directory is preserved with `finalization-error.txt` when possible.
 
 ## Agent workflow
 

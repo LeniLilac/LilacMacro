@@ -169,8 +169,10 @@ public sealed class DeepDebugSessionTests : IDisposable
         RecordFrame(retention, evidenceRoot, errorAt, "at-error");
         RecordFrame(retention, evidenceRoot, errorAt.AddSeconds(10), "after-10");
         RecordFrame(retention, evidenceRoot, errorAt.AddSeconds(11), "after-11");
+        long windowBytes = new[] { "before-10", "at-error", "after-10" }
+            .Sum(name => new FileInfo(Path.Combine(evidenceRoot, name + ".png")).Length);
 
-        retention.Complete(errorAt.AddSeconds(12), 100_000);
+        retention.Complete(windowBytes);
 
         Assert.False(File.Exists(Path.Combine(evidenceRoot, "before-11.png")));
         Assert.True(File.Exists(Path.Combine(evidenceRoot, "before-10.png")));
@@ -178,6 +180,51 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.True(File.Exists(Path.Combine(evidenceRoot, "after-10.png")));
         Assert.False(File.Exists(Path.Combine(evidenceRoot, "after-11.png")));
         Assert.Equal(1, retention.WindowCount);
+    }
+
+    [Fact]
+    public void Evidence_keeps_complete_frame_stream_below_archive_pressure()
+    {
+        string evidenceRoot = Path.Combine(_root, "evidence-complete");
+        Directory.CreateDirectory(evidenceRoot);
+        DateTimeOffset started = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
+        DeepDebugEvidenceRetention retention = new();
+        RecordFrame(retention, evidenceRoot, started, "first");
+        RecordFrame(retention, evidenceRoot, started.AddMinutes(20), "second");
+        long retainedBytes = retention.RetainedBytes;
+
+        retention.Complete(retainedBytes);
+
+        Assert.False(retention.IsOptimized);
+        Assert.Equal(2, retention.RetainedFrameCount);
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "first.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "second.png")));
+    }
+
+    [Fact]
+    public void Evidence_uses_freed_capacity_only_after_archive_pressure()
+    {
+        string evidenceRoot = Path.Combine(_root, "evidence-pressure");
+        Directory.CreateDirectory(evidenceRoot);
+        DateTimeOffset started = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
+        DeepDebugEvidenceRetention retention = new();
+        RecordFrame(retention, evidenceRoot, started, "old");
+        RecordFrame(retention, evidenceRoot, started.AddSeconds(11), "recent");
+        long belowPressureBytes = retention.RetainedBytes;
+
+        retention.OptimizeWhenAbove(belowPressureBytes + 1);
+        Assert.False(retention.IsOptimized);
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "old.png")));
+
+        RecordFrame(retention, evidenceRoot, started.AddSeconds(12), "crossing");
+        retention.OptimizeWhenAbove(belowPressureBytes);
+
+        Assert.True(retention.IsOptimized);
+        Assert.Equal(2, retention.RetainedFrameCount);
+        Assert.True(retention.RetainedBytes <= belowPressureBytes);
+        Assert.False(File.Exists(Path.Combine(evidenceRoot, "old.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "recent.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "crossing.png")));
     }
 
     [Fact]
@@ -194,7 +241,8 @@ public sealed class DeepDebugSessionTests : IDisposable
         retention.ObserveEvent("macro", "runtime_error", new { Error = "fatal" }, started.AddSeconds(30));
         RecordFrame(retention, evidenceRoot, started.AddSeconds(30), "terminal");
 
-        retention.Complete(started.AddSeconds(41), new FileInfo(Path.Combine(evidenceRoot, "terminal.png")).Length);
+        long terminalBytes = new FileInfo(Path.Combine(evidenceRoot, "terminal.png")).Length;
+        retention.Complete(terminalBytes);
 
         Assert.Equal(2, retention.WindowCount);
         Assert.False(File.Exists(Path.Combine(evidenceRoot, "recoverable.png")));
