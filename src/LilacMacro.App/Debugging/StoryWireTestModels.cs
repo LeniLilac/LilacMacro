@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Vision;
 using LilacMacro.App.Runtime;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Debugging;
 
@@ -20,6 +21,9 @@ internal enum StoryWireStage
     MatchPreview,
     MatchPrestart,
     MatchRuntime,
+    TowerType,
+    TowerFloor,
+    TowerStage,
 }
 
 public enum StoryWireStageStatus
@@ -37,6 +41,7 @@ internal enum WireGameMode
     Challenge,
     Expedition,
     Event,
+    Tower,
 }
 
 internal static class WireGameModeRepeatPolicy
@@ -72,7 +77,20 @@ internal sealed record StoryWireTestOptions(
     int BossesBeforeExtract = 1,
     bool ExtractAtCheckpoint = true,
     string ExpeditionRewardTarget = "None",
-    bool SkipTeamLoad = false);
+    bool SkipTeamLoad = false,
+    TowerType TowerType = TowerType.Trait,
+    int TowerFloor = 0)
+{
+    public StoryWireTestOptions ApplyResolved(StoryWireTestResult result) =>
+        result.ResolvedMap is null
+            ? this
+            : this with
+            {
+                Map = result.ResolvedMap,
+                TeamNumber = result.ResolvedTeam ?? TeamNumber,
+                TowerFloor = result.TowerFloor ?? TowerFloor,
+            };
+}
 
 internal sealed record StoryWireProgress(
     StoryWireStage Stage,
@@ -111,7 +129,16 @@ internal sealed record StoryWireTestResult(
     DateTimeOffset? UnavailableUntilUtc = null,
     bool DailyLimitReached = false,
     MatchTerminalOutcome? Outcome = null,
-    bool RepeatedPrestartReady = false);
+    bool RepeatedPrestartReady = false,
+    string? ResolvedMap = null,
+    int? ResolvedTeam = null,
+    int? TowerFloor = null);
+
+internal sealed record TowerNavigationResult(
+    bool Succeeded,
+    string Status,
+    string? Map,
+    int Floor);
 
 internal sealed record ChallengeNavigationResult(
     bool Succeeded,

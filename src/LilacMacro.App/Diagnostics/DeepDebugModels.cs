@@ -5,26 +5,32 @@ namespace LilacMacro.App.Diagnostics;
 
 public sealed record DeepDebugOptions
 {
-    public const int DefaultCaptureIntervalMilliseconds = 1_000;
+    public const int DefaultFrameRetentionMinutes = 30;
+
+    public const int DefaultCaptureIntervalMilliseconds = 5_000;
+
+    public const int DefaultRetainedArchiveCount = 10;
 
     public const int MinimumCaptureIntervalMilliseconds = 500;
 
-    public const int MaximumCaptureIntervalMilliseconds = 2_000;
+    public const int MaximumCaptureIntervalMilliseconds = 5_000;
 
-    public bool Enabled { get; init; }
+    public bool Enabled { get; init; } = true;
 
-    public int FrameRetentionMinutes { get; init; } = 15;
+    public int FrameRetentionMinutes { get; init; } = DefaultFrameRetentionMinutes;
 
-    public bool AutomaticCleanupEnabled { get; init; } = true;
+    public int RetainedArchiveCount { get; init; } = DefaultRetainedArchiveCount;
 
     public int CaptureIntervalMilliseconds { get; init; } =
         DefaultCaptureIntervalMilliseconds;
 
     public static int NormalizeFrameRetention(int value) => Math.Clamp(value, 1, 120);
 
+    public static int NormalizeRetainedArchiveCount(int value) => Math.Clamp(value, 1, 100);
+
     public static int NormalizeCaptureInterval(int value) => value switch
     {
-        500 or 1_000 or 2_000 => value,
+        500 or 1_000 or 2_000 or 5_000 => value,
         _ => DefaultCaptureIntervalMilliseconds,
     };
 
@@ -32,8 +38,9 @@ public sealed record DeepDebugOptions
         NormalizeCaptureInterval(milliseconds) switch
         {
             500 => 0,
+            1_000 => 1,
             2_000 => 2,
-            _ => 1,
+            _ => 3,
         };
 }
 

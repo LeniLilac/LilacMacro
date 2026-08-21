@@ -131,7 +131,7 @@ public sealed record LocalSessionProvisioningManifest
 
 public sealed record RunnerRuntimeSnapshot
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
     public long Revision { get; init; }
@@ -157,6 +157,7 @@ public enum RunnerTaskMode
     Expedition,
     Event,
     Utilities,
+    Tower,
 }
 
 public sealed record RunnerTaskSnapshot

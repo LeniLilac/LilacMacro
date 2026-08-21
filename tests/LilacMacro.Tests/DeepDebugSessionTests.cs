@@ -13,6 +13,17 @@ public sealed class DeepDebugSessionTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void New_install_defaults_enable_bounded_deep_debug_logs()
+    {
+        DeepDebugSessionService service = new(_root);
+
+        Assert.True(service.Options.Enabled);
+        Assert.Equal(30, service.Options.FrameRetentionMinutes);
+        Assert.Equal(5_000, service.Options.CaptureIntervalMilliseconds);
+        Assert.Equal(10, service.Options.RetainedArchiveCount);
+    }
+
+    [Fact]
     public async Task SessionWritesAgentReadableRedactedArchive()
     {
         DeepDebugSessionService service = new(_root);
@@ -80,6 +91,7 @@ public sealed class DeepDebugSessionTests : IDisposable
     public async Task DisabledRecorderDoesNotCreateSession()
     {
         DeepDebugSessionService service = new(_root);
+        await service.UpdateOptionsAsync(enabled: false, frameRetentionMinutes: 30);
 
         DeepDebugScope? scope = await service.OpenSessionAsync(
             "disabled",
@@ -96,6 +108,7 @@ public sealed class DeepDebugSessionTests : IDisposable
         await service.UpdateOptionsAsync(
             enabled: true,
             frameRetentionMinutes: 999,
+            retainedArchiveCount: 999,
             captureIntervalMilliseconds: 2_000);
 
         DeepDebugSessionService restored = new(_root);
@@ -103,6 +116,7 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.True(restored.Options.Enabled);
         Assert.Equal(120, restored.Options.FrameRetentionMinutes);
         Assert.Equal(2_000, restored.Options.CaptureIntervalMilliseconds);
+        Assert.Equal(100, restored.Options.RetainedArchiveCount);
     }
 
     [Fact]
@@ -231,22 +245,26 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task LocalArchiveCleanupIsIndependentFromAutomaticUploadConsent()
+    public async Task ConfiguredArchiveRetentionAlwaysKeepsOnlyTheNewestLogs()
     {
         DeepDebugSessionService service = new(_root);
         Directory.CreateDirectory(service.DiagnosticsRoot);
-        for (int index = 0; index < 22; index++)
+        for (int index = 0; index < 12; index++)
         {
             string path = Path.Combine(service.DiagnosticsRoot, $"deep-debug-test-{index:D2}.zip");
             await File.WriteAllBytesAsync(path, []);
             File.SetCreationTimeUtc(path, DateTime.UtcNow.AddMinutes(index));
         }
 
-        await service.UpdateOptionsAsync(true, 15, automaticCleanupEnabled: false);
-        Assert.Equal(22, Directory.EnumerateFiles(service.DiagnosticsRoot, "deep-debug-*.zip").Count());
+        await service.UpdateOptionsAsync(true, 30, retainedArchiveCount: 10);
 
-        await service.UpdateOptionsAsync(true, 15, automaticCleanupEnabled: true);
-        Assert.Equal(20, Directory.EnumerateFiles(service.DiagnosticsRoot, "deep-debug-*.zip").Count());
+        string[] retained = Directory.EnumerateFiles(service.DiagnosticsRoot, "deep-debug-*.zip")
+            .Select(Path.GetFileName)
+            .Order(StringComparer.Ordinal)
+            .ToArray()!;
+        Assert.Equal(10, retained.Length);
+        Assert.DoesNotContain("deep-debug-test-00.zip", retained);
+        Assert.DoesNotContain("deep-debug-test-01.zip", retained);
     }
 
     private static async Task<string> ReadAsync(ZipArchive archive, string name)

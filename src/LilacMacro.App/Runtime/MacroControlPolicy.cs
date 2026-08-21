@@ -76,6 +76,7 @@ internal static class MacroControlPolicy
             PlanTaskMode.Challenge => "mode.challenge",
             PlanTaskMode.Expedition => "mode.expedition",
             PlanTaskMode.Event => "mode.event",
+            PlanTaskMode.Tower => "mode.story",
             _ => throw new ArgumentOutOfRangeException(nameof(task)),
         };
         return task.Mode == PlanTaskMode.Expedition &&

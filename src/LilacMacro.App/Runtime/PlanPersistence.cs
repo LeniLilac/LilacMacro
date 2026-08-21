@@ -183,6 +183,12 @@ internal static class PlanPersistence
                 try { UtilityTaskPolicy.Validate(snapshot.Route, snapshot.ShopItemIds); }
                 catch (Exception error) when (error is InvalidDataException or ArgumentException) { return false; }
             }
+            if (mode == PlanTaskMode.Tower)
+            {
+                try { _ = TowerRunPolicy.ParseType(snapshot.Route); }
+                catch (InvalidDataException) { return false; }
+                if (snapshot.DefeatRetries < 1) return false;
+            }
             restored = new PlanTaskPrototype
             {
                 RuntimeId = snapshot.RuntimeId == Guid.Empty ? Guid.NewGuid() : snapshot.RuntimeId,

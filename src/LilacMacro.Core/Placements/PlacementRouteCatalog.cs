@@ -17,6 +17,8 @@ public static class PlacementRouteCatalog
         new("infinite", "INFINITE"),
         new("mastery", "MASTERY"),
         new("challenge", "CHALLENGE"),
+        new(LilacMacro.Core.Automation.TowerRunPolicy.TraitPlacementRouteId, "TRAIT TOWER"),
+        new(LilacMacro.Core.Automation.TowerRunPolicy.TraitlessPlacementRouteId, "TRAITLESS TOWER"),
     ];
 
     public static IReadOnlyList<PlacementRouteDefinition> For(PlacementMapDefinition map)

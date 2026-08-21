@@ -1,0 +1,96 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "b4c9f7f2-3d1a-4978-ab38-ef4ca4db7904",
+  "name": "Tower Multi Floor UI",
+  "notes": "Make sure macro doesnt click a floor thats not the highest, so like ig ocr+img the floor text and click the highest floor text\r\n\r\nBundled runtime evidence slice. Original dataset: tower-multi-floor-ui-20260810-175955. Source frames: 1, 4, 7.",
+  "created_at_utc": "2026-08-10T17:59:55.9230000Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 10548,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-10T18:00:01.9565042Z",
+      "sha256": "c6fa28af28769f978e23a7c889a841aba3593645db4c4aef0560da6b6555da13",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "ef49f6ba-1ea3-4b33-8ae9-1f2c85c541b7",
+          "global_group_id": null,
+          "bounds": {
+            "x": 300,
+            "y": 80,
+            "width": 700,
+            "height": 580
+          },
+          "label": "Tower Floor List",
+          "notes": "Bounded main Tower floor column. Excludes the left subtype sidebar and reward-detail controls; the action is derived only from fresh Floor N OCR inside this region.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0004.png",
+      "captured_at_utc": "2026-08-10T18:00:15.5154115Z",
+      "sha256": "024cc60a816a0d1479f4ebd39f35f70b6fdf82db79fbd75a23f94fe924f89e69",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "ed78357b-0014-456d-ae96-77c9c6b41da6",
+          "global_group_id": null,
+          "bounds": {
+            "x": 300,
+            "y": 80,
+            "width": 700,
+            "height": 580
+          },
+          "label": "Tower Floor List",
+          "notes": "Bounded main Tower floor column. Excludes the left subtype sidebar and reward-detail controls; the action is derived only from fresh Floor N OCR inside this region.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0007.png",
+      "captured_at_utc": "2026-08-10T18:00:28.6668393Z",
+      "sha256": "29d2c2e57aa319238d93ad0034321d9c1b2f91d1dd235bf3e0d438c987c0184c",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "b3975ea5-f7a8-47ed-bfe8-3ec566831f57",
+          "global_group_id": null,
+          "bounds": {
+            "x": 300,
+            "y": 80,
+            "width": 700,
+            "height": 580
+          },
+          "label": "Tower Floor List",
+          "notes": "Bounded main Tower floor column. Excludes the left subtype sidebar and reward-detail controls; the action is derived only from fresh Floor N OCR inside this region.",
+          "minimum_pool_matches": 0,
+          "ocr_trials": []
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,29 @@ namespace LilacMacro.Tests;
 public sealed class MacroPlanPersistenceTests
 {
     [Fact]
+    public void TowerTaskRoundTripsTypeGoalAndDefeatStopLimit()
+    {
+        PlanPrototype source = new("Tower plan",
+        [
+            new PlanTaskPrototype
+            {
+                Mode = PlanTaskMode.Tower,
+                Route = LilacMacro.Core.Automation.TowerRunPolicy.TraitlessRoute,
+                Target = 35,
+                DefeatRetries = 5,
+            },
+        ]);
+
+        Assert.True(PlanPersistence.TryRestore(
+            PlanPersistence.CreateSnapshot([source]), out var restored));
+        PlanTaskPrototype task = Assert.IsType<PlanTaskPrototype>(Assert.Single(restored[0].Blocks));
+        Assert.Equal(PlanTaskMode.Tower, task.Mode);
+        Assert.Equal(LilacMacro.Core.Automation.TowerRunPolicy.TraitlessRoute, task.Route);
+        Assert.Equal(35, task.Target);
+        Assert.Equal(5, task.DefeatRetries);
+    }
+
+    [Fact]
     public async Task FreshSettingsCreateOneEmptyPlan()
     {
         string root = TemporaryRoot();

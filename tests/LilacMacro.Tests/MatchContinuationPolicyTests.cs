@@ -15,6 +15,7 @@ public sealed class MatchContinuationPolicyTests
     [InlineData(PlanTaskMode.Expedition, true)]
     [InlineData(PlanTaskMode.Event, true)]
     [InlineData(PlanTaskMode.Challenge, false)]
+    [InlineData(PlanTaskMode.Tower, false)]
     [InlineData(PlanTaskMode.Utilities, false)]
     public void MacroModeRepeatPolicyMatchesRuntimeContract(PlanTaskMode mode, bool expected) =>
         Assert.Equal(expected, MacroTaskRepeatPolicy.Supports(mode));
@@ -25,6 +26,7 @@ public sealed class MatchContinuationPolicyTests
     [InlineData((int)WireGameMode.Expedition, true)]
     [InlineData((int)WireGameMode.Event, true)]
     [InlineData((int)WireGameMode.Challenge, false)]
+    [InlineData((int)WireGameMode.Tower, false)]
     public void WireModeRepeatPolicyMatchesRuntimeContract(int mode, bool expected) =>
         Assert.Equal(expected, WireGameModeRepeatPolicy.Supports((WireGameMode)mode));
 

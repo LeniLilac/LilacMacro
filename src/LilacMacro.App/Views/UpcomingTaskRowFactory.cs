@@ -34,7 +34,9 @@ internal static class UpcomingTaskRowFactory
                         ? $"NEXT {until:MM-dd HH:mm}Z"
                         : task.Mode is PlanTaskMode.Utilities or PlanTaskMode.Challenge
                             ? task.TargetLabel
-                            : $"{victories.GetValueOrDefault(task)}/{task.Target} W";
+                            : task.Mode == PlanTaskMode.Tower
+                                ? $"FLOOR {victories.GetValueOrDefault(task)}/{task.Target}"
+                                : $"{victories.GetValueOrDefault(task)}/{task.Target} W";
                 return new UpcomingTaskRow(index + 1, task.Name, detail, progress);
             })
             .ToArray();

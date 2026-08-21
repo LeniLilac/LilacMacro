@@ -294,6 +294,7 @@ public partial class MacroDashboardPage : UserControl
         if (normalizeStartupSettings) markStartupSettingsNormalized();
         PlanTaskPrototype? lobbyHandoffFrom = _recovery.TakeOpportunisticHandoff();
         PlanTaskPrototype? repeatedTask = null;
+        StoryWireTestOptions? repeatedOptions = null;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -301,7 +302,9 @@ public partial class MacroDashboardPage : UserControl
             DateTimeOffset now = DateTimeOffset.UtcNow;
             bool repeatedEntry = repeatedTask is not null;
             PlanTaskPrototype? task = repeatedTask ?? SelectEligibleTask(plan, now);
+            StoryWireTestOptions? entryOptions = repeatedEntry ? repeatedOptions : null;
             repeatedTask = null;
+            repeatedOptions = null;
             if (task is null)
             {
                 PlanTaskPrototype[] allPending = MacroPriorityPolicy.Flatten(plan, _completedLoopRuns)
@@ -375,9 +378,11 @@ public partial class MacroDashboardPage : UserControl
                 continue;
             }
 
-            StoryWireTestOptions options = await _taskOptions.CreateAsync(task, device, cancellationToken);
+            StoryWireTestOptions options = entryOptions ??
+                await _taskOptions.CreateAsync(task, device, cancellationToken);
             if (!_control.IsTeamSwapEnabled(DateTimeOffset.UtcNow) &&
-                !teamState.CanReuse(options.TeamNumber))
+                (task.Mode == PlanTaskMode.Tower && !repeatedEntry ||
+                 task.Mode != PlanTaskMode.Tower && !teamState.CanReuse(options.TeamNumber)))
             {
                 DateTimeOffset until = _control.SnapshotExpiry;
                 _blockedUntil[task] = until;
@@ -386,7 +391,10 @@ public partial class MacroDashboardPage : UserControl
                 RefreshUpcomingTasks(plan);
                 continue;
             }
-            options = options with { SkipTeamLoad = teamState.CanReuse(options.TeamNumber) };
+            options = options with
+            {
+                SkipTeamLoad = task.Mode != PlanTaskMode.Tower && teamState.CanReuse(options.TeamNumber),
+            };
             Progress<StoryWireProgress> progress = new(value =>
             {
                 AppendLog($"{StoryWireTestRunner.Format(value.Stage)} | {value.Detail}");
@@ -396,6 +404,7 @@ public partial class MacroDashboardPage : UserControl
                 ? await _runner.RunRepeatedAsync(options, progress, cancellationToken)
                 : await _runner.RunAsync(options, progress, cancellationToken);
             if (!result.Succeeded) throw new InvalidOperationException(result.Status);
+            options = options.ApplyResolved(result);
             teamState.MarkLoaded(options.TeamNumber);
 
             if (result.UnavailableUntilUtc is DateTimeOffset unavailableUntil)
@@ -417,16 +426,9 @@ public partial class MacroDashboardPage : UserControl
                 ?? throw new InvalidOperationException("The completed match did not return a terminal outcome.");
             bool victory = outcome == MatchTerminalOutcome.Victory;
             NotifyDiscordOutcome(plan, task, victory);
-            if (victory)
-            {
-                _victories[task] = _victories.GetValueOrDefault(task) + 1;
-            }
-            else
-            {
-                _defeats[task] = _defeats.GetValueOrDefault(task) + 1;
-                if (_defeats[task] > task.DefeatRetries)
-                    throw new InvalidOperationException($"{task.Name} exceeded its defeat retry limit.");
-            }
+            MatchTaskProgressPolicy.Apply(
+                task, task.Name, task.Mode == PlanTaskMode.Tower, victory, options.TowerFloor,
+                task.DefeatRetries, _victories, _defeats);
             _runStats.Add(new RunStatsPoint(_runtime.Elapsed, victory));
             _recovery.MarkTaskSucceeded(task);
             madeProgress();
@@ -449,7 +451,8 @@ public partial class MacroDashboardPage : UserControl
             bool modeSupportsRepeat = MacroTaskRepeatPolicy.Supports(task.Mode);
             bool sameTaskSelected = ReferenceEquals(task, nextTask);
             bool hasPendingCodes = _lobbyReset.HasPendingCodes(redeemedCodes, terminalDecisionAt);
-            bool shouldRepeat = MatchContinuationPolicy.ShouldRepeat(
+            bool towerDefeatRepeat = task.Mode == PlanTaskMode.Tower && !victory;
+            bool shouldRepeat = towerDefeatRepeat || MatchContinuationPolicy.ShouldRepeat(
                     hasVerifiedTerminalOutcome: true,
                     modeSupportsRepeat,
                     sameTaskSelected) &&
@@ -464,15 +467,24 @@ public partial class MacroDashboardPage : UserControl
                 SameTaskSelected = sameTaskSelected,
                 HasPendingCodes = hasPendingCodes,
                 Decision = shouldRepeat
-                    ? result.RepeatedPrestartReady ? "verified_prestart" : "repeat_stage"
+                    ? towerDefeatRepeat ? "repeat_floor" : result.RepeatedPrestartReady ? "verified_prestart" : "repeat_stage"
                     : "lobby_reset",
             });
             if (shouldRepeat)
             {
+                if (towerDefeatRepeat)
+                {
+                    await _runner.RepeatTowerFloorAsync(options, progress, cancellationToken);
+                    AppendLog("REPEAT FLOOR CONTINUATION | TEAM + CAMERA RETAINED");
+                    repeatedTask = task;
+                    repeatedOptions = options;
+                    continue;
+                }
                 if (result.RepeatedPrestartReady)
                 {
                     AppendLog("INFINITE CONTINUATION | VERIFIED PRESTART | TEAM + CAMERA RETAINED");
                     repeatedTask = task;
+                    repeatedOptions = options;
                     continue;
                 }
                 try
@@ -480,6 +492,7 @@ public partial class MacroDashboardPage : UserControl
                     await _runner.RepeatStageAsync(outcome, options, progress, cancellationToken);
                     AppendLog("REPEAT CONTINUATION | TEAM + CAMERA RETAINED");
                     repeatedTask = task;
+                    repeatedOptions = options;
                     continue;
                 }
                 catch (Exception error) when (error is not OperationCanceledException)

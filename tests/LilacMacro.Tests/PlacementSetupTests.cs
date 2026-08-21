@@ -126,7 +126,7 @@ public sealed class PlacementSetupTests
         IReadOnlyList<PlacementRouteDefinition> routes = PlacementRouteCatalog.For(story);
 
         Assert.Equal(
-            ["SHARED", "ACT 1", "ACT 2", "ACT 3", "ACT 4", "ACT 5", "INFINITE", "MASTERY", "CHALLENGE"],
+            ["SHARED", "ACT 1", "ACT 2", "ACT 3", "ACT 4", "ACT 5", "INFINITE", "MASTERY", "CHALLENGE", "TRAIT TOWER", "TRAITLESS TOWER"],
             routes.Select(route => route.Label));
         Assert.True(routes[0].IsShared);
     }

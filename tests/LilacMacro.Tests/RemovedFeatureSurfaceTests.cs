@@ -17,6 +17,35 @@ public sealed class RemovedFeatureSurfaceTests
         Assert.DoesNotContain("UPLOAD ARCHIVE", settings, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Enable manual recording controls", settings, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Recording name", settings, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Capture frames on failure", settings, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Include current run log", settings, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Deep Debug Logs", settings, StringComparison.Ordinal);
+        Assert.Contains("NEWEST DEEP DEBUG LOGS", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("DiagnosticsStatusText", settings, StringComparison.Ordinal);
+
+        string settingsCode = File.ReadAllText(Path.Combine(
+            repository,
+            "src",
+            "LilacMacro.App",
+            "Views",
+            "SettingsPage.xaml.cs"));
+        Assert.DoesNotContain("DiagnosticsStatusText", settingsCode, StringComparison.Ordinal);
+        Assert.Contains("DEEP DEBUG LOG SAVED", settingsCode, StringComparison.Ordinal);
+
+        string privacyPanel = File.ReadAllText(Path.Combine(
+            repository,
+            "src",
+            "LilacMacro.App",
+            "Views",
+            "PrivacySettingsPanel.xaml"));
+        string privacyPanelCode = File.ReadAllText(Path.Combine(
+            repository,
+            "src",
+            "LilacMacro.App",
+            "Views",
+            "PrivacySettingsPanel.xaml.cs"));
+        Assert.DoesNotContain("Choices saved locally", privacyPanel, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Choices saved locally", privacyPanelCode, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

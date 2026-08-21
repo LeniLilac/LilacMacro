@@ -43,7 +43,7 @@
                         <Button Width="112" Style="{DynamicResource SettingsButtonStyle}" Click="Privacy_OnClick" Content="PRIVACY" />
                         <Button Width="112" Margin="8,0,0,0" Style="{DynamicResource SettingsButtonStyle}" Click="Terms_OnClick" Content="TERMS" />
                         <TextBlock x:Name="SavedText" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="9"
-                                   Foreground="{DynamicResource InkSoftBrush}" Text="Choices saved locally" />
+                                   Foreground="{DynamicResource InkSoftBrush}" />
                     </StackPanel>
                 </Grid>
             </StackPanel>

@@ -63,14 +63,17 @@ internal sealed class RunnerSnapshotBuilder
         return snapshots;
     }
 
-    private static IEnumerable<DebugStateSpec> StateSpecs() => typeof(DebugWorkflowCatalog)
+    private static IEnumerable<DebugStateSpec> StateSpecs() => StateSpecs(typeof(DebugWorkflowCatalog))
+        .Concat(TowerWorkflowCatalog.All())
+        .Concat(ExpeditionCheckpointStateCatalog.All())
+        .OrderBy(state => state.Name, StringComparer.Ordinal);
+
+    private static IEnumerable<DebugStateSpec> StateSpecs(Type catalog) => catalog
         .GetFields(BindingFlags.Public | BindingFlags.Static)
         .Where(field => field.FieldType == typeof(DebugStateSpec))
         .Select(field => (DebugStateSpec?)field.GetValue(null))
         .Where(state => state is not null)
-        .Cast<DebugStateSpec>()
-        .Concat(ExpeditionCheckpointStateCatalog.All())
-        .OrderBy(state => state.Name, StringComparer.Ordinal);
+        .Cast<DebugStateSpec>();
 
     private static RunnerTaskSnapshot CreateTask(PlanTaskPrototype task, int index) => new()
     {
@@ -83,6 +86,7 @@ internal sealed class RunnerSnapshotBuilder
             PlanTaskMode.Challenge => RunnerTaskMode.Challenge,
             PlanTaskMode.Expedition => RunnerTaskMode.Expedition,
             PlanTaskMode.Event => RunnerTaskMode.Event,
+            PlanTaskMode.Tower => RunnerTaskMode.Tower,
             PlanTaskMode.Utilities => RunnerTaskMode.Utilities,
             _ => throw new InvalidOperationException($"Unsupported local runner mode: {task.ModeLabel}."),
         },

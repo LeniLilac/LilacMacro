@@ -179,6 +179,7 @@ public sealed class RuntimeEvidencePolicyTests
             .GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
             .Where(field => field.FieldType == typeof(DebugStateSpec))
             .Select(field => Assert.IsType<DebugStateSpec>(field.GetValue(null)))
+            .Concat(TowerWorkflowCatalog.All())
             .Concat(ExpeditionCheckpointStateCatalog.All())
             .Concat(ExpeditionRewardStateCatalog.All())
             .Concat(DebugCodeWorkflowCatalog.All());

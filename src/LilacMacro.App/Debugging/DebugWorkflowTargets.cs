@@ -6,7 +6,9 @@ internal static class DebugWorkflowTargets
 {
     public static readonly IReadOnlyList<OcrTargetRule> ResultSupport =
     [
-        new("Repeat Stage", "repeat stage", "repeat"),
+        new("Repeat Stage", "repeat stage"),
+        new("Repeat Floor", "repeat floor"),
+        new("Next Floor", "next floor"),
         new("View Party", "view party", "party"),
         new("Game Stats", "game stats"),
         new("Gained Rewards", "gained rewards"),
@@ -14,6 +16,20 @@ internal static class DebugWorkflowTargets
         new("Total Yen", "total yen"),
         new("Total Kills", "total kills"),
         new("Total Damage", "total damage"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> TowerSelect =
+    [
+        new("Tower", "tower"),
+        new("Traitless Tower", "traitless tower"),
+        new("Rewards", "rewards"),
+        new("Leaderboard", "leaderboard"),
+        new("Back", "back"),
+    ];
+
+    public static readonly IReadOnlyList<OcrTargetRule> TowerFloors =
+    [
+        new("Floor", "floor"),
     ];
 
     public static readonly IReadOnlyList<OcrTargetRule> Lobby =

@@ -90,7 +90,7 @@ internal static class MacroPriorityPolicy
         victories.GetValueOrDefault(task) < task.Target;
 
     public static bool Supported(PlanTaskPrototype task) =>
-        task.Mode is PlanTaskMode.Story or PlanTaskMode.Raid or PlanTaskMode.Challenge or PlanTaskMode.Expedition or PlanTaskMode.Event or PlanTaskMode.Utilities;
+        task.Mode is PlanTaskMode.Story or PlanTaskMode.Raid or PlanTaskMode.Challenge or PlanTaskMode.Expedition or PlanTaskMode.Event or PlanTaskMode.Tower or PlanTaskMode.Utilities;
 
     private static void Add(
         PlanBlockPrototype block,

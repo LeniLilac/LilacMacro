@@ -87,7 +87,7 @@ Purpose: task and priority configuration.
 - Plan row actions match Setup rows: a compact `Edit` button followed by the shared Lucide trash button.
 - Keep plan creation, copy, rename, and deletion in one compact toolbar.
 - Add and edit tasks through one centered modal rather than an anchored popover or permanent editor rail.
-- Support the permanent Story, Raid, Challenge, and Expedition modes, limited Event acts, and Utilities in the editor.
+- Support the permanent Story, Raid, Challenge, Expedition, and Tower modes, limited Event acts, and Utilities in the editor. Tower tasks choose Trait Tower or Traitless Tower, a goal floor, and a consecutive-defeat stop limit.
 - Support root tasks and repeat loops. Loop settings are `Forever` or a bounded repeat count; nested tasks retain global priority and can be targeted directly from the task editor. Forever loops are normalized to the plan-level tail, their grips are disabled, and plan-level tasks or finite loops can never remain below them.
 - Match ExpeditionsMacro's task fields: destination, mode, route and target schedule, defeat retries, challenge types, Expedition difficulty/extraction/boss count, and Story hard mode.
 - Committed plan edits, ordering, loops, names, and the selected plan autosave atomically to the versioned Macro settings contract. Application shutdown and Macro start flush queued writes. Runtime scheduler consumption remains Prototype.
@@ -161,7 +161,7 @@ SETUP / STORY / SCHOOL GROUNDS                         [Back to maps]
 - Keep route selection in one compact header dropdown. Do not use a permanent route rail.
 - Stack the timeline below the map as normal page content. The map and docked timeline share one vertical workspace scroller, so scrolling continues through the complete Match Steps or Match Settings content. Do not use a fixed-height dock row, horizontal divider, or nested docked timeline scrollbar.
 - Popout moves the same live editor into a separate resizable window and restores bounded internal scrolling there. Its title bar contains only window controls; it does not repeat a Match Timeline heading that is absent from the docked panel. Dock or closing the window returns it below the map without changing the selected route or losing edits.
-- Story maps expose Shared, Act 1 through Act 5, Infinite, Mastery, and Challenge routes.
+- Story maps expose Shared, Act 1 through Act 5, Infinite, Mastery, Challenge, Trait Tower, and Traitless Tower routes.
 - Exact routes use the Shared setup until their first committed edit automatically creates an independent override. Reset removes that override and resumes Shared inheritance. Reset on Shared removes every authored action while retaining the required Start Game boundary.
 - Raid map cards expose Shared plus the act represented by that card. Expedition maps use one Default setup.
 - `Copy Setup` atomically replaces the active route from a selected map and route, including its saved team, authoring defaults, placements, and every timeline action. Placement coordinates scale between different source and target image dimensions. Reference views of one map already share one setup and do not need copying.
@@ -194,7 +194,7 @@ Purpose: keybinds, webhooks, Roblox private server links, and other application 
 - Local instances presents This desktop plus compact Runner rows with session state, shared/separate configuration, endpoint, `OPEN`, and `REMOVE`. Machine actions remain one terse row: setup, repair, add shared, add separate, and remove all.
 - Discord owns webhook and failure-notification fields.
 - Keybinds uses a compact name, scope, and binding list.
-- Diagnostics owns failure evidence, Deep Debug, local archive cleanup, and default-off automatic error reports. It has no recording or manual diagnostic-upload surface.
+- Diagnostics owns default-on Deep Debug Logs, a 30-minute default frame window, a five-second default capture interval, configurable newest-log retention defaulting to 10, and default-off automatic error reports. Failure frames and structured run events are always included when their owning diagnostic path runs; there are no redundant switches or persistent status row, and completed archive-save feedback uses the shared bottom-right notification. Recording and manual diagnostic-upload surfaces remain absent.
 - Controls are session-only prototypes unless their current implementation explicitly says otherwise. Theme mode and color-family selection update live and persist with display/update preferences, press-then-key bindings, private-server/webhook values, Discord failure options, Plan state, and local-instance profiles across versioned artifacts. Every macro UI runs on its own desktop; there is no run-target selector. Current Story/Raid Play and Unit inventory bindings may be unset to use verified OCR button navigation. Areas exposes the same optional binding contract for its future runner. Webhook delivery, private-server protocol launch, coordinated updates, and automatic deep-debug diagnostics are connected.
 
 ## Visual language

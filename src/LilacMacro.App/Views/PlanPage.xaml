@@ -243,12 +243,13 @@
                             <TextBlock Style="{StaticResource FieldLabelStyle}" Text="ADD TO" />
                             <ComboBox x:Name="TaskDestinationCombo" Margin="0,6,0,0" DisplayMemberPath="Name" />
                             <TextBlock Margin="0,14,0,6" Style="{StaticResource FieldLabelStyle}" Text="MODE" />
-                            <UniformGrid Columns="3" Rows="2" Margin="-4">
+                            <UniformGrid Columns="4" Rows="2" Margin="-4">
                                 <RadioButton x:Name="ChallengeModeButton" GroupName="TaskMode" Tag="Challenge" Content="CHALLENGE" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
                                 <RadioButton x:Name="ExpeditionModeButton" GroupName="TaskMode" Tag="Expedition" Content="EXPEDITION" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
                                 <RadioButton x:Name="StoryModeButton" GroupName="TaskMode" Tag="Story" Content="STORY" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
                                 <RadioButton x:Name="RaidModeButton" GroupName="TaskMode" Tag="Raid" Content="RAID" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
                                 <RadioButton x:Name="EventModeButton" GroupName="TaskMode" Tag="Event" Content="EVENT" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
+                                <RadioButton x:Name="TowerModeButton" GroupName="TaskMode" Tag="Tower" Content="TOWER" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
                                 <RadioButton x:Name="UtilitiesModeButton" GroupName="TaskMode" Tag="Utilities" Content="UTILITIES" Style="{StaticResource PlanModeChoiceButtonStyle}" Checked="TaskModeButton_OnChecked" />
                             </UniformGrid>
                             <StackPanel x:Name="TaskSchedulePanel" Margin="0,10,0,0">
@@ -276,7 +277,7 @@
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="ROUTE" />
+                                        <TextBlock x:Name="TaskRouteLabel" Style="{StaticResource PlanTaskOptionLabelStyle}" Text="ROUTE" />
                                         <ComboBox x:Name="TaskRouteCombo" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right"
                                                   SelectionChanged="TaskRouteCombo_OnSelectionChanged" />
                                     </Grid>
@@ -318,7 +319,7 @@
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="TaskOptionLabel" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Style="{StaticResource PlanTaskOptionLabelStyle}" Text="DEFEAT RETRIES" />
+                                        <TextBlock x:Name="TaskRetriesLabel" Style="{StaticResource PlanTaskOptionLabelStyle}" Text="DEFEAT RETRIES" />
                                         <TextBox x:Name="TaskRetriesText" Grid.Column="1" Width="220" Margin="24,0,0,0" HorizontalAlignment="Right" Text="0" />
                                     </Grid>
                                 </Border>

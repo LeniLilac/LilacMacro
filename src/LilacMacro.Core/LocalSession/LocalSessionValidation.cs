@@ -159,6 +159,13 @@ public static class LocalSessionValidation
                 }
                 catch (InvalidDataException error) { errors.Add(error.Message); }
             }
+            if (task.Mode == RunnerTaskMode.Tower)
+            {
+                try { _ = TowerRunPolicy.ParseType(task.Route); }
+                catch (InvalidDataException error) { errors.Add(error.Message); }
+                if (task.DefeatRetries < 1)
+                    errors.Add($"Snapshot task {task.Id} must stop after at least one Tower defeat.");
+            }
             if (task.Mode == RunnerTaskMode.Utilities)
             {
                 try { UtilityTaskPolicy.Validate(task.Route, task.ShopItemIds); }
@@ -169,6 +176,11 @@ public static class LocalSessionValidation
             (!snapshot.KeyBindings.TryGetValue("AreasMenu", out int? areasMenu) || areasMenu is null))
         {
             errors.Add("Snapshot shop and refuel tasks require an Areas menu key binding.");
+        }
+        if (snapshot.Tasks.Any(task => task.Mode == RunnerTaskMode.Tower) &&
+            (!snapshot.KeyBindings.TryGetValue("UnitInventory", out int? unitInventory) || unitInventory is null))
+        {
+            errors.Add("Snapshot Tower tasks require a Unit inventory key binding.");
         }
         if (snapshot.PlacementSetups.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
             errors.Add("Snapshot placement setups are missing.");

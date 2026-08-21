@@ -16,6 +16,8 @@ internal sealed class StoryWireTestRunner(
     private readonly DebugOcrController _debug = new(workspace, ocr);
     private readonly DebugLobbyRunner _lobby = new(workspace, ocr);
     private readonly ChallengeWireNavigator _challenge = new(workspace, ocr, deepDebug);
+    private readonly TowerWireNavigator _tower = new(workspace, ocr, deepDebug);
+    private readonly TowerTeamLoader _towerTeam = new(workspace, ocr, deepDebug);
     private readonly EventWireNavigator _event = new(workspace, ocr);
     private readonly WireStateService _state = new(workspace, deepDebug);
     private readonly WireTransitionService _transitions = new(workspace, ocr, deepDebug);
@@ -33,7 +35,15 @@ internal sealed class StoryWireTestRunner(
 
         if (!await CheckAsync(StoryWireStage.Lobby, DebugWorkflowCatalog.Lobby, _debug.CheckLobbyAsync, options, progress, cancellationToken))
             return Failed(StoryWireStage.Lobby);
-        if (options.SkipTeamLoad)
+        if (options.GameMode == WireGameMode.Tower)
+        {
+            progress.Report(new StoryWireProgress(
+                StoryWireStage.LoadTeam,
+                StoryWireStageStatus.Waiting,
+                "TEAM DEFERRED UNTIL TOWER MAP IS KNOWN",
+                []));
+        }
+        else if (options.SkipTeamLoad)
         {
             progress.Report(new StoryWireProgress(
                 StoryWireStage.LoadTeam,
@@ -62,7 +72,7 @@ internal sealed class StoryWireTestRunner(
                     progress,
                     cancellationToken))
                 return Failed(StoryWireStage.Teams);
-            if (!await LoadTeamAsync(options, progress, cancellationToken))
+            if (!await LoadTeamAsync(options, DebugWorkflowCatalog.Lobby, progress, cancellationToken))
                 return Failed(StoryWireStage.LoadTeam);
         }
         if (options.GameMode == WireGameMode.Event)
@@ -109,7 +119,20 @@ internal sealed class StoryWireTestRunner(
                     cancellationToken))
                 return Failed(StoryWireStage.Play);
         }
-        if (options.GameMode == WireGameMode.Challenge)
+        if (options.GameMode == WireGameMode.Tower)
+        {
+            if (!await TransitionAsync(
+                    StoryWireStage.TowerType,
+                    DebugWorkflowCatalog.PlayUi,
+                    TowerWorkflowCatalog.TowerSelect,
+                    token => _debug.SelectModeAsync("Tower", options.Device, token),
+                    options, progress, cancellationToken))
+                return Failed(StoryWireStage.TowerType);
+            TowerNavigationResult tower = await _tower.NavigateAsync(options, progress, cancellationToken);
+            if (!tower.Succeeded || tower.Map is null) return Failed(StoryWireStage.TowerStage);
+            options = options with { Map = tower.Map, TowerFloor = tower.Floor };
+        }
+        else if (options.GameMode == WireGameMode.Challenge)
         {
             ChallengeNavigationResult challenge = await NavigateChallengeAsync(options, progress, cancellationToken);
             if (!challenge.Succeeded) return Failed(StoryWireStage.ChallengeState);
@@ -186,9 +209,26 @@ internal sealed class StoryWireTestRunner(
         if (!options.RunMatchRuntime)
             return new StoryWireTestResult(true, StoryWireStage.MatchPrestart, "MATCH PRESTART VERIFIED");
 
-        return options.GameMode == WireGameMode.Expedition
+        if (options.GameMode == WireGameMode.Tower)
+        {
+            StoryWireTestOptions? loaded = await _towerTeam.LoadAsync(
+                options, progress, cancellationToken).ConfigureAwait(false);
+            if (loaded is null)
+                return Failed(StoryWireStage.LoadTeam);
+            options = loaded;
+        }
+
+        StoryWireTestResult result = options.GameMode == WireGameMode.Expedition
             ? await _expeditionRuntime.RunAsync(options, progress, alignCamera: true, cancellationToken)
             : await _matchRuntime.RunAsync(options, progress, alignCamera: true, cancellationToken);
+        return options.GameMode == WireGameMode.Tower && result.Succeeded
+            ? result with
+            {
+                ResolvedMap = options.Map,
+                ResolvedTeam = options.TeamNumber,
+                TowerFloor = options.TowerFloor,
+            }
+            : result;
     }
 
     public async Task<StoryWireTestResult> RunRepeatedAsync(
@@ -198,7 +238,7 @@ internal sealed class StoryWireTestRunner(
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(progress);
-        if (!WireGameModeRepeatPolicy.Supports(options.GameMode))
+        if (!WireGameModeRepeatPolicy.Supports(options.GameMode) && options.GameMode != WireGameMode.Tower)
             throw new InvalidOperationException($"{options.GameMode} cannot continue through Repeat Stage.");
 
         await _debug.PrepareAsync(cancellationToken);
@@ -228,6 +268,12 @@ internal sealed class StoryWireTestRunner(
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken) =>
         _matchRuntime.RepeatStageAsync(outcome, options, progress, cancellationToken);
+
+    public Task RepeatTowerFloorAsync(
+        StoryWireTestOptions options,
+        IProgress<StoryWireProgress> progress,
+        CancellationToken cancellationToken) =>
+        _matchRuntime.RepeatTowerFloorAsync(options, progress, cancellationToken);
 
     private async Task<ChallengeNavigationResult> NavigateChallengeAsync(
         StoryWireTestOptions options,
@@ -275,6 +321,7 @@ internal sealed class StoryWireTestRunner(
 
     private async Task<bool> LoadTeamAsync(
         StoryWireTestOptions options,
+        DebugStateSpec returnState,
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken)
     {
@@ -295,7 +342,7 @@ internal sealed class StoryWireTestRunner(
             ? await TransitionAsync(
                 StoryWireStage.LoadTeam,
                 DebugWorkflowCatalog.TeamSwap,
-                DebugWorkflowCatalog.Lobby,
+                returnState,
                 token => PressNavigationKeyAsync(
                     StoryWireStage.LoadTeam,
                     unitInventoryKey,
@@ -308,7 +355,7 @@ internal sealed class StoryWireTestRunner(
             : await TransitionAsync(
                 StoryWireStage.LoadTeam,
                 DebugWorkflowCatalog.TeamSwap,
-                DebugWorkflowCatalog.Lobby,
+                returnState,
                 token => _lobby.CloseUnitsViaButtonAsync(options.Device, token),
                 options,
                 progress,
@@ -432,6 +479,9 @@ internal sealed class StoryWireTestRunner(
         StoryWireStage.MatchPreview => "MATCH PREVIEW",
         StoryWireStage.MatchPrestart => "MATCH PRESTART",
         StoryWireStage.MatchRuntime => "MATCH RUNTIME",
+        StoryWireStage.TowerType => "TOWER TYPE",
+        StoryWireStage.TowerFloor => "TOWER FLOOR",
+        StoryWireStage.TowerStage => "TOWER STAGE",
         _ => stage.ToString().ToUpperInvariant(),
     };
 

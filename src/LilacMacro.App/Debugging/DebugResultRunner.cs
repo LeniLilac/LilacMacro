@@ -39,4 +39,19 @@ internal sealed class DebugResultRunner(
             cancellationToken);
         return ClickReport(snapshot, repeat, point, "CENTER");
     }
+
+    public async Task<DebugRunReport> RepeatFloorAsync(
+        DebugStateSpec state,
+        string device,
+        CancellationToken cancellationToken)
+    {
+        DebugOcrSnapshot snapshot = await _states.RunAsync(state, device, cancellationToken);
+        if (!snapshot.Evaluation.IsMatch) return FailedState(snapshot);
+        OcrTargetMatch? repeat = snapshot.Evaluation.Matches.FirstOrDefault(
+            match => match.Target.Equals("Repeat Floor", StringComparison.Ordinal));
+        if (repeat is null) return MissingTarget(snapshot, "REPEAT FLOOR");
+        PixelPoint point = repeat.Region.Bounds.Center;
+        await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, point, cancellationToken);
+        return ClickReport(snapshot, repeat, point, "CENTER");
+    }
 }

@@ -2,6 +2,7 @@ using LilacMacro.App.Debugging;
 using LilacMacro.App.Views;
 using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Placements;
+using LilacMacro.Core.Automation;
 using System.Text.RegularExpressions;
 
 namespace LilacMacro.App.Runtime;
@@ -11,6 +12,7 @@ internal sealed class MacroTaskOptionsFactory(
     PlacementSetupStore placements)
 {
     private readonly ChallengePlacementResolver _challengePlacements = new(placements);
+    private readonly TowerPlacementResolver _towerPlacements = new(placements);
 
     public async Task<StoryWireTestOptions> CreateAsync(
         PlanTaskPrototype task,
@@ -23,15 +25,25 @@ internal sealed class MacroTaskOptionsFactory(
             PlanTaskMode.Challenge => WireGameMode.Challenge,
             PlanTaskMode.Expedition => WireGameMode.Expedition,
             PlanTaskMode.Event => WireGameMode.Event,
+            PlanTaskMode.Tower => WireGameMode.Tower,
             _ => WireGameMode.Story,
         };
-        (string mapName, StoryAct act) = gameMode == WireGameMode.Challenge
+        TowerType towerType = gameMode == WireGameMode.Tower
+            ? TowerRunPolicy.ParseType(task.Route)
+            : TowerType.Trait;
+        (string mapName, StoryAct act) = gameMode is WireGameMode.Challenge or WireGameMode.Tower
             ? ("AUTO", StoryAct.Act1)
             : ParseRoute(task.Route);
+        if (gameMode == WireGameMode.Tower)
+            await _towerPlacements.ValidateAsync(towerType, cancellationToken);
         int team = gameMode == WireGameMode.Challenge
             ? await _challengePlacements.ResolveCommonTeamAsync(cancellationToken)
-            : await ResolveTeamAsync(gameMode, mapName, act, cancellationToken);
+            : gameMode == WireGameMode.Tower
+                ? 1
+                : await ResolveTeamAsync(gameMode, mapName, act, cancellationToken);
         MacroRuntimeKeySnapshot keys = ownerState.KeyBindings.Snapshot();
+        if (gameMode == WireGameMode.Tower && keys.UnitInventory is null)
+            throw new InvalidDataException("Tower tasks require a Unit inventory key binding for the in-match team swap.");
         RegularChallengeType[] challengeTypes = gameMode == WireGameMode.Challenge
             ? EnabledChallengeTypes(task)
             : [];
@@ -53,7 +65,8 @@ internal sealed class MacroTaskOptionsFactory(
             InfiniteWave: task.InfiniteWave,
             BossesBeforeExtract: task.BossesBeforeExtract,
             ExtractAtCheckpoint: task.ExtractAtCheckpoint,
-            ExpeditionRewardTarget: task.RewardTarget);
+            ExpeditionRewardTarget: task.RewardTarget,
+            TowerType: towerType);
     }
 
     private async Task<int> ResolveTeamAsync(

@@ -47,6 +47,9 @@ internal sealed class PlacementPlaybackService(
         CancellationToken cancellationToken) =>
         _terminal.RepeatAsync(outcome, device, cancellationToken);
 
+    public Task RepeatFloorAsync(string device, CancellationToken cancellationToken) =>
+        _terminal.RepeatFloorAsync(device, cancellationToken);
+
     public async Task<int> RunSetupAsync(
         PlacementSetupDocument document,
         PlacementRouteSetup route,

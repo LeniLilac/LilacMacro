@@ -16,6 +16,8 @@ public partial class PlanPage : UserControl
         "Villain Invasion · Act 1", "Villain Invasion · Act 2", "Villain Invasion · Act 3",
         "Villain Invasion · Act 4",
     ];
+    private static readonly string[] TowerRoutes =
+        [TowerRunPolicy.TraitRoute, TowerRunPolicy.TraitlessRoute];
     private static readonly string[] UtilityRoutes =
     [
         .. ResourceRefuelPolicy.Routes,
@@ -188,6 +190,11 @@ public partial class PlanPage : UserControl
             return;
         }
         if (!int.TryParse(TaskRetriesText.Text, out int retries)) retries = 0;
+        if (_editorMode == PlanTaskMode.Tower && retries < 1)
+        {
+            AppToastService.ShowError("INVALID DEFEAT LIMIT", "Enter at least 1 defeat before stop.");
+            return;
+        }
         if (!int.TryParse(TaskBossNodesText.Text, out int bosses)) bosses = 1;
         int infiniteWave = 140;
         if (IsInfiniteStory && (!int.TryParse(TaskInfiniteWaveText.Text, out infiniteWave) || infiniteWave is < 1 or > 999))
@@ -267,6 +274,7 @@ public partial class PlanPage : UserControl
             PlanTaskMode.Story => StoryModeButton,
             PlanTaskMode.Raid => RaidModeButton,
             PlanTaskMode.Event => EventModeButton,
+            PlanTaskMode.Tower => TowerModeButton,
             PlanTaskMode.Utilities => UtilitiesModeButton,
             _ => ChallengeModeButton,
         };
@@ -279,22 +287,27 @@ public partial class PlanPage : UserControl
         bool utility = _editorMode == PlanTaskMode.Utilities;
         bool expedition = _editorMode == PlanTaskMode.Expedition;
         bool story = _editorMode == PlanTaskMode.Story;
+        bool tower = _editorMode == PlanTaskMode.Tower;
         TaskSchedulePanel.Visibility = challenge ? Visibility.Collapsed : Visibility.Visible;
         TaskOptionsPanel.Visibility = utility ? Visibility.Collapsed : Visibility.Visible;
         TaskOptionsPanel.Margin = challenge ? new Thickness(0, 10, 0, 0) : new Thickness(0);
-        TaskRetriesPanel.Visibility = _editorMode is PlanTaskMode.Challenge or PlanTaskMode.Story or PlanTaskMode.Raid or PlanTaskMode.Event ? Visibility.Visible : Visibility.Collapsed;
+        TaskRetriesPanel.Visibility = _editorMode is PlanTaskMode.Challenge or PlanTaskMode.Story or PlanTaskMode.Raid or PlanTaskMode.Event or PlanTaskMode.Tower ? Visibility.Visible : Visibility.Collapsed;
         TaskChallengePanel.Visibility = challenge ? Visibility.Visible : Visibility.Collapsed;
         TaskExpeditionPanel.Visibility = expedition ? Visibility.Visible : Visibility.Collapsed;
         TaskStoryPanel.Visibility = story ? Visibility.Visible : Visibility.Collapsed;
         TaskStoryRoutePanel.Visibility = story ? Visibility.Visible : Visibility.Collapsed;
         TaskRoutePanel.Visibility = story ? Visibility.Collapsed : Visibility.Visible;
-        TaskTargetLabel.Text = utility ? "INTERVAL, MIN" : IsInfiniteStory ? "RUNS" : "VICTORIES";
+        TaskTargetLabel.Text = utility ? "INTERVAL, MIN" : tower ? "GOAL FLOOR" : IsInfiniteStory ? "RUNS" : "VICTORIES";
+        TaskRetriesLabel.Text = tower ? "DEFEATS BEFORE STOP" : "DEFEAT RETRIES";
+        TaskRouteLabel.Text = tower ? "TOWER TYPE" : "ROUTE";
         TaskRouteCombo.ItemsSource = RoutesFor(_editorMode);
         TaskRouteCombo.SelectedIndex = 0;
         if (story && TaskStoryMapCombo.SelectedIndex < 0) TaskStoryMapCombo.SelectedIndex = 0;
         if (story && TaskStoryActCombo.SelectedIndex < 0) TaskStoryActCombo.SelectedIndex = 0;
         UpdateStoryOptions();
         if (utility) TaskTargetText.Text = "60";
+        if (tower && _editingTask is null && TaskRetriesText.Text == "0")
+            TaskRetriesText.Text = TowerRunPolicy.DefaultDefeatsBeforeStop.ToString();
         RefreshShopItemEditor();
     }
 
@@ -469,6 +482,7 @@ public partial class PlanPage : UserControl
         PlanTaskMode.Raid => RaidRoutes,
         PlanTaskMode.Expedition => ExpeditionRoutes,
         PlanTaskMode.Event => EventRoutes,
+        PlanTaskMode.Tower => TowerRoutes,
         PlanTaskMode.Utilities => UtilityRoutes,
         _ => [],
     };

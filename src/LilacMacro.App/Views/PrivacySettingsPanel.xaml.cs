@@ -39,7 +39,7 @@ public partial class PrivacySettingsPanel
             TelemetryCheck.IsChecked = _ownerState.TelemetryEnabled;
             AutomaticReportsCheck.IsChecked = _ownerState.AutomaticErrorReportsEnabled;
             _initialized = true;
-            SavedText.Text = "Choices saved locally";
+            SavedText.Text = string.Empty;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {

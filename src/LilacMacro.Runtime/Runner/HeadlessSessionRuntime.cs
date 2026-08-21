@@ -103,6 +103,7 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         UtilityTaskService utilities = new(workspace, ocr);
         PlacementSetupStore placements = new(Path.Combine(revisionRoot, PlacementDirectoryName));
         ChallengePlacementResolver challengePlacements = new(placements);
+        TowerPlacementResolver towerPlacements = new(placements);
         Dictionary<string, int> wins = snapshot.Tasks.ToDictionary(task => task.Id, _ => 0, StringComparer.Ordinal);
         Dictionary<string, int> losses = snapshot.Tasks.ToDictionary(task => task.Id, _ => 0, StringComparer.Ordinal);
         Dictionary<string, DateTimeOffset> blockedUntil = new(StringComparer.Ordinal);
@@ -125,12 +126,15 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         startup.Completed = true;
 
         RunnerTaskSnapshot? repeatedTask = null;
+        StoryWireTestOptions? repeatedOptions = null;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
             bool repeatedEntry = repeatedTask is not null;
             RunnerTaskSnapshot? task = repeatedTask ?? SelectTask(snapshot.Tasks, wins, blockedUntil, utilityDueAt);
+            StoryWireTestOptions? entryOptions = repeatedEntry ? repeatedOptions : null;
             repeatedTask = null;
+            repeatedOptions = null;
             if (task is null)
             {
                 if (snapshot.Tasks.All(candidate =>
@@ -164,12 +168,13 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                     $"NEXT {utilityDueAt[task.Id]:yyyy-MM-dd HH:mm:ss}Z");
                 continue;
             }
-            StoryWireTestOptions options = await CreateOptionsAsync(
+            StoryWireTestOptions options = entryOptions ?? await CreateOptionsAsync(
                 task,
                 snapshot.KeyBindings,
                 device,
                 placements,
                 challengePlacements,
+                towerPlacements,
                 cancellationToken).ConfigureAwait(false);
             InlineProgress<StoryWireProgress> wireProgress = new(value => Report(
                 progress,
@@ -182,6 +187,7 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                 ? await runner.RunRepeatedAsync(options, wireProgress, cancellationToken).ConfigureAwait(false)
                 : await runner.RunAsync(options, wireProgress, cancellationToken).ConfigureAwait(false);
             if (!result.Succeeded) throw new InvalidOperationException(result.Status);
+            options = options.ApplyResolved(result);
 
             if (result.UnavailableUntilUtc is DateTimeOffset unavailableUntil)
             {
@@ -201,29 +207,34 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
 
             MatchTerminalOutcome outcome = result.Outcome
                 ?? throw new InvalidOperationException("The completed match did not return a terminal outcome.");
-            if (outcome == MatchTerminalOutcome.Victory)
-            {
-                wins[task.Id]++;
-                Report(progress, task, "victory", wins, losses, result.Status);
-            }
-            else
-            {
-                losses[task.Id]++;
-                Report(progress, task, "defeat", wins, losses, result.Status);
-                if (losses[task.Id] > task.DefeatRetries)
-                    throw new InvalidOperationException($"{task.Id} exceeded its defeat retry limit.");
-            }
+            bool victory = outcome == MatchTerminalOutcome.Victory;
+            MatchTaskProgressPolicy.Apply(
+                task.Id, task.Id, task.Mode == RunnerTaskMode.Tower, victory, options.TowerFloor,
+                task.DefeatRetries, wins, losses);
+            Report(progress, task, victory ? "victory" : "defeat", wins, losses, result.Status);
 
             RunnerTaskSnapshot? nextTask = SelectTask(snapshot.Tasks, wins, blockedUntil, utilityDueAt);
-            if (MatchContinuationPolicy.ShouldRepeat(
+            bool towerDefeatRepeat = task.Mode == RunnerTaskMode.Tower &&
+                                     outcome == MatchTerminalOutcome.Defeat;
+            if (towerDefeatRepeat || MatchContinuationPolicy.ShouldRepeat(
                     hasVerifiedTerminalOutcome: true,
                     modeSupportsRepeat: task.Mode is RunnerTaskMode.Story or RunnerTaskMode.Raid or RunnerTaskMode.Event,
                     sameTaskSelected: string.Equals(task.Id, nextTask?.Id, StringComparison.Ordinal)))
             {
+                if (towerDefeatRepeat)
+                {
+                    await runner.RepeatTowerFloorAsync(
+                        options, wireProgress, cancellationToken).ConfigureAwait(false);
+                    Report(progress, task, "repeat-floor-continuation", wins, losses, "TEAM + CAMERA RETAINED");
+                    repeatedTask = task;
+                    repeatedOptions = options;
+                    continue;
+                }
                 if (result.RepeatedPrestartReady)
                 {
                     Report(progress, task, "infinite-continuation", wins, losses, "VERIFIED PRESTART | TEAM + CAMERA RETAINED");
                     repeatedTask = task;
+                    repeatedOptions = options;
                     continue;
                 }
                 try
@@ -235,6 +246,7 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                         cancellationToken).ConfigureAwait(false);
                     Report(progress, task, "repeat-continuation", wins, losses, "TEAM + CAMERA RETAINED");
                     repeatedTask = task;
+                    repeatedOptions = options;
                     continue;
                 }
                 catch (Exception error) when (error is not OperationCanceledException)
@@ -356,6 +368,7 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         string device,
         PlacementSetupStore placements,
         ChallengePlacementResolver challengePlacements,
+        TowerPlacementResolver towerPlacements,
         CancellationToken cancellationToken)
     {
         WireGameMode gameMode = task.Mode switch
@@ -364,12 +377,22 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             RunnerTaskMode.Challenge => WireGameMode.Challenge,
             RunnerTaskMode.Expedition => WireGameMode.Expedition,
             RunnerTaskMode.Event => WireGameMode.Event,
+            RunnerTaskMode.Tower => WireGameMode.Tower,
             _ => WireGameMode.Story,
         };
-        (string map, StoryAct act) = gameMode == WireGameMode.Challenge ? ("AUTO", StoryAct.Act1) : ParseRoute(task.Route);
+        TowerType towerType = gameMode == WireGameMode.Tower
+            ? TowerRunPolicy.ParseType(task.Route)
+            : TowerType.Trait;
+        (string map, StoryAct act) = gameMode is WireGameMode.Challenge or WireGameMode.Tower
+            ? ("AUTO", StoryAct.Act1)
+            : ParseRoute(task.Route);
+        if (gameMode == WireGameMode.Tower)
+            await towerPlacements.ValidateAsync(towerType, cancellationToken).ConfigureAwait(false);
         int team = gameMode == WireGameMode.Challenge
             ? await challengePlacements.ResolveCommonTeamAsync(cancellationToken).ConfigureAwait(false)
-            : await ResolveTeamAsync(gameMode, map, act, placements, cancellationToken).ConfigureAwait(false);
+            : gameMode == WireGameMode.Tower
+                ? 1
+                : await ResolveTeamAsync(gameMode, map, act, placements, cancellationToken).ConfigureAwait(false);
         RegularChallengeType[] challengeTypes = ChallengeTypes(task);
         return new StoryWireTestOptions(
             DebugEvidenceMode.ImageWithOcrFallback,
@@ -396,7 +419,8 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             InfiniteWave: task.InfiniteWave,
             BossesBeforeExtract: task.BossesBeforeExtract,
             ExtractAtCheckpoint: task.ExtractAtCheckpoint,
-            ExpeditionRewardTarget: task.RewardTarget);
+            ExpeditionRewardTarget: task.RewardTarget,
+            TowerType: towerType);
     }
 
     private static async Task<int> ResolveTeamAsync(
@@ -439,28 +463,6 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
         string map = (match.Success ? route[..match.Index] : route).Trim().TrimEnd('\u00b7', '\u00c2', '-', '|', '/').Trim();
         if (string.IsNullOrWhiteSpace(map)) throw new InvalidDataException("Task route has no map.");
         string actText = match.Success ? Regex.Replace(match.Value, @"\s+", " ") : "Act 1";
-        StoryAct act = actText.ToLowerInvariant() switch
-        {
-            "act 1" => StoryAct.Act1,
-            "act 2" => StoryAct.Act2,
-            "act 3" => StoryAct.Act3,
-            "act 4" => StoryAct.Act4,
-            "act 5" => StoryAct.Act5,
-            "infinite" => StoryAct.Infinite,
-            "mastery" => StoryAct.Mastery,
-            _ => throw new InvalidDataException("Task route act is invalid."),
-        };
-        return (map, act);
-    }
-
-    private static (string Map, StoryAct Act) ParseLegacyRoute(string route)
-    {
-        string[] parts = route.Replace("Â·", "·", StringComparison.Ordinal)
-            .Split('·', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        string map = parts.FirstOrDefault() ?? throw new InvalidDataException("Task route has no map.");
-        string actText = parts.FirstOrDefault(part => part.StartsWith("Act ", StringComparison.OrdinalIgnoreCase))
-            ?? parts.FirstOrDefault(part => part.Equals("Infinite", StringComparison.OrdinalIgnoreCase) || part.Equals("Mastery", StringComparison.OrdinalIgnoreCase))
-            ?? "Act 1";
         StoryAct act = actText.ToLowerInvariant() switch
         {
             "act 1" => StoryAct.Act1,

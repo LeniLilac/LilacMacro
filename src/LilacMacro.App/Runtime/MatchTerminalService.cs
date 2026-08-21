@@ -121,6 +121,25 @@ internal sealed class MatchTerminalService(
         }
     }
 
+    public async Task RepeatFloorAsync(string device, CancellationToken cancellationToken)
+    {
+        ObservedStateTransitionRunResult transition = await _transitions.RunAsync(
+            DebugWorkflowCatalog.Defeat,
+            DebugWorkflowCatalog.MatchPrestart,
+            device,
+            async token => ObservedStateTransitionActionResult.From(
+                await _results.RepeatFloorAsync(
+                    DebugWorkflowCatalog.Defeat, device, token).ConfigureAwait(false)),
+            cancellationToken,
+            MatchLoadPolicy.TransitionBudget).ConfigureAwait(false);
+        if (!transition.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Repeat Floor did not reach Match Prestart after {transition.ActionAttempts} action attempt(s) " +
+                $"({transition.Observation.Outcome}).");
+        }
+    }
+
     private static bool IsRecoverableObservationFailure(Exception error) =>
         error is IOException or UnauthorizedAccessException or InvalidDataException or
         InvalidOperationException or TimeoutException;

@@ -73,6 +73,8 @@
              Link="Runtime\MatchTerminalService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\TerminalAwarePlacementSetup.cs"
              Link="Runtime\TerminalAwarePlacementSetup.cs" />
+    <Compile Include="..\LilacMacro.App\Runtime\TowerPlacementResolver.cs"
+             Link="Runtime\TowerPlacementResolver.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MatchWaveService.cs"
              Link="Runtime\MatchWaveService.cs" />
     <Compile Include="..\LilacMacro.App\Runtime\MapPreparationService.cs"

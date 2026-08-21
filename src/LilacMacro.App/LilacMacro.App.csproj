@@ -46,6 +46,7 @@
     <Compile Remove="Runtime\ExpeditionSettingsService.cs" />
     <Compile Remove="Runtime\MatchTerminalService.cs" />
     <Compile Remove="Runtime\TerminalAwarePlacementSetup.cs" />
+    <Compile Remove="Runtime\TowerPlacementResolver.cs" />
     <Compile Remove="Runtime\MatchWaveService.cs" />
     <Compile Remove="Runtime\MapPreparationService.cs" />
     <Compile Remove="Runtime\ModalActionLocator.cs" />

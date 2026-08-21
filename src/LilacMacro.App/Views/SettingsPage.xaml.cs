@@ -46,7 +46,7 @@ public partial class SettingsPage : UserControl
         MacroVersionText.Text = BuildVersion();
         LayoutProfileCombo.ItemsSource = new[] { "1920 x 1080 - full dock", "1366 x 768 - compact" };
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on app start" };
-        CaptureIntervalCombo.ItemsSource = new[] { "0.5 sec", "1.0 sec", "2.0 sec" };
+        CaptureIntervalCombo.ItemsSource = new[] { "0.5 sec", "1.0 sec", "2.0 sec", "5.0 sec" };
         MacroLayoutProfile effectiveLayout = ownerState.LayoutProfile;
         if (MacroInstanceContext.Current.IsManagedRunner)
         {
@@ -74,12 +74,10 @@ public partial class SettingsPage : UserControl
         NotifyDefeatCheck.IsChecked = ownerState.NotifyOnDefeat;
         NotifyRecoveryCheck.IsChecked = ownerState.NotifyOnRecovery;
         DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
-        AutomaticCleanupCheck.IsChecked = _deepDebug.Options.AutomaticCleanupEnabled;
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
+        RetainedArchiveCountText.Text = _deepDebug.Options.RetainedArchiveCount.ToString();
         FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
-        DiagnosticsStatusText.Text = _deepDebug.Options.Enabled
-            ? $"Deep debug enabled · {_deepDebug.Options.FrameRetentionMinutes} minute frame history"
-            : "Deep debug disabled";
+        CaptureIntervalCombo.IsEnabled = _deepDebug.Options.Enabled;
         _initialized = true;
         RefreshDisplayControls();
         RefreshUpdateOwnership();
@@ -151,15 +149,13 @@ public partial class SettingsPage : UserControl
         {
             0 => 500,
             2 => 2_000,
+            3 => 5_000,
             _ => 1_000,
         };
         await _deepDebug.UpdateOptionsAsync(
             DeepDebugCheck.IsChecked == true,
             _deepDebug.Options.FrameRetentionMinutes,
-            AutomaticCleanupCheck.IsChecked == true,
-            interval);
-        DiagnosticsStatusText.Text =
-            $"Deep debug capture interval saved · {interval / 1000.0:0.0} seconds";
+            captureIntervalMilliseconds: interval);
     }
 
     internal async Task CheckOnStartupAsync()
@@ -467,19 +463,16 @@ public partial class SettingsPage : UserControl
         if (!_initialized) return;
         bool enabled = DeepDebugCheck.IsChecked == true;
         FrameHistoryText.IsEnabled = enabled;
+        CaptureIntervalCombo.IsEnabled = enabled;
         int retention = int.TryParse(FrameHistoryText.Text, out int parsed)
             ? parsed
             : _deepDebug.Options.FrameRetentionMinutes;
-        await _deepDebug.UpdateOptionsAsync(enabled, retention, AutomaticCleanupCheck.IsChecked == true);
-        DiagnosticsStatusText.Text = enabled
-            ? $"Deep debug enabled · {_deepDebug.Options.FrameRetentionMinutes} minute frame history"
-            : "Deep debug disabled";
+        await _deepDebug.UpdateOptionsAsync(enabled, retention);
     }
 
     private void DeepDebug_OnArchiveSaved(object? sender, string path)
     {
-        _ = Dispatcher.BeginInvoke(() =>
-            DiagnosticsStatusText.Text = $"Saved {Path.GetFileName(path)}");
+        AppToastService.ShowSuccess("DEEP DEBUG LOG SAVED", Path.GetFileName(path));
     }
 
     private async void FrameHistory_OnLostKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs eventArgs)
@@ -490,8 +483,7 @@ public partial class SettingsPage : UserControl
             : _deepDebug.Options.FrameRetentionMinutes;
         await _deepDebug.UpdateOptionsAsync(
             DeepDebugCheck.IsChecked == true,
-            retention,
-            AutomaticCleanupCheck.IsChecked == true);
+            retention);
         FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
     }
 

@@ -371,24 +371,23 @@
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="FAILURE EVIDENCE" />
                                     <StackPanel Grid.Column="1">
-                                        <CheckBox IsChecked="True" Content="Capture frames on failure" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                        <CheckBox Margin="0,9,0,0" IsChecked="True" Content="Include current run log" Checked="SettingChanged_OnClick" Unchecked="SettingChanged_OnClick" />
-                                        <CheckBox x:Name="DeepDebugCheck" Margin="0,9,0,0" Content="Deep debug trace" Checked="DeepDebug_OnChanged" Unchecked="DeepDebug_OnChanged" />
-                                        <CheckBox x:Name="AutomaticCleanupCheck" Margin="0,9,0,0" Content="Keep only the 20 newest local Deep Debug archives"
-                                                  Checked="AutomaticCleanup_OnChanged" Unchecked="AutomaticCleanup_OnChanged" />
-                                        <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
-                                                   Text="Local cleanup is independent from automatic error reports." />
+                                        <CheckBox x:Name="DeepDebugCheck" Content="Deep Debug Logs" Checked="DeepDebug_OnChanged" Unchecked="DeepDebug_OnChanged" />
                                     </StackPanel>
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="FRAME HISTORY, MIN" />
-                                    <TextBox x:Name="FrameHistoryText" Grid.Column="1" Width="95" HorizontalAlignment="Left" Text="15" LostKeyboardFocus="FrameHistory_OnLostKeyboardFocus" />
+                                    <TextBox x:Name="FrameHistoryText" Grid.Column="1" Width="95" HorizontalAlignment="Left" Text="30" LostKeyboardFocus="FrameHistory_OnLostKeyboardFocus" />
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="CAPTURE INTERVAL" />
                                     <ComboBox x:Name="CaptureIntervalCombo" Grid.Column="1" Width="150" HorizontalAlignment="Left" SelectionChanged="CaptureInterval_OnSelectionChanged" />
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="NEWEST DEEP DEBUG LOGS" />
+                                    <TextBox x:Name="RetainedArchiveCountText" Grid.Column="1" Width="95" HorizontalAlignment="Left" Text="10" LostKeyboardFocus="RetainedArchiveCount_OnLostKeyboardFocus" />
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -399,12 +398,6 @@
                                             <TextBlock Text="OPEN DEBUG FOLDER" />
                                         </StackPanel>
                                     </Button>
-                                </Grid>
-                                <Grid Margin="0,10,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="STATUS" />
-                                    <TextBlock x:Name="DiagnosticsStatusText" Grid.Column="1" FontSize="10"
-                                               Foreground="{DynamicResource InkSoftBrush}" />
                                 </Grid>
                             </StackPanel>
                         </Grid>

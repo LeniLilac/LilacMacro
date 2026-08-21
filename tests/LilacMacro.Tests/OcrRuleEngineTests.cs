@@ -1,6 +1,7 @@
 using LilacMacro.Core.Datasets;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Ocr;
+using LilacMacro.App.Debugging;
 
 namespace LilacMacro.Tests;
 
@@ -388,6 +389,43 @@ public sealed class OcrRuleEngineTests
 
         Assert.False(evaluation.IsMatch);
         Assert.True(evaluation.RequiredEvidenceMatched);
+    }
+
+    [Fact]
+    public void Evaluate_TowerDefeatRequiresEvidenceBeyondRepeatFloor()
+    {
+        OcrStateEvaluation incomplete = DebugOcrStateRunner.Evaluate(
+            DebugWorkflowCatalog.Defeat,
+            [
+                Region("Defeat", new PixelRect(10, 10, 100, 20)),
+                Region("Repeat Floor", new PixelRect(10, 40, 120, 20)),
+            ]);
+        OcrStateEvaluation complete = DebugOcrStateRunner.Evaluate(
+            DebugWorkflowCatalog.Defeat,
+            [
+                Region("Defeat", new PixelRect(10, 10, 100, 20)),
+                Region("Repeat Floor", new PixelRect(10, 40, 120, 20)),
+                Region("View Party", new PixelRect(10, 70, 120, 20)),
+            ]);
+
+        Assert.False(incomplete.IsMatch);
+        Assert.True(complete.IsMatch);
+        Assert.Contains(complete.Matches, match => match.Target == "Repeat Floor");
+    }
+
+    [Fact]
+    public void Evaluate_TowerVictoryAcceptsNextFloorWithIndependentSupport()
+    {
+        OcrStateEvaluation evaluation = DebugOcrStateRunner.Evaluate(
+            DebugWorkflowCatalog.Victory,
+            [
+                Region("Victory", new PixelRect(10, 10, 100, 20)),
+                Region("Next Floor", new PixelRect(10, 40, 120, 20)),
+                Region("Game Stats", new PixelRect(10, 70, 120, 20)),
+            ]);
+
+        Assert.True(evaluation.IsMatch);
+        Assert.Contains(evaluation.Matches, match => match.Target == "Next Floor");
     }
 
     [Fact]

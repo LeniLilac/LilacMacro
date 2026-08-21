@@ -1,0 +1,284 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LeniLilac/LilacMacro/main/schemas/dataset.schema.json",
+  "format": "lilacmacro.dataset",
+  "coordinate_space": "roblox_client_pixels_half_open",
+  "image_root": "images",
+  "schema_version": 1,
+  "id": "d7fa031b-320d-4c58-885d-3c56956087ec",
+  "name": "Tower Map Select Stage + Preview",
+  "notes": "Select Stage text to confirm ui\r\n\r\nThen like use the same challenge mode stuff/method to check the map and load the config for that map\r\n\r\nAnd add a new Tower config in the story map setups, like how theres config slots for each story act + mastery + infinite + challenge, like add a tower config there\r\n\r\nThen use the general match preivew start to start/enter the match\r\n\r\nBundled runtime evidence slice. Original dataset: tower-map-select-stage-preview-20260810-174515. Source frames: 1, 7, 11.",
+  "created_at_utc": "2026-08-10T17:45:15.2962689Z",
+  "source_window_title": "Roblox",
+  "source_process_id": 10548,
+  "client_width": 1366,
+  "client_height": 700,
+  "capture_mode": "manual",
+  "requested_frame_count": 0,
+  "requested_duration_seconds": 0,
+  "is_finalized": true,
+  "frames": [
+    {
+      "file_name": "frame-0001.png",
+      "captured_at_utc": "2026-08-10T17:45:16.7070748Z",
+      "sha256": "4d2b3ae343f69df436da9e330255089a5e5b0268e9112ff85e71f5740563d88e",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "abe3498f-d98f-4027-a0c3-f0ab700bea84",
+          "global_group_id": "3a4933dd-b145-4f6c-9985-8a43e9c7782d",
+          "bounds": {
+            "x": 163,
+            "y": 40,
+            "width": 1032,
+            "height": 621
+          },
+          "label": "Tower Stage State",
+          "notes": "",
+          "ocr_trials": [
+            {
+              "model_name": "PP-OCRv6_small_rec",
+              "detector_model_name": "PP-OCRv6_small_det",
+              "device": "gpu:0",
+              "text": "Tower\nx\nTower\nFloor 1-Rose Kingdom\nStageEffects\n0.26x 0.75x 1.89x 21x\nRewards\n225x\n225x\nGem\nGold\nSelectStage",
+              "confidence": 0.9540031254291534,
+              "model_load_milliseconds": 0,
+              "inference_milliseconds": 316,
+              "runtime_version": "3.7.0",
+              "ran_at_utc": "2026-08-10T17:47:47.5579550Z",
+              "model_was_cached": true,
+              "regions": [
+                {
+                  "bounds": {
+                    "x": 183,
+                    "y": 51,
+                    "width": 80,
+                    "height": 33
+                  },
+                  "text": "Tower",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.999969482421875,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 1153,
+                    "y": 54,
+                    "width": 24,
+                    "height": 24
+                  },
+                  "text": "x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.5241191387176514,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 280,
+                    "y": 131,
+                    "width": 48,
+                    "height": 15
+                  },
+                  "text": "Tower",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999345541000366,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 275,
+                    "y": 148,
+                    "width": 251,
+                    "height": 28
+                  },
+                  "text": "Floor 1-Rose Kingdom",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9744599461555481,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "fuzzy_phrase",
+                  "spatial_selector": "topmost",
+                  "spatial_selector_overridden": true
+                },
+                {
+                  "bounds": {
+                    "x": 230,
+                    "y": 332,
+                    "width": 107,
+                    "height": 17
+                  },
+                  "text": "StageEffects",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999403953552246,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 478,
+                    "y": 393,
+                    "width": 198,
+                    "height": 15
+                  },
+                  "text": "0.26x 0.75x 1.89x 21x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9509013891220093,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 234,
+                    "y": 428,
+                    "width": 68,
+                    "height": 14
+                  },
+                  "text": "Rewards",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999581575393677,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 217,
+                    "y": 461,
+                    "width": 33,
+                    "height": 14
+                  },
+                  "text": "225x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998980760574341,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 307,
+                    "y": 461,
+                    "width": 34,
+                    "height": 14
+                  },
+                  "text": "225x",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9998747706413269,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 265,
+                    "y": 525,
+                    "width": 29,
+                    "height": 15
+                  },
+                  "text": "Gem",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9993312954902649,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 354,
+                    "y": 524,
+                    "width": 31,
+                    "height": 15
+                  },
+                  "text": "Gold",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9999212026596069,
+                  "is_ocr_evidence": false,
+                  "is_visual_anchor": false,
+                  "match_mode": "exact"
+                },
+                {
+                  "bounds": {
+                    "x": 630,
+                    "y": 596,
+                    "width": 106,
+                    "height": 26
+                  },
+                  "text": "SelectStage",
+                  "detection_confidence": null,
+                  "recognition_confidence": 0.9997290968894958,
+                  "is_ocr_evidence": true,
+                  "is_visual_anchor": true,
+                  "match_mode": "exact",
+                  "evidence_role": "required",
+                  "spatial_selector": "bottommost",
+                  "spatial_selector_overridden": true
+                }
+              ]
+            }
+          ],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0007.png",
+      "captured_at_utc": "2026-08-10T17:46:22.9669045Z",
+      "sha256": "1489f8a05fcbdb6951f122c8280174bd73ce93883c5dc6de332ea86882648217",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "03bff937-83f6-4c0a-ad1b-359a72067ab4",
+          "global_group_id": "3a4933dd-b145-4f6c-9985-8a43e9c7782d",
+          "bounds": {
+            "x": 163,
+            "y": 40,
+            "width": 1032,
+            "height": 621
+          },
+          "label": "Tower Stage State",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0011.png",
+      "captured_at_utc": "2026-08-10T17:47:00.3145649Z",
+      "sha256": "c730f63cf9b42c963044ad37113189d8abd5eb6c0fdde228641070734cb625d6",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "4f25fcc2-ea92-495e-9a1a-d6c0dd4d000b",
+          "global_group_id": "3a4933dd-b145-4f6c-9985-8a43e9c7782d",
+          "bounds": {
+            "x": 163,
+            "y": 40,
+            "width": 1032,
+            "height": 621
+          },
+          "label": "Tower Stage State",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    }
+  ]
+}

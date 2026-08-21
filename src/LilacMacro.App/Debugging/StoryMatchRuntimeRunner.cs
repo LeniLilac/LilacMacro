@@ -54,7 +54,12 @@ internal sealed class StoryMatchRuntimeRunner(
 
             PlacementMapDefinition map = ResolvePlacementMap(options);
             PlacementSetupDocument document = await _placementStore.LoadAsync(map.Id, cancellationToken);
-            string routeId = options.GameMode == WireGameMode.Challenge ? "challenge" : RouteId(options.Act);
+            string routeId = options.GameMode switch
+            {
+                WireGameMode.Challenge => "challenge",
+                WireGameMode.Tower => TowerRunPolicy.PlacementRouteId(options.TowerType),
+                _ => RouteId(options.Act),
+            };
             PlacementRouteDefinition routeDefinition = PlacementRouteCatalog.For(map)
                 .FirstOrDefault(candidate => candidate.Id == routeId)
                 ?? PlacementRouteCatalog.For(map).First(candidate => candidate.IsShared);
@@ -159,6 +164,26 @@ internal sealed class StoryMatchRuntimeRunner(
             StoryWireStageStatus.Passed,
             "REPEAT STAGE VERIFIED + CLICKED",
             ["REPEAT STAGE VERIFIED + CLICKED"]));
+    }
+
+    public async Task RepeatTowerFloorAsync(
+        StoryWireTestOptions options,
+        IProgress<StoryWireProgress> progress,
+        CancellationToken cancellationToken)
+    {
+        if (options.GameMode != WireGameMode.Tower)
+            throw new InvalidOperationException("Repeat Floor is only available for Tower tasks.");
+        progress.Report(new StoryWireProgress(
+            StoryWireStage.MatchRuntime,
+            StoryWireStageStatus.Running,
+            "REPEAT FLOOR",
+            ["REPEAT FLOOR"]));
+        await _placements.RepeatFloorAsync(options.Device, cancellationToken);
+        progress.Report(new StoryWireProgress(
+            StoryWireStage.MatchRuntime,
+            StoryWireStageStatus.Passed,
+            "REPEAT FLOOR VERIFIED + CLICKED",
+            ["REPEAT FLOOR VERIFIED + CLICKED"]));
     }
 
     private static PlacementMapDefinition ResolvePlacementMap(StoryWireTestOptions options)

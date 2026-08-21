@@ -546,6 +546,9 @@ public sealed class PrivacyTelemetryTests
             Assert.DoesNotContain("Users", uploads.TextEntries, StringComparison.Ordinal);
             Assert.Contains("manifest.json", uploads.EntryNames);
             Assert.Contains("events.jsonl", uploads.EntryNames);
+            Assert.Contains(
+                uploads.EntryNames,
+                name => name.StartsWith("frames/frame-", StringComparison.Ordinal));
             await reports.DisposeAsync();
             Assert.False(File.Exists(uploads.ArchivePath));
         }

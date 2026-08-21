@@ -12,6 +12,7 @@ public enum PlanTaskMode
     Story,
     Raid,
     Event,
+    Tower,
     Utilities,
 }
 
@@ -95,6 +96,7 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
         PlanTaskMode.Story => $"Story · {Route}{(HardMode ? " · Hard" : string.Empty)}",
         PlanTaskMode.Raid => $"Raid · {Route}",
         PlanTaskMode.Event => $"Event · {Route}",
+        PlanTaskMode.Tower => $"{Route} · Goal floor {Target}",
         _ => Route,
     };
 
@@ -102,11 +104,17 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
     {
         PlanTaskMode.Utilities => UtilityTaskPolicy.ScheduleLabel(Route, Target),
         PlanTaskMode.Challenge => "Every reset",
+        PlanTaskMode.Tower => $"Goal floor {Target}",
         PlanTaskMode.Story when Route.Contains("Infinite", StringComparison.OrdinalIgnoreCase) => $"{Target} runs",
         _ => $"{Target} victories",
     };
 
-    public string Status => Mode == PlanTaskMode.Utilities ? "Ready" : "0W / 0L";
+    public string Status => Mode switch
+    {
+        PlanTaskMode.Utilities => "Ready",
+        PlanTaskMode.Tower => "Floor 0 / 0L",
+        _ => "0W / 0L",
+    };
 
     public override PlanTaskPrototype Clone() => new()
     {
@@ -132,6 +140,7 @@ public sealed class PlanTaskPrototype : PlanBlockPrototype
         OnPropertyChanged(nameof(ModeLabel));
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(TargetLabel));
+        OnPropertyChanged(nameof(Status));
     }
 }
 

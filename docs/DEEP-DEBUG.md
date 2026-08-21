@@ -1,18 +1,18 @@
 # Deep debug diagnostics
 
-**Status: Implemented.** Deep debug is local, optional, and shared by the main Macro shell, Dataset Builder, and Runtime Lab. A dedicated viewer is also implemented for owner inspection.
+**Status: Implemented.** Deep Debug Logs default on and are shared by the main Macro shell, Dataset Builder, and Runtime Lab. A dedicated viewer is also implemented for owner inspection.
 
 ## Enable and locate
 
-- Main Macro: Settings, Diagnostics, `Deep debug trace`.
+- Main Macro: Settings, Diagnostics, `Deep Debug Logs`.
 - Dataset Builder: click the `DEEP DEBUG` pill in the title bar.
 - Runtime Lab: click the `DEEP DEBUG` pill in the title bar.
-- Set `FRAME HISTORY, MIN` from 1 to 120. The value and enabled state persist locally.
-- Set `CAPTURE INTERVAL` to 0.5, 1.0, or 2.0 seconds. While a session is active, its registered Roblox surface captures one full client frame at that interval; the interval is persisted independently from frame history.
+- Set `FRAME HISTORY, MIN` from 1 to 120. New installs default to 30 minutes; the value and enabled state persist locally.
+- Set `CAPTURE INTERVAL` to 0.5, 1.0, 2.0, or 5.0 seconds. New installs default to five seconds. While a session is active, its registered Roblox surface captures one full client frame at that interval; the interval is persisted independently from frame history.
 - Runtime Lab retains already-acquired PNG evidence for its complete operation and displays `DEEP DEBUG ON`; the frame-history setting applies to the main Macro and Dataset Builder only.
 - Archives are written to `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - Settings exposes `OPEN DEBUG FOLDER`.
-- Settings also exposes a default-on local-cleanup choice that keeps the 20 newest completed archives. It is independent from automatic reports; disabling cleanup never enables network transfer.
+- `NEWEST DEEP DEBUG LOGS` always limits local retention to the configured newest completed archives, from 1 to 100 and defaulting to 10. The same limit applies whether automatic reports are enabled or disabled.
 - Automatic reports default off. When enabled, a completed active Deep Debug archive is queued automatically and deleted only after the service accepts it. A failed transfer leaves the archive local. There is no manual diagnostic-upload surface.
 - Open `LilacMacro.DeepDebugViewer.exe`, choose `OPEN ARCHIVE`, or drop a ZIP onto the window. The viewer does not initialize OCR or Roblox.
 
@@ -48,7 +48,7 @@ PNG evidence includes pixels already acquired by the operation plus intentional 
 - `events.jsonl` and `timeline.md` cover the complete operation.
 - `CAPTURE INTERVAL` controls sampling frequency; `FRAME HISTORY, MIN` controls how long PNG evidence remains in the rolling archive. Frame history is retention time, not a second capture scheduler.
 - Main Macro and Dataset Builder remove PNGs older than the configured rolling frame window before archival. Runtime Lab retains PNG evidence for the complete operation.
-- When local cleanup is enabled, the 20 newest completed archives are retained and older archives are deleted after a new archive succeeds. When it is disabled, archive finalization does not prune completed ZIPs.
+- The configured newest-log count is enforced at startup, whenever the setting changes, and after a new archive succeeds. It applies equally to automatically reported and local-only Deep Debug sessions.
 - One session owns the recorder at a time.
 - A diagnostics writer or ZIP failure never changes the primary operation result. The staging directory is preserved with `finalization-error.txt` when possible.
 - App shutdown and unhandled WPF exceptions finalize an active session.

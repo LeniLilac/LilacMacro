@@ -11,7 +11,6 @@ namespace LilacMacro.App.Diagnostics;
 
 public sealed partial class DeepDebugSessionService
 {
-    private const int ArchiveLimit = 20;
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
     private static readonly JsonSerializerOptions CompactJsonOptions = CreateJsonOptions(writeIndented: false);
     private readonly object _gate = new();
@@ -34,10 +33,10 @@ public sealed partial class DeepDebugSessionService
         _diagnosticsRoot = Path.Combine(_appDataRoot, "diagnostics");
         _optionsStore = new DeepDebugOptionsStore(_appDataRoot);
         Options = _optionsStore.Load();
+        PruneOldArchives();
     }
 
     public DeepDebugOptions Options { get; private set; }
-
     public bool RetainAllFrames { get; set; }
 
     public bool IsActive
@@ -81,19 +80,19 @@ public sealed partial class DeepDebugSessionService
     public async Task UpdateOptionsAsync(
         bool enabled,
         int frameRetentionMinutes,
-        bool? automaticCleanupEnabled = null,
+        int? retainedArchiveCount = null,
         int? captureIntervalMilliseconds = null)
     {
         Options = new DeepDebugOptions
         {
             Enabled = enabled,
             FrameRetentionMinutes = DeepDebugOptions.NormalizeFrameRetention(frameRetentionMinutes),
-            AutomaticCleanupEnabled = automaticCleanupEnabled ?? Options.AutomaticCleanupEnabled,
+            RetainedArchiveCount = DeepDebugOptions.NormalizeRetainedArchiveCount(retainedArchiveCount ?? Options.RetainedArchiveCount),
             CaptureIntervalMilliseconds = DeepDebugOptions.NormalizeCaptureInterval(
                 captureIntervalMilliseconds ?? Options.CaptureIntervalMilliseconds),
         };
         await _optionsStore.SaveAsync(Options);
-        if (Options.AutomaticCleanupEnabled) PruneOldArchives();
+        PruneOldArchives();
         OptionsChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -315,7 +314,7 @@ public sealed partial class DeepDebugSessionService
         string archive = CreateArchive(session);
         LastArchivePath = archive;
         TryDeleteDirectory(session.StagingDirectory);
-        if (Options.AutomaticCleanupEnabled) PruneOldArchives();
+        PruneOldArchives();
         try
         {
             ArchiveSaved?.Invoke(this, archive);
@@ -446,7 +445,7 @@ public sealed partial class DeepDebugSessionService
                 .EnumerateFiles("deep-debug-*.zip")
                 .OrderByDescending(file => file.CreationTimeUtc)
                 .ToArray();
-            foreach (FileInfo archive in archives.Skip(ArchiveLimit)) archive.Delete();
+            foreach (FileInfo archive in archives.Skip(Options.RetainedArchiveCount)) archive.Delete();
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {

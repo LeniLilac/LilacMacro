@@ -1,10 +1,10 @@
 # Macro architecture
 
-**Status: Prototype.** The Story/Raid/Challenge/Expedition scheduler, Villain Invasion Acts 1-4, shared placement/terminal path, verified private-server Lobby reset, persistent Plan authoring, and DPAPI secret persistence are Prototype.
+**Status: Prototype.** The Story/Raid/Challenge/Expedition/Tower scheduler, Villain Invasion Acts 1-4, shared placement/terminal path, verified private-server Lobby reset, persistent Plan authoring, and DPAPI secret persistence are Prototype.
 
 ## Root model
 
-Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story, Raid, Expedition, or Event selection may continue through Repeat Stage; Story Infinite instead uses its verified in-match Restart and already returns to Match Prestart. Any task, act, or mode change returns through verified Lobby.
+Lobby is the canonical entry and task-change root state. The Plan page configures independent tasks with explicit priority; visual order means priority, not a consecutive script. After every completed or failed match attempt, the scheduler records the outcome and reevaluates eligibility from the highest priority. An exact same-task Story, Raid, Expedition, or Event selection may continue through Repeat Stage; Story Infinite instead uses its verified in-match Restart and already returns to Match Prestart. Tower defeats below the configured per-floor stop limit use Repeat Floor, while every Tower victory returns through verified Lobby to discover the newly available highest floor and map. Any other task, act, or mode change returns through verified Lobby.
 
 ```mermaid
 flowchart TD
@@ -24,7 +24,7 @@ flowchart TD
     J -- "Changed, complete, Challenge, or Repeat unavailable" --> B
 ```
 
-Repeat Stage is a bounded fast path, not a competing scheduler. It is authorized only after a typed terminal outcome and a fresh priority decision select the exact same Story, Raid, Expedition, or Event task. The continuation verifies fresh Match Prestart/Start Game evidence and reruns mode-specific preparation without team selection or camera alignment because Roblox retains both. Story Infinite has no result-screen continuation: two fresh counter observations authorize the shared Settings Restart path, which verifies Match Prestart before the scheduler accounts a completed run and reevaluates. Resetting through Lobby remains mandatory for task/act/mode changes, completion, Challenge, Tower when implemented, and Repeat/Restart failure.
+Repeat Stage is a bounded fast path, not a competing scheduler. It is authorized only after a typed terminal outcome and a fresh priority decision select the exact same Story, Raid, Expedition, or Event task. Tower has a separate Defeat-only Repeat Floor path that verifies Match Prestart and retains team/camera; Victory never uses a result-screen continuation. Story Infinite has no result-screen continuation: two fresh counter observations authorize the shared Settings Restart path, which verifies Match Prestart before the scheduler accounts a completed run and reevaluates. Resetting through Lobby remains mandatory for task/act/mode changes, ordinary completion, Challenge, every Tower victory, and Repeat/Restart failure.
 
 ## Execution target
 
@@ -106,6 +106,12 @@ Lobby -> Unit Inventory -> Teams -> change team -> Play UI -> Challenge type or 
 Challenge does not use Repeat Stage; its eligibility is reevaluated after the Lobby reset. Enabled types run in Trait, Stat, Sprite order and are attempted at most once per global half-hour epoch. A cooldown observation blocks that type until the next reset. If the same type is still cooling down after the epoch advances, that type is treated as having reached its 10/10 daily limit until UTC midnight. Availability clears the prior cooldown evidence. Other enabled types remain independently eligible.
 
 The random Challenge map is recognized after type selection and selects the corresponding Story map's `challenge` placement route. Because team selection happens before the random map is known, all five effective Challenge routes must use one common team; disagreement fails before Roblox input.
+
+### Tower — Prototype
+
+Lobby -> Play UI -> Tower -> configured Trait Tower or Traitless Tower -> topmost/rightmost highest-floor text -> Tower stage/map recognition -> Select Stage -> Match Preview -> Match Prestart -> load that Story map's Tower-route team -> camera/map preparation -> placements -> Start Game -> Victory/Defeat.
+
+Tower uses separate `trait-tower` and `traitless-tower` placement routes on every Story map. Because the map is learned only from the selected floor's stage modal, team selection occurs after Match Prestart. A verified Victory stores the cleared floor as progress and always uses the shared private-server restart/rejoin path; the next pass selects the newly available highest floor. A Defeat below the configured per-floor limit clicks verified Repeat Floor and resumes from fresh Match Prestart without another team load or camera alignment. The default limit stops on the fifth defeat on one floor, and any Victory resets it.
 
 ### Expedition — Planned
 
