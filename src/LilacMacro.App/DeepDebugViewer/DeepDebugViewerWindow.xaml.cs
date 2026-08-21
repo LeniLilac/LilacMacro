@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Theming;
 using Microsoft.Win32;
 
@@ -404,7 +405,7 @@ public partial class DeepDebugViewerWindow : Window
 
     private static string DefaultDiagnosticsDirectory()
     {
-        string path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LilacMacro", "diagnostics");
+        string path = MacroInstanceContext.Current.DiagnosticsRoot;
         return Directory.Exists(path) ? path : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     }
 

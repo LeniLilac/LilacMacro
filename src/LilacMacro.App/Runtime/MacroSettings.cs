@@ -47,7 +47,7 @@ internal sealed record MacroSettings
 
     public bool TelemetryEnabled { get; init; } = true;
 
-    public bool AutomaticErrorReportsEnabled { get; init; }
+    public bool AutomaticErrorReportsEnabled { get; init; } = true;
 
     public bool CheckForUpdatesOnStartup { get; init; } = true;
 

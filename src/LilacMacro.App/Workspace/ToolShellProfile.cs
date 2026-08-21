@@ -16,8 +16,7 @@ internal sealed record ToolShellProfile(
     IReadOnlyList<PageKind> Pages,
     string OcrDevice,
     bool KeepOcrLoaded,
-    bool PreloadOcrOnOpen,
-    bool RetainAllDeepDebugFrames)
+    bool PreloadOcrOnOpen)
 {
     public bool Includes(PageKind page) => Pages.Contains(page);
 
@@ -31,8 +30,7 @@ internal sealed record ToolShellProfile(
             [PageKind.Capture, PageKind.Review, PageKind.Datasets],
             OcrRunner.GpuDevice,
             KeepOcrLoaded: true,
-            PreloadOcrOnOpen: true,
-            RetainAllDeepDebugFrames: false),
+            PreloadOcrOnOpen: true),
         ToolShellKind.RuntimeLab => new ToolShellProfile(
             kind,
             "Runtime Lab",
@@ -48,8 +46,7 @@ internal sealed record ToolShellProfile(
             ],
             OcrRunner.GpuDevice,
             KeepOcrLoaded: true,
-            PreloadOcrOnOpen: true,
-            RetainAllDeepDebugFrames: true),
+            PreloadOcrOnOpen: true),
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 }

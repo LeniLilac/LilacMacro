@@ -341,6 +341,7 @@ public sealed partial class LocalSessionContractTests
 
         Assert.Equal(paths.SharedConfigurationRoot, paths.ConfigurationRootFor(shared));
         Assert.Equal(Path.Combine(paths.ConfigurationsRoot, "runner-2"), paths.ConfigurationRootFor(isolated));
+        Assert.Equal(Path.Combine(paths.ProgramDataRoot, "Diagnostics"), paths.DiagnosticsRoot);
         Assert.Equal("TERMSRV/127.0.0.2", paths.CredentialTargetFor(shared));
         Assert.Equal("TERMSRV/127.0.0.3", paths.CredentialTargetFor(isolated));
         Assert.NotEqual(paths.SecretCredentialTargetFor(shared), paths.SecretCredentialTargetFor(isolated));

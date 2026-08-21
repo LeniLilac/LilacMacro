@@ -126,7 +126,11 @@ internal sealed class StoryWireTestRunner(
                     DebugWorkflowCatalog.PlayUi,
                     TowerWorkflowCatalog.TowerSelect,
                     token => _debug.SelectModeAsync("Tower", options.Device, token),
-                    options, progress, cancellationToken))
+                    options, progress, cancellationToken,
+                    new ObservedStateTransitionBudget
+                    {
+                        MaximumActionAttempts = TowerRunPolicy.MaximumModeTransitionActionAttempts,
+                    }))
                 return Failed(StoryWireStage.TowerType);
             TowerNavigationResult tower = await _tower.NavigateAsync(options, progress, cancellationToken);
             if (!tower.Succeeded || tower.Map is null) return Failed(StoryWireStage.TowerStage);
@@ -403,7 +407,8 @@ internal sealed class StoryWireTestRunner(
         Func<CancellationToken, Task<DebugRunReport>> sourceAction,
         StoryWireTestOptions options,
         IProgress<StoryWireProgress> progress,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        ObservedStateTransitionBudget? budget = null) =>
         _transitions.RunAsync(
             stage,
             source,
@@ -411,7 +416,8 @@ internal sealed class StoryWireTestRunner(
             options.Device,
             sourceAction,
             progress,
-            cancellationToken);
+            cancellationToken,
+            budget);
 
     private Task<bool> TransitionAsync(
         StoryWireStage stage,

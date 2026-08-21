@@ -89,6 +89,24 @@ public sealed class TowerRunPolicyTests
     public void TowerTypeUsesObservedGameSelectionLabel(TowerType type, string expected) =>
         Assert.Equal(expected, TowerRunPolicy.SelectionLabel(type));
 
+    [Fact]
+    public void TowerModeRevealUsesClientCenterAndBoundedDownwardBursts()
+    {
+        Assert.Equal(
+            new PixelPoint(683, 350),
+            TowerRunPolicy.ModeRevealScrollAnchor(new PixelSize(1366, 700)));
+        Assert.Equal(-5000, TowerRunPolicy.ModeRevealScrollWheelDelta);
+        Assert.Equal(3, TowerRunPolicy.MaximumModeRevealScrollAttempts);
+        Assert.Equal(1, TowerRunPolicy.MaximumModeTransitionActionAttempts);
+    }
+
+    [Theory]
+    [InlineData(0, 700)]
+    [InlineData(1366, 0)]
+    public void TowerModeRevealRejectsInvalidClientSize(int width, int height) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            TowerRunPolicy.ModeRevealScrollAnchor(new PixelSize(width, height)));
+
     private static OcrTextRegion Region(string text, int x, int y) => new()
     {
         Bounds = new PixelRect(x, y, 80, 20),

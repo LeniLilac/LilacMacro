@@ -36,4 +36,21 @@ public sealed class MacroInstanceContextTests
             provisionedOwnerSid,
             currentSid));
     }
+
+    [Theory]
+    [InlineData(true, true, "machine")]
+    [InlineData(true, false, "local")]
+    [InlineData(false, true, "local")]
+    [InlineData(false, false, "local")]
+    public void Diagnostics_use_machine_storage_only_when_provisioned_and_ready(
+        bool preferMachineStorage,
+        bool machineDirectoryReady,
+        string expected)
+    {
+        Assert.Equal(expected, MacroInstanceContext.SelectDiagnosticsRoot(
+            "local",
+            "machine",
+            preferMachineStorage,
+            machineDirectoryReady));
+    }
 }

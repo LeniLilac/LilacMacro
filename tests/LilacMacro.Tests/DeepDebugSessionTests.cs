@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using LilacMacro.App.Diagnostics;
 using LilacMacro.Core.Imaging;
+using LilacMacro.Core.Services;
 
 namespace LilacMacro.Tests;
 
@@ -13,28 +14,77 @@ public sealed class DeepDebugSessionTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public void New_install_defaults_enable_bounded_deep_debug_logs()
+    public void New_install_defaults_enable_fixed_interval_and_capacity_tier()
     {
-        DeepDebugSessionService service = new(_root);
+        DeepDebugSessionService service = NewService(freeGiB: 75);
 
         Assert.True(service.Options.Enabled);
-        Assert.Equal(30, service.Options.FrameRetentionMinutes);
-        Assert.Equal(5_000, service.Options.CaptureIntervalMilliseconds);
-        Assert.Equal(10, service.Options.RetainedArchiveCount);
+        Assert.Equal(1_000, DeepDebugOptions.CaptureIntervalMilliseconds);
+        Assert.Equal(10, service.Options.MaximumArchiveStorageGiB);
+        Assert.False(service.IsTemporarilyPausedByStorage);
+    }
+
+    [Theory]
+    [InlineData(2, 3, true)]
+    [InlineData(10, 3, false)]
+    [InlineData(51, 10, false)]
+    [InlineData(201, 30, false)]
+    public void Storage_policy_uses_free_space_tiers(
+        int freeGiB,
+        int expectedStorageGiB,
+        bool paused)
+    {
+        long freeBytes = freeGiB * DiagnosticUploadPolicy.OneGiB;
+
+        Assert.Equal(expectedStorageGiB, DeepDebugStoragePolicy.RecommendedStorageGiB(freeBytes));
+        Assert.Equal(
+            paused,
+            DeepDebugStoragePolicy.Evaluate(expectedStorageGiB, freeBytes, 0).CapturePaused);
     }
 
     [Fact]
-    public async Task SessionWritesAgentReadableRedactedArchive()
+    public async Task Low_disk_temporarily_pauses_without_turning_logging_off()
     {
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        long freeBytes = 2 * DiagnosticUploadPolicy.OneGiB;
+        DeepDebugSessionService service = NewService(availableFreeBytes: _ => freeBytes);
+
+        DeepDebugScope? paused = await service.OpenSessionAsync(
+            "low disk",
+            new DeepDebugOperationContext("test"));
+        Assert.Null(paused);
+        Assert.True(service.Options.Enabled);
+        Assert.True(service.IsTemporarilyPausedByStorage);
+
+        freeBytes = 20 * DiagnosticUploadPolicy.OneGiB;
+        DeepDebugScope? resumed = await service.OpenSessionAsync(
+            "space restored",
+            new DeepDebugOperationContext("test"));
+        Assert.NotNull(resumed);
+        await resumed!.CompleteAsync("success");
+    }
+
+    [Fact]
+    public async Task Configured_storage_is_lowered_to_available_archive_pool()
+    {
+        DeepDebugSessionService service = NewService(freeGiB: 7);
+
+        await service.UpdateOptionsAsync(maximumArchiveStorageGiB: 30);
+        DeepDebugSessionService restored = NewService(freeGiB: 7);
+
+        Assert.Equal(7, service.Options.MaximumArchiveStorageGiB);
+        Assert.Equal(7, restored.Options.MaximumArchiveStorageGiB);
+    }
+
+    [Fact]
+    public async Task Session_writes_redacted_agent_readable_archive_and_transition_frame()
+    {
+        DeepDebugSessionService service = NewService();
         DeepDebugScope? scope = await service.OpenSessionAsync(
             "wire test",
             new DeepDebugOperationContext(
                 "dataset-builder",
                 new { Secret = "https://discord.com" + "/api/webhooks/" + "123/abc" }));
 
-        Assert.NotNull(scope);
         service.RecordEvent("ocr", "state_evaluated", new
         {
             Path = Path.Combine(
@@ -43,55 +93,161 @@ public sealed class DeepDebugSessionTests : IDisposable
                 "dataset"),
             Text = "Lobby",
         });
-        RgbImage image = new(2, 1, [255, 0, 0, 0, 255, 0], takeOwnership: true);
-        service.RecordPng(PngEncoder.Encode(image), "live-client", new { Width = 2, Height = 1 });
+        service.RecordPng(TestPng(255, 0, 0), "live-client");
         await scope!.CompleteAsync("success");
 
-        string archivePath = Assert.IsType<string>(service.LastArchivePath);
-        Assert.True(File.Exists(archivePath));
-        using ZipArchive archive = ZipFile.OpenRead(archivePath);
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
         string[] entries = archive.Entries.Select(entry => entry.FullName).ToArray();
         Assert.Contains("manifest.json", entries);
         Assert.Contains("events.jsonl", entries);
         Assert.Contains("timeline.md", entries);
         Assert.Contains("README.md", entries);
         Assert.Contains(entries, entry => entry.StartsWith("frames/frame-", StringComparison.Ordinal));
-
         string events = await ReadAsync(archive, "events.jsonl");
         Assert.DoesNotContain(Environment.UserName, events, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("discord.com/api/webhooks", events, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("[REDACTED WINDOWS USER]", events, StringComparison.Ordinal);
         foreach (string line in events.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-        {
-            using JsonDocument _ = JsonDocument.Parse(line);
-        }
+            using (JsonDocument.Parse(line)) { }
+        string manifest = await ReadAsync(archive, "manifest.json");
+        Assert.Contains("\"formatVersion\": 2", manifest, StringComparison.Ordinal);
+        Assert.Contains("\"transitionFrames\": 1", manifest, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task RuntimeLogIsIncludedInArchive()
+    public async Task Runtime_log_is_preserved_without_unrelated_frames()
     {
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        DeepDebugSessionService service = NewService();
         DeepDebugScope? scope = await service.OpenSessionAsync(
             "macro runtime",
             new DeepDebugOperationContext("main-macro"));
-
         const string message = "MATCH RUNTIME | Upgrade target did not produce physical selection proof.";
+
         service.RecordRuntimeLog(message);
         await scope!.CompleteAsync("stopped");
 
         using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
         string events = await ReadAsync(archive, "events.jsonl");
         Assert.Contains(message, events, StringComparison.Ordinal);
-        Assert.Contains("\"category\":\"macro\"", events, StringComparison.Ordinal);
-        Assert.Contains("\"action\":\"log\"", events, StringComparison.Ordinal);
+        Assert.DoesNotContain(archive.Entries, entry => entry.FullName.EndsWith(".png", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task DisabledRecorderDoesNotCreateSession()
+    public async Task Fixed_one_second_capture_records_periodic_observations()
     {
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(enabled: false, frameRetentionMinutes: 30);
+        DeepDebugSessionService service = NewService();
+        using IDisposable registration = service.RegisterFrameCaptureProvider(
+            "test",
+            token =>
+            {
+                service.RecordPng(TestPng(1, 2, 3), "live-client");
+                return Task.CompletedTask;
+            });
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "periodic capture",
+            new DeepDebugOperationContext("test"));
+
+        await Task.Delay(2_250);
+        await scope!.CompleteAsync("success");
+
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
+        string events = await ReadAsync(archive, "events.jsonl");
+        Assert.True(events.Split("\"action\":\"live-client\"", StringSplitOptions.None).Length >= 3);
+        string configuration = await ReadAsync(archive, "configuration/deep-debug-options.json");
+        Assert.DoesNotContain("captureInterval", configuration, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Evidence_retains_ten_seconds_before_and_after_error()
+    {
+        string evidenceRoot = Path.Combine(_root, "evidence-window");
+        Directory.CreateDirectory(evidenceRoot);
+        DateTimeOffset errorAt = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
+        DeepDebugEvidenceRetention retention = new();
+        RecordFrame(retention, evidenceRoot, errorAt.AddSeconds(-11), "before-11");
+        RecordFrame(retention, evidenceRoot, errorAt.AddSeconds(-10), "before-10");
+        retention.ObserveEvent("macro", "runtime_recovery", new { FailedTask = "tower" }, errorAt);
+        RecordFrame(retention, evidenceRoot, errorAt, "at-error");
+        RecordFrame(retention, evidenceRoot, errorAt.AddSeconds(10), "after-10");
+        RecordFrame(retention, evidenceRoot, errorAt.AddSeconds(11), "after-11");
+
+        retention.Complete(errorAt.AddSeconds(12), 100_000);
+
+        Assert.False(File.Exists(Path.Combine(evidenceRoot, "before-11.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "before-10.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "at-error.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "after-10.png")));
+        Assert.False(File.Exists(Path.Combine(evidenceRoot, "after-11.png")));
+        Assert.Equal(1, retention.WindowCount);
+    }
+
+    [Fact]
+    public void Overlapping_error_windows_merge_and_terminal_evidence_has_priority()
+    {
+        string evidenceRoot = Path.Combine(_root, "evidence-priority");
+        Directory.CreateDirectory(evidenceRoot);
+        DateTimeOffset started = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
+        DeepDebugEvidenceRetention retention = new();
+        retention.ObserveEvent("macro", "runtime_recovery", new { FailedTask = "one" }, started);
+        RecordFrame(retention, evidenceRoot, started, "recoverable");
+        retention.ObserveEvent("input", "click_failed", new { Operation = "two" }, started.AddSeconds(5));
+        RecordFrame(retention, evidenceRoot, started.AddSeconds(5), "overlap");
+        retention.ObserveEvent("macro", "runtime_error", new { Error = "fatal" }, started.AddSeconds(30));
+        RecordFrame(retention, evidenceRoot, started.AddSeconds(30), "terminal");
+
+        retention.Complete(started.AddSeconds(41), new FileInfo(Path.Combine(evidenceRoot, "terminal.png")).Length);
+
+        Assert.Equal(2, retention.WindowCount);
+        Assert.False(File.Exists(Path.Combine(evidenceRoot, "recoverable.png")));
+        Assert.False(File.Exists(Path.Combine(evidenceRoot, "overlap.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "terminal.png")));
+        Assert.Equal(1, retention.DiscardedWindowCount);
+    }
+
+    [Theory]
+    [InlineData("application", "unhandled_exception", true)]
+    [InlineData("macro", "runtime_error", true)]
+    [InlineData("macro", "runtime_recovery", false)]
+    [InlineData("ocr_setup", "setup_failed", false)]
+    [InlineData("ocr", "inference_failed", false)]
+    [InlineData("local_instance", "operation_failed", false)]
+    [InlineData("route_optimizer_test", "trial_failed", false)]
+    [InlineData("diagnostic", "periodic_live_frame_capture_failed", false)]
+    public void Evidence_policy_classifies_actionable_failures(
+        string category,
+        string action,
+        bool terminal)
+    {
+        bool classified = DeepDebugEvidencePolicy.TryClassifyError(
+            category,
+            action,
+            new { FailureCode = "bounded_failure", Stage = "test" },
+            DateTimeOffset.UtcNow,
+            out DeepDebugErrorMarker? marker);
+
+        Assert.True(classified);
+        Assert.Equal(
+            terminal ? DeepDebugErrorSeverity.Terminal : DeepDebugErrorSeverity.Recoverable,
+            marker!.Severity);
+    }
+
+    [Fact]
+    public void Perceptual_hash_is_stable_for_same_pixels()
+    {
+        byte[] first = PatternPng(leftBright: true);
+        byte[] same = PatternPng(leftBright: true);
+        byte[] different = PatternPng(leftBright: false);
+
+        ulong firstHash = DeepDebugPerceptualHash.Create(first);
+
+        Assert.Equal(firstHash, DeepDebugPerceptualHash.Create(same));
+        Assert.NotEqual(firstHash, DeepDebugPerceptualHash.Create(different));
+    }
+
+    [Fact]
+    public async Task Disabled_logging_does_not_create_session()
+    {
+        DeepDebugSessionService service = NewService();
+        await service.UpdateOptionsAsync(enabled: false);
 
         DeepDebugScope? scope = await service.OpenSessionAsync(
             "disabled",
@@ -102,81 +258,9 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task OptionsAreNormalizedAndPersisted()
+    public async Task Concurrent_session_is_rejected()
     {
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(
-            enabled: true,
-            frameRetentionMinutes: 999,
-            retainedArchiveCount: 999,
-            captureIntervalMilliseconds: 2_000);
-
-        DeepDebugSessionService restored = new(_root);
-
-        Assert.True(restored.Options.Enabled);
-        Assert.Equal(120, restored.Options.FrameRetentionMinutes);
-        Assert.Equal(2_000, restored.Options.CaptureIntervalMilliseconds);
-        Assert.Equal(100, restored.Options.RetainedArchiveCount);
-    }
-
-    [Fact]
-    public async Task ConfiguredIntervalRecordsPeriodicFullClientFrames()
-    {
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(
-            enabled: true,
-            frameRetentionMinutes: 15,
-            captureIntervalMilliseconds: 500);
-        using IDisposable registration = service.RegisterFrameCaptureProvider(
-            "test",
-            token =>
-            {
-                service.RecordPng(
-                    PngEncoder.Encode(new RgbImage(1, 1, [1, 2, 3], takeOwnership: true)),
-                    "live-client",
-                    new { CaptureReason = "deep-debug-interval" });
-                return Task.CompletedTask;
-            });
-
-        DeepDebugScope? scope = await service.OpenSessionAsync(
-            "periodic capture",
-            new DeepDebugOperationContext("test"));
-        await Task.Delay(1_300);
-        await scope!.CompleteAsync("success");
-
-        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
-        Assert.True(archive.Entries.Count(entry =>
-            entry.FullName.Contains("-live-client.png", StringComparison.Ordinal)) >= 2);
-        string configuration = await ReadAsync(archive, "configuration/deep-debug-options.json");
-        Assert.Contains("\"captureIntervalMilliseconds\": 500", configuration, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task RetainAllFrames_RecordsFullOperationPolicy()
-    {
-        DeepDebugSessionService service = new(_root) { RetainAllFrames = true };
-        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
-        DeepDebugScope? scope = await service.OpenSessionAsync(
-            "runtime lab",
-            new DeepDebugOperationContext("runtime-lab"));
-        service.RecordPng(
-            PngEncoder.Encode(new RgbImage(1, 1, [1, 2, 3], takeOwnership: true)),
-            "runtime-frame");
-
-        await scope!.CompleteAsync("success");
-
-        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
-        string manifest = await ReadAsync(archive, "manifest.json");
-        Assert.Contains("\"frameRetentionMinutes\": 0", manifest, StringComparison.Ordinal);
-        Assert.Contains("cover the full operation", manifest, StringComparison.Ordinal);
-        Assert.Contains(archive.Entries, entry => entry.FullName.StartsWith("frames/", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public async Task ConcurrentSessionIsRejected()
-    {
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        DeepDebugSessionService service = NewService();
         DeepDebugScope? first = await service.OpenSessionAsync(
             "first",
             new DeepDebugOperationContext("test"));
@@ -184,12 +268,11 @@ public sealed class DeepDebugSessionTests : IDisposable
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.OpenSessionAsync(
             "second",
             new DeepDebugOperationContext("test")));
-        Assert.Single(Directory.EnumerateDirectories(service.DiagnosticsRoot, ".deep-debug-*"));
         await first!.CompleteAsync("success");
     }
 
     [Fact]
-    public async Task SessionIncludesOnlyRegisteredVisualProfileRevision()
+    public async Task Session_includes_only_registered_visual_profile_revision()
     {
         string profileRoot = Path.Combine(_root, "profiles", "wire-test");
         string revision = Path.Combine(profileRoot, "revisions", "20260808T010203000Z-test");
@@ -200,12 +283,11 @@ public sealed class DeepDebugSessionTests : IDisposable
         await File.WriteAllBytesAsync(Path.Combine(revision, "median.pgm"), [80, 53, 10]);
         string locator = Path.Combine(profileRoot, "locator.json");
         await File.WriteAllTextAsync(locator, "{\"bounds\":[1,2,3,4]}");
-
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        DeepDebugSessionService service = NewService();
         DeepDebugScope? scope = await service.OpenSessionAsync(
             "profile snapshot",
             new DeepDebugOperationContext("test"));
+
         service.RecordVisualProfileRevision("wire-test", revision, locator);
         await scope!.CompleteAsync("success");
 
@@ -214,25 +296,22 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.Contains(archive.Entries, entry => entry.FullName == prefix + "profile.json");
         Assert.Contains(archive.Entries, entry => entry.FullName == prefix + "median.pgm");
         Assert.Contains(archive.Entries, entry => entry.FullName == prefix + "locator.json");
-        Assert.Contains(archive.Entries, entry => entry.FullName == "visual-profiles/index.json");
-        string copiedManifest = await ReadAsync(archive, prefix + "profile.json");
-        Assert.DoesNotContain(Environment.UserName, copiedManifest, StringComparison.OrdinalIgnoreCase);
-        string manifest = await ReadAsync(archive, "manifest.json");
-        Assert.Contains("\"visualProfiles\": 1", manifest, StringComparison.Ordinal);
+        string copied = await ReadAsync(archive, prefix + "profile.json");
+        Assert.DoesNotContain(Environment.UserName, copied, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"visualProfiles\": 1", await ReadAsync(archive, "manifest.json"));
     }
 
     [Fact]
-    public async Task MissingRegisteredLocatorIsReportedInManifest()
+    public async Task Missing_registered_locator_is_reported_in_manifest()
     {
         string revision = Path.Combine(_root, "profiles", "wire-test", "revisions", "revision");
         Directory.CreateDirectory(revision);
         await File.WriteAllTextAsync(Path.Combine(revision, "profile.json"), "{}");
-
-        DeepDebugSessionService service = new(_root);
-        await service.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
+        DeepDebugSessionService service = NewService();
         DeepDebugScope? scope = await service.OpenSessionAsync(
             "missing locator",
             new DeepDebugOperationContext("test"));
+
         service.RecordVisualProfileRevision(
             "wire-test",
             revision,
@@ -240,31 +319,129 @@ public sealed class DeepDebugSessionTests : IDisposable
         await scope!.CompleteAsync("success");
 
         using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
-        string manifest = await ReadAsync(archive, "manifest.json");
-        Assert.Contains("Visual locator was unavailable for profile wire-test", manifest, StringComparison.Ordinal);
+        Assert.Contains(
+            "Visual locator was unavailable for profile wire-test",
+            await ReadAsync(archive, "manifest.json"),
+            StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task ConfiguredArchiveRetentionAlwaysKeepsOnlyTheNewestLogs()
+    public async Task Shared_diagnostics_use_one_storage_budget_across_profiles()
     {
-        DeepDebugSessionService service = new(_root);
-        Directory.CreateDirectory(service.DiagnosticsRoot);
-        for (int index = 0; index < 12; index++)
+        string sharedDiagnostics = Path.Combine(_root, "machine-diagnostics");
+        Func<string, long> capacity = _ => 100 * DiagnosticUploadPolicy.OneGiB;
+        DeepDebugSessionService owner = new(
+            Path.Combine(_root, "owner-profile"),
+            sharedDiagnostics,
+            capacity);
+        DeepDebugSessionService runner = new(
+            Path.Combine(_root, "runner-profile"),
+            sharedDiagnostics,
+            capacity);
+
+        await owner.UpdateOptionsAsync(enabled: false, maximumArchiveStorageGiB: 30);
+        runner.RefreshOptions();
+
+        Assert.Equal(30, runner.Options.MaximumArchiveStorageGiB);
+        Assert.True(runner.Options.Enabled);
+        Assert.False(owner.Options.Enabled);
+        Assert.True(File.Exists(Path.Combine(sharedDiagnostics, "deep-debug-retention.json")));
+    }
+
+    [Fact]
+    public async Task Shared_storage_pruning_deletes_oldest_archives_by_total_bytes()
+    {
+        string sharedDiagnostics = Path.Combine(_root, "byte-pruning");
+        Directory.CreateDirectory(sharedDiagnostics);
+        for (int index = 0; index < 3; index++)
         {
-            string path = Path.Combine(service.DiagnosticsRoot, $"deep-debug-test-{index:D2}.zip");
-            await File.WriteAllBytesAsync(path, []);
+            string path = Path.Combine(sharedDiagnostics, $"deep-debug-test-{index}.zip");
+            await File.WriteAllBytesAsync(path, new byte[6]);
             File.SetCreationTimeUtc(path, DateTime.UtcNow.AddMinutes(index));
         }
 
-        await service.UpdateOptionsAsync(true, 30, retainedArchiveCount: 10);
+        DeepDebugConfigurationStore.PruneArchivesWithinBudget(sharedDiagnostics, maximumBytes: 10);
 
-        string[] retained = Directory.EnumerateFiles(service.DiagnosticsRoot, "deep-debug-*.zip")
-            .Select(Path.GetFileName)
-            .Order(StringComparer.Ordinal)
-            .ToArray()!;
-        Assert.Equal(10, retained.Length);
-        Assert.DoesNotContain("deep-debug-test-00.zip", retained);
-        Assert.DoesNotContain("deep-debug-test-01.zip", retained);
+        string retained = Assert.Single(Directory.EnumerateFiles(sharedDiagnostics, "deep-debug-*.zip"));
+        Assert.EndsWith("deep-debug-test-2.zip", retained, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Archive_stays_below_injected_hard_limit()
+    {
+        DeepDebugArchiveLimits limits = new(
+            64 * 1024,
+            1 * 1024 * 1024,
+            16 * 1024,
+            8 * 1024,
+            8 * 1024,
+            4 * 1024);
+        DeepDebugSessionService service = NewService(limits: limits);
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "bounded",
+            new DeepDebugOperationContext("test"));
+        service.RecordEvent("macro", "runtime_error", new { Error = "failure" });
+        for (int index = 0; index < 4; index++)
+            service.RecordPng(NoisyPng(index), "live-client");
+
+        await scope!.CompleteAsync("error");
+
+        Assert.True(new FileInfo(service.LastArchivePath!).Length <= limits.MaximumArchiveBytes);
+    }
+
+    private DeepDebugSessionService NewService(
+        int freeGiB = 300,
+        Func<string, long>? availableFreeBytes = null,
+        DeepDebugArchiveLimits? limits = null) => new(
+            _root,
+            diagnosticsRoot: null,
+            availableFreeBytes ?? (_ => freeGiB * DiagnosticUploadPolicy.OneGiB),
+            limits);
+
+    private static byte[] TestPng(byte red, byte green, byte blue) =>
+        PngEncoder.Encode(new RgbImage(2, 2,
+        [
+            red, green, blue,
+            blue, red, green,
+            green, blue, red,
+            red, blue, green,
+        ], takeOwnership: true));
+
+    private static byte[] PatternPng(bool leftBright)
+    {
+        byte[] pixels = new byte[8 * 8 * 3];
+        for (int y = 0; y < 8; y++)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                bool bright = x < 4 == leftBright;
+                byte value = bright ? (byte)240 : (byte)10;
+                int offset = (y * 8 + x) * 3;
+                pixels[offset] = value;
+                pixels[offset + 1] = value;
+                pixels[offset + 2] = value;
+            }
+        }
+        return PngEncoder.Encode(new RgbImage(8, 8, pixels, takeOwnership: true));
+    }
+
+    private static byte[] NoisyPng(int seed)
+    {
+        byte[] pixels = new byte[128 * 128 * 3];
+        new Random(seed).NextBytes(pixels);
+        return PngEncoder.Encode(new RgbImage(128, 128, pixels, takeOwnership: true));
+    }
+
+    private static void RecordFrame(
+        DeepDebugEvidenceRetention retention,
+        string root,
+        DateTimeOffset timestamp,
+        string name)
+    {
+        byte[] png = TestPng((byte)name.Length, 20, 30);
+        string path = Path.Combine(root, name + ".png");
+        File.WriteAllBytes(path, png);
+        retention.RecordFrame(path, timestamp, png, fullClient: true);
     }
 
     private static async Task<string> ReadAsync(ZipArchive archive, string name)

@@ -16,6 +16,7 @@ public sealed record LocalSessionPaths(
     public string RunnerRoot => Path.Combine(ProgramDataRoot, "Runner");
     public string ProfilesRoot => Path.Combine(ProgramDataRoot, "Profiles");
     public string ConfigurationsRoot => Path.Combine(ProgramDataRoot, "Configurations");
+    public string DiagnosticsRoot => Path.Combine(ProgramDataRoot, "Diagnostics");
     public string SharedConfigurationRoot => Path.Combine(ConfigurationsRoot, "shared");
     public string JournalPath => Path.Combine(SessionRoot, "provisioning.json");
     public string StatusPath => Path.Combine(RunnerRoot, "status.json");

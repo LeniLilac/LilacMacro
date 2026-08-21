@@ -3,7 +3,7 @@
 Renders selected PNG evidence from a LilacMacro deep-debug ZIP or expanded session.
 
 .EXAMPLE
-./scripts/New-DeepDebugContactSheet.ps1 "$env:LOCALAPPDATA\LilacMacro\diagnostics\deep-debug-story-wire-test.zip"
+./scripts/New-DeepDebugContactSheet.ps1 "<path from OPEN DEEP DEBUG FOLDER>\deep-debug-story-wire-test.zip"
 #>
 [CmdletBinding()]
 param(

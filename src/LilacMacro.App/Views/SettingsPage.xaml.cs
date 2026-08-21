@@ -28,6 +28,7 @@ public partial class SettingsPage : UserControl
     private MacroKeyBinding? _capturingBinding;
     private bool _updatingDisplayControls;
     private bool _updatingThemeControls;
+    private bool _refreshingDiagnosticsControls;
 
     internal SettingsPage(
         DeepDebugSessionService deepDebug,
@@ -46,7 +47,6 @@ public partial class SettingsPage : UserControl
         MacroVersionText.Text = BuildVersion();
         LayoutProfileCombo.ItemsSource = new[] { "1920 x 1080 - full dock", "1366 x 768 - compact" };
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on app start" };
-        CaptureIntervalCombo.ItemsSource = new[] { "0.5 sec", "1.0 sec", "2.0 sec", "5.0 sec" };
         MacroLayoutProfile effectiveLayout = ownerState.LayoutProfile;
         if (MacroInstanceContext.Current.IsManagedRunner)
         {
@@ -59,8 +59,6 @@ public partial class SettingsPage : UserControl
             ownerState.MinimizeBehavior);
         CheckUpdatesOnStartupCheck.IsChecked = ownerState.CheckForUpdatesOnStartup;
         IncludePrereleaseCheck.IsChecked = ownerState.IncludePrereleaseUpdates;
-        CaptureIntervalCombo.SelectedIndex = DeepDebugOptions.CaptureIntervalIndex(
-            _deepDebug.Options.CaptureIntervalMilliseconds);
         LocalInstancesPanel.Initialize(instanceManager, ownerState);
         KeyBindingsItems.ItemsSource = ownerState.KeyBindings.Items;
         PrivateServerText.Text = ownerState.PrivateServerLink;
@@ -73,11 +71,7 @@ public partial class SettingsPage : UserControl
         NotifyVictoryCheck.IsChecked = ownerState.NotifyOnVictory;
         NotifyDefeatCheck.IsChecked = ownerState.NotifyOnDefeat;
         NotifyRecoveryCheck.IsChecked = ownerState.NotifyOnRecovery;
-        DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
-        FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
-        RetainedArchiveCountText.Text = _deepDebug.Options.RetainedArchiveCount.ToString();
-        FrameHistoryText.IsEnabled = _deepDebug.Options.Enabled;
-        CaptureIntervalCombo.IsEnabled = _deepDebug.Options.Enabled;
+        RefreshDiagnosticsControls();
         _initialized = true;
         RefreshDisplayControls();
         RefreshUpdateOwnership();
@@ -122,7 +116,12 @@ public partial class SettingsPage : UserControl
     private void RobloxTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(RobloxTabButton, RobloxPanel);
     private void DiscordTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(DiscordTabButton, DiscordPanel);
     private void KeybindsTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(KeybindsTabButton, KeybindsPanel);
-    private void DiagnosticsTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(DiagnosticsTabButton, DiagnosticsPanel);
+    private void DiagnosticsTab_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        _deepDebug.RefreshOptions();
+        RefreshDiagnosticsControls();
+        ShowPanel(DiagnosticsTabButton, DiagnosticsPanel);
+    }
 
     private void ShowPanel(Button selectedButton, UIElement selectedPanel)
     {
@@ -138,24 +137,6 @@ public partial class SettingsPage : UserControl
     private void SettingChanged_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         if (_initialized) GeneralStatusText.Text = "Changed in this session";
-    }
-
-    private async void CaptureInterval_OnSelectionChanged(
-        object sender,
-        SelectionChangedEventArgs eventArgs)
-    {
-        if (!_initialized) return;
-        int interval = CaptureIntervalCombo.SelectedIndex switch
-        {
-            0 => 500,
-            2 => 2_000,
-            3 => 5_000,
-            _ => 1_000,
-        };
-        await _deepDebug.UpdateOptionsAsync(
-            DeepDebugCheck.IsChecked == true,
-            _deepDebug.Options.FrameRetentionMinutes,
-            captureIntervalMilliseconds: interval);
     }
 
     internal async Task CheckOnStartupAsync()
@@ -460,31 +441,15 @@ public partial class SettingsPage : UserControl
 
     private async void DeepDebug_OnChanged(object sender, RoutedEventArgs eventArgs)
     {
-        if (!_initialized) return;
+        if (!_initialized || _refreshingDiagnosticsControls) return;
         bool enabled = DeepDebugCheck.IsChecked == true;
-        FrameHistoryText.IsEnabled = enabled;
-        CaptureIntervalCombo.IsEnabled = enabled;
-        int retention = int.TryParse(FrameHistoryText.Text, out int parsed)
-            ? parsed
-            : _deepDebug.Options.FrameRetentionMinutes;
-        await _deepDebug.UpdateOptionsAsync(enabled, retention);
+        MaximumArchiveStorageText.IsEnabled = enabled;
+        await _deepDebug.UpdateOptionsAsync(enabled: enabled);
     }
 
     private void DeepDebug_OnArchiveSaved(object? sender, string path)
     {
         AppToastService.ShowSuccess("DEEP DEBUG LOG SAVED", Path.GetFileName(path));
-    }
-
-    private async void FrameHistory_OnLostKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs eventArgs)
-    {
-        if (!_initialized) return;
-        int retention = int.TryParse(FrameHistoryText.Text, out int parsed)
-            ? parsed
-            : _deepDebug.Options.FrameRetentionMinutes;
-        await _deepDebug.UpdateOptionsAsync(
-            DeepDebugCheck.IsChecked == true,
-            retention);
-        FrameHistoryText.Text = _deepDebug.Options.FrameRetentionMinutes.ToString();
     }
 
     private void OpenDiagnostics_OnClick(object sender, RoutedEventArgs eventArgs)

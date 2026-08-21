@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -16,7 +15,10 @@ public sealed partial class DeepDebugSessionService
     private readonly object _gate = new();
     private readonly string _appDataRoot;
     private readonly string _diagnosticsRoot;
-    private readonly DeepDebugOptionsStore _optionsStore;
+    private readonly DeepDebugConfigurationStore _configurationStore;
+    private readonly DeepDebugArchiveFinalizer _archiveFinalizer;
+    private readonly DeepDebugArchiveLimits _limits;
+    private readonly Func<DateTimeOffset> _utcNow;
     private readonly Dictionary<string, DeepDebugFrameCaptureProvider> _frameCaptureProviders =
         new(StringComparer.OrdinalIgnoreCase);
     private DeepDebugSession? _active;
@@ -27,17 +29,34 @@ public sealed partial class DeepDebugSessionService
     {
     }
 
-    internal DeepDebugSessionService(string appDataRoot)
+    internal DeepDebugSessionService(
+        string appDataRoot,
+        string? diagnosticsRoot = null,
+        Func<string, long>? availableFreeBytes = null,
+        DeepDebugArchiveLimits? limits = null,
+        Func<DateTimeOffset>? utcNow = null)
     {
         _appDataRoot = Path.GetFullPath(appDataRoot);
-        _diagnosticsRoot = Path.Combine(_appDataRoot, "diagnostics");
-        _optionsStore = new DeepDebugOptionsStore(_appDataRoot);
-        Options = _optionsStore.Load();
-        PruneOldArchives();
+        _diagnosticsRoot = Path.GetFullPath(
+            diagnosticsRoot ?? Path.Combine(_appDataRoot, "diagnostics"));
+        _configurationStore = new DeepDebugConfigurationStore(
+            _appDataRoot,
+            _diagnosticsRoot,
+            availableFreeBytes);
+        _limits = limits ?? DeepDebugArchiveLimits.Production;
+        _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
+        _archiveFinalizer = new DeepDebugArchiveFinalizer(
+            _appDataRoot,
+            _diagnosticsRoot,
+            JsonOptions);
+        Options = _configurationStore.Load();
+        _configurationStore.PruneArchives(Options);
+        IsTemporarilyPausedByStorage = _configurationStore.StorageState(Options).CapturePaused;
     }
 
     public DeepDebugOptions Options { get; private set; }
-    public bool RetainAllFrames { get; set; }
+
+    public bool IsTemporarilyPausedByStorage { get; private set; }
 
     public bool IsActive
     {
@@ -51,6 +70,8 @@ public sealed partial class DeepDebugSessionService
     public event EventHandler? OptionsChanged;
 
     public event EventHandler<string>? ArchiveSaved;
+
+    internal event EventHandler<string>? AutomaticReportArchiveSaved;
 
     internal IDisposable RegisterFrameCaptureProvider(
         string surface,
@@ -78,23 +99,18 @@ public sealed partial class DeepDebugSessionService
     }
 
     public async Task UpdateOptionsAsync(
-        bool enabled,
-        int frameRetentionMinutes,
-        int? retainedArchiveCount = null,
-        int? captureIntervalMilliseconds = null)
+        bool? enabled = null,
+        int? maximumArchiveStorageGiB = null)
     {
-        Options = new DeepDebugOptions
-        {
-            Enabled = enabled,
-            FrameRetentionMinutes = DeepDebugOptions.NormalizeFrameRetention(frameRetentionMinutes),
-            RetainedArchiveCount = DeepDebugOptions.NormalizeRetainedArchiveCount(retainedArchiveCount ?? Options.RetainedArchiveCount),
-            CaptureIntervalMilliseconds = DeepDebugOptions.NormalizeCaptureInterval(
-                captureIntervalMilliseconds ?? Options.CaptureIntervalMilliseconds),
-        };
-        await _optionsStore.SaveAsync(Options);
-        PruneOldArchives();
+        Options = await _configurationStore.UpdateAsync(
+            enabled,
+            maximumArchiveStorageGiB);
+        _configurationStore.PruneArchives(Options);
+        IsTemporarilyPausedByStorage = _configurationStore.StorageState(Options).CapturePaused;
         OptionsChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    internal void RefreshOptions() => Options = _configurationStore.Load();
 
     public async Task<DeepDebugScope?> OpenSessionAsync(
         string operation,
@@ -102,7 +118,10 @@ public sealed partial class DeepDebugSessionService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation);
         ArgumentNullException.ThrowIfNull(context);
-        if (!Options.Enabled) return null;
+        RefreshOptions();
+        DeepDebugStorageState storage = _configurationStore.StorageState(Options);
+        IsTemporarilyPausedByStorage = storage.CapturePaused;
+        if (!Options.Enabled || IsTemporarilyPausedByStorage) return null;
 
         string diagnosticsRoot = Path.GetFullPath(_diagnosticsRoot);
         Directory.CreateDirectory(diagnosticsRoot);
@@ -121,10 +140,11 @@ public sealed partial class DeepDebugSessionService
         {
             Operation = operation,
             Context = context,
-            StartedAtUtc = DateTimeOffset.UtcNow,
+            StartedAtUtc = _utcNow(),
             StagingDirectory = staging,
             Channel = channel,
-            FrameRetentionMinutes = RetainAllFrames ? 0 : Options.FrameRetentionMinutes,
+            Limits = _limits,
+            Evidence = new DeepDebugEvidenceRetention(),
         };
         lock (_gate)
         {
@@ -150,8 +170,7 @@ public sealed partial class DeepDebugSessionService
             ? null
             : new DeepDebugFrameCaptureLoop(
                 this,
-                provider.Capture,
-                Options.CaptureIntervalMilliseconds);
+                provider.Capture);
         session.FrameCaptureLoop?.Start();
         return new DeepDebugScope(this, session);
     }
@@ -236,6 +255,16 @@ public sealed partial class DeepDebugSessionService
         if (FrameRecorded is not null) PublishFrameObservation(source, data, png.ToArray());
         DeepDebugSession? session = ActiveSession();
         if (session is null) return;
+        DeepDebugStorageState storage = _configurationStore.StorageState(Options);
+        if (storage.CapturePaused)
+        {
+            bool newlyPaused = !IsTemporarilyPausedByStorage;
+            IsTemporarilyPausedByStorage = true;
+            if (newlyPaused)
+                RecordEvent("diagnostic", "capture_paused_low_disk", new { storage.FreeBytes });
+            return;
+        }
+        IsTemporarilyPausedByStorage = false;
         int index = Interlocked.Increment(ref session.ArtifactCount);
         string path = $"frames/frame-{index:D9}-{SafeName(source)}.png";
         Enqueue(session, "frame", source, data, path, png.ToArray());
@@ -283,46 +312,17 @@ public sealed partial class DeepDebugSessionService
             session.WriterFailure ??= writerError;
         }
 
-        DateTimeOffset completed = DateTimeOffset.UtcNow;
-        DeepDebugSessionWriter.PruneExpiredArtifacts(session, completed);
-        int visualProfiles = WriteVisualProfileSnapshots(session);
-        await CopyLatestCrashLogAsync(session.StagingDirectory);
-        await WriteReadmeAsync(session.StagingDirectory);
-        await WriteJsonAsync(
-            Path.Combine(session.StagingDirectory, "manifest.json"),
-            new DeepDebugManifest(
-                1,
-                session.Operation,
-                outcome,
-                GetVersion(),
-                session.StartedAtUtc,
-                completed,
-                completed - session.StartedAtUtc,
-                Volatile.Read(ref session.ArtifactCount),
-                Volatile.Read(ref session.EventCount),
-                Volatile.Read(ref session.InputEventCount),
-                session.FrameRetentionMinutes,
-                session.RetainedFrames.Count,
-                Volatile.Read(ref session.DiscardedArtifactCount),
-                visualProfiles,
-                session.RetainsAllFrames
-                    ? "events.jsonl, timeline.md, and already-acquired PNG evidence cover the full operation. Visual profiles contain only immutable revisions consulted by this run."
-                    : "events.jsonl and timeline.md cover the full operation. PNG evidence uses already-acquired captures and retains only the final rolling window. Visual profiles contain only immutable revisions consulted by this run.",
-                session.WriterFailure is null ? null : DeepDebugRedactor.Redact(session.WriterFailure.ToString()),
-                error is null ? null : DeepDebugRedactor.Redact(error.ToString()),
-                "Private-server links, Discord webhooks, Windows usernames, and profile paths are redacted. Captured Roblox pixels can still contain personal game data."));
-        string archive = CreateArchive(session);
+        string archive = await _archiveFinalizer.FinalizeAsync(
+            session,
+            outcome,
+            error,
+            _utcNow());
         LastArchivePath = archive;
         TryDeleteDirectory(session.StagingDirectory);
-        PruneOldArchives();
-        try
-        {
-            ArchiveSaved?.Invoke(this, archive);
-        }
-        catch (Exception)
-        {
-            // A closed UI observer must not turn a successfully saved archive into an operation failure.
-        }
+        _configurationStore.PruneArchives(Options);
+        NotifyArchiveSaved(ArchiveSaved, archive);
+        if (session.Evidence.WindowCount > 0)
+            NotifyArchiveSaved(AutomaticReportArchiveSaved, archive);
     }
 
     private void Enqueue(
@@ -337,7 +337,7 @@ public sealed partial class DeepDebugSessionService
         long sequence = Interlocked.Increment(ref session.Sequence);
         DeepDebugWriteItem item = new(
             sequence,
-            DateTimeOffset.UtcNow,
+            _utcNow(),
             category,
             action,
             data,
@@ -356,8 +356,14 @@ public sealed partial class DeepDebugSessionService
     private async Task WriteConfigurationAsync(DeepDebugSession session)
     {
         string root = Path.Combine(session.StagingDirectory, "configuration");
-        await WriteJsonAsync(Path.Combine(root, "operation-context.json"), session.Context);
-        await WriteJsonAsync(Path.Combine(root, "deep-debug-options.json"), Options);
+        await WriteJsonAsync(
+            Path.Combine(root, "operation-context.json"),
+            session.Context,
+            session.Limits.ConfigurationBytes * 3 / 4);
+        await WriteJsonAsync(
+            Path.Combine(root, "deep-debug-options.json"),
+            Options,
+            session.Limits.ConfigurationBytes / 8);
         await WriteJsonAsync(Path.Combine(root, "environment.json"), new
         {
             AppVersion = GetVersion(),
@@ -365,97 +371,41 @@ public sealed partial class DeepDebugSessionService
             Framework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
             ProcessArchitecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),
             ProcessId = Environment.ProcessId,
-            CapturedAtUtc = DateTimeOffset.UtcNow,
-        });
+            CapturedAtUtc = _utcNow(),
+        }, session.Limits.ConfigurationBytes / 8);
     }
 
-    private async Task CopyLatestCrashLogAsync(string staging)
-    {
-        string source = Path.Combine(_appDataRoot, "logs", "latest-crash.txt");
-        if (!File.Exists(source)) return;
-        try
-        {
-            string text = await File.ReadAllTextAsync(source);
-            await File.WriteAllTextAsync(
-                Path.Combine(staging, "latest-crash-sanitized.txt"),
-                DeepDebugRedactor.Redact(text),
-                new UTF8Encoding(false));
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-        {
-            await File.WriteAllTextAsync(
-                Path.Combine(staging, "latest-crash-copy-error.txt"),
-                DeepDebugRedactor.Redact(error.Message));
-        }
-    }
-
-    private static int WriteVisualProfileSnapshots(DeepDebugSession session)
-    {
-        try
-        {
-            return DeepDebugVisualProfileSnapshotWriter.Write(session);
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
-        {
-            File.WriteAllText(
-                Path.Combine(session.StagingDirectory, "visual-profile-copy-error.txt"),
-                DeepDebugRedactor.Redact(error.ToString()));
-            return 0;
-        }
-    }
-
-    private static Task WriteReadmeAsync(string staging) => File.WriteAllTextAsync(
-        Path.Combine(staging, "README.md"),
-        "# LilacMacro deep debug session\n\n" +
-        "Start with `manifest.json`, then read `timeline.md` or machine-readable `events.jsonl`. " +
-        "Frame links point to decision-time PNG evidence. `visual-profiles/` contains the exact bounded profile revisions consulted by this run. " +
-        "Coordinates are Roblox client-relative half-open rectangles.\n",
-        new UTF8Encoding(false));
-
-    private async Task WriteJsonAsync<T>(string path, T value)
+    private async Task WriteJsonAsync<T>(string path, T value, long maximumBytes)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        string json = JsonSerializer.Serialize(value, JsonOptions);
-        await File.WriteAllTextAsync(path, DeepDebugRedactor.Redact(json), new UTF8Encoding(false));
-    }
-
-    private string CreateArchive(DeepDebugSession session)
-    {
-        string name = $"deep-debug-{SafeName(session.Operation)}-{session.StartedAtUtc.ToLocalTime():yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.zip";
-        string archive = Path.Combine(_diagnosticsRoot, name);
-        string temporary = Path.Combine(_diagnosticsRoot, $".{name}.tmp");
-        EnsureChildPath(_diagnosticsRoot, archive);
-        try
+        string json = DeepDebugRedactor.Redact(JsonSerializer.Serialize(value, JsonOptions));
+        if (Encoding.UTF8.GetByteCount(json) > maximumBytes)
         {
-            ZipFile.CreateFromDirectory(session.StagingDirectory, temporary, CompressionLevel.NoCompression, false);
-            File.Move(temporary, archive, false);
+            json = JsonSerializer.Serialize(new
+            {
+                Truncated = true,
+                Reason = "Configuration artifact exceeded its Deep Debug safety bound.",
+            }, JsonOptions);
         }
-        finally
-        {
-            if (File.Exists(temporary)) File.Delete(temporary);
-        }
-        return archive;
-    }
-
-    private void PruneOldArchives()
-    {
-        try
-        {
-            FileInfo[] archives = new DirectoryInfo(_diagnosticsRoot)
-                .EnumerateFiles("deep-debug-*.zip")
-                .OrderByDescending(file => file.CreationTimeUtc)
-                .ToArray();
-            foreach (FileInfo archive in archives.Skip(Options.RetainedArchiveCount)) archive.Delete();
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-        {
-            // Archive creation succeeded; retention cleanup can retry next session.
-        }
+        await File.WriteAllTextAsync(path, json, new UTF8Encoding(false));
     }
 
     private DeepDebugSession? ActiveSession()
     {
         lock (_gate) return _active;
+    }
+
+    private void NotifyArchiveSaved(EventHandler<string>? handlers, string archive)
+    {
+        if (handlers is null) return;
+        foreach (EventHandler<string> handler in handlers.GetInvocationList())
+        {
+            try { handler(this, archive); }
+            catch (Exception)
+            {
+                // A closed UI or optional network observer cannot change archive finalization.
+            }
+        }
     }
 
     private DeepDebugFrameCaptureProvider? GetFrameCaptureProvider(string surface)
@@ -492,9 +442,10 @@ public sealed partial class DeepDebugSessionService
                 service.RemoveFrameCaptureProvider(provider);
         }
     }
-    private static string GetVersion() => Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "unknown";
+    internal static string GetVersion() =>
+        Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "unknown";
 
-    private static string SafeName(string value)
+    internal static string SafeName(string value)
     {
         HashSet<char> invalid = Path.GetInvalidFileNameChars().ToHashSet();
         string safe = new(value.Trim().ToLowerInvariant().Select(character =>

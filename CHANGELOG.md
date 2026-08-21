@@ -2,9 +2,15 @@
 
 ## Unreleased
 
+## 1.0.151 — Public beta
+
 - Fixed the full Macro dashboard workspace at the exact dock height, matched the Stats/Upcoming Tasks inspector to it, clipped overflowing tasks, and prevented full-layout resizing below the complete dock and inspector.
 - Simplified the first-run privacy window, restored the shared Lilac button styling, and made save failures visible within the window.
 - Kept unrelated Windows profiles on their own local configuration instead of selecting another account's ACL-restricted shared runner configuration.
+- Simplified placement, replay, reconfiguration, and sell verification around the selection UI while retaining physical-unit proof where upgrades require it.
+- Reworked Deep Debug into shared, storage-budgeted evidence archives with one-second capture, bounded error windows, distinct failure retention, and a hard 3 GiB archive ceiling.
+- Made automatic error reporting default on, removed light-report fallback, and paused automatic uploads whenever Deep Debug is unavailable or disabled.
+- Added shared owner/runner diagnostic retention tiers based on available disk space and reusable local OCR/Python caches for development installer builds.
 
 ## 1.0.150 — Public beta
 

@@ -2,7 +2,7 @@ namespace LilacMacro.App.Runtime;
 
 internal static class PrivacyChoicesPolicy
 {
-    internal const int CurrentNoticeVersion = 3;
+    internal const int CurrentNoticeVersion = 4;
 
     internal static readonly Uri PrivacyUri = new("https://macro.expeditions.gg/privacy");
 

@@ -14,7 +14,6 @@ public sealed class ToolShellProfileTests
         Assert.Equal("gpu:0", profile.OcrDevice);
         Assert.True(profile.KeepOcrLoaded);
         Assert.True(profile.PreloadOcrOnOpen);
-        Assert.False(profile.RetainAllDeepDebugFrames);
     }
 
     [Fact]
@@ -36,6 +35,5 @@ public sealed class ToolShellProfileTests
         Assert.Equal("gpu:0", profile.OcrDevice);
         Assert.True(profile.KeepOcrLoaded);
         Assert.True(profile.PreloadOcrOnOpen);
-        Assert.True(profile.RetainAllDeepDebugFrames);
     }
 }

@@ -69,6 +69,24 @@ internal sealed class UnitPanelEvidenceService(
         throw new InvalidOperationException("Priority, Sell, and DPS panel geometry did not stabilize.");
     }
 
+    public async Task NormalizeSelectionAsync(
+        UnitPanelLayout? layout,
+        Action<string>? status,
+        CancellationToken cancellationToken)
+    {
+        await workspace.CaptureLiveFrameAsync(
+            DebugWorkflowCatalog.ClientSize,
+            cancellationToken,
+            "placement-selection-normalization");
+        status?.Invoke("NORMALIZING UNIT SELECTION");
+        await workspace.ClickRobloxAsync(
+            DebugWorkflowCatalog.ClientSize,
+            UnitPanelDismissalPolicy.ActionPoint(DebugWorkflowCatalog.ClientSize),
+            cancellationToken);
+        if (layout is not null)
+            await DismissAsync(layout, status, cancellationToken);
+    }
+
     public async Task<bool> WaitForSelectedPanelAsync(
         UnitPanelLayout layout,
         Action<string>? status,

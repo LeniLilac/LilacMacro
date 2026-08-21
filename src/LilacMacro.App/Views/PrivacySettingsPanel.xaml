@@ -4,36 +4,36 @@
     <Border Margin="0,0,0,12" Padding="15" Style="{StaticResource CardStyle}">
         <Grid>
             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-            <TextBlock FontSize="15" FontWeight="Bold" Text="Privacy and online features" />
+            <TextBlock FontSize="15" FontWeight="Bold" Text="Privacy and connected services" />
             <StackPanel Grid.Row="1" Margin="0,16,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="ONLINE FEATURES" />
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="ONLINE SERVICES" />
                     <StackPanel Grid.Column="1">
-                        <CheckBox x:Name="OnlineFeaturesCheck" Content="Enable online safety, updates, code claiming, and configuration sharing"
+                        <CheckBox x:Name="OnlineFeaturesCheck" Content="Use updates, safety controls, code claiming, and Plan sharing"
                                   Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
                         <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
-                                   Text="Turning this off prevents LilacMacro service and update requests. Local macro functions remain available without remote safety status." />
+                                   Text="Connects only to the official LilacMacro service and GitHub. Turning it off keeps local automation available but disables these online features." />
                     </StackPanel>
                 </Grid>
                 <Grid Margin="0,14,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="PRODUCT TELEMETRY" />
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="USAGE DATA" />
                     <StackPanel Grid.Column="1">
-                        <CheckBox x:Name="TelemetryCheck" Content="Send bounded usage, reward, error, OCR timing, and coarse device capability events"
+                        <CheckBox x:Name="TelemetryCheck" Content="Share limited usage and performance data"
                                   Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
                         <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
-                                   Text="No screenshots, credentials, webhook URLs, file paths, raw hardware identifiers, or free-form error text." />
+                                   Text="Includes feature use, rewards, classified errors, OCR timing, and coarse device capability. Never includes screenshots, credentials, file paths, webhook URLs, or free-form error text." />
                     </StackPanel>
                 </Grid>
                 <Grid Margin="0,14,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="AUTOMATIC REPORTS" />
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="ERROR LOG UPLOADS" />
                     <StackPanel Grid.Column="1">
-                        <CheckBox x:Name="AutomaticReportsCheck" Content="Automatically send bounded diagnostics when a macro error occurs"
+                        <CheckBox x:Name="AutomaticReportsCheck" Content="Send Deep Debug logs automatically after macro errors"
                                   Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
                         <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
-                                   Text="Light reports: up to 32 important frames and 80 MiB. Deep Debug: completed archive. Temporary light reports are removed after the upload attempt." />
+                                   Text="Requires Deep Debug logging. No log is sent while Deep Debug is off or paused for low disk space. Sent logs are removed locally; failed uploads remain in the Deep Debug folder." />
                     </StackPanel>
                 </Grid>
                 <Grid Margin="0,14,0,0">

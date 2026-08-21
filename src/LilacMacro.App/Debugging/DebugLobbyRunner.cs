@@ -143,6 +143,9 @@ internal sealed class DebugLobbyRunner(
         string device,
         CancellationToken cancellationToken)
     {
+        if (mode.Equals("Tower", StringComparison.Ordinal))
+            return await SelectTowerModeAsync(device, cancellationToken).ConfigureAwait(false);
+
         DebugOcrSnapshot snapshot = await _states.RunAsync(
             DebugWorkflowCatalog.PlayUi,
             device,
@@ -156,6 +159,62 @@ internal sealed class DebugLobbyRunner(
         PixelPoint point = target.Region.Bounds.Center;
         await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, point, cancellationToken);
         return ClickReport(snapshot, target, point, "CENTER");
+    }
+
+    private async Task<DebugRunReport> SelectTowerModeAsync(
+        string device,
+        CancellationToken cancellationToken)
+    {
+        DebugOcrSnapshot source = await _states.RunAsync(
+            DebugWorkflowCatalog.PlayUi,
+            device,
+            cancellationToken);
+        if (!source.Evaluation.IsMatch) return FailedState(source);
+
+        OcrTargetRule towerRule = DebugWorkflowTargets.Modes.Single(rule =>
+            rule.Name.Equals("Tower", StringComparison.Ordinal));
+        PixelPoint anchor = TowerRunPolicy.ModeRevealScrollAnchor(DebugWorkflowCatalog.ClientSize);
+        List<string> events = [StateLine(source), "PLAY UI VERIFIED BEFORE TOWER SCROLL"];
+        DebugOcrSnapshot latest = source;
+        for (int attempt = 1; attempt <= TowerRunPolicy.MaximumModeRevealScrollAttempts; attempt++)
+        {
+            await workspace.ScrollRobloxAsync(
+                DebugWorkflowCatalog.ClientSize,
+                anchor,
+                TowerRunPolicy.ModeRevealScrollWheelDelta,
+                TimeSpan.FromMilliseconds(TowerRunPolicy.ModeRevealScrollMilliseconds),
+                cancellationToken);
+            events.Add(
+                $"TOWER SCROLL {attempt}/{TowerRunPolicy.MaximumModeRevealScrollAttempts} " +
+                $"[{anchor.X},{anchor.Y}] {TowerRunPolicy.ModeRevealScrollWheelDelta} / " +
+                $"{TowerRunPolicy.ModeRevealScrollMilliseconds} MS");
+            await Task.Delay(TowerRunPolicy.ModeRevealSettleMilliseconds, cancellationToken);
+
+            latest = await _states.RunAsync(
+                DebugWorkflowCatalog.PlayUi,
+                device,
+                cancellationToken);
+            OcrTargetMatch? target = OcrRuleEngine.FindTarget(towerRule, latest.Regions);
+            events.Add(StateLine(latest));
+            if (target is null) continue;
+
+            PixelPoint point = target.Region.Bounds.Center;
+            await workspace.ClickRobloxAsync(
+                DebugWorkflowCatalog.ClientSize,
+                point,
+                cancellationToken);
+            return new DebugRunReport(
+                latest,
+                true,
+                "TOWER CLICKED",
+                [.. events, $"TOWER [{point.X},{point.Y}] CENTER"]);
+        }
+
+        return new DebugRunReport(
+            latest,
+            false,
+            "TOWER NOT FOUND AFTER SCROLL",
+            [.. events, "INPUT BLOCKED"]);
     }
 
     private async Task<DebugRunReport> OpenFromLobbyAsync(

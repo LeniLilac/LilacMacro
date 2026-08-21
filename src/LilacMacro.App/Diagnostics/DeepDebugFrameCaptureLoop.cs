@@ -6,12 +6,11 @@ internal sealed record DeepDebugFrameCaptureProvider(
 
 internal sealed class DeepDebugFrameCaptureLoop(
     DeepDebugSessionService service,
-    Func<CancellationToken, Task> capture,
-    int intervalMilliseconds)
+    Func<CancellationToken, Task> capture)
 {
     private readonly CancellationTokenSource _cancellation = new();
-    private readonly TimeSpan _interval = TimeSpan.FromMilliseconds(
-        DeepDebugOptions.NormalizeCaptureInterval(intervalMilliseconds));
+    private static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(
+        DeepDebugOptions.CaptureIntervalMilliseconds);
     private Task? _task;
 
     public void Start() => _task = RunAsync();
@@ -37,7 +36,7 @@ internal sealed class DeepDebugFrameCaptureLoop(
     {
         try
         {
-            using PeriodicTimer timer = new(_interval);
+            using PeriodicTimer timer = new(Interval);
             while (await timer.WaitForNextTickAsync(_cancellation.Token).ConfigureAwait(false))
             {
                 try
@@ -55,7 +54,7 @@ internal sealed class DeepDebugFrameCaptureLoop(
                         "periodic_live_frame_capture_failed",
                         new
                         {
-                            IntervalMilliseconds = (int)_interval.TotalMilliseconds,
+                            IntervalMilliseconds = DeepDebugOptions.CaptureIntervalMilliseconds,
                             Error = error.ToString(),
                         });
                 }

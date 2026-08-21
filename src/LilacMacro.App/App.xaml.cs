@@ -15,7 +15,7 @@ namespace LilacMacro.App;
 
 public partial class App : Application
 {
-    private readonly DeepDebugSessionService _deepDebug = new();
+    private DeepDebugSessionService? _deepDebug;
     private UpdateShutdownMonitor? _updateShutdown;
     private Mutex? _managedInstanceMutex;
 
@@ -28,6 +28,12 @@ public partial class App : Application
     {
         base.OnStartup(eventArgs);
         MacroInstanceContext.Initialize(eventArgs.Args);
+        string localAppDataRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "LilacMacro");
+        _deepDebug = new DeepDebugSessionService(
+            localAppDataRoot,
+            MacroInstanceContext.Current.DiagnosticsRoot);
         if (MacroInstanceContext.Current.IsManagedRunner && !AcquireManagedInstanceMutex())
         {
             Shutdown(0);
@@ -106,7 +112,7 @@ public partial class App : Application
 
     private async Task ShowGpuSetupIfNeededAsync()
     {
-        using OcrRunner setupOcr = new(_deepDebug);
+        using OcrRunner setupOcr = new(_deepDebug!);
         if (setupOcr.IsDeviceReady(OcrRunner.GpuDevice)) return;
 
         OcrGpuInfo? gpu;
@@ -177,14 +183,14 @@ public partial class App : Application
         {
             crashPath = "the local crash log";
         }
-        if (Current is App app)
+        if (Current is App { _deepDebug: { } deepDebug })
         {
-            app._deepDebug.RecordEvent("application", "unhandled_exception", new
+            deepDebug.RecordEvent("application", "unhandled_exception", new
             {
                 Error = eventArgs.Exception.ToString(),
                 CrashLog = crashPath,
             });
-            await app._deepDebug.CompleteActiveAsync("unhandled-error", eventArgs.Exception);
+            await deepDebug.CompleteActiveAsync("unhandled-error", eventArgs.Exception);
         }
         MessageBox.Show(
             $"{root.GetType().Name}: {root.Message}\n\nDetails: {crashPath}",

@@ -7,6 +7,7 @@ internal sealed record MacroInstanceContext(
     string Id,
     string DisplayName,
     string ConfigurationRoot,
+    string DiagnosticsRoot,
     bool UsesMachineProtectedSecrets,
     bool IsManagedRunner)
 {
@@ -27,13 +28,20 @@ internal sealed record MacroInstanceContext(
         string id = ValueAfter(arguments, managedIndex, "managed instance");
         string displayName = ValueFor(arguments, "--instance-name");
         string configurationRoot = Path.GetFullPath(ValueFor(arguments, "--configuration-root"));
+        string diagnosticsRoot = ResolveDiagnosticsRoot();
         string allowedRoot = Path.GetFullPath(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "LilacMacro",
             "Configurations")) + Path.DirectorySeparatorChar;
         if (!configurationRoot.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("The managed configuration root is outside LilacMacro ProgramData.");
-        current = new MacroInstanceContext(id, displayName, configurationRoot, true, true);
+        current = new MacroInstanceContext(
+            id,
+            displayName,
+            configurationRoot,
+            diagnosticsRoot,
+            true,
+            true);
         Environment.SetEnvironmentVariable("LILACMACRO_CONFIGURATION_ROOT", current.ConfigurationRoot);
     }
 
@@ -59,8 +67,47 @@ internal sealed record MacroInstanceContext(
             "desktop",
             "This desktop",
             useShared ? shared : local,
+            ResolveDiagnosticsRoot(useShared),
             useShared,
             false);
+    }
+
+    private static string ResolveDiagnosticsRoot(bool preferMachineStorage = true)
+    {
+        string local = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "LilacMacro",
+            "diagnostics");
+        if (!preferMachineStorage) return local;
+        string machine = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "LilacMacro",
+            "Diagnostics");
+        return SelectDiagnosticsRoot(
+            local,
+            machine,
+            preferMachineStorage,
+            IsOrdinaryDirectory(machine));
+    }
+
+    internal static string SelectDiagnosticsRoot(
+        string localRoot,
+        string machineRoot,
+        bool preferMachineStorage,
+        bool machineDirectoryReady) =>
+        preferMachineStorage && machineDirectoryReady ? machineRoot : localRoot;
+
+    private static bool IsOrdinaryDirectory(string path)
+    {
+        try
+        {
+            return Directory.Exists(path)
+                && (File.GetAttributes(path) & FileAttributes.ReparsePoint) == 0;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     internal static bool ShouldUseSharedConfiguration(

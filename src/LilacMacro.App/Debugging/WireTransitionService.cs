@@ -19,7 +19,8 @@ internal sealed class WireTransitionService(
         string device,
         Func<CancellationToken, Task<DebugRunReport>> sourceAction,
         IProgress<StoryWireProgress> progress,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        ObservedStateTransitionBudget? budget = null) =>
         RunAsync(
             stage,
             source,
@@ -27,7 +28,8 @@ internal sealed class WireTransitionService(
             device,
             async token => ObservedStateTransitionActionResult.From(await sourceAction(token)),
             progress,
-            cancellationToken);
+            cancellationToken,
+            budget);
 
     public async Task<bool> RunAsync(
         StoryWireStage stage,
@@ -36,7 +38,8 @@ internal sealed class WireTransitionService(
         string device,
         Func<CancellationToken, Task<ObservedStateTransitionActionResult>> sourceAction,
         IProgress<StoryWireProgress> progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ObservedStateTransitionBudget? budget = null)
     {
         progress.Report(new StoryWireProgress(
             stage, StoryWireStageStatus.Running, $"{source.Name} -> {destination.Name}", []));
@@ -52,9 +55,9 @@ internal sealed class WireTransitionService(
             device,
             sourceAction,
             cancellationToken,
-            stage == StoryWireStage.MatchPrestart
+            budget ?? (stage == StoryWireStage.MatchPrestart
                 ? MatchLoadPolicy.TransitionBudget
-                : null);
+                : null));
         string status = result.Succeeded
             ? $"{destination.Name.ToUpperInvariant()} VERIFIED"
             : result.Observation.Outcome == ObservedStateTransitionOutcome.SourceRetained

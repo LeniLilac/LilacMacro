@@ -120,7 +120,7 @@ internal sealed class MacroSettingsStore
             OnlineFeaturesEnabled = onlineFeaturesEnabled ?? current?.OnlineFeaturesEnabled ?? false,
             TelemetryEnabled = telemetryEnabled ?? current?.TelemetryEnabled ?? false,
             AutomaticErrorReportsEnabled = automaticErrorReportsEnabled
-                ?? current?.AutomaticErrorReportsEnabled ?? false,
+                ?? current?.AutomaticErrorReportsEnabled ?? true,
         };
         await WriteAtomicAsync(_privacyPath, desired, cancellationToken).ConfigureAwait(false);
         return desired;

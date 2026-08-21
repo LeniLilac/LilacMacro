@@ -180,7 +180,7 @@ public sealed class DiagnosticUploadTests
     {
         byte[] archive = Encoding.ASCII.GetBytes("abcdefg");
         string root = NewTemporaryDirectory();
-        string path = Path.Combine(root, "live-debug-test.zip");
+        string path = Path.Combine(root, "deep-debug-test.zip");
         await File.WriteAllBytesAsync(path, archive);
         Guid uploadId = Guid.NewGuid();
         Dictionary<int, byte[]> expectedParts = new()
@@ -248,7 +248,7 @@ public sealed class DiagnosticUploadTests
 
             DiagnosticUploadResult result = await transport.UploadAsync(
                 path,
-                DiagnosticArchiveKind.LiveDebug,
+                DiagnosticArchiveKind.DeepDebug,
                 "1.2.3",
                 Guid.NewGuid());
 

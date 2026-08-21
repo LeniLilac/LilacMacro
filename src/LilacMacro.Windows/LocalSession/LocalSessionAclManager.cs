@@ -52,6 +52,9 @@ public static class LocalSessionAclManager
         SecureDirectory(paths.SharedConfigurationRoot, [ownerSid, systemSid, adminsSid, .. sharedSids]);
         foreach (LocalRunnerProfile profile in profiles.Where(profile => profile.ConfigurationMode == RunnerConfigurationMode.Isolated))
             SecureDirectory(paths.ConfigurationRootFor(profile), ownerSid, profile.RunnerSid, systemSid, adminsSid);
+        SecureDirectory(
+            paths.DiagnosticsRoot,
+            [ownerSid, systemSid, adminsSid, .. profiles.Select(profile => profile.RunnerSid)]);
     }
 
     private static void GrantReadOnly(string path, string sid)

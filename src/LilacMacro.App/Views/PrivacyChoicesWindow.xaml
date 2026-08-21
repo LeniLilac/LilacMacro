@@ -34,10 +34,10 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Margin="0,0,24,0">
-                                <TextBlock FontSize="16" FontWeight="Bold" Text="Online features" />
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="Online services" />
                                 <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
                                            Foreground="{DynamicResource InkSoftBrush}"
-                                           Text="Checks signed service status and GitHub update metadata, claims available codes, applies remote safety disables during bugs or maintenance, and enables service-backed sharing when available." />
+                                           Text="Uses the official LilacMacro service and GitHub for updates, safety controls, code claiming, and Plan sharing. Local automation remains available when this is off." />
                             </StackPanel>
                             <CheckBox x:Name="OnlineFeaturesCheck" Grid.Column="1"
                                       Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="True" />
@@ -47,10 +47,10 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Margin="0,0,24,0">
-                                <TextBlock FontSize="16" FontWeight="Bold" Text="Product telemetry" />
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="Usage data" />
                                 <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
                                            Foreground="{DynamicResource InkSoftBrush}"
-                                           Text="Sends bounded events about feature use, reward observations, failures, OCR timing, app version, and coarse OS/CPU/GPU capability. It never sends Roblox credentials, webhook URLs, screenshots, or raw hardware identifiers." />
+                                           Text="Shares limited events about feature use, rewards, classified errors, OCR timing, app version, and coarse device capability. It never sends screenshots, credentials, file paths, webhook URLs, raw hardware identifiers, or free-form error text." />
                             </StackPanel>
                             <CheckBox x:Name="TelemetryCheck" Grid.Column="1"
                                       Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="True" />
@@ -60,13 +60,13 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Margin="0,0,24,0">
-                                <TextBlock FontSize="16" FontWeight="Bold" Text="Automatic error reports" />
+                                <TextBlock FontSize="16" FontWeight="Bold" Text="Deep Debug error uploads" />
                                 <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
                                            Foreground="{DynamicResource InkSoftBrush}"
-                                           Text="When enabled, errors send a temporary light report with at most 32 important frames and an 80 MiB hard limit. Active Deep Debug sessions send their completed archive instead. Temporary reports are deleted after the upload attempt; your normal Deep Debug archives remain local if upload fails." />
+                                           Text="After a classified macro error, sends the completed Deep Debug log. This pauses when Deep Debug logging is off or low disk space temporarily disables it. A sent log is removed locally; a failed upload stays in the shared Deep Debug folder." />
                             </StackPanel>
                             <CheckBox x:Name="AutomaticReportsCheck" Grid.Column="1"
-                                      Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="False" />
+                                      Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="True" />
                         </Grid>
                     </Border>
                 </StackPanel>

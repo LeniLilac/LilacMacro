@@ -1,47 +1,39 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using LilacMacro.Core.Services;
 
 namespace LilacMacro.App.Diagnostics;
 
 public sealed record DeepDebugOptions
 {
-    public const int DefaultFrameRetentionMinutes = 30;
+    public const int CaptureIntervalMilliseconds = 1_000;
 
-    public const int DefaultCaptureIntervalMilliseconds = 5_000;
-
-    public const int DefaultRetainedArchiveCount = 10;
-
-    public const int MinimumCaptureIntervalMilliseconds = 500;
-
-    public const int MaximumCaptureIntervalMilliseconds = 5_000;
+    public const int DefaultMaximumArchiveStorageGiB = 10;
 
     public bool Enabled { get; init; } = true;
 
-    public int FrameRetentionMinutes { get; init; } = DefaultFrameRetentionMinutes;
+    public int MaximumArchiveStorageGiB { get; init; } =
+        DefaultMaximumArchiveStorageGiB;
 
-    public int RetainedArchiveCount { get; init; } = DefaultRetainedArchiveCount;
+    public static int NormalizeMaximumArchiveStorageGiB(int value) =>
+        Math.Clamp(value, 1, 1_024);
+}
 
-    public int CaptureIntervalMilliseconds { get; init; } =
-        DefaultCaptureIntervalMilliseconds;
-
-    public static int NormalizeFrameRetention(int value) => Math.Clamp(value, 1, 120);
-
-    public static int NormalizeRetainedArchiveCount(int value) => Math.Clamp(value, 1, 100);
-
-    public static int NormalizeCaptureInterval(int value) => value switch
-    {
-        500 or 1_000 or 2_000 or 5_000 => value,
-        _ => DefaultCaptureIntervalMilliseconds,
-    };
-
-    public static int CaptureIntervalIndex(int milliseconds) =>
-        NormalizeCaptureInterval(milliseconds) switch
-        {
-            500 => 0,
-            1_000 => 1,
-            2_000 => 2,
-            _ => 3,
-        };
+internal sealed record DeepDebugArchiveLimits(
+    long MaximumArchiveBytes,
+    long FrameEvidenceBytes,
+    long EventBytes,
+    long TimelineBytes,
+    long ConfigurationBytes,
+    long CrashLogBytes)
+{
+    public static DeepDebugArchiveLimits Production { get; } = new(
+        DiagnosticUploadPolicy.MaximumArchiveBytes,
+        5 * DiagnosticUploadPolicy.OneGiB / 2,
+        128L * 1024 * 1024,
+        64L * 1024 * 1024,
+        8L * 1024 * 1024,
+        1L * 1024 * 1024);
 }
 
 public sealed record DeepDebugOperationContext(
@@ -61,13 +53,11 @@ internal sealed class DeepDebugSession
 
     public required Channel<DeepDebugWriteItem> Channel { get; init; }
 
-    public required int FrameRetentionMinutes { get; init; }
+    public required DeepDebugArchiveLimits Limits { get; init; }
+
+    public required DeepDebugEvidenceRetention Evidence { get; init; }
 
     public DeepDebugFrameCaptureLoop? FrameCaptureLoop { get; set; }
-
-    public bool RetainsAllFrames => FrameRetentionMinutes == 0;
-
-    public PriorityQueue<DeepDebugRetainedFrame, long> RetainedFrames { get; } = new();
 
     public ConcurrentDictionary<string, DeepDebugVisualProfileReference> VisualProfiles { get; } =
         new(StringComparer.Ordinal);
@@ -81,6 +71,9 @@ internal sealed class DeepDebugSession
     public int EventCount;
     public int InputEventCount;
     public int DiscardedArtifactCount;
+    public int WrittenEventCount;
+    public int DiscardedEventCount;
+    public bool TimelineTruncated;
 }
 
 internal sealed record DeepDebugWriteItem(
@@ -100,8 +93,6 @@ internal sealed record DeepDebugEventRecord(
     string? Artifact,
     object? Data);
 
-internal sealed record DeepDebugRetainedFrame(string Path, DateTimeOffset TimestampUtc);
-
 internal sealed record DeepDebugVisualProfileReference(
     string ProfileId,
     string RevisionDirectory,
@@ -118,9 +109,16 @@ internal sealed record DeepDebugManifest(
     int Artifacts,
     int Events,
     int InputEvents,
-    int FrameRetentionMinutes,
     int RetainedArtifacts,
     int DiscardedArtifacts,
+    int RetainedEvents,
+    int DiscardedEvents,
+    bool TimelineTruncated,
+    int ErrorWindows,
+    int ErrorWindowsDiscarded,
+    int TransitionFrames,
+    long FrameEvidenceBytes,
+    long MaximumArchiveBytes,
     int VisualProfiles,
     string ArtifactPolicy,
     string? WriterFailure,

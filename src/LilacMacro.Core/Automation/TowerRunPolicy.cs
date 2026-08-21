@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using LilacMacro.Core.Datasets;
+using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.Core.Automation;
@@ -21,6 +22,11 @@ public readonly record struct TowerTerminalState(
 public static partial class TowerRunPolicy
 {
     public const int DefaultDefeatsBeforeStop = 5;
+    public const int MaximumModeRevealScrollAttempts = 3;
+    public const int ModeRevealScrollWheelDelta = -5000;
+    public const int ModeRevealScrollMilliseconds = 280;
+    public const int ModeRevealSettleMilliseconds = 250;
+    public const int MaximumModeTransitionActionAttempts = 1;
     public const string TraitRoute = "Trait Tower";
     public const string TraitlessRoute = "Traitless Tower";
     public const string TraitPlacementRouteId = "trait-tower";
@@ -46,6 +52,13 @@ public static partial class TowerRunPolicy
         TowerType.Traitless => TraitlessPlacementRouteId,
         _ => throw new ArgumentOutOfRangeException(nameof(type)),
     };
+
+    public static PixelPoint ModeRevealScrollAnchor(PixelSize clientSize)
+    {
+        if (clientSize.Width < 1 || clientSize.Height < 1)
+            throw new ArgumentOutOfRangeException(nameof(clientSize));
+        return new PixelPoint(clientSize.Width / 2, clientSize.Height / 2);
+    }
 
     public static TowerFloorSelection? SelectTopRightFloor(IReadOnlyList<OcrTextRegion> regions)
     {

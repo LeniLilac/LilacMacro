@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using System.IO.Compression;
 using LilacMacro.App.Diagnostics;
@@ -22,7 +21,7 @@ public sealed class PrivacyTelemetryTests
             Assert.False(first.HasAcceptedCurrentPrivacyChoices);
             Assert.True(first.OnlineFeaturesEnabled);
             Assert.True(first.TelemetryEnabled);
-            Assert.False(first.AutomaticErrorReportsEnabled);
+            Assert.True(first.AutomaticErrorReportsEnabled);
 
             await first.SavePrivacyChoicesAsync(
                 onlineFeaturesEnabled: false,
@@ -61,7 +60,7 @@ public sealed class PrivacyTelemetryTests
 
             Assert.False(owner.OnlineFeaturesEnabled);
             Assert.False(owner.TelemetryEnabled);
-            Assert.False(owner.AutomaticErrorReportsEnabled);
+            Assert.True(owner.AutomaticErrorReportsEnabled);
             Assert.False(owner.HasAcceptedCurrentPrivacyChoices);
         }
         finally
@@ -179,7 +178,7 @@ public sealed class PrivacyTelemetryTests
     }
 
     [Fact]
-    public async Task Shared_store_opt_out_prevents_sibling_light_report_capture()
+    public async Task Shared_store_opt_out_prevents_sibling_deep_debug_upload()
     {
         string root = NewTemporaryDirectory();
         try
@@ -188,7 +187,7 @@ public sealed class PrivacyTelemetryTests
             await seed.SavePrivacyChoicesAsync(true, false, true);
             MacroOwnerState changer = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
             MacroOwnerState stale = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
-            DeepDebugSessionService deepDebug = new(root);
+            DeepDebugSessionService deepDebug = NewDeepDebug(root);
             RecordingUploadTransport uploads = new();
             await using AutomaticDiagnosticReportService reports = new(
                 deepDebug,
@@ -197,8 +196,11 @@ public sealed class PrivacyTelemetryTests
                 uploads);
 
             await changer.SavePrivacyChoiceAsync(PrivacyChoiceKind.AutomaticErrorReports, false);
-            deepDebug.RecordPng([1, 2, 3], "route-reward");
+            DeepDebugScope? scope = await deepDebug.OpenSessionAsync(
+                "shared opt out",
+                new DeepDebugOperationContext("test"));
             deepDebug.RecordEvent("macro", "runtime_error");
+            await scope!.CompleteAsync("error");
             await Task.Delay(100);
 
             Assert.Null(uploads.ArchivePath);
@@ -440,37 +442,6 @@ public sealed class PrivacyTelemetryTests
     }
 
     [Fact]
-    public void Light_diagnostics_are_bounded_and_strip_ocr_text_and_errors()
-    {
-        LightDiagnosticBuffer buffer = new();
-        for (int index = 0; index < LightDiagnosticBuffer.MaximumFrames + 5; index++)
-        {
-            buffer.Capture(new DeepDebugObservation(
-                DateTimeOffset.UtcNow,
-                "ocr",
-                "inference_completed",
-                new
-                {
-                    ModelName = "server",
-                    Device = "gpu",
-                    InferenceMilliseconds = 18,
-                    Text = "private text",
-                    Error = "C:\\Users\\name",
-                },
-                Encoding.UTF8.GetBytes($"png-{index}")));
-        }
-
-        LightDiagnosticSnapshot snapshot = buffer.SnapshotAndClear();
-
-        Assert.Equal(LightDiagnosticBuffer.MaximumFrames, snapshot.Frames.Count);
-        string events = JsonSerializer.Serialize(snapshot.Events);
-        Assert.DoesNotContain("private text", events, StringComparison.Ordinal);
-        Assert.DoesNotContain("Users", events, StringComparison.Ordinal);
-        Assert.Contains("InferenceMilliseconds", events, StringComparison.Ordinal);
-        Assert.Empty(buffer.SnapshotAndClear().Events);
-    }
-
-    [Fact]
     public void Observation_stream_remains_available_when_deep_debug_is_off()
     {
         string root = NewTemporaryDirectory();
@@ -518,7 +489,7 @@ public sealed class PrivacyTelemetryTests
     }
 
     [Fact]
-    public async Task Automatic_light_report_uses_private_upload_path_and_deletes_temporary_archive()
+    public async Task Automatic_error_report_uploads_only_completed_deep_debug_archive()
     {
         string root = NewTemporaryDirectory();
         try
@@ -528,7 +499,7 @@ public sealed class PrivacyTelemetryTests
                 onlineFeaturesEnabled: false,
                 telemetryEnabled: false,
                 automaticErrorReportsEnabled: true);
-            DeepDebugSessionService deepDebug = new(root);
+            DeepDebugSessionService deepDebug = NewDeepDebug(root);
             RecordingUploadTransport uploads = new();
             AutomaticDiagnosticReportService reports = new(
                 deepDebug,
@@ -536,19 +507,18 @@ public sealed class PrivacyTelemetryTests
                 new DiagnosticInstallationStore(root),
                 uploads);
 
-            deepDebug.RecordPng([1, 2, 3], "route-reward", new { Text = "private OCR" });
+            DeepDebugScope? scope = await deepDebug.OpenSessionAsync(
+                "automatic error",
+                new DeepDebugOperationContext("test"));
             deepDebug.RecordEvent("macro", "runtime_error", new { Error = "C:\\Users\\name" });
+            await scope!.CompleteAsync("error");
             await uploads.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-            Assert.Equal(DiagnosticArchiveKind.LiveDebug, uploads.Kind);
+            Assert.Equal(DiagnosticArchiveKind.DeepDebug, uploads.Kind);
             Assert.NotNull(uploads.ArchivePath);
-            Assert.DoesNotContain("private OCR", uploads.TextEntries, StringComparison.Ordinal);
-            Assert.DoesNotContain("Users", uploads.TextEntries, StringComparison.Ordinal);
+            Assert.DoesNotContain(Environment.UserName, uploads.TextEntries, StringComparison.OrdinalIgnoreCase);
             Assert.Contains("manifest.json", uploads.EntryNames);
             Assert.Contains("events.jsonl", uploads.EntryNames);
-            Assert.Contains(
-                uploads.EntryNames,
-                name => name.StartsWith("frames/frame-", StringComparison.Ordinal));
             await reports.DisposeAsync();
             Assert.False(File.Exists(uploads.ArchivePath));
         }
@@ -559,35 +529,39 @@ public sealed class PrivacyTelemetryTests
     }
 
     [Fact]
-    public async Task Automatic_report_startup_scavenges_only_stale_exact_root_temporary_entries()
+    public async Task Automatic_error_uploads_pause_with_deep_debug_and_ignore_clean_archives()
     {
-        string settingsRoot = NewTemporaryDirectory();
-        string automaticRoot = Path.Combine(Path.GetTempPath(), "LilacMacro", "automatic-reports");
-        string id = Guid.NewGuid().ToString("N");
-        string staleArchive = Path.Combine(automaticRoot, $"live-debug-20000101-000000-{id}.zip");
-        string staleStaging = Path.Combine(automaticRoot, $".live-debug-{id}");
-        Directory.CreateDirectory(staleStaging);
-        await File.WriteAllTextAsync(staleArchive, "partial");
-        File.SetLastWriteTimeUtc(staleArchive, DateTime.UtcNow.AddHours(-7));
-        Directory.SetLastWriteTimeUtc(staleStaging, DateTime.UtcNow.AddHours(-7));
+        string root = NewTemporaryDirectory();
         try
         {
-            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(settingsRoot));
-            DeepDebugSessionService deepDebug = new(settingsRoot);
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+            await owner.SavePrivacyChoicesAsync(false, false, true);
+            DeepDebugSessionService deepDebug = NewDeepDebug(root);
+            RecordingUploadTransport uploads = new();
             await using AutomaticDiagnosticReportService reports = new(
                 deepDebug,
                 owner,
-                new DiagnosticInstallationStore(settingsRoot),
-                new RecordingUploadTransport());
+                new DiagnosticInstallationStore(root),
+                uploads);
 
-            Assert.False(File.Exists(staleArchive));
-            Assert.False(Directory.Exists(staleStaging));
+            await deepDebug.UpdateOptionsAsync(enabled: false);
+            deepDebug.RecordEvent("macro", "runtime_error");
+            await Task.Delay(100);
+            Assert.Null(uploads.ArchivePath);
+
+            await deepDebug.UpdateOptionsAsync(enabled: true);
+            DeepDebugScope? scope = await deepDebug.OpenSessionAsync(
+                "clean run",
+                new DeepDebugOperationContext("test"));
+            await scope!.CompleteAsync("success");
+            await Task.Delay(100);
+
+            Assert.Null(uploads.ArchivePath);
+            Assert.True(File.Exists(deepDebug.LastArchivePath));
         }
         finally
         {
-            if (File.Exists(staleArchive)) File.Delete(staleArchive);
-            if (Directory.Exists(staleStaging)) Directory.Delete(staleStaging, recursive: true);
-            Directory.Delete(settingsRoot, recursive: true);
+            Directory.Delete(root, recursive: true);
         }
     }
 
@@ -630,7 +604,7 @@ public sealed class PrivacyTelemetryTests
         {
             MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
             await owner.SavePrivacyChoicesAsync(true, false, true);
-            DeepDebugSessionService deepDebug = new(root);
+            DeepDebugSessionService deepDebug = NewDeepDebug(root);
             BlockingUploadTransport uploads = new();
             await using AutomaticDiagnosticReportService reports = new(
                 deepDebug,
@@ -638,13 +612,12 @@ public sealed class PrivacyTelemetryTests
                 new DiagnosticInstallationStore(root),
                 uploads);
 
-            deepDebug.RecordEvent("macro", "runtime_error");
-            await uploads.FirstStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            await deepDebug.UpdateOptionsAsync(enabled: true, frameRetentionMinutes: 15);
             DeepDebugScope? scope = await deepDebug.OpenSessionAsync(
                 "privacy generation",
                 new DeepDebugOperationContext("test"));
-            await scope!.CompleteAsync("success");
+            deepDebug.RecordEvent("macro", "runtime_error");
+            await scope!.CompleteAsync("error");
+            await uploads.FirstStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             await owner.SavePrivacyChoicesAsync(true, false, false);
             await owner.SavePrivacyChoicesAsync(true, false, true);
@@ -659,6 +632,11 @@ public sealed class PrivacyTelemetryTests
             Directory.Delete(root, recursive: true);
         }
     }
+
+    private static DeepDebugSessionService NewDeepDebug(string root) => new(
+        root,
+        diagnosticsRoot: null,
+        _ => 300 * DiagnosticUploadPolicy.OneGiB);
 
     private static ProductTelemetryBatch CreateBatch() => new(
         Guid.NewGuid(),

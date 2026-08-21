@@ -1,19 +1,37 @@
+using LilacMacro.App.Diagnostics;
+
 namespace LilacMacro.App.Views;
 
 public partial class SettingsPage
 {
-    private async void RetainedArchiveCount_OnLostKeyboardFocus(
+    private void RefreshDiagnosticsControls()
+    {
+        _refreshingDiagnosticsControls = true;
+        try
+        {
+            DeepDebugCheck.IsChecked = _deepDebug.Options.Enabled;
+            MaximumArchiveStorageText.Text =
+                _deepDebug.Options.MaximumArchiveStorageGiB.ToString();
+            MaximumArchiveStorageText.IsEnabled = _deepDebug.Options.Enabled;
+        }
+        finally
+        {
+            _refreshingDiagnosticsControls = false;
+        }
+    }
+
+    private async void MaximumArchiveStorage_OnLostKeyboardFocus(
         object sender,
         System.Windows.Input.KeyboardFocusChangedEventArgs eventArgs)
     {
         if (!_initialized) return;
-        int retainedArchives = int.TryParse(RetainedArchiveCountText.Text, out int parsed)
+        int maximumStorage = int.TryParse(
+            MaximumArchiveStorageText.Text,
+            out int parsed)
             ? parsed
-            : _deepDebug.Options.RetainedArchiveCount;
-        await _deepDebug.UpdateOptionsAsync(
-            DeepDebugCheck.IsChecked == true,
-            _deepDebug.Options.FrameRetentionMinutes,
-            retainedArchiveCount: retainedArchives);
-        RetainedArchiveCountText.Text = _deepDebug.Options.RetainedArchiveCount.ToString();
+            : _deepDebug.Options.MaximumArchiveStorageGiB;
+        await _deepDebug.UpdateOptionsAsync(maximumArchiveStorageGiB: maximumStorage);
+        MaximumArchiveStorageText.Text =
+            _deepDebug.Options.MaximumArchiveStorageGiB.ToString();
     }
 }

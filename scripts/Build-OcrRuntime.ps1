@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]$OutputRoot
+    [string]$OutputRoot,
+    [switch]$UseLocalRuntimeCache
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,7 +12,16 @@ $ocrRoot = Join-Path ([IO.Path]::GetFullPath($OutputRoot)) 'ocr'
 $pythonRoot = Join-Path $ocrRoot 'python'
 $modelRoot = Join-Path $ocrRoot 'models'
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ('LilacMacro-ocr-build-' + [Guid]::NewGuid().ToString('N'))
-$modelCache = Join-Path $temporaryRoot 'model-cache'
+$localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
+if ([string]::IsNullOrWhiteSpace($localAppData)) {
+    throw 'The local application data directory could not be located for the OCR build cache.'
+}
+$cacheRoot = Join-Path $localAppData 'LilacMacro\BuildCache\ocr\python312-paddle330-paddleocr370'
+$packageCache = Join-Path $cacheRoot 'pip'
+$modelCache = Join-Path $cacheRoot 'models'
+$runtimeCache = Join-Path $cacheRoot 'bundled-runtime'
+$runtimeCacheManifest = Join-Path $runtimeCache 'build-cache.json'
+$builderScriptHash = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash
 
 function Invoke-BuilderPython([string[]]$Arguments) {
     & $builderPython @Arguments
@@ -56,6 +66,51 @@ function Resolve-Python312 {
     return $null
 }
 
+function Test-RuntimeCache([string]$PythonFullVersion) {
+    if (-not $UseLocalRuntimeCache -or
+        -not (Test-Path -LiteralPath $runtimeCacheManifest -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $runtimeCache 'python\python.exe') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $runtimeCache 'cpu-runtime.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $runtimeCache 'models\official_models') -PathType Container)) {
+        return $false
+    }
+
+    try {
+        $manifest = Get-Content -LiteralPath $runtimeCacheManifest -Raw | ConvertFrom-Json
+        return $manifest.schemaVersion -eq 1 -and
+            $manifest.builderSha256 -eq $builderScriptHash -and
+            $manifest.pythonFullVersion -eq $PythonFullVersion -and
+            $manifest.paddle -eq '3.3.0' -and
+            $manifest.paddleOcr -eq '3.7.0'
+    }
+    catch {
+        return $false
+    }
+}
+
+function Save-RuntimeCache([string]$PythonFullVersion) {
+    if (-not $UseLocalRuntimeCache) { return }
+
+    $stagedCache = Join-Path $temporaryRoot 'bundled-runtime'
+    Copy-Item -LiteralPath $ocrRoot -Destination $stagedCache -Recurse -Force
+    $cacheManifest = [ordered]@{
+        schemaVersion = 1
+        builderSha256 = $builderScriptHash
+        pythonFullVersion = $PythonFullVersion
+        paddle = '3.3.0'
+        paddleOcr = '3.7.0'
+    } | ConvertTo-Json -Depth 3
+    [IO.File]::WriteAllText(
+        (Join-Path $stagedCache 'build-cache.json'),
+        $cacheManifest,
+        [Text.UTF8Encoding]::new($false))
+
+    if (Test-Path -LiteralPath $runtimeCache) {
+        Remove-Item -LiteralPath $runtimeCache -Recurse -Force
+    }
+    Move-Item -LiteralPath $stagedCache -Destination $runtimeCache
+}
+
 try {
     $builderPython = Resolve-Python312
     if ([string]::IsNullOrWhiteSpace($builderPython)) {
@@ -63,6 +118,7 @@ try {
     }
     $pythonVersion = (& $builderPython -c 'import sys; print(str(sys.version_info.major) + chr(46) + str(sys.version_info.minor))').Trim()
     if ($pythonVersion -ne '3.12') { throw "The OCR build Python must be 3.12, not $pythonVersion." }
+    $pythonFullVersion = (& $builderPython -c 'import sys; print(sys.version)').Trim()
     $sourceRoot = (& $builderPython -c 'import sys; print(sys.prefix)').Trim()
     if (-not (Test-Path -LiteralPath $sourceRoot -PathType Container)) {
         throw 'The Python 3.12 installation root could not be located.'
@@ -71,7 +127,17 @@ try {
     if (Test-Path -LiteralPath $ocrRoot) {
         Remove-Item -LiteralPath $ocrRoot -Recurse -Force
     }
-    New-Item -ItemType Directory -Path $pythonRoot, $modelRoot, $temporaryRoot, $modelCache | Out-Null
+    New-Item -ItemType Directory -Path $temporaryRoot, $packageCache, $modelCache -Force | Out-Null
+
+    if (Test-RuntimeCache $pythonFullVersion) {
+        Copy-Item -LiteralPath $runtimeCache -Destination $ocrRoot -Recurse -Force
+        Remove-Item -LiteralPath (Join-Path $ocrRoot 'build-cache.json') -Force
+        Write-Output "Reused local bundled OCR runtime cache: $runtimeCache"
+        Write-Output $ocrRoot
+        return
+    }
+
+    New-Item -ItemType Directory -Path $pythonRoot, $modelRoot -Force | Out-Null
 
     $runtimeFiles = @(
         Get-ChildItem -LiteralPath $sourceRoot -File -Filter 'python*.dll' -ErrorAction SilentlyContinue
@@ -96,7 +162,7 @@ try {
     Invoke-BuilderPython @(
         '-m', 'pip', 'install',
         '--disable-pip-version-check',
-        '--no-cache-dir',
+        '--cache-dir', $packageCache,
         '--upgrade',
         '--target', $sitePackages,
         '--only-binary=:all:',
@@ -157,6 +223,7 @@ try {
     if (Test-Path -LiteralPath $license -PathType Leaf) {
         Copy-Item -LiteralPath $license -Destination (Join-Path $ocrRoot 'Python-LICENSE.txt')
     }
+    Save-RuntimeCache $pythonFullVersion
     Write-Output $ocrRoot
 }
 finally {

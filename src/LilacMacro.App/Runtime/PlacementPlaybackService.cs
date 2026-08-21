@@ -252,6 +252,7 @@ internal sealed class PlacementPlaybackService(
                     await workspace.RunQuickPlacementBatchAsync(
                         DebugWorkflowCatalog.ClientSize, keys.QuickPlacement, keys.CancelPlacement, [point], cancellationToken);
                 }
+                await _panel.NormalizeSelectionAsync(layout, status, cancellationToken);
                 await workspace.ClickRobloxAsync(DebugWorkflowCatalog.ClientSize, point.Point, cancellationToken);
                 if (layout is null)
                 {

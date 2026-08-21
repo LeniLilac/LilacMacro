@@ -260,10 +260,7 @@ internal sealed class TeamScrollAbTestRunner(
 
     private static string CreateOutputDirectory(TeamScrollTestMethod method)
     {
-        string root = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "LilacMacro",
-            "diagnostics");
+        string root = MacroInstanceContext.Current.DiagnosticsRoot;
         string directory = Path.Combine(
             root,
             $"team-scroll-{method.ToString().ToLowerInvariant()}-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}");

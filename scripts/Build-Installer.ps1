@@ -53,7 +53,8 @@ try {
     Invoke-Publish 'src\LilacMacro.SessionSetup\LilacMacro.SessionSetup.csproj'
     Invoke-Publish 'src\LilacMacro.SessionWorker\LilacMacro.SessionWorker.csproj'
 
-    & (Join-Path $repository 'scripts\Build-OcrRuntime.ps1') -OutputRoot $publish
+    & (Join-Path $repository 'scripts\Build-OcrRuntime.ps1') -OutputRoot $publish `
+        -UseLocalRuntimeCache:$UnsignedDevelopmentBuild
     if ($LASTEXITCODE -ne 0) { throw 'Bundled OCR runtime build failed.' }
 
     $legacyEvidence = Join-Path $publish 'Assets\RuntimeEvidence'

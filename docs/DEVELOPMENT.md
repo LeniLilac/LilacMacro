@@ -57,6 +57,8 @@ Validate the installer without mutating Windows:
 
 Building a local installer additionally requires Inno Setup 6 and `-UnsignedDevelopmentBuild`; that artifact cannot be published. Official project-signed artifacts are produced only by the pinned GitHub Actions release workflow using its protected Ed25519 secret. No Authenticode certificate is used. Do not run the elevated helper on the owner's machine during agent work unless the owner explicitly authorizes it for the current task. See [Installer](INSTALLER.md).
 
+Installer builds reuse downloaded Python packages and official model files from `%LOCALAPPDATA%\LilacMacro\BuildCache\ocr`. Unsigned local builds also reuse a complete assembled Python/OCR runtime after validating the builder hash, Python version, and pinned package versions; official release builds always assemble a fresh runtime. Removing that developer cache is safe—the next installer build recreates it from the pinned package and model sources.
+
 Run the current macro-shell prototype with:
 
 ```powershell
@@ -146,7 +148,7 @@ Every semantic detector search area must be owned by a named bundled dataset ann
 | Local instance profiles | `%ProgramData%\LilacMacro\Profiles` | Owner-journaled runner identity/policy receipts; one ACL-restricted directory per runner |
 | OCR runtime | Installed `ocr\python` plus `%LOCALAPPDATA%\LilacMacro\ocr` | Read-only bundled CPU runtime; per-user GPU environment, model cache, and device markers |
 | Crash logging | `%LOCALAPPDATA%\LilacMacro\logs\latest-crash.txt` | Latest unhandled WPF exception |
-| Deep debug | `%LOCALAPPDATA%\LilacMacro\diagnostics` | Bounded ZIP archives plus transient staging; settings use atomic replacement |
+| Deep debug | `%ProgramData%\LilacMacro\Diagnostics` after local-instance provisioning; otherwise `%LOCALAPPDATA%\LilacMacro\diagnostics` | Bounded ZIP archives plus transient staging; one archive-byte budget is atomic and machine-wide for owner/runners, fixed one-second error-window capture pauses below 3 GiB free, and old profile-local archives are not migrated |
 | Application updates | `%LOCALAPPDATA%\LilacMacro\updates`; coordinated request under `%ProgramData%\LilacMacro\Updates` | Public metadata and owner-approved downloads stay per owner; the machine request contains only exact version/hash/process/session/profile coordination data and is cleared after install/relaunch |
 
 Never commit any of this state. See [Privacy](../PRIVACY.md).

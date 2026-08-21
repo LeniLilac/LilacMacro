@@ -32,9 +32,10 @@ The latest unhandled WPF exception is written to `%LOCALAPPDATA%\LilacMacro\logs
 
 - Enable `Deep Debug Logs` under Macro Settings, Diagnostics, or click the Dataset Builder/Runtime Lab title-bar `DEEP DEBUG` pill. New installs enable it by default.
 - Complete or stop the operation. The ZIP is finalized at operation end, cancellation, shutdown, or an unhandled WPF exception.
-- Open `%LOCALAPPDATA%\LilacMacro\diagnostics` from Settings with `OPEN DEBUG FOLDER`.
+- Use `OPEN DEEP DEBUG FOLDER` in Settings. Provisioned owner/runner UIs open `%ProgramData%\LilacMacro\Diagnostics`; an unprovisioned profile opens `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - A `.deep-debug-*` directory with `finalization-error.txt` means ZIP creation failed and the uncompressed evidence was preserved.
-- Local retention always keeps only the configured newest Deep Debug logs, defaulting to 10. Increase the value or copy an important archive elsewhere before extended testing; changing it does not enable an upload.
+- Retention keeps newest Deep Debug archives inside `MAX LOG STORAGE, GB`. On a provisioned machine that is one combined byte budget across the main desktop and all runners. New machines default to 3, 10, or 30 GiB according to free space, and capture reports `DEEP DEBUG LOW DISK` below 3 GiB free. Increase the byte budget or copy an important archive elsewhere before extended testing; changing it does not enable an upload.
+- Archives created in the old profile-local directories before provisioning remain there and are not included in the shared cap. Delete or move those old files manually only after confirming they are no longer needed.
 
 Read [Deep debug](DEEP-DEBUG.md) before sharing or inspecting an archive. To render bounded frames:
 

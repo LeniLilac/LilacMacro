@@ -49,7 +49,6 @@ public partial class MainWindow : Window
                     token,
                     "deep-debug-interval");
             });
-        _deepDebug.RetainAllFrames = _profile.RetainAllDeepDebugFrames;
         _ocr = new OcrRunner(deepDebug) { KeepLoaded = _profile.KeepOcrLoaded };
         _currentPage = _profile.StartPage;
         InitializeComponent();
@@ -115,8 +114,7 @@ public partial class MainWindow : Window
     private async void DeepDebugToggle_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         await _deepDebug.UpdateOptionsAsync(
-            !_deepDebug.Options.Enabled,
-            _deepDebug.Options.FrameRetentionMinutes);
+            enabled: !_deepDebug.Options.Enabled);
     }
 
     private void DeepDebug_OnOptionsChanged(object? sender, EventArgs eventArgs) =>
@@ -134,11 +132,11 @@ public partial class MainWindow : Window
         DeepDebugPill.SetResourceReference(
             Border.BackgroundProperty,
             _deepDebug.Options.Enabled ? "AccentBrush" : "MutedBrush");
-        DeepDebugPillText.Text = _deepDebug.Options.Enabled
-            ? _profile.RetainAllDeepDebugFrames
-                ? "DEEP DEBUG ON"
-                : $"DEEP DEBUG {_deepDebug.Options.FrameRetentionMinutes}M"
-            : "DEEP DEBUG OFF";
+        DeepDebugPillText.Text = !_deepDebug.Options.Enabled
+            ? "DEEP DEBUG OFF"
+            : _deepDebug.IsTemporarilyPausedByStorage
+                ? "DEEP DEBUG LOW DISK"
+                : "DEEP DEBUG ON";
     }
 
     private async void MainWindow_OnLoaded(object sender, RoutedEventArgs eventArgs)

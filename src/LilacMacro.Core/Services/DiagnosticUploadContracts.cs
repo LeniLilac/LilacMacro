@@ -5,8 +5,6 @@ namespace LilacMacro.Core.Services;
 public enum DiagnosticArchiveKind
 {
     DeepDebug,
-    RuntimeLog,
-    LiveDebug,
 }
 
 public enum DiagnosticUploadPhase
@@ -56,8 +54,6 @@ public static partial class DiagnosticUploadPolicy
     public static string KindValue(DiagnosticArchiveKind kind) => kind switch
     {
         DiagnosticArchiveKind.DeepDebug => "deep-debug",
-        DiagnosticArchiveKind.RuntimeLog => "runtime-log",
-        DiagnosticArchiveKind.LiveDebug => "live-debug",
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 

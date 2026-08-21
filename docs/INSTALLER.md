@@ -45,6 +45,8 @@ Official artifacts are built by `.github/workflows/release.yml` from the current
 
 `scripts/Build-Installer.ps1` requires a clean source tree for release candidates, records the exact source commit, performs locked restore, publishes app/helper/worker, compiles Inno Setup, hashes the installer, and creates—but never signs—the canonical manifest. `scripts/Finalize-ReleaseArtifact.ps1` validates that candidate and signs only the exact raw manifest bytes. It does not launch a child process while the private key is present. The scripts write one immutable versioned artifact directory and refuse to overwrite an existing one. `BUILD-INFO.txt` is local CI evidence and is not a release asset.
 
+Official builds create a fresh bundled CPU OCR runtime. To keep local iteration practical, unsigned development builds may reuse a complete assembled Python/OCR runtime from `%LOCALAPPDATA%\LilacMacro\BuildCache\ocr` after matching the builder hash, Python version, and pinned Paddle versions. Pip downloads and official model files are cached there for both paths. The cache is outside the repository and is never installed or published as mutable state.
+
 `scripts/Publish-GitHubRelease.ps1` requires a clean worktree, exact existing tag, official build metadata, all six assets, a matching checksum/manifest, and a valid Ed25519 signature before calling GitHub. `scripts/Test-Installer.ps1` validates required files, TermWrap sizes/hashes, helper verbs, cleanup hooks, release trust, and naming without provisioning Windows.
 
 ## Upgrade and uninstall

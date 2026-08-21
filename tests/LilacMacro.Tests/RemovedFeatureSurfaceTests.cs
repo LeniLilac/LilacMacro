@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace LilacMacro.Tests;
 
 public sealed class RemovedFeatureSurfaceTests
@@ -19,9 +21,29 @@ public sealed class RemovedFeatureSurfaceTests
         Assert.DoesNotContain("Recording name", settings, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Capture frames on failure", settings, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Include current run log", settings, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Deep Debug Logs", settings, StringComparison.Ordinal);
-        Assert.Contains("NEWEST DEEP DEBUG LOGS", settings, StringComparison.Ordinal);
+        Assert.Contains("Deep Debug", settings, StringComparison.Ordinal);
+        Assert.Contains("Enable Deep Debug Logs", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("CAPTURE INTERVAL, SEC", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("FRAME HISTORY, MIN", settings, StringComparison.Ordinal);
+        Assert.Contains("MAX LOG STORAGE, GB", settings, StringComparison.Ordinal);
+        Assert.Contains("OPEN DEEP DEBUG FOLDER", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("Failure evidence", settings, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("CaptureIntervalCombo", settings, StringComparison.Ordinal);
         Assert.DoesNotContain("DiagnosticsStatusText", settings, StringComparison.Ordinal);
+
+        XDocument settingsDocument = XDocument.Load(Path.Combine(
+            repository,
+            "src",
+            "LilacMacro.App",
+            "Views",
+            "SettingsPage.xaml"));
+        XElement openDebugFolder = Assert.Single(
+            settingsDocument.Descendants(),
+            element => string.Equals(
+                (string?)element.Attribute("Click"),
+                "OpenDiagnostics_OnClick",
+                StringComparison.Ordinal));
+        Assert.Null(openDebugFolder.Attribute("Width"));
 
         string settingsCode = File.ReadAllText(Path.Combine(
             repository,

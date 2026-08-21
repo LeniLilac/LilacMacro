@@ -19,8 +19,10 @@ internal sealed class DeepDebugOptionsStore
         try
         {
             if (!File.Exists(_path)) return new DeepDebugOptions();
-            DeepDebugOptions? loaded = JsonSerializer.Deserialize<DeepDebugOptions>(File.ReadAllText(_path), JsonOptions);
-            return Normalize(loaded ?? new DeepDebugOptions());
+            DeepDebugLocalSettings? loaded = JsonSerializer.Deserialize<DeepDebugLocalSettings>(
+                File.ReadAllText(_path),
+                JsonOptions);
+            return new DeepDebugOptions { Enabled = loaded?.Enabled ?? true };
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -37,7 +39,10 @@ internal sealed class DeepDebugOptionsStore
         {
             await File.WriteAllTextAsync(
                 temporary,
-                JsonSerializer.Serialize(Normalize(options), JsonOptions),
+                JsonSerializer.Serialize(new DeepDebugLocalSettings
+                {
+                    Enabled = options.Enabled,
+                }, JsonOptions),
                 CancellationToken.None);
             File.Move(temporary, _path, overwrite: true);
         }
@@ -47,12 +52,9 @@ internal sealed class DeepDebugOptionsStore
         }
     }
 
-    private static DeepDebugOptions Normalize(DeepDebugOptions options) => options with
+    private sealed record DeepDebugLocalSettings
     {
-        FrameRetentionMinutes = DeepDebugOptions.NormalizeFrameRetention(options.FrameRetentionMinutes),
-        RetainedArchiveCount = DeepDebugOptions.NormalizeRetainedArchiveCount(
-            options.RetainedArchiveCount),
-        CaptureIntervalMilliseconds = DeepDebugOptions.NormalizeCaptureInterval(
-            options.CaptureIntervalMilliseconds),
-    };
+        public int SchemaVersion { get; init; } = 2;
+        public bool Enabled { get; init; } = true;
+    }
 }
