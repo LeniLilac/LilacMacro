@@ -79,7 +79,8 @@ internal sealed record StoryWireTestOptions(
     string ExpeditionRewardTarget = "None",
     bool SkipTeamLoad = false,
     TowerType TowerType = TowerType.Trait,
-    int TowerFloor = 0)
+    int TowerFloor = 0,
+    int TowerGoalFloor = 0)
 {
     public StoryWireTestOptions ApplyResolved(StoryWireTestResult result) =>
         result.ResolvedMap is null
@@ -132,7 +133,8 @@ internal sealed record StoryWireTestResult(
     bool RepeatedPrestartReady = false,
     string? ResolvedMap = null,
     int? ResolvedTeam = null,
-    int? TowerFloor = null);
+    int? TowerFloor = null,
+    bool TowerGoalAlreadyReached = false);
 
 internal sealed record TowerNavigationResult(
     bool Succeeded,

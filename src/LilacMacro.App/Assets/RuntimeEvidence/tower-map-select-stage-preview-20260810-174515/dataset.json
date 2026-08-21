@@ -6,7 +6,7 @@
   "schema_version": 1,
   "id": "d7fa031b-320d-4c58-885d-3c56956087ec",
   "name": "Tower Map Select Stage + Preview",
-  "notes": "Select Stage text to confirm ui\r\n\r\nThen like use the same challenge mode stuff/method to check the map and load the config for that map\r\n\r\nAnd add a new Tower config in the story map setups, like how theres config slots for each story act + mastery + infinite + challenge, like add a tower config there\r\n\r\nThen use the general match preivew start to start/enter the match\r\n\r\nBundled runtime evidence slice. Original dataset: tower-map-select-stage-preview-20260810-174515. Source frames: 1, 7, 11.",
+  "notes": "Select Stage text to confirm ui\r\n\r\nThen like use the same challenge mode stuff/method to check the map and load the config for that map\r\n\r\nAnd add a new Tower config in the story map setups, like how theres config slots for each story act + mastery + infinite + challenge, like add a tower config there\r\n\r\nThen use the general match preivew start to start/enter the match\r\n\r\nBundled runtime evidence slice. Original dataset: tower-map-select-stage-preview-20260810-174515. Source frames: 1, 2, 4, 6, 7, 11.",
   "created_at_utc": "2026-08-10T17:45:15.2962689Z",
   "source_window_title": "Roblox",
   "source_process_id": 10548,
@@ -28,7 +28,7 @@
       "annotations": [
         {
           "id": "abe3498f-d98f-4027-a0c3-f0ab700bea84",
-          "global_group_id": "3a4933dd-b145-4f6c-9985-8a43e9c7782d",
+          "global_group_id": null,
           "bounds": {
             "x": 163,
             "y": 40,
@@ -227,6 +227,137 @@
             }
           ],
           "minimum_pool_matches": 0
+        },
+        {
+          "id": "3122f0f4-f4a6-4b7d-a73d-823c6851bf45",
+          "global_group_id": "02573c68-3fc0-4f92-859b-c6bcf790d73e",
+          "bounds": {
+            "x": 595,
+            "y": 136,
+            "width": 699,
+            "height": 137
+          },
+          "label": "Map+Floor Detect ROI",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0002.png",
+      "captured_at_utc": "2026-08-10T17:45:22.3963891Z",
+      "sha256": "14cb511096c0a7e30a1d5c76354afacb2432f61c330bb59fc9f5605946838727",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "2b1dce27-dded-44ad-ba75-7ed3d9479cad",
+          "global_group_id": null,
+          "bounds": {
+            "x": 163,
+            "y": 40,
+            "width": 1032,
+            "height": 621
+          },
+          "label": "",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "3df0bab5-251d-4a39-bd7c-e7f96eafa345",
+          "global_group_id": "02573c68-3fc0-4f92-859b-c6bcf790d73e",
+          "bounds": {
+            "x": 595,
+            "y": 136,
+            "width": 699,
+            "height": 137
+          },
+          "label": "Map+Floor Detect ROI",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0004.png",
+      "captured_at_utc": "2026-08-10T17:45:39.8296141Z",
+      "sha256": "42a4b9cf299ded0e50376012867282f8cf376b22e937d41ce97de86e8fa7b5f6",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "fd70eb86-4102-41a1-8ca1-5d57b11688f4",
+          "global_group_id": null,
+          "bounds": {
+            "x": 163,
+            "y": 40,
+            "width": 1032,
+            "height": 621
+          },
+          "label": "",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "bbf505fd-cd7b-440e-aba0-c442db9a28fb",
+          "global_group_id": "02573c68-3fc0-4f92-859b-c6bcf790d73e",
+          "bounds": {
+            "x": 595,
+            "y": 136,
+            "width": 699,
+            "height": 137
+          },
+          "label": "Map+Floor Detect ROI",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        }
+      ]
+    },
+    {
+      "file_name": "frame-0006.png",
+      "captured_at_utc": "2026-08-10T17:46:01.6309669Z",
+      "sha256": "8cf7f795f575d685c416becc387924bd5525e65af9c44e5207b2d5b1e721aae9",
+      "width": 1366,
+      "height": 700,
+      "verdict": "unreviewed",
+      "notes": "",
+      "annotations": [
+        {
+          "id": "f3f49569-4cb3-4a02-a0aa-5f54128ea1ee",
+          "global_group_id": null,
+          "bounds": {
+            "x": 163,
+            "y": 40,
+            "width": 1032,
+            "height": 621
+          },
+          "label": "",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "f07417c6-092d-440c-b5d8-b4466a0ba9ad",
+          "global_group_id": "02573c68-3fc0-4f92-859b-c6bcf790d73e",
+          "bounds": {
+            "x": 595,
+            "y": 136,
+            "width": 699,
+            "height": 137
+          },
+          "label": "Map+Floor Detect ROI",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
         }
       ]
     },
@@ -241,7 +372,7 @@
       "annotations": [
         {
           "id": "03bff937-83f6-4c0a-ad1b-359a72067ab4",
-          "global_group_id": "3a4933dd-b145-4f6c-9985-8a43e9c7782d",
+          "global_group_id": null,
           "bounds": {
             "x": 163,
             "y": 40,
@@ -249,6 +380,20 @@
             "height": 621
           },
           "label": "Tower Stage State",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "6103e12a-a3bb-42b9-89e6-576708e72ee5",
+          "global_group_id": "02573c68-3fc0-4f92-859b-c6bcf790d73e",
+          "bounds": {
+            "x": 595,
+            "y": 136,
+            "width": 699,
+            "height": 137
+          },
+          "label": "Map+Floor Detect ROI",
           "notes": "",
           "ocr_trials": [],
           "minimum_pool_matches": 0
@@ -266,7 +411,7 @@
       "annotations": [
         {
           "id": "4f25fcc2-ea92-495e-9a1a-d6c0dd4d000b",
-          "global_group_id": "3a4933dd-b145-4f6c-9985-8a43e9c7782d",
+          "global_group_id": null,
           "bounds": {
             "x": 163,
             "y": 40,
@@ -274,6 +419,20 @@
             "height": 621
           },
           "label": "Tower Stage State",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "2c4b9e3d-5004-4d2a-aab7-f8c79a3f32e7",
+          "global_group_id": "02573c68-3fc0-4f92-859b-c6bcf790d73e",
+          "bounds": {
+            "x": 595,
+            "y": 136,
+            "width": 699,
+            "height": 137
+          },
+          "label": "Map+Floor Detect ROI",
           "notes": "",
           "ocr_trials": [],
           "minimum_pool_matches": 0

@@ -11,7 +11,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
     Action<PlanPrototype> refreshTasks,
     DeepDebugSessionService deepDebug,
     Func<CancellationToken, Task> waitForInternet,
-    Action<PlanTaskPrototype?, TimeSpan> recoveryStarted)
+    Func<PlanTaskPrototype?, TimeSpan, Task> recoveryStarted)
 {
     private readonly Dictionary<PlanTaskPrototype, int> _taskFailures = [];
     private readonly HashSet<PlanTaskPrototype> _indefinitelyQuarantinedUtilities = [];
@@ -87,7 +87,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
                 });
                 refreshTasks(plan);
                 await waitForInternet(cancellationToken).ConfigureAwait(false);
-                recoveryStarted(failedTask, delay);
+                await recoveryStarted(failedTask, delay).ConfigureAwait(false);
                 await Task.Delay(delay, cancellationToken);
             }
         }

@@ -36,40 +36,27 @@ internal sealed class TowerWireNavigator(
                 cancellationToken).ConfigureAwait(false))
             return Failed("TOWER FLOOR BLOCKED");
 
-        string? map = null;
-        int floor = 0;
         if (!await _transitions.RunAsync(
                 StoryWireStage.TowerStage,
                 TowerWorkflowCatalog.TowerStage,
                 DebugWorkflowCatalog.MatchPreview,
                 options.Device,
-                async token =>
-                {
-                    TowerStageSelection selection = await ReadStageAsync(options.Device, token).ConfigureAwait(false);
-                    map = selection.Map;
-                    floor = selection.Floor;
-                    await workspace.ClickRobloxAsync(
-                        DebugWorkflowCatalog.ClientSize,
-                        selection.SelectStagePoint,
-                        token).ConfigureAwait(false);
-                    return new ObservedStateTransitionActionResult(
-                        true,
-                        $"SELECT STAGE {selection.Map} FLOOR {selection.Floor}",
-                        [$"MAP {selection.Map}", $"FLOOR {selection.Floor}"]);
-                },
+                token => ClickSelectStageAsync(options.Device, token),
                 progress,
                 cancellationToken).ConfigureAwait(false))
             return Failed("TOWER STAGE BLOCKED");
 
-        if (map is null || floor < 1)
-            return Failed("TOWER STAGE EVIDENCE LOST");
+        TowerPreviewSelection preview = await ReadPreviewAsync(
+            options.Device,
+            cancellationToken).ConfigureAwait(false);
         deepDebug.RecordEvent("tower", "stage_selected", new
         {
             Type = options.TowerType.ToString(),
-            Map = map,
-            Floor = floor,
+            Map = preview.Map,
+            Floor = preview.Floor,
+            EvidenceState = "MatchPreview",
         });
-        return new TowerNavigationResult(true, "TOWER STAGE SELECTED", map, floor);
+        return new TowerNavigationResult(true, "TOWER STAGE SELECTED", preview.Map, preview.Floor);
     }
 
     private async Task<bool> SelectTypeAsync(
@@ -141,7 +128,7 @@ internal sealed class TowerWireNavigator(
             [$"FLOOR BOUNDS {selection.Region.Bounds}"]);
     }
 
-    private async Task<TowerStageSelection> ReadStageAsync(
+    private async Task<ObservedStateTransitionActionResult> ClickSelectStageAsync(
         string device,
         CancellationToken cancellationToken)
     {
@@ -149,23 +136,30 @@ internal sealed class TowerWireNavigator(
             TowerWorkflowCatalog.TowerStage, device, cancellationToken).ConfigureAwait(false);
         if (!snapshot.Evaluation.IsMatch)
             throw new InvalidDataException("Tower stage was not verified.");
-        HashSet<string> mapNames = DebugWorkflowCatalog.MapTargets
-            .Select(target => target.Name)
-            .ToHashSet(StringComparer.Ordinal);
-        string map = snapshot.Evaluation.Matches
-            .FirstOrDefault(match => mapNames.Contains(match.Target))?.Target
-            ?? throw new InvalidDataException("Tower stage has no supported Story map.");
-        TowerFloorSelection? floor = TowerRunPolicy.SelectTopRightFloor(snapshot.Regions);
         OcrTargetMatch selectStage = snapshot.Evaluation.Matches
             .FirstOrDefault(match => match.Target == "Select Stage")
             ?? throw new InvalidDataException("Tower stage has no Select Stage action.");
-        return new TowerStageSelection(
-            map,
-            floor?.Floor ?? throw new InvalidDataException("Tower stage has no floor number."),
-            selectStage.Region.Bounds.Center);
+        await workspace.ClickRobloxAsync(
+            DebugWorkflowCatalog.ClientSize,
+            selectStage.Region.Bounds.Center,
+            cancellationToken).ConfigureAwait(false);
+        return new ObservedStateTransitionActionResult(
+            true,
+            "SELECT STAGE",
+            ["SELECT STAGE"]);
+    }
+
+    private async Task<TowerPreviewSelection> ReadPreviewAsync(
+        string device,
+        CancellationToken cancellationToken)
+    {
+        DebugOcrSnapshot snapshot = await _states.RunAsync(
+            TowerWorkflowCatalog.TowerPreviewMapFloor, device, cancellationToken).ConfigureAwait(false);
+        if (!snapshot.Evaluation.IsMatch)
+            throw new InvalidDataException("Tower Match Preview map and floor were not verified.");
+        return TowerRunPolicy.ResolvePreview(snapshot.Regions, DebugWorkflowCatalog.MapTargets);
     }
 
     private static TowerNavigationResult Failed(string status) => new(false, status, null, 0);
 
-    private sealed record TowerStageSelection(string Map, int Floor, PixelPoint SelectStagePoint);
 }

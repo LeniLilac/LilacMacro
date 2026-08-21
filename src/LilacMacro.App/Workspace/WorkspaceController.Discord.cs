@@ -6,10 +6,11 @@ namespace LilacMacro.App.Workspace;
 public sealed partial class WorkspaceController
 {
     private const int MaximumWebhookScreenshotBytes = 8 * 1024 * 1024;
+    private static readonly TimeSpan WebhookCaptureGateTimeout = TimeSpan.FromSeconds(1);
 
     public async Task<byte[]?> CaptureWebhookScreenshotAsync(CancellationToken cancellationToken = default)
     {
-        if (!await _operationGate.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+        if (!await _operationGate.WaitAsync(WebhookCaptureGateTimeout, cancellationToken).ConfigureAwait(false))
             return null;
         try
         {

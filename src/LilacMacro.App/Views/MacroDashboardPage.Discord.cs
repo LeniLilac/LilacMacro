@@ -14,32 +14,33 @@ public partial class MacroDashboardPage
                 new Action(() => AppendLog($"DISCORD EVENT NOT SENT | {message}"))),
             _workspace.CaptureWebhookScreenshotAsync);
 
-    private void BeginDiscordRun(PlanPrototype plan)
+    private async Task BeginDiscordRunAsync(PlanPrototype plan)
     {
         _lastDiscordTask = null;
         if (_ownerState.NotifyOnRunStart)
-            NotifyDiscord(DiscordEventKind.RunStarted, plan, null, "Run started.");
+            await NotifyDiscordAsync(DiscordEventKind.RunStarted, plan, null, "Run started.");
     }
 
-    private void NotifyDiscordRunStopped(PlanPrototype plan, string detail)
+    private async Task NotifyDiscordRunStoppedAsync(PlanPrototype plan, string detail)
     {
         if (_ownerState.NotifyOnRunStop)
-            NotifyDiscord(DiscordEventKind.RunStopped, plan, _currentTask, detail);
+            await NotifyDiscordAsync(DiscordEventKind.RunStopped, plan, _currentTask, detail);
     }
 
-    private void NotifyDiscordTaskChanged(PlanPrototype plan, PlanTaskPrototype task)
+    private async Task NotifyDiscordTaskChangedAsync(PlanPrototype plan, PlanTaskPrototype task)
     {
         if (ReferenceEquals(task, _lastDiscordTask)) return;
         _lastDiscordTask = task;
         if (_ownerState.NotifyOnTaskChange)
-            NotifyDiscord(DiscordEventKind.TaskChanged, plan, task, $"Now running priority {task.Priority}.");
+            await NotifyDiscordAsync(
+                DiscordEventKind.TaskChanged, plan, task, $"Now running priority {task.Priority}.");
     }
 
-    private void NotifyDiscordOutcome(PlanPrototype plan, PlanTaskPrototype task, bool victory)
+    private async Task NotifyDiscordOutcomeAsync(PlanPrototype plan, PlanTaskPrototype task, bool victory)
     {
         if (victory && _ownerState.NotifyOnVictory)
         {
-            NotifyDiscord(
+            await NotifyDiscordAsync(
                 DiscordEventKind.Victory,
                 plan,
                 task,
@@ -47,7 +48,7 @@ public partial class MacroDashboardPage
         }
         else if (!victory && _ownerState.NotifyOnDefeat)
         {
-            NotifyDiscord(
+            await NotifyDiscordAsync(
                 DiscordEventKind.Defeat,
                 plan,
                 task,
@@ -55,21 +56,21 @@ public partial class MacroDashboardPage
         }
     }
 
-    private void NotifyDiscordRecovery(PlanTaskPrototype? task, TimeSpan delay)
+    private async Task NotifyDiscordRecoveryAsync(PlanTaskPrototype? task, TimeSpan delay)
     {
         if (!_ownerState.NotifyOnRecovery) return;
-        PlanPrototype plan = PlanCombo.SelectedItem as PlanPrototype ?? _ownerState.SelectedPlan;
-        NotifyDiscord(
+        PlanPrototype plan = _ownerState.SelectedPlan;
+        await NotifyDiscordAsync(
             DiscordEventKind.Recovery,
             plan,
             task,
             $"Restart and rejoin retry in {delay.TotalSeconds:N0} seconds.");
     }
 
-    private void NotifyDiscordTerminalFailure(PlanPrototype plan)
+    private async Task NotifyDiscordTerminalFailureAsync(PlanPrototype plan)
     {
         if (!_ownerState.NotifyOnTerminalFailure) return;
-        NotifyDiscord(
+        await NotifyDiscordAsync(
             DiscordEventKind.TerminalFailure,
             plan,
             _currentTask,
@@ -77,13 +78,13 @@ public partial class MacroDashboardPage
             _ownerState.DiscordUserId);
     }
 
-    private void NotifyDiscord(
+    private Task NotifyDiscordAsync(
         DiscordEventKind kind,
         PlanPrototype plan,
         PlanTaskPrototype? task,
         string detail,
         string? mentionUserId = null) =>
-        _discordEvents.Enqueue(new DiscordEventNotification(
+        _discordEvents.CaptureAndEnqueueAsync(new DiscordEventNotification(
             kind,
             plan.Name,
             task?.Name,

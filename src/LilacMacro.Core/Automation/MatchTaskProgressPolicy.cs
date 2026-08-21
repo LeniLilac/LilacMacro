@@ -46,6 +46,23 @@ public static class MatchTaskProgressPolicy
             throw new InvalidOperationException($"{taskName} exceeded its defeat retry limit.");
     }
 
+    public static void ApplyObservedTowerAvailability<TKey>(
+        TKey task,
+        int availableFloor,
+        IDictionary<TKey, int> victories,
+        IDictionary<TKey, int> defeats)
+        where TKey : notnull
+    {
+        ArgumentNullException.ThrowIfNull(task);
+        ArgumentNullException.ThrowIfNull(victories);
+        ArgumentNullException.ThrowIfNull(defeats);
+        if (availableFloor < 2)
+            throw new InvalidDataException("An already-cleared Tower goal requires an available floor above floor 1.");
+
+        victories[task] = Math.Max(Current(victories, task), availableFloor - 1);
+        defeats.Remove(task);
+    }
+
     private static int Current<TKey>(IDictionary<TKey, int> values, TKey key)
         where TKey : notnull => values.TryGetValue(key, out int value) ? value : 0;
 }

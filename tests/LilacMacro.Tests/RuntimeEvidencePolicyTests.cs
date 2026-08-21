@@ -63,6 +63,23 @@ public sealed class RuntimeEvidencePolicyTests
     }
 
     [Fact]
+    public async Task TowerPreviewMapAndFloorUsesItsDedicatedThreeScaleOwner()
+    {
+        DebugStateDatasetContextLoader contexts = new();
+
+        DebugStateDatasetContext preview = await contexts.LoadAsync(
+            TowerWorkflowCatalog.TowerPreviewMapFloor, CancellationToken.None);
+        DebugStateDatasetContext stage = await contexts.LoadAsync(
+            TowerWorkflowCatalog.TowerStage, CancellationToken.None);
+
+        Assert.Equal(new PixelRect(595, 136, 699, 137), preview.RegionOfInterest);
+        Assert.NotEqual(stage.RegionOfInterest, preview.RegionOfInterest);
+        Assert.Equal(3, TowerWorkflowCatalog.TowerPreviewMapFloor.RegionFrames.Count);
+        Assert.Equal("Select Stage", Assert.Single(TowerWorkflowCatalog.TowerStage.Targets).Name);
+        Assert.Null(TowerWorkflowCatalog.TowerStage.PoolTargetNames);
+    }
+
+    [Fact]
     public async Task EveryStaticSearchRegionEqualsItsBundledAnnotation()
     {
         RuntimeSearchRegionEvidence[] evidence = RuntimeSearchRegionEvidenceCatalog.All.ToArray();

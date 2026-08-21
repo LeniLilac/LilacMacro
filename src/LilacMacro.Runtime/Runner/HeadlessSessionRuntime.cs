@@ -14,7 +14,7 @@ using LilacMacro.Runtime.Normalization;
 
 namespace LilacMacro.Runtime.Runner;
 
-public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWorkerRuntime
+public sealed partial class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWorkerRuntime
 {
     private const string ContextFileName = "state-contexts.json";
     private const string PlacementDirectoryName = "placements";
@@ -202,6 +202,12 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
                     normalizeStartupSettings: false,
                     detail => Report(progress, task, "lobby-reset", wins, losses, detail),
                     cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            if (result.TowerGoalAlreadyReached)
+            {
+                await CompleteAlreadyClearedTowerGoalAsync(result, options, task, wins, losses, progress, rejoin, uiScale, gameSettings, request.PrivateServerLink, device, cancellationToken).ConfigureAwait(false);
                 continue;
             }
 
@@ -420,7 +426,8 @@ public sealed class HeadlessSessionRuntime(LocalSessionPaths paths) : ISessionWo
             BossesBeforeExtract: task.BossesBeforeExtract,
             ExtractAtCheckpoint: task.ExtractAtCheckpoint,
             ExpeditionRewardTarget: task.RewardTarget,
-            TowerType: towerType);
+            TowerType: towerType,
+            TowerGoalFloor: gameMode == WireGameMode.Tower ? task.Target : 0);
     }
 
     private static async Task<int> ResolveTeamAsync(

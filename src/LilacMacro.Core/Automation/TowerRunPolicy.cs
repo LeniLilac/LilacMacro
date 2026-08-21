@@ -13,6 +13,8 @@ public enum TowerType
 
 public sealed record TowerFloorSelection(int Floor, OcrTextRegion Region);
 
+public sealed record TowerPreviewSelection(string Map, int Floor);
+
 public readonly record struct TowerTerminalState(
     int Progress,
     int DefeatsOnFloor,
@@ -73,6 +75,40 @@ public static partial class TowerRunPolicy
             .ThenByDescending(candidate => candidate.Region.Bounds.X)
             .ThenByDescending(candidate => candidate.Region.RecognitionConfidence)
             .FirstOrDefault();
+    }
+
+    public static TowerPreviewSelection ResolvePreview(
+        IReadOnlyList<OcrTextRegion> regions,
+        IReadOnlyList<OcrTargetRule> mapTargets)
+    {
+        ArgumentNullException.ThrowIfNull(regions);
+        ArgumentNullException.ThrowIfNull(mapTargets);
+        if (mapTargets.Count == 0) throw new ArgumentException("At least one Tower map target is required.", nameof(mapTargets));
+
+        int[] floors = regions
+            .Select(region => TryParseFloor(region.Text, out int floor) ? floor : 0)
+            .Where(floor => floor > 0)
+            .ToArray();
+        if (floors.Length != 1)
+            throw new InvalidDataException($"Tower Match Preview requires exactly one floor number; found {floors.Length}.");
+
+        string[] maps = mapTargets
+            .Select(target => OcrRuleEngine.FindTarget(target, regions)?.Target)
+            .Where(target => target is not null)
+            .Cast<string>()
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        if (maps.Length != 1)
+            throw new InvalidDataException($"Tower Match Preview requires exactly one supported Story map; found {maps.Length}.");
+
+        return new TowerPreviewSelection(maps[0], floors[0]);
+    }
+
+    public static bool IsGoalAlreadyCleared(int availableFloor, int goalFloor)
+    {
+        if (availableFloor < 1) throw new ArgumentOutOfRangeException(nameof(availableFloor));
+        if (goalFloor < 1) throw new ArgumentOutOfRangeException(nameof(goalFloor));
+        return availableFloor > goalFloor;
     }
 
     public static bool TryParseFloor(string? text, out int floor)

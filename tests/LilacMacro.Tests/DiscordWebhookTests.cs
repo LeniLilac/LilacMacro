@@ -67,6 +67,70 @@ public sealed class DiscordWebhookTests
     }
 
     [Fact]
+    public async Task Event_boundary_capture_is_queued_once_before_delivery()
+    {
+        RecordingHandler handler = new(HttpStatusCode.NoContent);
+        DiscordWebhookClient client = new(new HttpClient(handler));
+        TaskCompletionSource<bool> sent = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        handler.OnRequest = () => sent.TrySetResult(true);
+        byte[] screenshot = [137, 80, 78, 71, 13, 10, 26, 10];
+        int captures = 0;
+        await using DiscordEventDispatcher dispatcher = new(
+            () => ValidWebhook,
+            _ => { },
+            _ =>
+            {
+                captures++;
+                return Task.FromResult<byte[]?>(screenshot);
+            },
+            client);
+
+        await dispatcher.CaptureAndEnqueueAsync(new DiscordEventNotification(
+            DiscordEventKind.Victory,
+            "Plan",
+            "Task",
+            "Victory 1 of 5.",
+            "This desktop",
+            DateTimeOffset.UnixEpoch));
+
+        Assert.Equal(1, captures);
+        await sent.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(1, captures);
+        Assert.Contains("\"type\":12", handler.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Event_boundary_capture_failure_is_not_retried_after_state_changes()
+    {
+        RecordingHandler handler = new(HttpStatusCode.NoContent);
+        DiscordWebhookClient client = new(new HttpClient(handler));
+        TaskCompletionSource<bool> sent = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        handler.OnRequest = () => sent.TrySetResult(true);
+        int captures = 0;
+        await using DiscordEventDispatcher dispatcher = new(
+            () => ValidWebhook,
+            _ => { },
+            _ =>
+            {
+                captures++;
+                throw new InvalidOperationException("capture unavailable");
+            },
+            client);
+
+        await dispatcher.CaptureAndEnqueueAsync(new DiscordEventNotification(
+            DiscordEventKind.RunStarted,
+            "Plan",
+            null,
+            "Started.",
+            "This desktop",
+            DateTimeOffset.UnixEpoch));
+
+        await sent.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(1, captures);
+        Assert.DoesNotContain("\"type\":12", handler.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Dispatcher_sends_text_when_screenshot_capture_fails()
     {
         RecordingHandler handler = new(HttpStatusCode.NoContent);

@@ -66,7 +66,8 @@ internal sealed class MacroTaskOptionsFactory(
             BossesBeforeExtract: task.BossesBeforeExtract,
             ExtractAtCheckpoint: task.ExtractAtCheckpoint,
             ExpeditionRewardTarget: task.RewardTarget,
-            TowerType: towerType);
+            TowerType: towerType,
+            TowerGoalFloor: gameMode == WireGameMode.Tower ? task.Target : 0);
     }
 
     private async Task<int> ResolveTeamAsync(

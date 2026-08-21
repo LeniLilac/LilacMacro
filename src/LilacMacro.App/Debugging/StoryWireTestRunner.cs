@@ -135,6 +135,24 @@ internal sealed class StoryWireTestRunner(
             TowerNavigationResult tower = await _tower.NavigateAsync(options, progress, cancellationToken);
             if (!tower.Succeeded || tower.Map is null) return Failed(StoryWireStage.TowerStage);
             options = options with { Map = tower.Map, TowerFloor = tower.Floor };
+            if (options.TowerGoalFloor > 0 &&
+                TowerRunPolicy.IsGoalAlreadyCleared(options.TowerFloor, options.TowerGoalFloor))
+            {
+                string status = $"GOAL FLOOR {options.TowerGoalFloor} ALREADY CLEARED | " +
+                                $"AVAILABLE FLOOR {options.TowerFloor}";
+                progress.Report(new StoryWireProgress(
+                    StoryWireStage.MatchPreview,
+                    StoryWireStageStatus.Passed,
+                    status,
+                    [$"MAP {options.Map}", $"FLOOR {options.TowerFloor}"]));
+                return new StoryWireTestResult(
+                    true,
+                    StoryWireStage.MatchPreview,
+                    status,
+                    ResolvedMap: options.Map,
+                    TowerFloor: options.TowerFloor,
+                    TowerGoalAlreadyReached: true);
+            }
         }
         else if (options.GameMode == WireGameMode.Challenge)
         {

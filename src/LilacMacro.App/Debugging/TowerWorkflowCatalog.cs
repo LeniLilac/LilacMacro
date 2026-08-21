@@ -7,6 +7,11 @@ internal static class TowerWorkflowCatalog
     private static readonly IReadOnlyList<OcrTargetRule> StageTargets =
     [
         new("Select Stage", "select stage"),
+    ];
+
+    private static readonly IReadOnlyList<OcrTargetRule> PreviewMapFloorTargets =
+    [
+        new("Floor", "floor"),
         .. DebugWorkflowCatalog.MapTargets,
     ];
 
@@ -34,20 +39,32 @@ internal static class TowerWorkflowCatalog
     public static readonly DebugStateSpec TowerStage = new(
         "TOWER STAGE",
         Dataset("tower-map-select-stage-preview-20260810-174515"),
-        [1, 2, 3],
-        2,
+        [1, 5, 6],
+        1,
         StageTargets,
         DebugMatchMode.DeclarativeEvidence,
         RequiredTargetNames: ["Select Stage"],
+        RegionLabel: "Tower Stage State");
+
+    public static readonly DebugStateSpec TowerPreviewMapFloor = new(
+        "TOWER PREVIEW MAP + FLOOR",
+        Dataset("tower-map-select-stage-preview-20260810-174515"),
+        [2, 3, 4],
+        2,
+        PreviewMapFloorTargets,
+        DebugMatchMode.DeclarativeEvidence,
+        RequiredTargetNames: ["Floor"],
         PoolTargetNames: DebugWorkflowCatalog.MapTargets.Select(target => target.Name).ToArray(),
         MinimumPoolMatches: 1,
-        RegionLabel: "Tower Stage State");
+        FuzzyPrefixTargetNames: ["Floor"],
+        RegionLabel: "Map+Floor Detect ROI");
 
     public static IEnumerable<DebugStateSpec> All()
     {
         yield return TowerSelect;
         yield return TowerFloorList;
         yield return TowerStage;
+        yield return TowerPreviewMapFloor;
     }
 
     private static string Dataset(string directory) => RuntimeEvidenceDatasetCatalog.Dataset(directory);

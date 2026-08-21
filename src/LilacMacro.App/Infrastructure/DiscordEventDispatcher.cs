@@ -37,6 +37,30 @@ internal sealed class DiscordEventDispatcher : IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(_webhook())) _ = _queue.Writer.TryWrite(notification);
     }
 
+    public async Task CaptureAndEnqueueAsync(
+        DiscordEventNotification notification,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(_webhook())) return;
+        byte[]? screenshot = null;
+        if (_captureScreenshot is not null)
+        {
+            try
+            {
+                screenshot = await _captureScreenshot(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception error) when (error is not OperationCanceledException)
+            {
+                // A missing frame must not suppress the text event or interrupt the macro.
+            }
+        }
+        _ = _queue.Writer.TryWrite(notification with
+        {
+            ScreenshotPng = screenshot,
+            ScreenshotCaptureAttempted = true,
+        });
+    }
+
     public async ValueTask DisposeAsync()
     {
         _queue.Writer.TryComplete();
@@ -53,8 +77,8 @@ internal sealed class DiscordEventDispatcher : IAsyncDisposable
         {
             string webhook = _webhook();
             if (string.IsNullOrWhiteSpace(webhook)) continue;
-            byte[]? screenshot = null;
-            if (_captureScreenshot is not null)
+            byte[]? screenshot = notification.ScreenshotPng;
+            if (!notification.ScreenshotCaptureAttempted && _captureScreenshot is not null)
             {
                 try
                 {
@@ -69,7 +93,11 @@ internal sealed class DiscordEventDispatcher : IAsyncDisposable
             {
                 await _client.SendEventAsync(
                         webhook,
-                        notification with { ScreenshotPng = screenshot },
+                        notification with
+                        {
+                            ScreenshotPng = screenshot,
+                            ScreenshotCaptureAttempted = true,
+                        },
                         _cancellation.Token)
                     .ConfigureAwait(false);
             }

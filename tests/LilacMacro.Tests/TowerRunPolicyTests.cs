@@ -43,6 +43,36 @@ public sealed class TowerRunPolicyTests
         Assert.Same(floor, selection.Region);
     }
 
+    [Fact]
+    public void ResolvesTowerMapAndFloorFromDedicatedMatchPreviewEvidence()
+    {
+        TowerPreviewSelection selection = TowerRunPolicy.ResolvePreview(
+            [Region("Tower", 720, 150), Region("Floor 1 - Rose Kingdom", 760, 180)],
+            [new("Rose Kingdom", "rose kingdom"), new("East Town", "east town")]);
+
+        Assert.Equal(new TowerPreviewSelection("Rose Kingdom", 1), selection);
+    }
+
+    [Fact]
+    public void RejectsBroadPreviewEvidenceWithSidebarAndPreviewFloors()
+    {
+        InvalidDataException exception = Assert.Throws<InvalidDataException>(() =>
+            TowerRunPolicy.ResolvePreview(
+                [Region("Floor 6", 169, 162), Region("Floor 1 - Rose Kingdom", 760, 180)],
+                [new("Rose Kingdom", "rose kingdom")]));
+
+        Assert.Contains("exactly one floor number; found 2", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(5, 5, false)]
+    [InlineData(6, 5, true)]
+    public void GoalIsAlreadyClearedOnlyWhenAvailableFloorIsHigher(
+        int availableFloor,
+        int goalFloor,
+        bool expected) =>
+        Assert.Equal(expected, TowerRunPolicy.IsGoalAlreadyCleared(availableFloor, goalFloor));
+
     [Theory]
     [InlineData(4, 5, false)]
     [InlineData(5, 5, true)]

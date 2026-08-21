@@ -5,6 +5,19 @@ namespace LilacMacro.Tests;
 public sealed class MatchTaskProgressPolicyTests
 {
     [Fact]
+    public void ObservedAvailableTowerFloorStoresPriorClearedFloorAndClearsDefeats()
+    {
+        Dictionary<string, int> progress = [];
+        Dictionary<string, int> defeats = new() { ["tower"] = 3 };
+
+        MatchTaskProgressPolicy.ApplyObservedTowerAvailability(
+            "tower", availableFloor: 6, progress, defeats);
+
+        Assert.Equal(5, progress["tower"]);
+        Assert.Empty(defeats);
+    }
+
+    [Fact]
     public void TowerVictoryStoresFloorAndClearsDefeats()
     {
         Dictionary<string, int> progress = new() { ["tower"] = 7 };

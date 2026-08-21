@@ -272,7 +272,34 @@ public partial class SettingsPage : UserControl
             ? "Privacy choices saved"
             : "Online features are disabled";
     }
-    private void LocalPath_OnClick(object sender, RoutedEventArgs eventArgs) => GeneralStatusText.Text = "Folder opening is not connected";
+    private void LocalPath_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        if (sender is not Button { Tag: string folderKind }) return;
+
+        string path = folderKind switch
+        {
+            "data" => MacroInstanceContext.Current.ConfigurationRoot,
+            "logs" => Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "LilacMacro",
+                "logs"),
+            _ => throw new InvalidOperationException("The requested LilacMacro folder is unknown."),
+        };
+
+        try
+        {
+            Directory.CreateDirectory(path);
+            _ = Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })
+                ?? throw new InvalidOperationException("Windows did not open the requested folder.");
+        }
+        catch (Exception exception) when (exception is IOException
+            or UnauthorizedAccessException
+            or InvalidOperationException
+            or System.ComponentModel.Win32Exception)
+        {
+            AppToastService.ShowError("FOLDER OPEN FAILED", exception.Message);
+        }
+    }
     private async void TestPrivateServer_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         TestPrivateServerButton.IsEnabled = false;

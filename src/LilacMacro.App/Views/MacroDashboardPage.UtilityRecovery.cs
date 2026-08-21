@@ -67,7 +67,7 @@ public partial class MacroDashboardPage
         if (task is null) return;
 
         _currentTask = task;
-        NotifyDiscordTaskChanged(plan, task);
+        await NotifyDiscordTaskChangedAsync(plan, task);
         RefreshUpcomingTasks(plan);
         AppendLog($"OPPORTUNISTIC UTILITY RETRY | {task.Name}");
         MacroRuntimeKeySnapshot keys = _ownerState.KeyBindings.Snapshot();

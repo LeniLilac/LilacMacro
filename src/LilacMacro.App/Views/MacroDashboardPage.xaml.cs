@@ -89,7 +89,7 @@ public partial class MacroDashboardPage : UserControl
             new MacroInternetConnectivityGate(
                 new InternetConnectivityProbe().IsAvailable,
                 AppendLog).WaitUntilAvailableAsync,
-            NotifyDiscordRecovery);
+            NotifyDiscordRecoveryAsync);
         InitializeComponent();
         InitializeRuntimeProgressPersistence();
         InitializeDiscordEvents();
@@ -204,13 +204,13 @@ public partial class MacroDashboardPage : UserControl
             _runStats.Clear();
             StatsChart.SetPoints(_runStats);
             RefreshRunState(true);
-            BeginDiscordRun(plan);
             string device = SelectOcrDevice();
             if (!_initialized)
             {
                 await _workspace.InitializeAsync();
                 _initialized = true;
             }
+            await BeginDiscordRunAsync(plan);
             await MacroPlanPreflight.ValidateAsync(
                 plan,
                 async (task, token) =>
@@ -242,19 +242,19 @@ public partial class MacroDashboardPage : UserControl
                 _runCancellation.Token);
             await _runTask;
             AppendLog("PLAN COMPLETE");
-            NotifyDiscordRunStopped(plan, "Plan complete.");
+            await NotifyDiscordRunStoppedAsync(plan, "Plan complete.");
         }
         catch (OperationCanceledException)
         {
             AppendLog("STOPPED");
-            NotifyDiscordRunStopped(plan, "Stopped by the user.");
+            await NotifyDiscordRunStoppedAsync(plan, "Stopped by the user.");
         }
         catch (Exception error)
         {
             AppToastService.ShowError("MACRO STOPPED", error.Message);
             AppendLog($"ERROR {error.Message}");
             _deepDebug.RecordEvent("macro", "runtime_error", new { Error = error.ToString() });
-            NotifyDiscordTerminalFailure(plan);
+            await NotifyDiscordTerminalFailureAsync(plan);
         }
         finally
         {
@@ -285,13 +285,8 @@ public partial class MacroDashboardPage : UserControl
         CancellationToken cancellationToken)
     {
         if (!_control.CanContinue(AppendLog)) return;
-        bool normalizeStartupSettings = !startupSettingsNormalized();
-        await _lobbyReset.ResetAsync(
-            device,
-            normalizeStartupSettings,
-            redeemedCodes,
-            cancellationToken);
-        if (normalizeStartupSettings) markStartupSettingsNormalized();
+        await ResetLobbyAtPlanStartAsync(device, redeemedCodes, startupSettingsNormalized,
+            markStartupSettingsNormalized, cancellationToken);
         PlanTaskPrototype? lobbyHandoffFrom = _recovery.TakeOpportunisticHandoff();
         PlanTaskPrototype? repeatedTask = null;
         StoryWireTestOptions? repeatedOptions = null;
@@ -352,7 +347,7 @@ public partial class MacroDashboardPage : UserControl
             }
 
             _currentTask = task;
-            NotifyDiscordTaskChanged(plan, task);
+            await NotifyDiscordTaskChangedAsync(plan, task);
             RefreshUpcomingTasks(plan);
             AppendLog($"RUN {task.Name}");
 
@@ -422,10 +417,16 @@ public partial class MacroDashboardPage : UserControl
                 continue;
             }
 
+            if (result.TowerGoalAlreadyReached)
+            {
+                lobbyHandoffFrom = await CompleteAlreadyClearedTowerGoalAsync(plan, task, options, result, device, redeemedCodes, madeProgress, cancellationToken);
+                continue;
+            }
+
             MatchTerminalOutcome outcome = result.Outcome
                 ?? throw new InvalidOperationException("The completed match did not return a terminal outcome.");
             bool victory = outcome == MatchTerminalOutcome.Victory;
-            NotifyDiscordOutcome(plan, task, victory);
+            await NotifyDiscordOutcomeAsync(plan, task, victory);
             MatchTaskProgressPolicy.Apply(
                 task, task.Name, task.Mode == PlanTaskMode.Tower, victory, options.TowerFloor,
                 task.DefeatRetries, _victories, _defeats);
