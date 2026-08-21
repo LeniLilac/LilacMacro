@@ -118,7 +118,7 @@ public partial class MacroDashboardPage : UserControl
         bool dockAllowed = MacroDisplayPolicy.AllowsDock(profile);
         if (!dockAllowed) RobloxDock.SetRequested(false);
         DockCard.Visibility = dockAllowed ? Visibility.Visible : Visibility.Collapsed;
-        DockColumn.Width = dockAllowed ? new GridLength(1396) : new GridLength(0);
+        DockColumn.Width = dockAllowed ? new GridLength(1398) : new GridLength(0);
         DockSpacerColumn.Width = dockAllowed ? new GridLength(14) : new GridLength(0);
         StatsCard.SetValue(Grid.ColumnProperty, dockAllowed ? 2 : 0);
         StatsCard.SetValue(Grid.ColumnSpanProperty, dockAllowed ? 1 : 3);

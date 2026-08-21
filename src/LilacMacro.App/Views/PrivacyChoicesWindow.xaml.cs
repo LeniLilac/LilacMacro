@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Windows;
-using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
 
 namespace LilacMacro.App.Views;
@@ -21,6 +20,7 @@ public partial class PrivacyChoicesWindow : Window
     private async void Continue_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         IsEnabled = false;
+        SaveErrorText.Visibility = Visibility.Collapsed;
         try
         {
             await _ownerState.SavePrivacyChoicesAsync(
@@ -32,7 +32,8 @@ public partial class PrivacyChoicesWindow : Window
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             IsEnabled = true;
-            AppToastService.ShowError("PRIVACY CHOICES NOT SAVED", exception.Message);
+            SaveErrorText.Text = $"PRIVACY CHOICES NOT SAVED: {exception.Message}";
+            SaveErrorText.Visibility = Visibility.Visible;
         }
     }
 

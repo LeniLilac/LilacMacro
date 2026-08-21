@@ -45,4 +45,10 @@ internal static class MacroDisplayPolicy
         MacroLayoutProfile.Compact1366x768 => (1366, 768),
         _ => (1920, 1080),
     };
+
+    public static (double Width, double Height) MinimumSize(MacroLayoutProfile layout) => layout switch
+    {
+        MacroLayoutProfile.Compact1366x768 => (1060, 680),
+        _ => (1788, 898),
+    };
 }

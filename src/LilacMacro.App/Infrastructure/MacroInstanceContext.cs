@@ -1,3 +1,6 @@
+using System.Security.Principal;
+using System.Text.Json;
+
 namespace LilacMacro.App.Infrastructure;
 
 internal sealed record MacroInstanceContext(
@@ -36,21 +39,57 @@ internal sealed record MacroInstanceContext(
 
     private static MacroInstanceContext CreateOwnerContext()
     {
+        string programData = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "LilacMacro");
         string local = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "LilacMacro");
         string shared = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "LilacMacro",
+            programData,
             "Configurations",
             "shared");
-        bool useShared = Directory.Exists(shared);
+        string journal = Path.Combine(programData, "Session", "provisioning.json");
+        string? currentSid = WindowsIdentity.GetCurrent().User?.Value;
+        bool useShared = ShouldUseSharedConfiguration(
+            Directory.Exists(shared),
+            TryReadProvisionedOwnerSid(journal),
+            currentSid);
         return new MacroInstanceContext(
             "desktop",
             "This desktop",
             useShared ? shared : local,
             useShared,
             false);
+    }
+
+    internal static bool ShouldUseSharedConfiguration(
+        bool sharedDirectoryExists,
+        string? provisionedOwnerSid,
+        string? currentSid) =>
+        sharedDirectoryExists
+        && !string.IsNullOrWhiteSpace(provisionedOwnerSid)
+        && !string.IsNullOrWhiteSpace(currentSid)
+        && string.Equals(provisionedOwnerSid, currentSid, StringComparison.OrdinalIgnoreCase);
+
+    private static string? TryReadProvisionedOwnerSid(string journalPath)
+    {
+        try
+        {
+            using FileStream stream = new(
+                journalPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            using JsonDocument document = JsonDocument.Parse(stream);
+            return document.RootElement.TryGetProperty("owner_sid", out JsonElement ownerSid)
+                ? ownerSid.GetString()
+                : null;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return null;
+        }
     }
 
     private static int IndexOf(IReadOnlyList<string> arguments, string option)

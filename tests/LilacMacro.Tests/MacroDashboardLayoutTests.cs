@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using LilacMacro.App.Runtime;
 
 namespace LilacMacro.Tests;
 
@@ -42,6 +43,38 @@ public sealed class MacroDashboardLayoutTests
             .Single(element => (string?)element.Attribute(x + "Name") == "TraceLogText");
         Assert.Equal("Auto", (string?)log.Attribute("VerticalScrollBarVisibility"));
         Assert.Equal("140", (string?)log.Attribute("MaxHeight"));
+
+        XElement dock = dashboard
+            .Descendants(wpf + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "DockCard");
+        XElement stats = dashboard
+            .Descendants(wpf + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "StatsCard");
+        Assert.Equal("766", (string?)dock.Attribute("Height"));
+        Assert.Equal("Top", (string?)dock.Attribute("VerticalAlignment"));
+        Assert.Equal("Top", (string?)stats.Attribute("VerticalAlignment"));
+
+        XElement statsHeight = stats
+            .Descendants(wpf + "Setter")
+            .Single(element => (string?)element.Attribute("Property") == "Height"
+                && (string?)element.Attribute("Value") == "766");
+        Assert.NotNull(statsHeight);
+
+        XElement tasksViewport = dashboard
+            .Descendants(wpf + "Border")
+            .Single(element => (string?)element.Attribute(x + "Name") == "UpcomingTasksViewport");
+        Assert.Equal("True", (string?)tasksViewport.Attribute("ClipToBounds"));
+    }
+
+    [Fact]
+    public void Window_minimum_preserves_each_workspace_profile()
+    {
+        Assert.Equal(
+            (1788d, 898d),
+            MacroDisplayPolicy.MinimumSize(MacroLayoutProfile.Full1920x1080));
+        Assert.Equal(
+            (1060d, 680d),
+            MacroDisplayPolicy.MinimumSize(MacroLayoutProfile.Compact1366x768));
     }
 
     private static string RepositoryRoot()

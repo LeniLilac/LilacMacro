@@ -8,7 +8,7 @@ internal static class MacroConfigurationMigrator
     public static async Task EnsureOwnerSharedConfigurationAsync(CancellationToken cancellationToken = default)
     {
         MacroInstanceContext context = MacroInstanceContext.Current;
-        if (context.IsManagedRunner) return;
+        if (context.IsManagedRunner || !context.UsesMachineProtectedSecrets) return;
         string localRoot = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "LilacMacro");

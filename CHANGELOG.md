@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fixed the full Macro dashboard workspace at the exact dock height, matched the Stats/Upcoming Tasks inspector to it, clipped overflowing tasks, and prevented full-layout resizing below the complete dock and inspector.
+- Simplified the first-run privacy window, restored the shared Lilac button styling, and made save failures visible within the window.
+- Kept unrelated Windows profiles on their own local configuration instead of selecting another account's ACL-restricted shared runner configuration.
+
 ## 1.0.150 — Public beta
 
 - Bundled Python 3.12, the CPU OCR runtime, and the supported OCR model pairs in the Windows installer.

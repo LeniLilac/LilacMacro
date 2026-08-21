@@ -85,12 +85,13 @@
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="DockColumn" Width="1396" />
+                <ColumnDefinition x:Name="DockColumn" Width="1398" />
                 <ColumnDefinition x:Name="DockSpacerColumn" Width="14" />
                 <ColumnDefinition Width="*" MinWidth="304" />
             </Grid.ColumnDefinitions>
 
-            <Border x:Name="DockCard" Background="{DynamicResource CardBrush}"
+            <Border x:Name="DockCard" Height="766" VerticalAlignment="Top"
+                    Background="{DynamicResource CardBrush}"
                     BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="5">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -143,8 +144,19 @@
                 </Grid>
             </Border>
 
-            <Border x:Name="StatsCard" Grid.Column="2" Padding="15" Background="{DynamicResource CardBrush}"
+            <Border x:Name="StatsCard" Grid.Column="2" VerticalAlignment="Top"
+                    Padding="15" Background="{DynamicResource CardBrush}"
                     BorderBrush="{DynamicResource InkBrush}" BorderThickness="2" CornerRadius="5">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Height" Value="766" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Visibility, ElementName=DockCard}" Value="Collapsed">
+                                <Setter Property="Height" Value="Auto" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -196,8 +208,9 @@
                                    Style="{StaticResource DashboardMonoStyle}"
                                    Text="PRIORITY ORDER" />
                     </Grid>
-                    <Border Grid.Row="6" ClipToBounds="True">
+                    <Border x:Name="UpcomingTasksViewport" Grid.Row="6" ClipToBounds="True">
                         <ItemsControl x:Name="UpcomingTasksList"
+                                      ClipToBounds="True"
                                       VerticalAlignment="Top"
                                       HorizontalAlignment="Stretch"
                                       ItemTemplate="{StaticResource UpcomingTaskTemplate}" />

@@ -9,6 +9,8 @@ public partial class MacroShellWindow
 {
     private double _targetWorkspaceWidth = 1920;
     private double _targetWorkspaceHeight = 1080;
+    private double _targetMinimumWidth = 1788;
+    private double _targetMinimumHeight = 898;
     private HwndSource? _windowSource;
     private HwndSourceHook? _windowHook;
 
@@ -42,6 +44,9 @@ public partial class MacroShellWindow
     private void ApplyWorkspaceSize(Runtime.MacroLayoutProfile profile, bool resize)
     {
         (_targetWorkspaceWidth, _targetWorkspaceHeight) = Runtime.MacroDisplayPolicy.TargetSize(profile);
+        (_targetMinimumWidth, _targetMinimumHeight) = Runtime.MacroDisplayPolicy.MinimumSize(profile);
+        MinWidth = _targetMinimumWidth;
+        MinHeight = _targetMinimumHeight;
         if (resize && IsLoaded) FitWorkspaceToCurrentMonitor();
     }
 
@@ -51,8 +56,8 @@ public partial class MacroShellWindow
         nint handle = new WindowInteropHelper(this).Handle;
         DpiScale dpi = VisualTreeHelper.GetDpi(this);
         if (!WindowsWindowWorkArea.TryGet(handle, dpi.DpiScaleX, dpi.DpiScaleY, out DesktopWorkAreaBounds workArea)) return;
-        MinWidth = Math.Min(MinWidth, workArea.Width);
-        MinHeight = Math.Min(MinHeight, workArea.Height);
+        MinWidth = Math.Min(_targetMinimumWidth, workArea.Width);
+        MinHeight = Math.Min(_targetMinimumHeight, workArea.Height);
         DesktopWorkAreaBounds fitted = WindowsWindowWorkArea.FitNormalBounds(
             new DesktopWorkAreaBounds(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height),
             workArea,
