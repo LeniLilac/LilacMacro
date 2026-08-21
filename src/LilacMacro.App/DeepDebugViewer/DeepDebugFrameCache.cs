@@ -1,4 +1,5 @@
 using System.Windows.Media.Imaging;
+using LilacMacro.App.Diagnostics;
 
 namespace LilacMacro.App.DeepDebugViewer;
 
@@ -26,6 +27,8 @@ internal sealed class DeepDebugFrameCache
             }
         }
         byte[] bytes = await _archive.ReadFrameBytesAsync(_archive.Frames[frameIndex], cancellationToken);
+        if (_archive.Frames[frameIndex].Path.EndsWith(".avif", StringComparison.OrdinalIgnoreCase))
+            bytes = await DeepDebugAvifDisplayDecoder.DecodeAsync(bytes, cancellationToken);
         BitmapImage bitmap = new();
         using (MemoryStream stream = new(bytes, writable: false))
         {

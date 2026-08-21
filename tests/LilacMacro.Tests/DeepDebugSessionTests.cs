@@ -102,15 +102,24 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.Contains("events.jsonl", entries);
         Assert.Contains("timeline.md", entries);
         Assert.Contains("README.md", entries);
+        Assert.Contains("frames/index.json", entries);
         Assert.Contains(entries, entry => entry.StartsWith("frames/frame-", StringComparison.Ordinal));
         string events = await ReadAsync(archive, "events.jsonl");
         Assert.DoesNotContain(Environment.UserName, events, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("discord.com/api/webhooks", events, StringComparison.OrdinalIgnoreCase);
+        string? retainedArtifact = null;
         foreach (string line in events.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-            using (JsonDocument.Parse(line)) { }
+        {
+            using JsonDocument document = JsonDocument.Parse(line);
+            if (document.RootElement.TryGetProperty("artifact", out JsonElement artifact))
+                retainedArtifact = artifact.GetString();
+        }
+        Assert.NotNull(retainedArtifact);
+        Assert.NotNull(archive.GetEntry(retainedArtifact!));
         string manifest = await ReadAsync(archive, "manifest.json");
-        Assert.Contains("\"formatVersion\": 2", manifest, StringComparison.Ordinal);
+        Assert.Contains("\"formatVersion\": 3", manifest, StringComparison.Ordinal);
         Assert.Contains("\"transitionFrames\": 1", manifest, StringComparison.Ordinal);
+        Assert.Contains("\"validation\"", await ReadAsync(archive, "frames/index.json"), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -125,6 +134,7 @@ public sealed class DeepDebugSessionTests : IDisposable
         service.RecordRuntimeLog(message);
         await scope!.CompleteAsync("stopped");
 
+        Assert.True(service.LastArchivePath is not null, ReadFinalizationFailures(service.DiagnosticsRoot));
         using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
         string events = await ReadAsync(archive, "events.jsonl");
         Assert.Contains(message, events, StringComparison.Ordinal);
@@ -228,6 +238,44 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
+    public async Task Evidence_converts_old_ordinary_frames_and_keeps_recent_png()
+    {
+        string evidenceRoot = Path.Combine(_root, "evidence-avif");
+        Directory.CreateDirectory(evidenceRoot);
+        DateTimeOffset started = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
+        DeepDebugEvidenceRetention retention = new();
+        RecordFrame(retention, evidenceRoot, started, "old");
+        RecordFrame(retention, evidenceRoot, started.AddSeconds(11), "recent");
+
+        await retention.CompleteAsync(new FakeFrameCodec(success: true), long.MaxValue);
+
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "old.avif")));
+        Assert.False(File.Exists(Path.Combine(evidenceRoot, "old.png")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "recent.png")));
+        Assert.Equal(1, retention.AvifFrameCount);
+        DeepDebugEvidenceFrame encoded = Assert.Single(retention.Frames, frame => frame.Format == "avif");
+        Assert.Equal("decode-verified", encoded.Validation);
+        Assert.Equal(20, encoded.Quality);
+    }
+
+    [Fact]
+    public async Task Evidence_keeps_png_when_avif_validation_fails()
+    {
+        string evidenceRoot = Path.Combine(_root, "evidence-avif-failure");
+        Directory.CreateDirectory(evidenceRoot);
+        DateTimeOffset started = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
+        DeepDebugEvidenceRetention retention = new();
+        RecordFrame(retention, evidenceRoot, started, "old");
+        RecordFrame(retention, evidenceRoot, started.AddSeconds(11), "recent");
+
+        await retention.CompleteAsync(new FakeFrameCodec(success: false), long.MaxValue);
+
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "old.png")));
+        Assert.Equal(0, retention.AvifFrameCount);
+        Assert.Contains(retention.Frames, frame => frame.Validation == "decode-failed");
+    }
+
+    [Fact]
     public void Overlapping_error_windows_merge_and_terminal_evidence_has_priority()
     {
         string evidenceRoot = Path.Combine(_root, "evidence-priority");
@@ -259,7 +307,6 @@ public sealed class DeepDebugSessionTests : IDisposable
     [InlineData("ocr", "inference_failed", false)]
     [InlineData("local_instance", "operation_failed", false)]
     [InlineData("route_optimizer_test", "trial_failed", false)]
-    [InlineData("diagnostic", "periodic_live_frame_capture_failed", false)]
     public void Evidence_policy_classifies_actionable_failures(
         string category,
         string action,
@@ -276,6 +323,20 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.Equal(
             terminal ? DeepDebugErrorSeverity.Terminal : DeepDebugErrorSeverity.Recoverable,
             marker!.Severity);
+    }
+
+    [Fact]
+    public void Evidence_policy_does_not_treat_periodic_capture_gaps_as_errors()
+    {
+        bool classified = DeepDebugEvidencePolicy.TryClassifyError(
+            "diagnostic",
+            "periodic_live_frame_capture_failed",
+            new { Error = "Roblox is unavailable while restart is in progress." },
+            DateTimeOffset.UtcNow,
+            out DeepDebugErrorMarker? marker);
+
+        Assert.False(classified);
+        Assert.Null(marker);
     }
 
     [Fact]
@@ -440,11 +501,13 @@ public sealed class DeepDebugSessionTests : IDisposable
     private DeepDebugSessionService NewService(
         int freeGiB = 300,
         Func<string, long>? availableFreeBytes = null,
-        DeepDebugArchiveLimits? limits = null) => new(
+        DeepDebugArchiveLimits? limits = null,
+        IDeepDebugFrameCodec? frameCodec = null) => new(
             _root,
             diagnosticsRoot: null,
             availableFreeBytes ?? (_ => freeGiB * DiagnosticUploadPolicy.OneGiB),
-            limits);
+            limits,
+            frameCodec: frameCodec);
 
     private static byte[] TestPng(byte red, byte green, byte blue) =>
         PngEncoder.Encode(new RgbImage(2, 2,
@@ -498,6 +561,25 @@ public sealed class DeepDebugSessionTests : IDisposable
         await using Stream stream = entry.Open();
         using StreamReader reader = new(stream);
         return await reader.ReadToEndAsync();
+    }
+
+    private static string ReadFinalizationFailures(string diagnosticsRoot) => string.Join(
+        Environment.NewLine,
+        Directory.Exists(diagnosticsRoot)
+            ? Directory.EnumerateFiles(diagnosticsRoot, "finalization-error.txt", SearchOption.AllDirectories)
+                .Select(File.ReadAllText)
+            : ["Diagnostics directory was not created."]);
+
+    private sealed class FakeFrameCodec(bool success) : IDeepDebugFrameCodec
+    {
+        public Task<DeepDebugFrameEncodingResult> EncodeAsync(
+            string pngPath,
+            bool lossless,
+            bool waitForLease,
+            CancellationToken cancellationToken = default) => Task.FromResult(success
+                ? new DeepDebugFrameEncodingResult(true, [1], lossless ? "pixel-exact" : "decode-verified",
+                    lossless ? null : 20)
+                : new DeepDebugFrameEncodingResult(false, null, "decode-failed", lossless ? null : 20));
     }
 
     public void Dispose()

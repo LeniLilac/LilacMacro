@@ -56,7 +56,6 @@ internal static class TowerWorkflowCatalog
         RequiredTargetNames: ["Floor"],
         PoolTargetNames: DebugWorkflowCatalog.MapTargets.Select(target => target.Name).ToArray(),
         MinimumPoolMatches: 1,
-        FuzzyPrefixTargetNames: ["Floor"],
         RegionLabel: "Map+Floor Detect ROI");
 
     public static IEnumerable<DebugStateSpec> All()

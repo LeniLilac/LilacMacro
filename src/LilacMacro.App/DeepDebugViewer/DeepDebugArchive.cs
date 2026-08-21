@@ -230,7 +230,7 @@ internal sealed partial class DeepDebugArchive : IDisposable
         for (int eventIndex = 0; eventIndex < events.Length; eventIndex++)
         {
             DeepDebugTimelineEvent item = events[eventIndex];
-            if (item.ArtifactPath is null || !item.ArtifactPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) continue;
+            if (item.ArtifactPath is null || !IsFramePath(item.ArtifactPath)) continue;
             if (!item.Category.Equals("frame", StringComparison.OrdinalIgnoreCase) &&
                 !item.ArtifactPath.StartsWith("frames/", StringComparison.OrdinalIgnoreCase)) continue;
             frames.Add(new(frames.Count, item.Sequence, item.TimestampUtc, item.ArtifactPath,
@@ -242,10 +242,14 @@ internal sealed partial class DeepDebugArchive : IDisposable
     private static IReadOnlyList<DeepDebugFrameRecord> BuildFallbackFrames(
         IReadOnlyDictionary<string, ZipArchiveEntry> entries) => entries.Values
         .Where(entry => NormalizePath(entry.FullName).StartsWith("frames/", StringComparison.OrdinalIgnoreCase))
-        .Where(entry => entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+        .Where(entry => IsFramePath(entry.FullName))
         .OrderBy(entry => entry.FullName, StringComparer.OrdinalIgnoreCase)
         .Select((entry, index) => new DeepDebugFrameRecord(index, index + 1, entry.LastWriteTime,
             NormalizePath(entry.FullName), 0, true, null)).ToArray();
+
+    private static bool IsFramePath(string path) =>
+        path.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith(".avif", StringComparison.OrdinalIgnoreCase);
 
     private static DeepDebugSourceRegion? FindSourceRegion(JsonElement data)
     {

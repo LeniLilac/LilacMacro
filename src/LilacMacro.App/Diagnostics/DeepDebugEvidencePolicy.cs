@@ -83,6 +83,7 @@ internal static partial class DeepDebugEvidencePolicy
     }
 
     private static bool IsBoundedFailure(string category, string action) =>
+        !(category == "diagnostic" && action == "periodic_live_frame_capture_failed") &&
         category is "wire" or "tower" or "challenge" or "configuration" or "debug" or
             "diagnostic" or "input" or "window" or "ocr" or "ocr_setup" or "local_instance" or
             "route_optimizer_test" or "team_swap_test" or "vision"

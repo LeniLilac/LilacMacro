@@ -3,6 +3,7 @@ using System.Text.Json;
 using LilacMacro.App.Debugging;
 using LilacMacro.Core.Datasets;
 using LilacMacro.Core.Geometry;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.Tests;
 
@@ -77,6 +78,24 @@ public sealed class RuntimeEvidencePolicyTests
         Assert.Equal(3, TowerWorkflowCatalog.TowerPreviewMapFloor.RegionFrames.Count);
         Assert.Equal("Select Stage", Assert.Single(TowerWorkflowCatalog.TowerStage.Targets).Name);
         Assert.Null(TowerWorkflowCatalog.TowerStage.PoolTargetNames);
+    }
+
+    [Fact]
+    public void TowerPreviewAcceptsCombinedFloorAndMapTextFromLiveOcr()
+    {
+        OcrStateEvaluation evaluation = DebugOcrStateRunner.Evaluate(
+            TowerWorkflowCatalog.TowerPreviewMapFloor,
+            [new OcrTextRegion
+            {
+                Bounds = new PixelRect(807, 206, 232, 23),
+                Text = "Floor 6 - School Grounds",
+                DetectionConfidence = 1,
+                RecognitionConfidence = 0.9748940467834473,
+            }]);
+
+        Assert.True(evaluation.IsMatch);
+        Assert.Contains(evaluation.Matches, match => match.Target == "Floor");
+        Assert.Contains(evaluation.Matches, match => match.Target == "School Grounds");
     }
 
     [Fact]

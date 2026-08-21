@@ -31,7 +31,7 @@ internal static class DeepDebugSessionWriter
                     item.Action,
                     item.Data,
                     item.TimestampUtc);
-                WriteArtifact(session, item);
+                await WriteArtifactAsync(session, item);
 
                 DeepDebugEventRecord record = new(
                     item.Sequence,
@@ -92,7 +92,7 @@ internal static class DeepDebugSessionWriter
         }
     }
 
-    private static void WriteArtifact(DeepDebugSession session, DeepDebugWriteItem item)
+    private static async Task WriteArtifactAsync(DeepDebugSession session, DeepDebugWriteItem item)
     {
         if (item.ArtifactBytes is null || item.ArtifactPath is null) return;
         if (item.ArtifactBytes.LongLength > session.Limits.FrameEvidenceBytes)
@@ -112,7 +112,10 @@ internal static class DeepDebugSessionWriter
             item.TimestampUtc,
             item.ArtifactBytes,
             string.Equals(item.Action, "live-client", StringComparison.Ordinal));
-        session.Evidence.OptimizeWhenAbove(session.Limits.MaximumArchiveBytes);
+        await session.Evidence.OptimizeAfterFrameAsync(
+            session.FrameCodec,
+            item.TimestampUtc,
+            session.Limits.MaximumArchiveBytes);
     }
 
     private static bool CanWrite(long writtenBytes, string value, long limit) =>

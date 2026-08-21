@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Renders selected PNG evidence from a LilacMacro deep-debug ZIP or expanded session.
+Renders selected PNG or AVIF evidence from a LilacMacro deep-debug ZIP or expanded session.
 
 .EXAMPLE
 ./scripts/New-DeepDebugContactSheet.ps1 "<path from OPEN DEEP DEBUG FOLDER>\deep-debug-story-wire-test.zip"
@@ -47,6 +47,7 @@ $resolvedInput = [System.IO.Path]::GetFullPath($InputPath)
 if (-not (Test-Path -LiteralPath $resolvedInput)) { throw "Deep-debug input does not exist: $resolvedInput" }
 
 $temporaryDirectory = $null
+$avifDecodeDirectory = $null
 $sessionDirectory = $resolvedInput
 try {
     if ([System.IO.Path]::GetExtension($resolvedInput).Equals('.zip', [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -61,8 +62,10 @@ try {
     $retainedFramePaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $frameDirectory = Join-Path $sessionDirectory 'frames'
     if (Test-Path -LiteralPath $frameDirectory) {
-        foreach ($retainedFrame in [System.IO.Directory]::EnumerateFiles($frameDirectory, '*.png')) {
-            [void]$retainedFramePaths.Add([System.IO.Path]::GetFullPath($retainedFrame))
+        foreach ($retainedFrame in [System.IO.Directory]::EnumerateFiles($frameDirectory)) {
+            if ([System.IO.Path]::GetExtension($retainedFrame) -in @('.png', '.avif')) {
+                [void]$retainedFramePaths.Add([System.IO.Path]::GetFullPath($retainedFrame))
+            }
         }
     }
     $records = [System.Collections.Generic.List[object]]::new()
@@ -98,7 +101,7 @@ try {
             Inputs = [System.Collections.Generic.List[object]]::new()
         })
     }
-    if ($records.Count -eq 0) { throw 'The deep-debug session contains no retained PNG evidence.' }
+    if ($records.Count -eq 0) { throw 'The deep-debug session contains no retained frame evidence.' }
     $selected = @(Select-Evenly @($records) $MaximumFrames)
     $selectedLive = @($selected | Where-Object Source -eq 'live-client')
     foreach ($input in $inputs) {
@@ -142,7 +145,22 @@ try {
             if (-not (Test-Path -LiteralPath $record.Path)) { throw "Retained frame is missing: $($record.Path)" }
             $left = ($index % $Columns) * $CellWidth
             $top = [int][Math]::Floor($index / $Columns) * $cellHeight
-            $frame = [System.Drawing.Image]::FromFile($record.Path)
+            $displayPath = $record.Path
+            if ([System.IO.Path]::GetExtension($record.Path).Equals('.avif', [System.StringComparison]::OrdinalIgnoreCase)) {
+                if ($null -eq $avifDecodeDirectory) {
+                    $avifDecodeDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ("LilacMacro-avif-contact-sheet-" + [Guid]::NewGuid().ToString('N'))
+                    $toolDirectory = Join-Path $avifDecodeDirectory 'tools'
+                    New-Item -ItemType Directory -Path $avifDecodeDirectory | Out-Null
+                    & (Join-Path $PSScriptRoot 'Prepare-AvifTools.ps1') -DestinationDirectory $toolDirectory
+                    $avifDecoder = Join-Path $toolDirectory 'avifdec.exe'
+                }
+                $displayPath = Join-Path $avifDecodeDirectory ("frame-$index.png")
+                & $avifDecoder -j all --size-limit 67108864 --dimension-limit 16384 $record.Path $displayPath
+                if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $displayPath)) {
+                    throw "AVIF frame failed bounded decoding: $($record.Path)"
+                }
+            }
+            $frame = [System.Drawing.Image]::FromFile($displayPath)
             try {
                 $scale = [Math]::Min($CellWidth / $frame.Width, $imageHeight / $frame.Height)
                 $width = [int][Math]::Round($frame.Width * $scale)
@@ -207,6 +225,15 @@ try {
     [pscustomobject]@{ Output = $resolvedOutput; Frames = $selected.Count }
 }
 finally {
+    if ($null -ne $avifDecodeDirectory -and (Test-Path -LiteralPath $avifDecodeDirectory)) {
+        $resolvedAvifTemporary = [System.IO.Path]::GetFullPath($avifDecodeDirectory)
+        $systemTemporary = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
+        if (-not $resolvedAvifTemporary.StartsWith($systemTemporary, [System.StringComparison]::OrdinalIgnoreCase) -or
+            [System.IO.Path]::GetFileName($resolvedAvifTemporary) -notlike 'LilacMacro-avif-contact-sheet-*') {
+            throw "Refusing to remove unexpected AVIF temporary directory: $resolvedAvifTemporary"
+        }
+        Remove-Item -LiteralPath $resolvedAvifTemporary -Recurse -Force
+    }
     if ($null -ne $temporaryDirectory -and (Test-Path -LiteralPath $temporaryDirectory)) {
         $resolvedTemporary = [System.IO.Path]::GetFullPath($temporaryDirectory)
         $systemTemporary = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())

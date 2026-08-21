@@ -19,6 +19,7 @@ public sealed partial class DeepDebugSessionService
     private readonly DeepDebugArchiveFinalizer _archiveFinalizer;
     private readonly DeepDebugArchiveLimits _limits;
     private readonly Func<DateTimeOffset> _utcNow;
+    private readonly IDeepDebugFrameCodec _frameCodec;
     private readonly Dictionary<string, DeepDebugFrameCaptureProvider> _frameCaptureProviders =
         new(StringComparer.OrdinalIgnoreCase);
     private DeepDebugSession? _active;
@@ -34,7 +35,8 @@ public sealed partial class DeepDebugSessionService
         string? diagnosticsRoot = null,
         Func<string, long>? availableFreeBytes = null,
         DeepDebugArchiveLimits? limits = null,
-        Func<DateTimeOffset>? utcNow = null)
+        Func<DateTimeOffset>? utcNow = null,
+        IDeepDebugFrameCodec? frameCodec = null)
     {
         _appDataRoot = Path.GetFullPath(appDataRoot);
         _diagnosticsRoot = Path.GetFullPath(
@@ -45,6 +47,7 @@ public sealed partial class DeepDebugSessionService
             availableFreeBytes);
         _limits = limits ?? DeepDebugArchiveLimits.Production;
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
+        _frameCodec = frameCodec ?? new DeepDebugAvifCodec(_diagnosticsRoot);
         _archiveFinalizer = new DeepDebugArchiveFinalizer(
             _appDataRoot,
             _diagnosticsRoot,
@@ -145,6 +148,7 @@ public sealed partial class DeepDebugSessionService
             Channel = channel,
             Limits = _limits,
             Evidence = new DeepDebugEvidenceRetention(),
+            FrameCodec = _frameCodec,
         };
         lock (_gate)
         {

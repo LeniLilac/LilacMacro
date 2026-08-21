@@ -15,7 +15,8 @@ internal sealed class DeepDebugArchiveFinalizer(
         Exception? operationError,
         DateTimeOffset completedAtUtc)
     {
-        session.Evidence.Complete(session.Limits.MaximumArchiveBytes);
+        await session.Evidence.CompleteAsync(session.FrameCodec, session.Limits.MaximumArchiveBytes);
+        await DeepDebugFrameArtifactIndex.RewriteAsync(session.StagingDirectory, session.Evidence.Frames, jsonOptions);
         int visualProfiles = WriteVisualProfiles(session);
         await CopyLatestCrashLogAsync(session);
         await WriteReadmeAsync(session.StagingDirectory);
@@ -36,11 +37,7 @@ internal sealed class DeepDebugArchiveFinalizer(
         {
             while (true)
             {
-                ZipFile.CreateFromDirectory(
-                    session.StagingDirectory,
-                    temporary,
-                    CompressionLevel.Optimal,
-                    includeBaseDirectory: false);
+                CreateArchive(session.StagingDirectory, temporary);
                 long length = new FileInfo(temporary).Length;
                 if (length <= session.Limits.MaximumArchiveBytes) break;
                 File.Delete(temporary);
@@ -50,6 +47,10 @@ internal sealed class DeepDebugArchiveFinalizer(
                     throw new InvalidDataException(
                         $"Deep Debug archive exceeded its {session.Limits.MaximumArchiveBytes} byte hard limit after all optional frame evidence was removed.");
                 }
+                await DeepDebugFrameArtifactIndex.RewriteAsync(
+                    session.StagingDirectory,
+                    session.Evidence.Frames,
+                    jsonOptions);
                 await WriteManifestAsync(
                     session,
                     outcome,
@@ -117,7 +118,7 @@ internal sealed class DeepDebugArchiveFinalizer(
         int visualProfiles)
     {
         DeepDebugManifest manifest = new(
-            2,
+            3,
             session.Operation,
             outcome,
             DeepDebugSessionService.GetVersion(),
@@ -136,12 +137,14 @@ internal sealed class DeepDebugArchiveFinalizer(
             session.Evidence.WindowCount,
             session.Evidence.DiscardedWindowCount,
             session.Evidence.TransitionFrameCount,
+            session.Evidence.AvifFrameCount,
+            session.Evidence.LossyFrameCount,
             session.Evidence.RetainedBytes,
             session.Limits.MaximumArchiveBytes,
             visualProfiles,
             session.Evidence.IsOptimized
-                ? "Events and actions cover the run subject only to explicit archive safety bounds. The one-second PNG stream reached archive pressure and only enough low-priority evidence was removed to remain below the hard limit. Old ordinary frames are removed first, followed by transition frames and then redundant or lower-severity classified-failure windows."
-                : "Events and actions cover the run subject only to explicit archive safety bounds. The complete one-second PNG stream stayed below archive pressure and was retained without frame pruning.",
+                ? "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-20 AVIF. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. Compression was insufficient, so only enough lower-priority evidence was removed to remain below the hard limit."
+                : "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-20 AVIF. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. No frames were pruned.",
             session.WriterFailure is null
                 ? null
                 : DeepDebugRedactor.Redact(session.WriterFailure.ToString()),
@@ -166,11 +169,29 @@ internal sealed class DeepDebugArchiveFinalizer(
         "# LilacMacro Deep Debug\n\n" +
         "Start with `manifest.json`, then read `timeline.md` or `events.jsonl`. " +
         "The complete one-second frame stream is retained until it reaches the archive limit. " +
+        "Older ordinary frames can be decode-verified lossy AVIF; important frames are pixel-exact AVIF or PNG. " +
         "Under archive pressure, only enough low-priority frames are removed to stay below that limit, " +
         "so a timeline link can then refer to evidence removed by the retention policy. " +
         "`visual-profiles/` contains bounded immutable revisions consulted by this run. " +
         "Coordinates are Roblox client-relative half-open rectangles.\n",
         new UTF8Encoding(false));
+
+    private static void CreateArchive(string sourceDirectory, string archivePath)
+    {
+        using FileStream output = new(archivePath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        using ZipArchive archive = new(output, ZipArchiveMode.Create);
+        foreach (string file in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
+        {
+            string relative = Path.GetRelativePath(sourceDirectory, file).Replace('\\', '/');
+            CompressionLevel compression = file.EndsWith(".avif", StringComparison.OrdinalIgnoreCase)
+                ? CompressionLevel.NoCompression
+                : CompressionLevel.Optimal;
+            ZipArchiveEntry entry = archive.CreateEntry(relative, compression);
+            using Stream input = File.OpenRead(file);
+            using Stream destination = entry.Open();
+            input.CopyTo(destination);
+        }
+    }
 
     private static void EnsureChildPath(string root, string path)
     {

@@ -20,7 +20,44 @@ internal static class DeepDebugPerceptualHash
     public static int Distance(ulong left, ulong right) =>
         System.Numerics.BitOperations.PopCount(left ^ right);
 
+    public static (int Width, int Height, byte[] Digest) CreatePixelDigest(byte[] png)
+    {
+        DecodedPng decoded = DecodePixels(png);
+        return (decoded.Width, decoded.Height, SHA256.HashData(decoded.Pixels));
+    }
+
     private static ulong Decode(ReadOnlySpan<byte> png)
+    {
+        DecodedPng decoded = DecodePixels(png);
+        int width = decoded.Width;
+        int height = decoded.Height;
+        int channels = decoded.Channels;
+        byte[] pixels = decoded.Pixels;
+        long[] sums = new long[64];
+        int[] counts = new int[64];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int source = (y * width + x) * channels;
+                int luminance = channels == 1
+                    ? pixels[source]
+                    : (pixels[source] * 54 + pixels[source + 1] * 183 + pixels[source + 2] * 19) >> 8;
+                int bin = Math.Min(7, y * 8 / height) * 8 + Math.Min(7, x * 8 / width);
+                sums[bin] += luminance;
+                counts[bin]++;
+            }
+        }
+        double[] averages = sums.Select((sum, index) =>
+            counts[index] == 0 ? 0d : (double)sum / counts[index]).ToArray();
+        double global = averages.Average();
+        ulong hash = 0;
+        for (int index = 0; index < averages.Length; index++)
+            if (averages[index] >= global) hash |= 1UL << index;
+        return hash;
+    }
+
+    private static DecodedPng DecodePixels(ReadOnlySpan<byte> png)
     {
         if (png.Length < Signature.Length || !png[..Signature.Length].SequenceEqual(Signature))
             throw new InvalidDataException("Not a PNG image.");
@@ -54,8 +91,7 @@ internal static class DeepDebugPerceptualHash
         int stride = checked(width * channels);
         byte[] previous = new byte[stride];
         byte[] current = new byte[stride];
-        long[] sums = new long[64];
-        int[] counts = new int[64];
+        byte[] pixels = new byte[checked(stride * height)];
         compressed.Position = 0;
         using ZLibStream zlib = new(compressed, CompressionMode.Decompress);
         for (int y = 0; y < height; y++)
@@ -64,25 +100,11 @@ internal static class DeepDebugPerceptualHash
             if (filter < 0) throw new InvalidDataException("PNG pixel data ended early.");
             zlib.ReadExactly(current);
             Unfilter(current, previous, channels, filter);
-            for (int x = 0; x < width; x++)
-            {
-                int source = x * channels;
-                int luminance = channels == 1
-                    ? current[source]
-                    : (current[source] * 54 + current[source + 1] * 183 + current[source + 2] * 19) >> 8;
-                int bin = Math.Min(7, y * 8 / height) * 8 + Math.Min(7, x * 8 / width);
-                sums[bin] += luminance;
-                counts[bin]++;
-            }
+            Buffer.BlockCopy(current, 0, pixels, y * stride, stride);
             (previous, current) = (current, previous);
         }
-        double[] averages = sums.Select((sum, index) =>
-            counts[index] == 0 ? 0d : (double)sum / counts[index]).ToArray();
-        double global = averages.Average();
-        ulong hash = 0;
-        for (int index = 0; index < averages.Length; index++)
-            if (averages[index] >= global) hash |= 1UL << index;
-        return hash;
+        if (zlib.ReadByte() != -1) throw new InvalidDataException("PNG contains trailing pixel data.");
+        return new(width, height, channels, pixels);
     }
 
     private static void Unfilter(byte[] row, byte[] previous, int channels, int filter)
@@ -114,4 +136,6 @@ internal static class DeepDebugPerceptualHash
             ? left
             : aboveDistance <= upperLeftDistance ? above : upperLeft;
     }
+
+    private sealed record DecodedPng(int Width, int Height, int Channels, byte[] Pixels);
 }

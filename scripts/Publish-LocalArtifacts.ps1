@@ -70,6 +70,10 @@ try {
         throw "dotnet publish failed with exit code $LASTEXITCODE."
     }
 
+    & (Join-Path $repository 'scripts\Prepare-AvifTools.ps1') `
+        -DestinationDirectory (Join-Path $stagingRoot 'tools\avif')
+    if ($LASTEXITCODE -ne 0) { throw 'Bundled AVIF tools preparation failed.' }
+
     foreach ($launcherName in $launcherNames) {
         $launcherPath = Join-Path $stagingRoot $launcherName
         if (-not (Test-Path -LiteralPath $launcherPath -PathType Leaf)) {

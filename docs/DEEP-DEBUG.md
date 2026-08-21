@@ -7,7 +7,7 @@
 - Main Macro: Settings, Diagnostics, `Enable Deep Debug Logs`.
 - Dataset Builder and Runtime Lab: click the title-bar `DEEP DEBUG` pill.
 - Capture is fixed at one full-client sample per second. It is diagnostic evidence only and never authorizes input.
-- Deep Debug retains the complete one-second frame stream while frame evidence remains below the 3 GiB archive-pressure threshold. If capture crosses that threshold, or the completed ZIP would exceed 3 GiB, it removes only enough evidence to fit: oldest ordinary frames first, then transition frames, then redundant or lower-severity classified-error windows. A classified error protects frames from ten seconds before through ten seconds after it, and overlapping windows merge.
+- Deep Debug retains the complete one-second frame stream while it fits below 3 GiB. During capture, the newest ten seconds remain PNG while they can still become pre-error evidence. Older ordinary frames become decode-verified quality-20 AVIF; at finalization, transition and error-window frames become pixel-exact AVIF only when the result is smaller, otherwise they remain PNG. Encoding is serialized through one below-normal-priority machine worker and any timeout, failed decode, dimension mismatch, or lossless pixel mismatch preserves the PNG. If compression is insufficient, it removes only enough evidence to fit: oldest lossy ordinary frames first, then transition frames, then redundant or lower-severity classified-error windows. A classified error protects frames from ten seconds before through ten seconds after it, and overlapping windows merge.
 - After local-instance provisioning, the owner and every configured runner write to protected `%ProgramData%\LilacMacro\Diagnostics`. Without provisioning, the current profile uses `%LOCALAPPDATA%\LilacMacro\diagnostics`.
 - `MAX LOG STORAGE, GB` is one shared owner-and-runner archive budget. Its new-machine default is 3 GiB when free space is at most 50 GiB, 10 GiB above 50 GiB, and 30 GiB above 200 GiB. A configured value is lowered when completed logs plus remaining free space cannot support it.
 - When free space falls below 3 GiB, new Deep Debug sessions pause temporarily without changing the saved enabled choice. Capture resumes after space is available.
@@ -24,6 +24,7 @@ The retained-frame policy recognizes:
 - terminal macro/runtime errors and unhandled application exceptions;
 - recoverable failures that trigger unattended restart or rejoin;
 - bounded UI-state, input, window, docking, or capture failures after retries are exhausted;
+- periodic capture gaps while Roblox is intentionally closed, restarting, or temporarily unavailable remain in the event timeline but do not create classified error windows;
 - OCR inference/setup failures that prevent progress;
 - failed Setup, Runtime Lab, route-optimizer, or team-swap trials;
 - local-session provisioning, launch, or communication failures.
@@ -42,6 +43,7 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 | `README.md` | Archive reading order and coordinate convention |
 | `configuration/` | Sanitized operation context, Deep Debug options, and environment |
 | `frames/` | Complete one-second samples below archive pressure; near the limit, the highest-value samples that fit |
+| `frames/index.json` | Per-frame format, encoding mode/quality, original and retained sizes, validation, and importance |
 | `visual-profiles/` | Bounded immutable profile revisions and locators consulted by the run |
 | `latest-crash-sanitized.txt` | Bounded tail of the latest crash log when available |
 
@@ -49,7 +51,7 @@ Events include window discovery and observed client size, resize results, captur
 
 Events and the timeline normally cover the complete operation. Explicit 128 MiB event and 64 MiB timeline safety bounds prevent an abnormal producer from breaking the single-archive limit; truncation is recorded in the manifest and stream. Visual-profile snapshots remain usage-scoped: at most 64 referenced revisions, 32 files and 8 MiB per revision, and 32 MiB total.
 
-Every ZIP is verified after creation to remain at or below the 3 GiB upload and local-archive hard limit. Below archive pressure, all frames are retained. Once raw frame evidence crosses 3 GiB, the recorder evicts the lowest-priority frames only until the frame stream fits again; later frames continuously reuse that freed space. If structured data or ZIP overhead makes the completed archive too large, finalization removes approximately the measured excess and rebuilds until the ZIP fits. A finalization failure never changes the primary automation result; the staging directory is preserved with `finalization-error.txt` when possible.
+Every ZIP is verified after creation to remain at or below the 3 GiB upload and local-archive hard limit. AVIF entries are stored without redundant ZIP recompression. `frames/index.json` records each retained frame's format, mode, quality, original/retained size, and validation result. Below archive pressure, all frames are retained. If compression cannot keep the evidence within 3 GiB, the recorder evicts the lowest-priority frames only until it fits again. If structured data or ZIP overhead makes the completed archive too large, finalization removes approximately the measured excess and rebuilds until the ZIP fits. A finalization failure never changes the primary automation result; the staging directory is preserved with `finalization-error.txt` when possible.
 
 ## Agent workflow
 
@@ -64,7 +66,7 @@ Every ZIP is verified after creation to remain at or below the 3 GiB upload and 
 
 5. Correlate retained frames with surrounding OCR, vision, window, and input events. Coordinates are Roblox client-relative half-open rectangles.
 
-The viewer streams PNG entries from the ZIP without extracting them. It offers timestamp-aware playback, nearby events, and optional numbered click/scroll overlays. Missing frames and malformed JSONL records remain explicit failures rather than authorizing or hiding an action. Contact sheets default to ignored output under `artifacts\diagnostic-contact-sheets` and never change the source archive.
+The viewer streams PNG entries and bounded-decodes AVIF entries from the ZIP without persistently extracting them. It offers timestamp-aware playback, nearby events, and optional numbered click/scroll overlays. Missing frames and malformed JSONL records remain explicit failures rather than authorizing or hiding an action. The contact-sheet generator supports both formats, defaults to ignored output under `artifacts\diagnostic-contact-sheets`, and never changes the source archive.
 
 ## Privacy boundary
 

@@ -57,6 +57,8 @@ internal sealed class DeepDebugSession
 
     public required DeepDebugEvidenceRetention Evidence { get; init; }
 
+    public required IDeepDebugFrameCodec FrameCodec { get; init; }
+
     public DeepDebugFrameCaptureLoop? FrameCaptureLoop { get; set; }
 
     public ConcurrentDictionary<string, DeepDebugVisualProfileReference> VisualProfiles { get; } =
@@ -117,6 +119,8 @@ internal sealed record DeepDebugManifest(
     int ErrorWindows,
     int ErrorWindowsDiscarded,
     int TransitionFrames,
+    int AvifFrames,
+    int LossyFrames,
     long FrameEvidenceBytes,
     long MaximumArchiveBytes,
     int VisualProfiles,

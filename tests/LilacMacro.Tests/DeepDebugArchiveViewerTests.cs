@@ -49,6 +49,20 @@ public sealed class DeepDebugArchiveViewerTests : IDisposable
         Assert.Equal(-600, marker.WheelDelta);
     }
 
+    [Fact]
+    public async Task OpenAsync_IndexesAvifFrames()
+    {
+        string path = CreateArchive(
+            "{\"operation\":\"avif\",\"outcome\":\"success\"}",
+            "{\"sequence\":1,\"timestampUtc\":\"2026-08-08T01:00:00Z\",\"category\":\"frame\",\"action\":\"live-client\",\"artifact\":\"frames/first.avif\"}");
+        using (ZipArchive update = ZipFile.Open(path, ZipArchiveMode.Update))
+            WriteBytes(update, "frames/first.avif", [1, 2, 3]);
+
+        using DeepDebugArchive archive = await DeepDebugArchive.OpenAsync(path);
+
+        Assert.Contains(archive.Frames, frame => frame.Path == "frames/first.avif");
+    }
+
     private string CreateArchive(string manifest, string events)
     {
         Directory.CreateDirectory(_root);

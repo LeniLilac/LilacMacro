@@ -53,6 +53,10 @@ try {
     Invoke-Publish 'src\LilacMacro.SessionSetup\LilacMacro.SessionSetup.csproj'
     Invoke-Publish 'src\LilacMacro.SessionWorker\LilacMacro.SessionWorker.csproj'
 
+    & (Join-Path $repository 'scripts\Prepare-AvifTools.ps1') `
+        -DestinationDirectory (Join-Path $publish 'tools\avif')
+    if ($LASTEXITCODE -ne 0) { throw 'Bundled AVIF tools preparation failed.' }
+
     & (Join-Path $repository 'scripts\Build-OcrRuntime.ps1') -OutputRoot $publish `
         -UseLocalRuntimeCache:$UnsignedDevelopmentBuild
     if ($LASTEXITCODE -ne 0) { throw 'Bundled OCR runtime build failed.' }
@@ -80,6 +84,11 @@ try {
         'ocr\models\official_models')) {
         if (-not (Test-Path -LiteralPath (Join-Path $publish $path))) {
             throw "Missing bundled OCR runtime file: $path"
+        }
+    }
+    foreach ($path in @('tools\avif\avifenc.exe', 'tools\avif\avifdec.exe', 'tools\avif\LICENSE.txt')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $publish $path))) {
+            throw "Missing bundled AVIF runtime file: $path"
         }
     }
 

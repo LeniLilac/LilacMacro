@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.156 — Public beta
+
+- Added locally encoded AVIF Deep Debug evidence: older ordinary frames use decode-verified quality-20 compression, important frames use pixel-exact lossless compression only when smaller, and PNG remains the safe fallback.
+- Added mixed PNG/AVIF archive indexing plus viewer and contact-sheet support, preserving the full one-second frame stream until compression and the 3 GiB limit require priority-based pruning.
+- Fixed Tower Match Preview recognition for the game's combined `Floor N - Map` line.
+- Kept expected periodic capture gaps during Roblox restart in the event timeline without misclassifying every one-second miss as a recoverable error window.
+
 ## 1.0.155 — Public beta
 
 - Retained the complete one-second Deep Debug frame stream below the 3 GiB archive-pressure threshold.
