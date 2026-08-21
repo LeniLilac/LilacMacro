@@ -30,12 +30,11 @@ internal static class CoordinatedUpdateStateStore
         CancellationToken cancellationToken)
     {
         LocalSessionPaths paths = LocalSessionPaths.CreateDefault(AppContext.BaseDirectory);
-        int[] participantPids = DiscoverParticipants(out HashSet<int> participantSessions);
+        int[] participantPids = DiscoverParticipants();
         LocalSessionProvisioningManifest? manifest = await new ProvisioningJournalStore(paths)
             .ReadAsync(cancellationToken).ConfigureAwait(false);
         string[] activeRunners = LocalSessionProfileCompatibility.ResolveProfiles(manifest)
-            .Where(profile => RunnerSessionManager.Inspect(profile.AccountName).SessionId is int sessionId
-                && participantSessions.Contains(sessionId))
+            .Where(profile => ShouldRelaunchRunner(RunnerSessionManager.Inspect(profile.AccountName)))
             .Select(profile => profile.Id)
             .Distinct(StringComparer.Ordinal)
             .ToArray();
@@ -66,11 +65,13 @@ internal static class CoordinatedUpdateStateStore
         return statePath;
     }
 
-    private static int[] DiscoverParticipants(out HashSet<int> sessions)
+    internal static bool ShouldRelaunchRunner(RunnerSessionObservation observation) =>
+        observation.SessionId is not null
+        && observation.State is RunnerSessionConnectionState.Active or RunnerSessionConnectionState.Disconnected;
+
+    private static int[] DiscoverParticipants()
     {
-        sessions = [];
         HashSet<int> pids = [Environment.ProcessId];
-        sessions.Add(Process.GetCurrentProcess().SessionId);
         foreach (string processName in AppProcessNames)
         {
             Process[] processes = Process.GetProcessesByName(processName);
@@ -81,7 +82,6 @@ internal static class CoordinatedUpdateStateStore
                     try
                     {
                         pids.Add(process.Id);
-                        sessions.Add(process.SessionId);
                     }
                     catch (InvalidOperationException) { }
                     catch (System.ComponentModel.Win32Exception) { }

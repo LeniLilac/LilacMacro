@@ -61,7 +61,11 @@ public partial class MacroShellWindow : Window
                 new ControlSnapshotVerifier(ControlSnapshotTrust.PublicKeys)));
         DiagnosticInstallationStore installation = new(MacroInstanceContext.Current.ConfigurationRoot);
         _telemetry = new ProductTelemetryService(
-            deepDebug, ownerState, installation, _telemetryTransport);
+            deepDebug,
+            ownerState,
+            installation,
+            _telemetryTransport,
+            deviceContext: WindowsTelemetryDeviceContextProvider.Read());
         _automaticReports = new AutomaticDiagnosticReportService(
             deepDebug, ownerState, installation, _diagnosticUploads);
         _macroPage = new MacroDashboardPage(deepDebug, _ownerState, _control);

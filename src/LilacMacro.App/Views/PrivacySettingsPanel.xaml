@@ -23,7 +23,7 @@
                         <CheckBox x:Name="TelemetryCheck" Content="Share limited usage and performance data"
                                   Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
                         <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
-                                   Text="Includes feature use, rewards, classified errors, OCR timing, and coarse device capability. Never includes screenshots, credentials, file paths, webhook URLs, or free-form error text." />
+                                   Text="Includes feature use, rewards, classified errors, OCR timing with a normalized CPU/GPU model, and display/UI-scale calibration. Never includes screenshots, credentials, file paths, webhook URLs, hardware serial numbers, or free-form error text." />
                     </StackPanel>
                 </Grid>
                 <Grid Margin="0,14,0,0">

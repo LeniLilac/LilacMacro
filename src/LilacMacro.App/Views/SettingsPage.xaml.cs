@@ -171,7 +171,7 @@ public partial class SettingsPage : UserControl
             GeneralStatusText.Text = _updates.CanInstall
                 ? $"Version {release.Version} is available"
                 : $"Version {release.Version} is available; install from the Program Files build";
-            InstallUpdateButton.Content = $"INSTALL {release.Version}";
+            InstallUpdateButton.Content = $"UPDATE {release.Version}";
             InstallUpdateButton.Visibility = _updates.CanInstall ? Visibility.Visible : Visibility.Collapsed;
         }
         catch (Exception exception) when (exception is HttpRequestException or InvalidDataException or TaskCanceledException)
@@ -188,6 +188,14 @@ public partial class SettingsPage : UserControl
 
     private async void InstallUpdate_OnClick(object sender, RoutedEventArgs eventArgs)
     {
+        VerifiedUpdateRelease? release = _updates.AvailableRelease;
+        if (release is null) return;
+        UpdateConfirmationWindow confirmation = new(release)
+        {
+            Owner = Window.GetWindow(this),
+        };
+        if (confirmation.ShowDialog() != true) return;
+
         CheckUpdatesButton.IsEnabled = false;
         InstallUpdateButton.IsEnabled = false;
         GeneralStatusText.Text = "Downloading and verifying the project-signed installer...";
@@ -195,7 +203,7 @@ public partial class SettingsPage : UserControl
         {
             await _ownerState.FlushAsync();
             await _updates.LaunchAvailableUpdateAsync();
-            GeneralStatusText.Text = "Installer started; LilacMacro will close when installation begins";
+            GeneralStatusText.Text = "Update started; LilacMacro will close and reopen automatically";
         }
         catch (OperationCanceledException exception)
         {

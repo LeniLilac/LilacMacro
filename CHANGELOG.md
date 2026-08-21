@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.0.154 — Public beta
+
+- Restored telemetry delivery across privacy-notice updates by sharing one supported version contract between consent and event validation.
+- Added bounded OCR timing aggregates by normalized CPU/GPU model and primary-display UI Scale input/rendered calibration pairs without collecting device identifiers.
+- Reworked the in-app updater into a confirmation, UAC, non-cancelable progress, update, and automatic relaunch flow without showing the full setup wizard.
+- Made coordinated updates close the exact LilacMacro product processes across owner and runner profiles, then relaunch every configured runner with an active or disconnected logged-in Windows session on the updated shared installation.
+- Included the latest Tower progress, terminal evidence, and unattended recovery thread-affinity fixes from the public-beta line.
+
 ## 1.0.151 — Public beta
 
 - Fixed the full Macro dashboard workspace at the exact dock height, matched the Stats/Upcoming Tasks inspector to it, clipped overflowing tasks, and prevented full-layout resizing below the complete dock and inspector.

@@ -50,7 +50,7 @@
                                 <TextBlock FontSize="16" FontWeight="Bold" Text="Usage data" />
                                 <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
                                            Foreground="{DynamicResource InkSoftBrush}"
-                                           Text="Shares limited events about feature use, rewards, classified errors, OCR timing, app version, and coarse device capability. It never sends screenshots, credentials, file paths, webhook URLs, raw hardware identifiers, or free-form error text." />
+                                           Text="Shares limited events about feature use, rewards, classified errors, OCR timing with a normalized CPU/GPU model, app version, and display/UI-scale calibration. It never sends screenshots, credentials, file paths, webhook URLs, hardware serial numbers, or free-form error text." />
                             </StackPanel>
                             <CheckBox x:Name="TelemetryCheck" Grid.Column="1"
                                       Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="True" />

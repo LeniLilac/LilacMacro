@@ -60,9 +60,6 @@ Filename: "{app}\LilacMacro.exe"; Flags: nowait; Check: IsCoordinatedUpdate
 
 [Code]
 const
-  SynchronizeAccess = $00100000;
-  WaitTimeout = 258;
-  ErrorInvalidParameter = 87;
   InvalidFileAttributes = $FFFFFFFF;
   FileAttributeDirectory = $00000010;
   FileAttributeReparsePoint = $00000400;
@@ -80,16 +77,6 @@ var
   UpdateInstallerSha256: String;
   UpdateStateLoaded: Boolean;
   RunnerRepairSucceeded: Boolean;
-  ParticipantPids: array of Integer;
-
-function OpenProcess(DesiredAccess: LongWord; InheritHandle: Boolean; ProcessId: LongWord): THandle;
-  external 'OpenProcess@kernel32.dll stdcall';
-function WaitForSingleObject(Handle: THandle; Milliseconds: LongWord): LongWord;
-  external 'WaitForSingleObject@kernel32.dll stdcall';
-function CloseHandle(Handle: THandle): Boolean;
-  external 'CloseHandle@kernel32.dll stdcall';
-function GetLastError: LongWord;
-  external 'GetLastError@kernel32.dll stdcall';
 procedure GetSystemTime(var SystemTime: TSystemTime);
   external 'GetSystemTime@kernel32.dll stdcall';
 function GetFileAttributes(FileName: String): LongWord;
@@ -155,8 +142,6 @@ begin
       Value := Copy(Lines[I], Length('participant_pid=') + 1, MaxInt);
       Pid := StrToIntDef(Value, 0);
       if (Pid <= 0) or (Count >= 64) then exit;
-      SetArrayLength(ParticipantPids, Count + 1);
-      ParticipantPids[Count] := Pid;
       Count := Count + 1;
     end;
   if Count = 0 then exit;
@@ -185,48 +170,6 @@ begin
   { Manual requests are identified by their fresh timestamp and target version;
     the operation id only satisfies the shared request schema. }
   Result := '87c44822-4f2c-45e2-93da-84098d39d1bc';
-end;
-
-function ProcessStillRunning(ProcessId: Integer; var InspectionFailed: Boolean): Boolean;
-var
-  Handle: THandle;
-  ErrorCode, WaitResult: LongWord;
-begin
-  InspectionFailed := False;
-  Handle := OpenProcess(SynchronizeAccess, False, ProcessId);
-  if Handle = 0 then begin
-    ErrorCode := GetLastError;
-    Result := ErrorCode <> ErrorInvalidParameter;
-    InspectionFailed := Result;
-    exit;
-  end;
-  WaitResult := WaitForSingleObject(Handle, 0);
-  CloseHandle(Handle);
-  Result := WaitResult = WaitTimeout;
-  InspectionFailed := (WaitResult <> 0) and (WaitResult <> WaitTimeout);
-end;
-
-function WaitForUpdateParticipants: String;
-var
-  Attempt, I: Integer;
-  Running, InspectionFailed, Failed: Boolean;
-begin
-  Result := '';
-  for Attempt := 1 to 360 do begin
-    Running := False;
-    Failed := False;
-    for I := 0 to GetArrayLength(ParticipantPids) - 1 do begin
-      if ProcessStillRunning(ParticipantPids[I], InspectionFailed) then Running := True;
-      if InspectionFailed then Failed := True;
-    end;
-    if Failed then begin
-      Result := 'A running LilacMacro process could not be inspected. The update was not installed.';
-      exit;
-    end;
-    if not Running then exit;
-    Sleep(250);
-  end;
-  Result := 'LilacMacro did not close every active session within 90 seconds. The update was not installed.';
 end;
 
 function ForceCloseProductImage(const ImageName: String): String;
@@ -357,15 +300,12 @@ begin
     Result := 'The LilacMacro update shutdown request could not be written.';
     exit;
   end;
-  if IsCoordinatedUpdate then
-    Result := WaitForUpdateParticipants
-  else begin
-    { Give every UI, including runner-session instances, time to flush and close
-      normally before the exact product-name fallback handles legacy, repair, or
-      unresponsive processes that Restart Manager cannot cross-session close. }
-    Sleep(5000);
-    Result := StopManualUpdateProcesses;
-  end;
+  { Give every UI, including runner-session instances, time to observe the shared
+    request and flush normally. Cross-account process-handle inspection is not a
+    reliable ownership boundary, so the elevated installer then uses the same exact
+    four-product-image fallback for coordinated, manual, repair, and legacy updates. }
+  Sleep(5000);
+  Result := StopManualUpdateProcesses;
   if Result <> '' then DeleteFile(UpdateRequestPath);
 end;
 

@@ -1,8 +1,10 @@
+using LilacMacro.Core.Services;
+
 namespace LilacMacro.App.Runtime;
 
 internal static class PrivacyChoicesPolicy
 {
-    internal const int CurrentNoticeVersion = 4;
+    internal const int CurrentNoticeVersion = ProductTelemetryPolicy.CurrentPrivacyNoticeVersion;
 
     internal static readonly Uri PrivacyUri = new("https://macro.expeditions.gg/privacy");
 

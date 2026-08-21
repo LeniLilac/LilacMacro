@@ -17,6 +17,7 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
     private readonly DiagnosticInstallationStore _installation;
     private readonly ProductTelemetryRateLimitStore _rateLimits;
     private readonly IProductTelemetryTransport _transport;
+    private readonly ProductTelemetryDeviceContext _deviceContext;
     private readonly Channel<QueuedEvent> _events = Channel.CreateBounded<QueuedEvent>(
         new BoundedChannelOptions(256)
         {
@@ -37,13 +38,15 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
         MacroOwnerState ownerState,
         DiagnosticInstallationStore installation,
         IProductTelemetryTransport transport,
-        TimeSpan? batchWindow = null)
+        TimeSpan? batchWindow = null,
+        ProductTelemetryDeviceContext? deviceContext = null)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
         _installation = installation;
         _rateLimits = new ProductTelemetryRateLimitStore(installation.ConfigurationRoot);
         _transport = transport;
+        _deviceContext = deviceContext ?? ProductTelemetryDeviceContext.Unknown;
         _batchWindow = batchWindow ?? BatchWindow;
         _deepDebug.ObservationRecorded += DeepDebug_OnObservationRecorded;
         _ownerState.PrivacyOptionsChanged += OwnerState_OnPrivacyOptionsChanged;
@@ -86,7 +89,7 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
 
     private void DeepDebug_OnObservationRecorded(object? sender, DeepDebugObservation observation)
     {
-        ProductTelemetryEvent? item = Map(observation);
+        ProductTelemetryEvent? item = Map(observation, _deviceContext);
         if (item is not null) Queue(item);
     }
 
@@ -198,8 +201,11 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
     private static string RateLimitKey(ProductTelemetryEvent item) =>
         $"{item.Kind}\0{item.Feature}\0{item.Outcome}\0{item.RequestedDevice ?? item.ConfigurationMode}";
 
-    internal static ProductTelemetryEvent? Map(DeepDebugObservation observation)
+    internal static ProductTelemetryEvent? Map(
+        DeepDebugObservation observation,
+        ProductTelemetryDeviceContext? deviceContext = null)
     {
+        deviceContext ??= ProductTelemetryDeviceContext.Unknown;
         if (observation.Category is "macro" or "application"
             && observation.Action is "runtime_error" or "unhandled_exception")
         {
@@ -212,13 +218,20 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
         if (observation.Category == "ocr" && observation.Action == "inference_completed")
         {
             JsonElement data = JsonSerializer.SerializeToElement(observation.Data);
+            string capability = ReadGraphicsCapability(data);
             return new ProductTelemetryEvent(
                 ProductTelemetryKind.OcrTiming,
                 observation.ObservedAtUtc,
                 Feature: "ocr",
                 Outcome: "completed",
                 DurationMilliseconds: ReadInt(data, "InferenceMilliseconds"),
-                GraphicsCapability: ReadGraphicsCapability(data));
+                GraphicsCapability: capability,
+                HardwareModel: capability switch
+                {
+                    "gpu" or "gpu:0" => deviceContext.GraphicsModel,
+                    "cpu" => deviceContext.ProcessorModel,
+                    _ => null,
+                });
         }
         if (observation.Category == "ocr_setup" && observation.Action == "setup_failed")
         {
@@ -295,6 +308,26 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
                 Material: ReadSafeText(data, "Target"),
                 Quantity: ReadInt(data, "Quantity"));
         }
+        if (observation.Category == "ui_scale" && observation.Action == "ui_scale_feedback")
+        {
+            JsonElement data = JsonSerializer.SerializeToElement(observation.Data);
+            double? input = ReadDouble(data, "Candidate");
+            double? rendered = ReadDouble(data, "ObservedRenderedScale");
+            if (deviceContext.DisplayWidth is < 640 or > 16_384
+                || deviceContext.DisplayHeight is < 480 or > 16_384
+                || input is null or < 0.8 or > 1.2
+                || rendered is null or < 0.5 or > 1.5)
+                return null;
+            return new ProductTelemetryEvent(
+                ProductTelemetryKind.UiScaleCalibration,
+                observation.ObservedAtUtc,
+                Feature: "ui-scale",
+                Outcome: "observed",
+                DisplayWidth: deviceContext.DisplayWidth,
+                DisplayHeight: deviceContext.DisplayHeight,
+                InputScaleMilli: (int)Math.Round(input.Value * 1000, MidpointRounding.AwayFromZero),
+                RenderedScaleMilli: (int)Math.Round(rendered.Value * 1000, MidpointRounding.AwayFromZero));
+        }
         if (observation.Category is "workspace" or "wire" or "challenge" or "game_settings" or "ui_scale"
             && observation.Action.EndsWith("completed", StringComparison.Ordinal))
         {
@@ -310,6 +343,10 @@ internal sealed class ProductTelemetryService : IAsyncDisposable
     private static int? ReadInt(JsonElement data, string name) =>
         data.ValueKind == JsonValueKind.Object && data.TryGetProperty(name, out JsonElement value)
             && value.TryGetInt32(out int result) ? result : null;
+
+    private static double? ReadDouble(JsonElement data, string name) =>
+        data.ValueKind == JsonValueKind.Object && data.TryGetProperty(name, out JsonElement value)
+            && value.TryGetDouble(out double result) && double.IsFinite(result) ? result : null;
 
     private static bool? ReadBool(JsonElement data, string name) =>
         data.ValueKind == JsonValueKind.Object && data.TryGetProperty(name, out JsonElement value)

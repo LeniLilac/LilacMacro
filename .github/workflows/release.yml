@@ -181,4 +181,4 @@ jobs:
             git tag -a $tag -m "LilacMacro $tag"
             git push origin "refs/tags/$tag"
           }
-          ./scripts/Publish-GitHubRelease.ps1 -Version $env:RELEASE_VERSION -Prerelease
+          ./scripts/Publish-GitHubRelease.ps1 -Version $env:RELEASE_VERSION

@@ -247,7 +247,7 @@
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <Button x:Name="CheckUpdatesButton" Style="{StaticResource SettingsButtonStyle}" Click="CheckUpdates_OnClick" Content="CHECK NOW" />
                                         <Button x:Name="InstallUpdateButton" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Background="{DynamicResource AccentBrush}"
-                                                Visibility="Collapsed" Click="InstallUpdate_OnClick" Content="INSTALL UPDATE" />
+                                                Visibility="Collapsed" Click="InstallUpdate_OnClick" Content="UPDATE" />
                                         <Button Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Tag="data" Click="LocalPath_OnClick" Content="OPEN DATA" />
                                         <Button Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Tag="logs" Click="LocalPath_OnClick" Content="OPEN LOGS" />
                                     </StackPanel>

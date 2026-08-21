@@ -11,6 +11,16 @@ public enum ProductTelemetryKind
     OcrTiming,
     OcrSetupFailure,
     LocalInstanceFailure,
+    UiScaleCalibration,
+}
+
+public sealed record ProductTelemetryDeviceContext(
+    string ProcessorModel,
+    string GraphicsModel,
+    int DisplayWidth,
+    int DisplayHeight)
+{
+    public static ProductTelemetryDeviceContext Unknown { get; } = new("unknown", "unknown", 0, 0);
 }
 
 public sealed record ProductTelemetryEvent(
@@ -34,7 +44,12 @@ public sealed record ProductTelemetryEvent(
     string? Operation = null,
     string? FailureCode = null,
     string? ConfigurationMode = null,
-    int? RunnerCount = null);
+    int? RunnerCount = null,
+    string? HardwareModel = null,
+    int? DisplayWidth = null,
+    int? DisplayHeight = null,
+    int? InputScaleMilli = null,
+    int? RenderedScaleMilli = null);
 
 public sealed record ProductTelemetryBatch(
     Guid InstallId,
@@ -51,13 +66,15 @@ public static partial class ProductTelemetryPolicy
 {
     public const int MaximumEventsPerBatch = 64;
     public const int MaximumRequestBytes = 64 * 1024;
+    public const int CurrentPrivacyNoticeVersion = 5;
     public static readonly Uri Endpoint = new("https://macro.expeditions.gg/v1/telemetry/events");
 
     public static void Validate(ProductTelemetryBatch batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
         if (batch.InstallId == Guid.Empty) throw new InvalidDataException("Telemetry installation ID was empty.");
-        if (batch.PrivacyNoticeVersion != 1) throw new InvalidDataException("Telemetry notice version was invalid.");
+        if (batch.PrivacyNoticeVersion is < 1 or > CurrentPrivacyNoticeVersion)
+            throw new InvalidDataException("Telemetry notice version was invalid.");
         if (batch.Events.Count is < 1 or > MaximumEventsPerBatch)
             throw new InvalidDataException("Telemetry event count was outside its bound.");
         if (!SemanticVersionPattern().IsMatch(batch.AppVersion))
@@ -78,6 +95,7 @@ public static partial class ProductTelemetryPolicy
         ProductTelemetryKind.OcrTiming => "ocr-timing",
         ProductTelemetryKind.OcrSetupFailure => "ocr-setup-failure",
         ProductTelemetryKind.LocalInstanceFailure => "local-instance-failure",
+        ProductTelemetryKind.UiScaleCalibration => "ui-scale-calibration",
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 
@@ -144,7 +162,7 @@ public static partial class ProductTelemetryPolicy
                 && item.LogicalProcessorCount is >= 1 and <= 512
                 && item.GraphicsCapability == "not-observed"
                 && item.DurationMilliseconds is null && item.Material is null && item.Quantity is null
-                && HasNoSetupDetails(item),
+                && HasNoExtendedDetails(item),
             ProductTelemetryKind.FeatureUsed =>
                 item.Feature is "workspace" or "wire" or "challenge" or "game_settings" or "ui_scale"
                 && item.Outcome == "completed" && HasNoMetrics(item),
@@ -158,13 +176,17 @@ public static partial class ProductTelemetryPolicy
                 && item.Quantity is >= 0 and <= 1_000
                 && item.DurationMilliseconds is null && item.OperatingSystem is null
                 && item.LogicalProcessorCount is null && item.GraphicsCapability is null
-                && HasNoSetupDetails(item),
+                && HasNoExtendedDetails(item),
             ProductTelemetryKind.OcrTiming =>
                 item.Feature == "ocr" && item.Outcome == "completed"
                 && item.DurationMilliseconds is >= 0 and <= 600_000
                 && item.GraphicsCapability is "cpu" or "gpu" or "gpu:0" or "not-observed"
                 && item.Material is null && item.Quantity is null && item.OperatingSystem is null
-                && item.LogicalProcessorCount is null && HasNoSetupDetails(item),
+                && item.LogicalProcessorCount is null
+                && (item.GraphicsCapability == "not-observed"
+                    ? item.HardwareModel is null
+                    : item.HardwareModel is not null && IsHardwareModel(item.HardwareModel))
+                && HasNoSetupDetails(item) && HasNoCalibrationDetails(item),
             ProductTelemetryKind.OcrSetupFailure =>
                 item.Feature == "ocr-setup"
                 && IsOcrSetupFailureCode(item.Outcome)
@@ -179,7 +201,7 @@ public static partial class ProductTelemetryPolicy
                 && item.RuntimeMarkerPresent is not null
                 && item.LogicalProcessorCount is null && item.GraphicsCapability is null
                 && item.Material is null && item.Quantity is null
-                && HasNoLocalInstanceDetails(item),
+                && HasNoLocalInstanceDetails(item) && HasNoDeviceDetails(item),
             ProductTelemetryKind.LocalInstanceFailure =>
                 item.Feature == "local-instance"
                 && IsLocalInstanceOperation(item.Operation)
@@ -193,7 +215,17 @@ public static partial class ProductTelemetryPolicy
                 && item.ProcessExitCode is null or >= 0 and <= 65_535
                 && item.LogicalProcessorCount is null && item.GraphicsCapability is null
                 && item.Material is null && item.Quantity is null
-                && HasNoOcrSetupDetails(item),
+                && HasNoOcrSetupDetails(item) && HasNoDeviceDetails(item),
+            ProductTelemetryKind.UiScaleCalibration =>
+                item.Feature == "ui-scale" && item.Outcome == "observed"
+                && item.DisplayWidth is >= 640 and <= 16_384
+                && item.DisplayHeight is >= 480 and <= 16_384
+                && item.InputScaleMilli is >= 800 and <= 1_200
+                && item.RenderedScaleMilli is >= 500 and <= 1_500
+                && item.DurationMilliseconds is null && item.Material is null && item.Quantity is null
+                && item.OperatingSystem is null && item.LogicalProcessorCount is null
+                && item.GraphicsCapability is null && item.HardwareModel is null
+                && HasNoSetupDetails(item),
             _ => false,
         };
         if (!valid) throw new InvalidDataException("Telemetry event fields were invalid for its kind.");
@@ -202,7 +234,27 @@ public static partial class ProductTelemetryPolicy
     private static bool HasNoMetrics(ProductTelemetryEvent item) =>
         item.DurationMilliseconds is null && item.Material is null && item.Quantity is null
         && item.OperatingSystem is null && item.LogicalProcessorCount is null
-        && item.GraphicsCapability is null && HasNoSetupDetails(item);
+        && item.GraphicsCapability is null && HasNoExtendedDetails(item);
+
+    private static bool HasNoExtendedDetails(ProductTelemetryEvent item) =>
+        HasNoSetupDetails(item) && HasNoDeviceDetails(item);
+
+    private static bool HasNoDeviceDetails(ProductTelemetryEvent item) =>
+        item.HardwareModel is null && HasNoCalibrationDetails(item);
+
+    private static bool HasNoCalibrationDetails(ProductTelemetryEvent item) =>
+        item.DisplayWidth is null && item.DisplayHeight is null
+        && item.InputScaleMilli is null && item.RenderedScaleMilli is null;
+
+    public static bool IsHardwareModel(string value) =>
+        value.Length is >= 1 and <= 96
+        && (value == "unknown" || value.StartsWith("AMD ", StringComparison.Ordinal)
+            || value.StartsWith("Intel ", StringComparison.Ordinal)
+            || value.StartsWith("NVIDIA ", StringComparison.Ordinal)
+            || value.StartsWith("Qualcomm ", StringComparison.Ordinal))
+        && char.IsAsciiLetterOrDigit(value[0])
+        && value.All(character => char.IsAsciiLetterOrDigit(character)
+            || character is ' ' or '.' or '_' or '+' or '-' or '(' or ')');
 
     private static bool HasNoSetupDetails(ProductTelemetryEvent item) =>
         item.SetupStage is null && item.RequestedDevice is null && item.ProcessExitCode is null

@@ -2,6 +2,8 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Updates;
 using LilacMacro.Core.Updates;
+using LilacMacro.Windows.LocalSession;
+using System.Diagnostics;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.X509;
@@ -130,6 +132,41 @@ public sealed class ApplicationUpdateTests
         Assert.True(CoordinatedUpdateText.ShouldClose(request, new LilacSemanticVersion(1, 0, 70), now));
         Assert.False(CoordinatedUpdateText.ShouldClose(request, new LilacSemanticVersion(1, 0, 71), now));
         Assert.False(CoordinatedUpdateText.ShouldClose(request with { RequestedAtUtc = now.AddMinutes(-11) }, new LilacSemanticVersion(1, 0, 70), now));
+    }
+
+    [Fact]
+    public void In_app_update_launches_the_verified_installer_elevated_and_unattended()
+    {
+        ProcessStartInfo start = ApplicationUpdateService.CreateInstallerStartInfo(
+            @"C:\Users\owner\AppData\Local\LilacMacro\updates\operation\LilacMacro-Setup.exe",
+            @"C:\Users\owner\AppData\Local\LilacMacro\updates\operation\update-state.txt");
+
+        Assert.True(start.UseShellExecute);
+        Assert.Equal("runas", start.Verb);
+        Assert.Equal(
+            [
+                @"/UPDATESTATE=C:\Users\owner\AppData\Local\LilacMacro\updates\operation\update-state.txt",
+                "/SILENT",
+                "/NOCANCEL",
+                "/NORESTART",
+                "/SP-",
+            ],
+            start.ArgumentList);
+    }
+
+    [Theory]
+    [InlineData(RunnerSessionConnectionState.Active, 2, true)]
+    [InlineData(RunnerSessionConnectionState.Disconnected, 3, true)]
+    [InlineData(RunnerSessionConnectionState.SignedOut, null, false)]
+    [InlineData(RunnerSessionConnectionState.Unknown, null, false)]
+    public void Coordinated_update_relaunches_every_logged_in_runner_session(
+        RunnerSessionConnectionState state,
+        int? sessionId,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            CoordinatedUpdateStateStore.ShouldRelaunchRunner(new RunnerSessionObservation(state, sessionId)));
     }
 
     [Theory]

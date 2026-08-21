@@ -61,17 +61,28 @@ internal sealed class ApplicationUpdateService : IDisposable
             cancellationToken).ConfigureAwait(false);
         try
         {
-            _ = Process.Start(new ProcessStartInfo(installerPath)
-            {
-                UseShellExecute = true,
-                Verb = "runas",
-                Arguments = $"/UPDATESTATE=\"{statePath}\"",
-            }) ?? throw new InvalidOperationException("Windows did not start the verified update installer.");
+            _ = Process.Start(CreateInstallerStartInfo(installerPath, statePath))
+                ?? throw new InvalidOperationException("Windows did not start the verified update installer.");
         }
         catch (Win32Exception exception) when (exception.NativeErrorCode == 1223)
         {
             throw new OperationCanceledException("The update UAC prompt was cancelled.", exception);
         }
+    }
+
+    internal static ProcessStartInfo CreateInstallerStartInfo(string installerPath, string statePath)
+    {
+        ProcessStartInfo startInfo = new(installerPath)
+        {
+            UseShellExecute = true,
+            Verb = "runas",
+        };
+        startInfo.ArgumentList.Add($"/UPDATESTATE={statePath}");
+        startInfo.ArgumentList.Add("/SILENT");
+        startInfo.ArgumentList.Add("/NOCANCEL");
+        startInfo.ArgumentList.Add("/NORESTART");
+        startInfo.ArgumentList.Add("/SP-");
+        return startInfo;
     }
 
     private static bool IsInstalledApplication()
