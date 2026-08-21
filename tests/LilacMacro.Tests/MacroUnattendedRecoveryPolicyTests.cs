@@ -1,3 +1,4 @@
+using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Views;
 
@@ -5,6 +6,56 @@ namespace LilacMacro.Tests;
 
 public sealed class MacroUnattendedRecoveryPolicyTests
 {
+    [Fact]
+    public async Task RecoveryPreservesOwningSynchronizationContextAcrossSecondAttempt()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-recovery-context-{Guid.NewGuid():N}");
+        SynchronizationContext? previous = SynchronizationContext.Current;
+        InlineSynchronizationContext context = new();
+        SynchronizationContext.SetSynchronizationContext(context);
+        try
+        {
+            PlanTaskPrototype task = new() { Mode = PlanTaskMode.Story };
+            PlanPrototype plan = new("context", [task]);
+            List<bool> callbackContexts = [];
+            int attempts = 0;
+            MacroUnattendedRecoveryRunner runner = new(
+                new Dictionary<PlanTaskPrototype, DateTimeOffset>(),
+                () => task,
+                () => callbackContexts.Add(ReferenceEquals(context, SynchronizationContext.Current)),
+                _ => callbackContexts.Add(ReferenceEquals(context, SynchronizationContext.Current)),
+                _ => callbackContexts.Add(ReferenceEquals(context, SynchronizationContext.Current)),
+                new DeepDebugSessionService(root),
+                async _ => await Task.Run(static () => { }),
+                async (_, _) =>
+                {
+                    callbackContexts.Add(ReferenceEquals(context, SynchronizationContext.Current));
+                    await Task.Run(static () => { });
+                    callbackContexts.Add(ReferenceEquals(context, SynchronizationContext.Current));
+                },
+                async (_, _) => await Task.Run(static () => { }));
+
+            await runner.RunAsync(
+                plan,
+                (_, _) =>
+                {
+                    callbackContexts.Add(ReferenceEquals(context, SynchronizationContext.Current));
+                    if (attempts++ == 0) throw new InvalidOperationException("retry");
+                    return Task.CompletedTask;
+                },
+                CancellationToken.None);
+
+            Assert.Equal(2, attempts);
+            Assert.NotEmpty(callbackContexts);
+            Assert.All(callbackContexts, Assert.True);
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(previous);
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData(1, 2)]
     [InlineData(2, 5)]
@@ -107,5 +158,16 @@ public sealed class MacroUnattendedRecoveryPolicyTests
             CancellationToken.None);
 
         Assert.Equal([story, raid, eventTask], validated);
+    }
+
+    private sealed class InlineSynchronizationContext : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback callback, object? state)
+        {
+            SynchronizationContext? previous = Current;
+            SetSynchronizationContext(this);
+            try { callback(state); }
+            finally { SetSynchronizationContext(previous); }
+        }
     }
 }
