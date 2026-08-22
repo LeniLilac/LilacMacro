@@ -69,21 +69,11 @@ public sealed partial class WorkspaceController : IDisposable
     {
         _deepDebug.RecordEvent("workspace", "initialize_started");
         _settings = await _settingsStore.LoadAsync(cancellationToken);
-        await RefreshWindowAsync(cancellationToken);
+        await RefreshWindowAsync(cancellationToken, waitForCapturable: true);
         IReadOnlyList<DatasetLocation> datasets = await _datasets.DiscoverAsync(DatasetRoot, cancellationToken);
         RecentDataset = datasets.FirstOrDefault();
         _deepDebug.RecordEvent("workspace", "initialize_completed", new { TargetSize, DatasetRoot, RecentDataset = RecentDataset?.DirectoryPath });
         Changed?.Invoke(this, EventArgs.Empty);
-    }
-
-    public async Task RefreshWindowAsync(CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        RobloxWindow = _windows.FindBest();
-        ObservedClientSize = RobloxWindow is { } window ? _windows.GetClientBounds(window).Size : null;
-        _deepDebug.RecordEvent("window", "refreshed", new { Found = RobloxWindow is not null, RobloxWindow?.Title, RobloxWindow?.ProcessId, ObservedClientSize });
-        Changed?.Invoke(this, EventArgs.Empty);
-        await Task.CompletedTask;
     }
 
     public async Task<ResizeResult> ApplyTargetSizeAsync(CancellationToken cancellationToken = default)

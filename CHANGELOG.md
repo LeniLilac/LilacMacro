@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.159 — Public beta
+
+- Reobserved Roblox window candidates for up to three seconds during startup instead of failing on the first transient zero-area window.
+- Rejected stale and zero-area Roblox windows during ordinary selection and recorded bounded per-attempt candidate state in Deep Debug.
+
 ## 1.0.158 — Public beta
 
 - Displayed the stable installation ID in Settings with an explicit copy action so users can provide it for support-requested diagnostic searches.

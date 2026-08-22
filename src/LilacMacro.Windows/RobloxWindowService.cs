@@ -39,14 +39,68 @@ public sealed class RobloxWindowService
 
     internal static int CapturablePreference(long clientArea) => clientArea > 0 ? 0 : 1;
 
-    public RobloxWindow? FindBest() => FindAll().FirstOrDefault() is { Handle: not 0 } window ? window : null;
+    public RobloxWindow? FindBest() => AcquireBest().Window;
+
+    public RobloxWindowAcquisition AcquireBest()
+    {
+        List<RobloxWindowCandidateObservation> observations = [];
+        foreach (RobloxWindow candidate in FindAll())
+        {
+            bool wasMinimized = NativeMethods.IsIconic(candidate.Handle);
+            if (!TryReadClientSize(candidate.Handle, out int initialWidth, out int initialHeight))
+            {
+                observations.Add(new RobloxWindowCandidateObservation(
+                    candidate,
+                    null,
+                    0,
+                    0,
+                    wasMinimized,
+                    "client-rect-unavailable"));
+                continue;
+            }
+            if ((initialWidth <= 0 || initialHeight <= 0) && !wasMinimized)
+            {
+                observations.Add(new RobloxWindowCandidateObservation(
+                    candidate,
+                    null,
+                    initialWidth,
+                    initialHeight,
+                    false,
+                    "zero-area"));
+                continue;
+            }
+            try
+            {
+                ClientBounds bounds = GetClientBounds(candidate);
+                observations.Add(new RobloxWindowCandidateObservation(
+                    candidate,
+                    bounds.Size,
+                    initialWidth,
+                    initialHeight,
+                    wasMinimized,
+                    wasMinimized ? "restored" : "capturable"));
+                return new RobloxWindowAcquisition(candidate, bounds, observations);
+            }
+            catch (InvalidOperationException)
+            {
+                observations.Add(new RobloxWindowCandidateObservation(
+                    candidate,
+                    null,
+                    initialWidth,
+                    initialHeight,
+                    wasMinimized,
+                    wasMinimized ? "restore-failed" : "became-unavailable"));
+            }
+        }
+
+        return new RobloxWindowAcquisition(null, null, observations);
+    }
 
     public ClientBounds GetClientBounds(RobloxWindow window)
     {
         nint handle = Revalidate(window);
         NativeMethods.Rect rectangle = ReadClientRect(handle);
-        if ((rectangle.Right <= rectangle.Left || rectangle.Bottom <= rectangle.Top) &&
-            NativeMethods.IsIconic(handle))
+        if (NativeMethods.IsIconic(handle))
         {
             NativeMethods.ShowWindow(handle, NativeMethods.SwRestore);
             Thread.Sleep(120);
@@ -315,7 +369,17 @@ public sealed class RobloxWindowService
 
     private static long TryGetArea(nint handle)
     {
-        if (!NativeMethods.GetClientRect(handle, out NativeMethods.Rect rectangle)) return 0;
-        return Math.Max(0L, (long)(rectangle.Right - rectangle.Left) * (rectangle.Bottom - rectangle.Top));
+        if (!TryReadClientSize(handle, out int width, out int height)) return 0;
+        return width > 0 && height > 0 ? (long)width * height : 0;
+    }
+
+    private static bool TryReadClientSize(nint handle, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+        if (!NativeMethods.GetClientRect(handle, out NativeMethods.Rect rectangle)) return false;
+        width = rectangle.Right - rectangle.Left;
+        height = rectangle.Bottom - rectangle.Top;
+        return true;
     }
 }

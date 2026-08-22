@@ -26,7 +26,9 @@
     <Compile Remove="Workspace\CaptureProgress.cs" />
     <Compile Remove="Workspace\CrossProcessRobloxInputGate.cs" />
     <Compile Remove="Workspace\WorkspaceController.cs" />
+    <Compile Remove="Workspace\WorkspaceController.WindowDiscovery.cs" />
     <Compile Remove="Workspace\WorkspaceController.Discord.cs" />
+    <Compile Remove="Workspace\RobloxWindowAcquisitionWaiter.cs" />
     <Compile Remove="Workspace\WorkspaceInputCoordinator.cs" />
     <Compile Remove="Debugging\*.cs" />
     <Compile Include="Debugging\DebugKeySequenceCoordinator.cs" />
