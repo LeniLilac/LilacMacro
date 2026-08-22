@@ -235,6 +235,32 @@
                                 </Grid>
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="INSTALLATION ID" />
+                                    <Grid Grid.Column="1">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="330" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <TextBox x:Name="InstallationIdText"
+                                                 MinHeight="38"
+                                                 Padding="9,7"
+                                                 VerticalContentAlignment="Center"
+                                                 FontFamily="Consolas"
+                                                 FontSize="11"
+                                                 IsReadOnly="True"
+                                                 Text="Loading..." />
+                                        <Button x:Name="CopyInstallationIdButton"
+                                                Grid.Column="1"
+                                                Margin="8,0,0,0"
+                                                Style="{StaticResource SettingsFieldActionButtonStyle}"
+                                                IsEnabled="False"
+                                                Click="CopyInstallationId_OnClick">
+                                            <StackPanel Orientation="Horizontal">
+                                                <controls:LucideIcon Width="13" Height="13" Margin="0,0,6,0" Data="{StaticResource Lucide.Copy}" />
+                                                <TextBlock Text="COPY" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="UPDATE OPTIONS" />
                                     <StackPanel Grid.Column="1">
                                         <CheckBox x:Name="CheckUpdatesOnStartupCheck" Content="Auto check for updates" Checked="UpdateOptions_OnChanged" Unchecked="UpdateOptions_OnChanged" />

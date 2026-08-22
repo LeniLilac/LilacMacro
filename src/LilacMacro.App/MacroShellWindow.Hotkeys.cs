@@ -2,6 +2,7 @@ using System.Windows.Interop;
 using System.ComponentModel;
 using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
+using LilacMacro.App.Workspace;
 using LilacMacro.Windows;
 
 namespace LilacMacro.App;
@@ -71,11 +72,15 @@ public partial class MacroShellWindow
     {
         if (_macroHotkey?.Matches(message, parameter) != true) return 0;
         handled = true;
-        if (MacroHotkeyRoutingPolicy.Resolve(_setupPage.IsTestRunning) == MacroHotkeyTarget.SetupTest)
+        MacroHotkeyTarget target = MacroHotkeyRoutingPolicy.Resolve(
+            _setupPage.IsTestRunning,
+            _macroPage.IsRunning,
+            _currentPage == MacroShellPage.Macro);
+        if (target == MacroHotkeyTarget.SetupTest)
         {
             _setupPage.TryStopTest();
         }
-        else
+        else if (target == MacroHotkeyTarget.Macro)
         {
             _macroPage.ToggleRunFromHotkey();
         }

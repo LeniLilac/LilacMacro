@@ -79,6 +79,7 @@ public partial class MacroShellWindow : Window
             _ownerState,
             _instanceManager,
             _updates,
+            installation,
             SetMacroHotkeyCaptureSuspended);
         _settingsPage.UpdateAvailable += SettingsPage_OnUpdateAvailable;
         _pages = new Dictionary<MacroShellPage, UserControl>

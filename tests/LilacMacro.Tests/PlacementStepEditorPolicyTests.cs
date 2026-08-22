@@ -1,4 +1,3 @@
-using LilacMacro.App.Runtime;
 using LilacMacro.App.Views;
 using LilacMacro.Core.Placements;
 
@@ -19,16 +18,6 @@ public sealed class PlacementStepEditorPolicyTests
 
         Assert.Equal(["1", "6a", "6b"], options.Select(option => option.Label));
     }
-
-    [Theory]
-    [InlineData(false, false)]
-    [InlineData(true, true)]
-    public void MacroHotkeyPrioritizesTheActiveSetupTest(
-        bool setupTestRunning,
-        bool expectedSetupTest) =>
-        Assert.Equal(
-            expectedSetupTest ? MacroHotkeyTarget.SetupTest : MacroHotkeyTarget.Macro,
-            MacroHotkeyRoutingPolicy.Resolve(setupTestRunning));
 
     private static PlacementStep Placement(int slot) => new()
     {

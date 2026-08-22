@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.158 — Public beta
+
+- Displayed the stable installation ID in Settings with an explicit copy action so users can provide it for support-requested diagnostic searches.
+- Prevented the macro keybind from starting a run outside the Macro page while preserving global keybind stopping for an active run or test.
+
 ## 1.0.156 — Public beta
 
 - Added locally encoded AVIF Deep Debug evidence: older ordinary frames use decode-verified quality-20 compression, important frames use pixel-exact lossless compression only when smaller, and PNG remains the safe fallback.

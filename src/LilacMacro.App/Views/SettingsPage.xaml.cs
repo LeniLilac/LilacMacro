@@ -12,6 +12,7 @@ using LilacMacro.App.Notifications;
 using LilacMacro.App.Updates;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.Core.Updates;
+using LilacMacro.Runtime.Services;
 using LilacMacro.Windows;
 
 namespace LilacMacro.App.Views;
@@ -23,6 +24,7 @@ public partial class SettingsPage : UserControl
     private readonly MacroOwnerState _ownerState;
     private readonly Action<bool> _keyCaptureStateChanged;
     private readonly ApplicationUpdateService _updates;
+    private readonly DiagnosticInstallationStore _installation;
     private readonly DiscordWebhookClient _discord = new();
     private readonly PrivacySettingsPanel _privacySettingsPanel;
     private readonly SemaphoreSlim _updateCheckGate = new(1, 1);
@@ -38,16 +40,19 @@ public partial class SettingsPage : UserControl
         MacroOwnerState ownerState,
         LocalInstanceManagerController instanceManager,
         ApplicationUpdateService updates,
+        DiagnosticInstallationStore installation,
         Action<bool> keyCaptureStateChanged)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
         _updates = updates;
+        _installation = installation;
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
         _privacySettingsPanel = new PrivacySettingsPanel(ownerState);
         PrivacySettingsHost.Content = _privacySettingsPanel;
         MacroVersionText.Text = BuildVersion();
+        _ = LoadInstallationIdentityAsync();
         LayoutProfileCombo.ItemsSource = new[] { "1920 x 1080 - full dock", "1366 x 768 - compact" };
         MinimizeBehaviorCombo.ItemsSource = new[] { "Keep visible", "Minimize while running", "Minimize on app start" };
         MacroLayoutProfile effectiveLayout = ownerState.LayoutProfile;
