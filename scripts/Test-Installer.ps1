@@ -139,6 +139,10 @@ Require-Text $releaseWorkflow 'RELEASE_VERSION:\s*\$\{\{ inputs\.version \}\}' '
 Require-Text $releaseWorkflow 'persist-credentials:\s*false' 'Build and signing checkouts must not persist GitHub credentials.'
 Require-Text $releaseWorkflow 'environment:\s*release-signing' 'The signing secret must be scoped to the release-signing environment.'
 Require-Text $releaseWorkflow '(?s)jobs:.*build:.*sign:.*publish:' 'Release workflow must isolate build, signing, and publishing jobs.'
+Require-Text $releaseWorkflow 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' 'Release OCR downloads must use the pinned Actions cache version.'
+Require-Text $releaseWorkflow 'BuildCache\\ocr\\python312-paddle330-paddleocr370\\pip' 'Release workflow must cache pinned Python package downloads.'
+Require-Text $releaseWorkflow 'BuildCache\\ocr\\python312-paddle330-paddleocr370\\models' 'Release workflow must cache official OCR model downloads.'
+Reject-Text $releaseWorkflow 'BuildCache\\ocr\\python312-paddle330-paddleocr370\\bundled-runtime' 'Official releases must not restore an assembled OCR runtime cache.'
 
 foreach ($verb in @('install', 'repair', 'remove', 'uninstall-cleanup', 'relaunch-update', 'relaunch-runners')) {
     Require-Text $verbPolicy ('"' + [Regex]::Escape($verb) + '"') "Setup helper allowlist is missing verb: $verb"

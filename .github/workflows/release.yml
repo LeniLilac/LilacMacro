@@ -41,6 +41,14 @@ jobs:
           python-version: 3.12.10
           check-latest: false
 
+      - name: Restore pinned OCR downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~\AppData\Local\LilacMacro\BuildCache\ocr\python312-paddle330-paddleocr370\pip
+            ~\AppData\Local\LilacMacro\BuildCache\ocr\python312-paddle330-paddleocr370\models
+          key: ocr-downloads-${{ runner.os }}-python-3.12.10-paddle-3.3.0-paddleocr-3.7.0-${{ hashFiles('scripts/Build-OcrRuntime.ps1') }}
+
       - name: Validate release input and trust root
         shell: pwsh
         env:

@@ -57,7 +57,7 @@ Validate the installer without mutating Windows:
 
 Building a local installer additionally requires Inno Setup 6 and `-UnsignedDevelopmentBuild`; that artifact cannot be published. Official project-signed artifacts are produced only by the pinned GitHub Actions release workflow using its protected Ed25519 secret. No Authenticode certificate is used. Do not run the elevated helper on the owner's machine during agent work unless the owner explicitly authorizes it for the current task. See [Installer](INSTALLER.md).
 
-Installer builds reuse downloaded Python packages and official model files from `%LOCALAPPDATA%\LilacMacro\BuildCache\ocr`. Unsigned local builds also reuse a complete assembled Python/OCR runtime after validating the builder hash, Python version, and pinned package versions; official release builds always assemble a fresh runtime. Removing that developer cache is safe—the next installer build recreates it from the pinned package and model sources.
+Installer builds reuse downloaded Python packages and official model files from `%LOCALAPPDATA%\LilacMacro\BuildCache\ocr`. The GitHub release workflow persists only those download/model directories in a version-and-builder-keyed Actions cache. Unsigned local builds also reuse a complete assembled Python/OCR runtime after validating the builder hash, Python version, and pinned package versions; official release builds always assemble a fresh runtime and never restore that assembled directory. Removing the developer cache is safe—the next installer build recreates it from the pinned package and model sources.
 
 Run the current macro-shell prototype with:
 
