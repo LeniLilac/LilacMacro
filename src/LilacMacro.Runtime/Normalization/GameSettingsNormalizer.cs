@@ -39,10 +39,10 @@ internal sealed class GameSettingsNormalizer(
                     DebugWorkflowCatalog.ClientSize,
                     GameSettingsNormalizationPolicy.ScrollAnchor,
                     tab.ScrollDelta,
-                    TimeSpan.FromMilliseconds(600),
+                    GameSettingsNormalizationPolicy.ScrollDuration,
                     cancellationToken).ConfigureAwait(false);
                 await Task.Delay(SettleDelay, cancellationToken).ConfigureAwait(false);
-                await SelectScrolledTabAsync(tab, cancellationToken).ConfigureAwait(false);
+                await RequireSelectedTabAsync(tab, cancellationToken).ConfigureAwait(false);
                 (int scrollChanged, int scrollVerified) = await ApplyTargetsAsync(
                     tab.Name, scrolledTargets, cancellationToken).ConfigureAwait(false);
                 changed += scrollChanged;
@@ -105,8 +105,7 @@ internal sealed class GameSettingsNormalizer(
             UiScalePanelMatch panel = UiScalePanelDetector.DetectPanel(image);
             bool canonical = panel.Visible && panel.Settled &&
                 UiScalePanelDetector.IsCanonicalRenderedScale(panel.RenderedScale);
-            if (canonical && SelectedTabDetector.IsSelected(image, tab.TabPoint) &&
-                (tab.Name != "Units" || UnitsScrollDetector.IsExpected(image, scrolled: false))) return;
+            if (canonical && SelectedTabDetector.IsSelected(image, tab.TabPoint)) return;
 
             if (canonical && actions < 4)
             {
@@ -119,36 +118,8 @@ internal sealed class GameSettingsNormalizer(
         throw new InvalidOperationException($"{tab.Name} did not become the selected Settings section after {actions} bounded attempts.");
     }
 
-    private async Task SelectScrolledTabAsync(GameSettingsTabPlan tab, CancellationToken cancellationToken)
-    {
-        int actions = 1;
-        for (int observation = 0; observation < 12; observation++)
-        {
-            RgbImage image = await CaptureRgbAsync(cancellationToken).ConfigureAwait(false);
-            UiScalePanelMatch panel = UiScalePanelDetector.DetectPanel(image);
-            bool canonical = panel.Visible && panel.Settled &&
-                UiScalePanelDetector.IsCanonicalRenderedScale(panel.RenderedScale) &&
-                SelectedTabDetector.IsSelected(image, tab.TabPoint);
-            if (canonical && UnitsScrollDetector.IsExpected(image, scrolled: true)) return;
-
-            if (canonical && UnitsScrollDetector.IsExpected(image, scrolled: false) && actions < 4)
-            {
-                await workspace.ScrollRobloxAsync(
-                    DebugWorkflowCatalog.ClientSize,
-                    GameSettingsNormalizationPolicy.ScrollAnchor,
-                    tab.ScrollDelta,
-                    TimeSpan.FromMilliseconds(600),
-                    cancellationToken).ConfigureAwait(false);
-                actions++;
-            }
-            await Task.Delay(ObservationDelay(observation), cancellationToken).ConfigureAwait(false);
-        }
-        throw new InvalidOperationException($"{tab.Name} did not reach its lower option layout after {actions} bounded scroll attempts.");
-    }
-
-    private async Task RequireTabAsync(
+    private async Task RequireSelectedTabAsync(
         GameSettingsTabPlan tab,
-        bool scrolled,
         CancellationToken cancellationToken)
     {
         RgbImage image = await CaptureRgbAsync(cancellationToken).ConfigureAwait(false);
@@ -157,10 +128,6 @@ internal sealed class GameSettingsNormalizer(
             throw new InvalidOperationException($"{tab.Name} did not remain in a canonical Settings panel.");
         if (!SelectedTabDetector.IsSelected(image, tab.TabPoint))
             throw new InvalidOperationException($"{tab.Name} was not freshly verified as the selected Settings section.");
-        if (tab.Name == "Units" && !UnitsScrollDetector.IsExpected(image, scrolled))
-            throw new InvalidOperationException(scrolled
-                ? "Units did not reach the required lower option layout."
-                : "Units did not start at the required top option layout.");
     }
 
     private async Task<UiScalePanelMatch> OpenCanonicalPanelAsync(CancellationToken cancellationToken)
@@ -266,23 +233,4 @@ internal sealed class GameSettingsNormalizer(
         }
     }
 
-    private static class UnitsScrollDetector
-    {
-        public static bool IsExpected(RgbImage image, bool scrolled)
-        {
-            int top = 0;
-            int bottom = 0;
-            for (int y = 120; y <= 600; y++)
-            {
-                int pixel = checked((y * image.Size.Width + 1118) * 3);
-                byte r = image.Pixels[pixel];
-                byte g = image.Pixels[pixel + 1];
-                byte b = image.Pixels[pixel + 2];
-                if (b < 80 || g < 60 || b <= r * 1.3) continue;
-                top = top == 0 ? y : Math.Min(top, y);
-                bottom = Math.Max(bottom, y);
-            }
-            return top != 0 && (scrolled ? top >= 260 && bottom >= 575 : top <= 170 && bottom <= 475);
-        }
-    }
 }

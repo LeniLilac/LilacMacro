@@ -220,6 +220,19 @@ public sealed class UiScaleNormalizationTests
     }
 
     [Fact]
+    public void UnitsSettingsUsesOneLongCenteredDownwardScrollBurst()
+    {
+        GameSettingsTabPlan units = Assert.Single(
+            GameSettingsNormalizationPolicy.Tabs,
+            tab => tab.Name == "Units");
+
+        Assert.Equal(new PixelPoint(683, 350), GameSettingsNormalizationPolicy.ScrollAnchor);
+        Assert.Equal(TimeSpan.FromSeconds(5), GameSettingsNormalizationPolicy.ScrollDuration);
+        Assert.Equal(-5000, units.ScrollDelta);
+        Assert.NotEmpty(units.ScrolledTargets!);
+    }
+
+    [Fact]
     public void SuppliedGameSettingsDatasetMatchesCatalogAndToggleColors()
     {
         string? root = Environment.GetEnvironmentVariable("LILACMACRO_SETTINGS_OPTION_DATASET");

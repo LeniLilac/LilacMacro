@@ -21,7 +21,8 @@ internal sealed record GameSettingsToggleTarget(string Name, PixelPoint Point, b
 
 internal static class GameSettingsNormalizationPolicy
 {
-    public static readonly PixelPoint ScrollAnchor = new(1000, 420);
+    public static readonly PixelPoint ScrollAnchor = new(683, 350);
+    public static readonly TimeSpan ScrollDuration = TimeSpan.FromSeconds(5);
 
     public static IReadOnlyList<GameSettingsTabPlan> Tabs { get; } =
     [
@@ -61,7 +62,7 @@ internal static class GameSettingsNormalizationPolicy
             Target("Strict Phantom Placement", 735, 561, true),
             Target("Prioritize Phantom Placement", 1069, 561, true),
         ],
-        ScrollDelta: -2400,
+        ScrollDelta: -5000,
         ScrolledTargets:
         [
             Target("Auto-Upgrade Placed Units", 735, 423, false),
