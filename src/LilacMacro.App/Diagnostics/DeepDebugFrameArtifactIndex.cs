@@ -31,10 +31,78 @@ internal static class DeepDebugFrameArtifactIndex
         foreach (string name in new[] { "events.jsonl", "timeline.md" })
         {
             string path = Path.Combine(stagingDirectory, name);
-            string text = await File.ReadAllTextAsync(path);
-            foreach ((string before, string after) in replacements)
-                text = text.Replace(before, after, StringComparison.Ordinal);
-            await File.WriteAllTextAsync(path, text, new UTF8Encoding(false));
+            await RewriteFileAsync(path, replacements);
         }
+    }
+
+    private static async Task RewriteFileAsync(
+        string path,
+        IReadOnlyDictionary<string, string> replacements)
+    {
+        string temporary = path + ".rewrite";
+        try
+        {
+            {
+                await using FileStream input = new(
+                    path,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    65_536,
+                    useAsync: true);
+                using StreamReader reader = new(
+                    input,
+                    Encoding.UTF8,
+                    detectEncodingFromByteOrderMarks: true,
+                    65_536);
+                await using FileStream output = new(
+                    temporary,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    65_536,
+                    useAsync: true);
+                await using StreamWriter writer = new(output, new UTF8Encoding(false), 65_536);
+                while (await reader.ReadLineAsync() is { } line)
+                    await writer.WriteLineAsync(RewriteLine(line, replacements));
+                await writer.FlushAsync();
+            }
+            File.Move(temporary, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
+    }
+
+    internal static string RewriteLine(
+        string line,
+        IReadOnlyDictionary<string, string> replacements)
+    {
+        const string prefix = "frames/";
+        const string extension = ".png";
+        int searchFrom = 0;
+        int copyFrom = 0;
+        StringBuilder? rewritten = null;
+        while (line.IndexOf(prefix, searchFrom, StringComparison.Ordinal) is int start && start >= 0)
+        {
+            int extensionStart = line.IndexOf(extension, start + prefix.Length, StringComparison.Ordinal);
+            if (extensionStart < 0) break;
+            int end = extensionStart + extension.Length;
+            string candidate = line[start..end];
+            if (!replacements.TryGetValue(candidate, out string? replacement))
+            {
+                searchFrom = end;
+                continue;
+            }
+            rewritten ??= new StringBuilder(line.Length);
+            rewritten.Append(line, copyFrom, start - copyFrom);
+            rewritten.Append(replacement);
+            searchFrom = end;
+            copyFrom = end;
+        }
+        if (rewritten is null) return line;
+        rewritten.Append(line, copyFrom, line.Length - copyFrom);
+        return rewritten.ToString();
     }
 }

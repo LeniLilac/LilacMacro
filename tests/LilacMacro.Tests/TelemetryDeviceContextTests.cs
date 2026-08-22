@@ -46,6 +46,28 @@ public sealed class TelemetryDeviceContextTests
     }
 
     [Fact]
+    public void Physical_registry_adapter_wins_when_session_dxgi_adapter_is_unknown()
+    {
+        string model = WindowsTelemetryDeviceContextProvider.SelectBestGraphicsModel([
+            ("Microsoft Remote Display Adapter", 0),
+            ("NVIDIA GeForce RTX 3070", 0),
+        ]);
+
+        Assert.Equal("NVIDIA GeForce RTX 3070", model);
+    }
+
+    [Fact]
+    public void Dedicated_memory_breaks_ties_between_same_vendor_adapters()
+    {
+        string model = WindowsTelemetryDeviceContextProvider.SelectBestGraphicsModel([
+            ("NVIDIA GeForce RTX 2060", 6UL * 1024 * 1024 * 1024),
+            ("NVIDIA GeForce RTX 3070", 8UL * 1024 * 1024 * 1024),
+        ]);
+
+        Assert.Equal("NVIDIA GeForce RTX 3070", model);
+    }
+
+    [Fact]
     public void Ui_scale_feedback_maps_primary_display_and_render_pair()
     {
         ProductTelemetryDeviceContext device = new("unknown", "unknown", 1920, 1080);

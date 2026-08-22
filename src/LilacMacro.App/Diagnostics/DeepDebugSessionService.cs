@@ -316,11 +316,12 @@ public sealed partial class DeepDebugSessionService
             session.WriterFailure ??= writerError;
         }
 
-        string archive = await _archiveFinalizer.FinalizeAsync(
+        DateTimeOffset completedAtUtc = _utcNow();
+        string archive = await Task.Run(() => _archiveFinalizer.FinalizeAsync(
             session,
             outcome,
             error,
-            _utcNow());
+            completedAtUtc));
         LastArchivePath = archive;
         TryDeleteDirectory(session.StagingDirectory);
         _configurationStore.PruneArchives(Options);

@@ -276,6 +276,67 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
+    public void Frame_artifact_paths_are_rewritten_in_one_pass()
+    {
+        Dictionary<string, string> replacements = new(StringComparer.Ordinal)
+        {
+            ["frames/frame-000000001-live-client.png"] =
+                "frames/frame-000000001-live-client.avif",
+            ["frames/frame-000000002-unit-control-region.png"] =
+                "frames/frame-000000002-unit-control-region.avif",
+        };
+        string line =
+            "frames/frame-000000001-live-client.png " +
+            "[frame](frames/frame-000000001-live-client.png) " +
+            "frames/frame-000000002-unit-control-region.png " +
+            "frames/unrelated.png";
+
+        string rewritten = DeepDebugFrameArtifactIndex.RewriteLine(line, replacements);
+
+        Assert.Equal(
+            "frames/frame-000000001-live-client.avif " +
+            "[frame](frames/frame-000000001-live-client.avif) " +
+            "frames/frame-000000002-unit-control-region.avif " +
+            "frames/unrelated.png",
+            rewritten);
+    }
+
+    [Fact]
+    public async Task Frame_artifact_index_replaces_opened_log_files_after_streaming()
+    {
+        string staging = Path.Combine(_root, "artifact-rewrite");
+        string framesRoot = Path.Combine(staging, "frames");
+        Directory.CreateDirectory(framesRoot);
+        string original = Path.Combine(framesRoot, "frame-000000001-live-client.png");
+        await File.WriteAllBytesAsync(original, [1, 2, 3]);
+        DeepDebugEvidenceFrame frame = new(
+            original,
+            DateTimeOffset.UtcNow,
+            3,
+            0,
+            fullClient: true)
+        {
+            ArtifactPath = "frames/frame-000000001-live-client.avif",
+            Format = "avif",
+        };
+        await File.WriteAllTextAsync(
+            Path.Combine(staging, "events.jsonl"),
+            "{\"artifactPath\":\"frames/frame-000000001-live-client.png\"}\n");
+        await File.WriteAllTextAsync(
+            Path.Combine(staging, "timeline.md"),
+            "[frame](frames/frame-000000001-live-client.png)\n");
+
+        await DeepDebugFrameArtifactIndex.RewriteAsync(
+            staging,
+            [frame],
+            new JsonSerializerOptions());
+
+        Assert.Contains(".avif", await File.ReadAllTextAsync(Path.Combine(staging, "events.jsonl")));
+        Assert.Contains(".avif", await File.ReadAllTextAsync(Path.Combine(staging, "timeline.md")));
+        Assert.False(File.Exists(Path.Combine(staging, "events.jsonl.rewrite")));
+    }
+
+    [Fact]
     public void Overlapping_error_windows_merge_and_terminal_evidence_has_priority()
     {
         string evidenceRoot = Path.Combine(_root, "evidence-priority");
