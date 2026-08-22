@@ -3,6 +3,7 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Workspace;
 using LilacMacro.Core.Automation;
 using LilacMacro.Windows;
+using LilacMacro.Windows.Capture;
 
 namespace LilacMacro.App.Runtime;
 
@@ -11,6 +12,7 @@ internal sealed class PrivateServerRejoinService(
     OcrRunner ocr)
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(2);
+    private const int CaptureFailureLimit = 3;
     private readonly DebugOcrController _debug = new(workspace, ocr);
     private readonly RobloxClientLifecycleService _lifecycle = new();
     private readonly RobloxProtocolLauncher _launcher = new();
@@ -30,6 +32,7 @@ internal sealed class PrivateServerRejoinService(
         deadline.CancelAfter(Timeout);
         try
         {
+            int consecutiveCaptureFailures = 0;
             await Task.Delay(TimeSpan.FromSeconds(5), deadline.Token);
             while (true)
             {
@@ -42,9 +45,23 @@ internal sealed class PrivateServerRejoinService(
                         status?.Invoke("LOBBY VERIFIED AFTER REJOIN");
                         return;
                     }
+                    consecutiveCaptureFailures = 0;
+                }
+                catch (RobloxCaptureUnavailableException error)
+                {
+                    consecutiveCaptureFailures++;
+                    status?.Invoke(
+                        $"ROBLOX CAPTURE RECOVERY {consecutiveCaptureFailures}/{CaptureFailureLimit}");
+                    if (consecutiveCaptureFailures >= CaptureFailureLimit)
+                    {
+                        throw new InvalidOperationException(
+                            "Windows capture remained unavailable after Roblox reopened.",
+                            error);
+                    }
                 }
                 catch (Exception error) when (error is InvalidOperationException or ArgumentException)
                 {
+                    consecutiveCaptureFailures = 0;
                     status?.Invoke("WAITING FOR ROBLOX LOBBY");
                 }
                 await Task.Delay(TimeSpan.FromSeconds(1), deadline.Token);

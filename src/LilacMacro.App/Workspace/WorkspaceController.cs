@@ -122,7 +122,26 @@ public sealed partial class WorkspaceController : IDisposable
                 await _windows.ResizeClientAsync(window, requiredSize, cancellationToken);
             }
 
-            CapturedPng image = await Task.Run(() => _capture.Capture(window), cancellationToken);
+            CapturedPng image;
+            try
+            {
+                image = await Task.Run(() => _capture.Capture(window), cancellationToken);
+            }
+            catch (RobloxCaptureUnavailableException error)
+            {
+                if (!captureReason.Equals("deep-debug-interval", StringComparison.Ordinal))
+                {
+                    _deepDebug.RecordEvent("window", "capture_exhausted", new
+                    {
+                        FailureCode = "windows-graphics-capture-unavailable",
+                        Stage = captureReason,
+                        Error = error.ToString(),
+                        window.ProcessId,
+                        RequiredSize = requiredSize,
+                    });
+                }
+                throw;
+            }
             ObservedClientSize = _windows.GetClientBounds(window).Size;
             if (image.Size != requiredSize || ObservedClientSize != requiredSize)
             {

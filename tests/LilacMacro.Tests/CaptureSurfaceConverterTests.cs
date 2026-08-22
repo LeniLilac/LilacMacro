@@ -128,21 +128,67 @@ public sealed class CaptureSurfaceConverterTests
         Assert.InRange(diagnostics.MeanSrgbLuminance, 0.42, 0.43);
     }
 
+    [Fact]
+    public void BgraCompatibilitySurfaceConvertsAndCropsWithoutColorTransform()
+    {
+        byte[] bgra =
+        [
+            30, 20, 10, 255,
+            60, 50, 40, 255,
+            90, 80, 70, 255,
+            120, 110, 100, 255,
+        ];
+
+        RgbImage image = CaptureSurfaceConverter.ConvertBgra8ToRgb(
+            bgra,
+            2,
+            2,
+            new ScreenRegion(1, 0, 1, 2));
+
+        Assert.Equal(1, image.Size.Width);
+        Assert.Equal(2, image.Size.Height);
+        Assert.Equal([40, 50, 60, 100, 110, 120], image.Pixels.ToArray());
+    }
+
     [Theory]
     [InlineData(true, 0, true)]
     [InlineData(false, 0, true)]
-    [InlineData(true, 1, false)]
-    [InlineData(false, 1, false)]
-    public void CaptureSessionRecoveryIsBoundedToOneRetry(bool disposed, int attempt, bool expected)
+    [InlineData(true, 1, true)]
+    [InlineData(false, 1, true)]
+    [InlineData(true, 2, false)]
+    [InlineData(false, 2, false)]
+    public void CaptureSessionRecoveryUsesThreeBoundedAttempts(bool disposed, int attempt, bool expected)
     {
         Exception error = disposed
             ? new ObjectDisposedException("capture")
             : new TimeoutException("capture");
 
-        Assert.Equal(expected, WindowsGraphicsCapture.ShouldRebuildCaptureSession(error, attempt));
-        Assert.False(WindowsGraphicsCapture.ShouldRebuildCaptureSession(
+        Assert.Equal(expected, WindowsGraphicsCapture.ShouldRetryCapture(error, attempt));
+        Assert.False(WindowsGraphicsCapture.ShouldRetryCapture(
             new InvalidOperationException("unrelated"),
             attempt));
+    }
+
+    [Fact]
+    public void CaptureSessionRecoveryFallsBackAfterSecondScRgbFailure()
+    {
+        Assert.Equal(
+            CaptureSurfaceFormat.ScRgbFloat,
+            WindowsGraphicsCapture.SelectRetryFormat(CaptureSurfaceFormat.ScRgbFloat, 0));
+        Assert.Equal(
+            CaptureSurfaceFormat.Bgra8,
+            WindowsGraphicsCapture.SelectRetryFormat(CaptureSurfaceFormat.ScRgbFloat, 1));
+        Assert.Equal(
+            CaptureSurfaceFormat.Bgra8,
+            WindowsGraphicsCapture.SelectRetryFormat(CaptureSurfaceFormat.Bgra8, 0));
+    }
+
+    [Fact]
+    public void CaptureSessionTargetIncludesRobloxProcessIdentity()
+    {
+        Assert.True(WindowsGraphicsCapture.IsSameTarget((nint)42, 100, (nint)42, 100));
+        Assert.False(WindowsGraphicsCapture.IsSameTarget((nint)42, 100, (nint)42, 101));
+        Assert.False(WindowsGraphicsCapture.IsSameTarget((nint)42, 100, (nint)43, 100));
     }
 
     private static RgbImage ConvertPixel(

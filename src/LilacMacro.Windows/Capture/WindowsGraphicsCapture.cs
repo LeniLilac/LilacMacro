@@ -13,10 +13,14 @@ namespace LilacMacro.Windows.Capture;
 
 internal sealed partial class WindowsGraphicsCapture : IDisposable
 {
+    internal const int MaximumCaptureAttempts = 3;
     private static readonly Guid GraphicsCaptureItemId = new("79C3F95B-31F7-4EC2-A464-632EF5D30760");
     private static readonly Guid Direct3D11Texture2DId = new("6F15AAF2-D208-4E89-9AB4-489535D34F9C");
     private readonly object _gate = new();
     private CaptureSession? _active;
+    private CaptureSurfaceFormat _surfaceFormat = CaptureSurfaceFormat.ScRgbFloat;
+    private nint _targetWindow;
+    private int _targetProcessId;
     private bool _disposed;
 
     public CaptureColorDiagnostics? LastColorDiagnostics { get; private set; }
@@ -44,6 +48,7 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
 
     public RgbImage CaptureClient(
         nint window,
+        int processId,
         ClientBounds client,
         WindowBounds windowBounds,
         WindowBounds extendedFrameBounds)
@@ -51,23 +56,39 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            for (int attempt = 0; attempt < 2; attempt++)
+            PrepareTarget(window, processId);
+            Exception? lastRecoveryError = null;
+            for (int attempt = 0; attempt < MaximumCaptureAttempts; attempt++)
             {
                 try
                 {
-                    if (_active is null || !_active.Matches(window, client, windowBounds, extendedFrameBounds))
+                    if (_active is null || !_active.Matches(
+                            window,
+                            processId,
+                            client,
+                            windowBounds,
+                            extendedFrameBounds))
                     {
                         _active?.Dispose();
-                        _active = CaptureSession.Create(window, client, windowBounds, extendedFrameBounds);
+                        _active = CaptureSession.Create(
+                            window,
+                            processId,
+                            client,
+                            windowBounds,
+                            extendedFrameBounds,
+                            _surfaceFormat);
                     }
                     RgbImage image = _active.Capture();
                     LastColorDiagnostics = _active.ColorDiagnostics;
                     return image;
                 }
-                catch (Exception error) when (ShouldRebuildCaptureSession(error, attempt))
+                catch (Exception error) when (IsRecoverableCaptureFailure(error))
                 {
+                    lastRecoveryError = error;
                     _active?.Dispose();
                     _active = null;
+                    if (!ShouldRetryCapture(error, attempt)) break;
+                    _surfaceFormat = SelectRetryFormat(_surfaceFormat, attempt);
                 }
                 catch (CaptureSurfaceChangedException)
                 {
@@ -76,12 +97,13 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
                     throw;
                 }
             }
-            throw new TimeoutException("Windows did not provide a fresh Roblox frame after rebuilding the capture session.");
+            throw CreateUnavailableException(lastRecoveryError);
         }
     }
 
     public IReadOnlyList<RgbImage> CaptureClientRegions(
         nint window,
+        int processId,
         ClientBounds client,
         WindowBounds windowBounds,
         WindowBounds extendedFrameBounds,
@@ -90,23 +112,39 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            for (int attempt = 0; attempt < 2; attempt++)
+            PrepareTarget(window, processId);
+            Exception? lastRecoveryError = null;
+            for (int attempt = 0; attempt < MaximumCaptureAttempts; attempt++)
             {
                 try
                 {
-                    if (_active is null || !_active.Matches(window, client, windowBounds, extendedFrameBounds))
+                    if (_active is null || !_active.Matches(
+                            window,
+                            processId,
+                            client,
+                            windowBounds,
+                            extendedFrameBounds))
                     {
                         _active?.Dispose();
-                        _active = CaptureSession.Create(window, client, windowBounds, extendedFrameBounds);
+                        _active = CaptureSession.Create(
+                            window,
+                            processId,
+                            client,
+                            windowBounds,
+                            extendedFrameBounds,
+                            _surfaceFormat);
                     }
                     IReadOnlyList<RgbImage> images = _active.CaptureRegions(regions);
                     LastColorDiagnostics = _active.ColorDiagnostics;
                     return images;
                 }
-                catch (Exception error) when (ShouldRebuildCaptureSession(error, attempt))
+                catch (Exception error) when (IsRecoverableCaptureFailure(error))
                 {
+                    lastRecoveryError = error;
                     _active?.Dispose();
                     _active = null;
+                    if (!ShouldRetryCapture(error, attempt)) break;
+                    _surfaceFormat = SelectRetryFormat(_surfaceFormat, attempt);
                 }
                 catch (CaptureSurfaceChangedException)
                 {
@@ -115,7 +153,7 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
                     throw;
                 }
             }
-            throw new TimeoutException("Windows did not provide a fresh Roblox frame after rebuilding the capture session.");
+            throw CreateUnavailableException(lastRecoveryError);
         }
     }
 
@@ -130,8 +168,42 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
         }
     }
 
-    internal static bool ShouldRebuildCaptureSession(Exception error, int attempt) =>
-        attempt == 0 && error is TimeoutException or ObjectDisposedException;
+    internal static bool ShouldRetryCapture(Exception error, int attempt) =>
+        attempt < MaximumCaptureAttempts - 1 &&
+        IsRecoverableCaptureFailure(error);
+
+    private static bool IsRecoverableCaptureFailure(Exception error) =>
+        error is TimeoutException or ObjectDisposedException;
+
+    internal static CaptureSurfaceFormat SelectRetryFormat(
+        CaptureSurfaceFormat current,
+        int completedAttempt) =>
+        current == CaptureSurfaceFormat.ScRgbFloat && completedAttempt >= 1
+            ? CaptureSurfaceFormat.Bgra8
+            : current;
+
+    internal static bool IsSameTarget(
+        nint currentWindow,
+        int currentProcessId,
+        nint nextWindow,
+        int nextProcessId) =>
+        currentWindow == nextWindow && currentProcessId == nextProcessId;
+
+    private void PrepareTarget(nint window, int processId)
+    {
+        if (IsSameTarget(_targetWindow, _targetProcessId, window, processId)) return;
+        _active?.Dispose();
+        _active = null;
+        _targetWindow = window;
+        _targetProcessId = processId;
+        _surfaceFormat = CaptureSurfaceFormat.ScRgbFloat;
+    }
+
+    private RobloxCaptureUnavailableException CreateUnavailableException(Exception? innerException) =>
+        new(
+            $"Windows Graphics Capture did not provide a usable Roblox frame after " +
+            $"{MaximumCaptureAttempts} bounded attempts; final format: {_surfaceFormat}.",
+            innerException ?? new TimeoutException("No capture frame was returned."));
 
     internal static ScreenRegion ResolveClientCrop(
         int surfaceWidth,
@@ -232,4 +304,10 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
         if (pointer == nint.Zero) throw new InvalidOperationException("Windows returned a frame without a Direct3D texture.");
         return new ID3D11Texture2D(pointer);
     }
+}
+
+internal enum CaptureSurfaceFormat
+{
+    ScRgbFloat,
+    Bgra8,
 }

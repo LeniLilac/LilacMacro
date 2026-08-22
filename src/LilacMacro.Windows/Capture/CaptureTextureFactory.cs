@@ -5,10 +5,14 @@ namespace LilacMacro.Windows.Capture;
 
 internal static class CaptureTextureFactory
 {
-    public static ID3D11Texture2D Create(ID3D11Device device, int width, int height)
+    public static ID3D11Texture2D Create(
+        ID3D11Device device,
+        int width,
+        int height,
+        Format format)
     {
         Texture2DDescription description = new(
-            Format.R16G16B16A16_Float,
+            format,
             checked((uint)width),
             checked((uint)height),
             1,

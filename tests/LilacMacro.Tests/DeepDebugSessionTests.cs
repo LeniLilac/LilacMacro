@@ -390,6 +390,7 @@ public sealed class DeepDebugSessionTests : IDisposable
     [InlineData("ocr_setup", "setup_failed", false)]
     [InlineData("ocr", "inference_failed", false)]
     [InlineData("local_instance", "operation_failed", false)]
+    [InlineData("window", "capture_exhausted", false)]
     [InlineData("route_optimizer_test", "trial_failed", false)]
     public void Evidence_policy_classifies_actionable_failures(
         string category,

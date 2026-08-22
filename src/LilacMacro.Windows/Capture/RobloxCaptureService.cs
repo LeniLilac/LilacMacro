@@ -19,7 +19,12 @@ public sealed class RobloxCaptureService(RobloxWindowService windows) : IDisposa
         {
             try
             {
-                RgbImage image = _capture.CaptureClient(handle, client, bounds, extended);
+                RgbImage image = _capture.CaptureClient(
+                    handle,
+                    window.ProcessId,
+                    client,
+                    bounds,
+                    extended);
                 return new CapturedPng(
                     image.Size,
                     PngEncoder.Encode(image),
@@ -63,6 +68,7 @@ public sealed class RobloxCaptureService(RobloxWindowService windows) : IDisposa
             {
                 IReadOnlyList<RgbImage> images = _capture.CaptureClientRegions(
                     handle,
+                    window.ProcessId,
                     client,
                     bounds,
                     extended,

@@ -4,6 +4,36 @@ namespace LilacMacro.Windows.Capture;
 
 internal static class CaptureSurfaceConverter
 {
+    public static RgbImage ConvertBgra8ToRgb(
+        byte[] bgra8,
+        int surfaceWidth,
+        int surfaceHeight,
+        ScreenRegion crop)
+    {
+        if (bgra8.Length != checked(surfaceWidth * surfaceHeight * 4))
+        {
+            throw new ArgumentException("The BGRA8 buffer has an unexpected length.", nameof(bgra8));
+        }
+        if (crop.X < 0 || crop.Y < 0 || crop.Right > surfaceWidth || crop.Bottom > surfaceHeight)
+        {
+            throw new ArgumentOutOfRangeException(nameof(crop), "The client crop must fit inside the captured surface.");
+        }
+
+        byte[] rgb = new byte[checked(crop.Width * crop.Height * 3)];
+        int target = 0;
+        for (int y = crop.Y; y < crop.Bottom; y++)
+        {
+            int source = checked((y * surfaceWidth + crop.X) * 4);
+            for (int x = 0; x < crop.Width; x++, source += 4, target += 3)
+            {
+                rgb[target] = bgra8[source + 2];
+                rgb[target + 1] = bgra8[source + 1];
+                rgb[target + 2] = bgra8[source];
+            }
+        }
+        return new RgbImage(crop.Width, crop.Height, rgb, takeOwnership: true);
+    }
+
     public static RgbImage ConvertScRgbRgba16ToRgb(
         byte[] rgba16,
         int surfaceWidth,

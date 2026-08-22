@@ -17,6 +17,7 @@ internal sealed partial class WindowsGraphicsCapture
     {
         private readonly FrameArrivalGate _arrival = new();
         private readonly nint _window;
+        private readonly int _processId;
         private readonly ClientBounds _client;
         private readonly WindowBounds _windowBounds;
         private readonly WindowBounds _extendedBounds;
@@ -26,6 +27,7 @@ internal sealed partial class WindowsGraphicsCapture
         private readonly GraphicsCaptureItem _item;
         private readonly Direct3D11CaptureFramePool _framePool;
         private readonly GraphicsCaptureSession _captureSession;
+        private readonly CaptureSurfaceFormat _surfaceFormat;
         private readonly ScreenRegion _clientCrop;
         private readonly int _surfaceWidth;
         private readonly int _surfaceHeight;
@@ -36,6 +38,7 @@ internal sealed partial class WindowsGraphicsCapture
 
         private CaptureSession(
             nint window,
+            int processId,
             ClientBounds client,
             WindowBounds windowBounds,
             WindowBounds extendedBounds,
@@ -45,12 +48,14 @@ internal sealed partial class WindowsGraphicsCapture
             GraphicsCaptureItem item,
             Direct3D11CaptureFramePool framePool,
             GraphicsCaptureSession captureSession,
+            CaptureSurfaceFormat surfaceFormat,
             ScreenRegion clientCrop,
             int surfaceWidth,
             int surfaceHeight,
             CaptureColorContext colorContext)
         {
             _window = window;
+            _processId = processId;
             _client = client;
             _windowBounds = windowBounds;
             _extendedBounds = extendedBounds;
@@ -60,6 +65,7 @@ internal sealed partial class WindowsGraphicsCapture
             _item = item;
             _framePool = framePool;
             _captureSession = captureSession;
+            _surfaceFormat = surfaceFormat;
             _clientCrop = clientCrop;
             _surfaceWidth = surfaceWidth;
             _surfaceHeight = surfaceHeight;
@@ -71,9 +77,11 @@ internal sealed partial class WindowsGraphicsCapture
 
         public static CaptureSession Create(
             nint window,
+            int processId,
             ClientBounds client,
             WindowBounds windowBounds,
-            WindowBounds extendedBounds)
+            WindowBounds extendedBounds,
+            CaptureSurfaceFormat surfaceFormat)
         {
             if (!GraphicsCaptureSession.IsSupported())
             {
@@ -87,13 +95,14 @@ internal sealed partial class WindowsGraphicsCapture
             ScreenRegion crop = ResolveClientCrop(size.Width, size.Height, client, windowBounds, extendedBounds);
             Direct3D11CaptureFramePool pool = Direct3D11CaptureFramePool.CreateFreeThreaded(
                 winRtDevice,
-                DirectXPixelFormat.R16G16B16A16Float,
+                ToDirectXPixelFormat(surfaceFormat),
                 2,
                 size);
             GraphicsCaptureSession session = pool.CreateCaptureSession(item);
             session.IsCursorCaptureEnabled = false;
             return new CaptureSession(
                 window,
+                processId,
                 client,
                 windowBounds,
                 extendedBounds,
@@ -103,6 +112,7 @@ internal sealed partial class WindowsGraphicsCapture
                 item,
                 pool,
                 session,
+                surfaceFormat,
                 crop,
                 size.Width,
                 size.Height,
@@ -111,11 +121,13 @@ internal sealed partial class WindowsGraphicsCapture
 
         public bool Matches(
             nint window,
+            int processId,
             ClientBounds client,
             WindowBounds windowBounds,
             WindowBounds extendedBounds) =>
             !_disposed &&
             _window == window &&
+            _processId == processId &&
             client.Width == _client.Width &&
             client.Height == _client.Height &&
             client.X - extendedBounds.X == _client.X - _extendedBounds.X &&
@@ -125,7 +137,17 @@ internal sealed partial class WindowsGraphicsCapture
             extendedBounds.Width == _extendedBounds.Width &&
             extendedBounds.Height == _extendedBounds.Height;
 
-        public CaptureColorDiagnostics ColorDiagnostics => _colorContext.ToDiagnostics();
+        public CaptureColorDiagnostics ColorDiagnostics => _surfaceFormat == CaptureSurfaceFormat.ScRgbFloat
+            ? _colorContext.ToDiagnostics()
+            : new CaptureColorDiagnostics(
+                "B8G8R8A8UIntNormalized",
+                _colorContext.OutputColorSpace,
+                _colorContext.AdvancedColorActive,
+                _colorContext.SdrWhiteLevelNits,
+                _colorContext.DisplayMaxLuminanceNits,
+                1f,
+                "bgra8-compatibility-fallback",
+                _colorContext.UsedSdrWhiteFallback);
 
         public RgbImage Capture()
         {
@@ -134,12 +156,11 @@ internal sealed partial class WindowsGraphicsCapture
             using ID3D11Texture2D source = GetTexture(frame.Surface);
             byte[] pixels = ReadTextureRegionPixels(source, _clientCrop);
             RefreshColorContextIfNeeded();
-            return CaptureSurfaceConverter.ConvertScRgbRgba16ToRgb(
+            return ConvertSurface(
                 pixels,
                 _client.Width,
                 _client.Height,
-                new ScreenRegion(0, 0, _client.Width, _client.Height),
-                _colorContext);
+                new ScreenRegion(0, 0, _client.Width, _client.Height));
         }
 
         public IReadOnlyList<RgbImage> CaptureRegions(IReadOnlyList<PixelRect> regions)
@@ -154,12 +175,11 @@ internal sealed partial class WindowsGraphicsCapture
             RgbImage[] images = new RgbImage[layout.Entries.Count];
             foreach (CaptureAtlasEntry entry in layout.Entries)
             {
-                images[entry.RequestIndex] = CaptureSurfaceConverter.ConvertScRgbRgba16ToRgb(
+                images[entry.RequestIndex] = ConvertSurface(
                     pixels,
                     layout.Width,
                     layout.Height,
-                    entry.Atlas,
-                    _colorContext);
+                    entry.Atlas);
             }
             return images;
         }
@@ -214,7 +234,11 @@ internal sealed partial class WindowsGraphicsCapture
 
         private byte[] ReadTextureRegionPixels(ID3D11Texture2D source, ScreenRegion region)
         {
-            using ID3D11Texture2D compact = CaptureTextureFactory.Create(_device, region.Width, region.Height);
+            using ID3D11Texture2D compact = CaptureTextureFactory.Create(
+                _device,
+                region.Width,
+                region.Height,
+                ToDxgiFormat(_surfaceFormat));
             Box sourceBox = new(region.X, region.Y, 0, region.Right, region.Bottom, 1);
             _context.CopySubresourceRegion(compact, 0, 0, 0, 0, source, 0, sourceBox);
             return ReadTexturePixels(compact, region.Width, region.Height);
@@ -222,7 +246,11 @@ internal sealed partial class WindowsGraphicsCapture
 
         private byte[] ReadTextureAtlasPixels(ID3D11Texture2D source, CaptureAtlasLayout layout)
         {
-            using ID3D11Texture2D atlas = CaptureTextureFactory.Create(_device, layout.Width, layout.Height);
+            using ID3D11Texture2D atlas = CaptureTextureFactory.Create(
+                _device,
+                layout.Width,
+                layout.Height,
+                ToDxgiFormat(_surfaceFormat));
             foreach (CaptureAtlasEntry entry in layout.Entries)
             {
                 ScreenRegion sourceRegion = new(
@@ -253,7 +281,8 @@ internal sealed partial class WindowsGraphicsCapture
         private byte[] ReadTexturePixels(ID3D11Texture2D source, int width, int height)
         {
             Texture2DDescription description = source.Description;
-            if (description.Format != Format.R16G16B16A16_Float ||
+            Format expectedFormat = ToDxgiFormat(_surfaceFormat);
+            if (description.Format != expectedFormat ||
                 description.Width != width ||
                 description.Height != height)
             {
@@ -278,7 +307,7 @@ internal sealed partial class WindowsGraphicsCapture
             MappedSubresource mapped = _context.Map(staging, 0, MapMode.Read);
             try
             {
-                int rowBytes = checked(width * 8);
+                int rowBytes = checked(width * BytesPerPixel(_surfaceFormat));
                 byte[] pixels = new byte[checked(rowBytes * height)];
                 for (int row = 0; row < height; row++)
                 {
@@ -292,5 +321,44 @@ internal sealed partial class WindowsGraphicsCapture
                 _context.Unmap(staging, 0);
             }
         }
+
+        private RgbImage ConvertSurface(
+            byte[] pixels,
+            int surfaceWidth,
+            int surfaceHeight,
+            ScreenRegion crop) =>
+            _surfaceFormat == CaptureSurfaceFormat.ScRgbFloat
+                ? CaptureSurfaceConverter.ConvertScRgbRgba16ToRgb(
+                    pixels,
+                    surfaceWidth,
+                    surfaceHeight,
+                    crop,
+                    _colorContext)
+                : CaptureSurfaceConverter.ConvertBgra8ToRgb(
+                    pixels,
+                    surfaceWidth,
+                    surfaceHeight,
+                    crop);
+
+        private static DirectXPixelFormat ToDirectXPixelFormat(CaptureSurfaceFormat format) => format switch
+        {
+            CaptureSurfaceFormat.ScRgbFloat => DirectXPixelFormat.R16G16B16A16Float,
+            CaptureSurfaceFormat.Bgra8 => DirectXPixelFormat.B8G8R8A8UIntNormalized,
+            _ => throw new ArgumentOutOfRangeException(nameof(format)),
+        };
+
+        private static Format ToDxgiFormat(CaptureSurfaceFormat format) => format switch
+        {
+            CaptureSurfaceFormat.ScRgbFloat => Format.R16G16B16A16_Float,
+            CaptureSurfaceFormat.Bgra8 => Format.B8G8R8A8_UNorm,
+            _ => throw new ArgumentOutOfRangeException(nameof(format)),
+        };
+
+        private static int BytesPerPixel(CaptureSurfaceFormat format) => format switch
+        {
+            CaptureSurfaceFormat.ScRgbFloat => 8,
+            CaptureSurfaceFormat.Bgra8 => 4,
+            _ => throw new ArgumentOutOfRangeException(nameof(format)),
+        };
     }
 }
