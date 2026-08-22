@@ -15,6 +15,7 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
     private readonly MacroOwnerState _ownerState;
     private readonly DiagnosticInstallationStore _installation;
     private readonly IDiagnosticUploadTransport _transport;
+    private readonly string _operatingSystemVersion;
     private readonly SemaphoreSlim _uploadGate = new(1, 1);
     private readonly object _choiceGate = new();
     private readonly List<CancellationTokenSource> _retiredCancellations = [];
@@ -27,12 +28,16 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
         DeepDebugSessionService deepDebug,
         MacroOwnerState ownerState,
         DiagnosticInstallationStore installation,
-        IDiagnosticUploadTransport transport)
+        IDiagnosticUploadTransport transport,
+        string? operatingSystemVersion = null)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
         _installation = installation;
         _transport = transport;
+        _operatingSystemVersion = string.IsNullOrWhiteSpace(operatingSystemVersion)
+            ? Environment.OSVersion.VersionString
+            : operatingSystemVersion;
         _deepDebug.AutomaticReportArchiveSaved += DeepDebug_OnArchiveSaved;
         _deepDebug.OptionsChanged += DeepDebug_OnOptionsChanged;
         _ownerState.PrivacyOptionsChanged += OwnerState_OnPrivacyOptionsChanged;
@@ -128,6 +133,7 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
                 DiagnosticArchiveKind.DeepDebug,
                 BuildVersion(),
                 installId,
+                _operatingSystemVersion,
                 progress: null,
                 consent.Token).ConfigureAwait(false);
         }

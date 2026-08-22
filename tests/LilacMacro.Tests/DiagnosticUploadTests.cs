@@ -70,6 +70,8 @@ public sealed class DiagnosticUploadTests
                     Assert.Equal("deep-debug-test.zip", body.RootElement.GetProperty("fileName").GetString());
                     Assert.Equal(sha, body.RootElement.GetProperty("sha256").GetString());
                     Assert.True(body.RootElement.GetProperty("explicitConsent").GetBoolean());
+                    Assert.Equal("Microsoft Windows NT 10.0.19045.6456",
+                        body.RootElement.GetProperty("osVersion").GetString());
                     return JsonResponse(HttpStatusCode.Created, new
                     {
                         id = uploadId,
@@ -112,7 +114,8 @@ public sealed class DiagnosticUploadTests
                 path,
                 DiagnosticArchiveKind.DeepDebug,
                 "1.2.3",
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                "Microsoft Windows NT 10.0.19045.6456");
 
             Assert.Equal(uploadId, result.UploadId);
             Assert.Equal("Verifying", result.Status);
@@ -165,7 +168,8 @@ public sealed class DiagnosticUploadTests
                     path,
                     DiagnosticArchiveKind.DeepDebug,
                     "1.2.3",
-                    Guid.NewGuid()));
+                    Guid.NewGuid(),
+                    "Microsoft Windows NT 10.0.19045.6456"));
 
             Assert.Contains("completion state", failure.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -250,7 +254,8 @@ public sealed class DiagnosticUploadTests
                 path,
                 DiagnosticArchiveKind.DeepDebug,
                 "1.2.3",
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                "Microsoft Windows NT 10.0.19045.6456");
 
             Assert.Equal(uploadId, result.UploadId);
             Assert.Equal(2, storageHandler.Requests.Count);

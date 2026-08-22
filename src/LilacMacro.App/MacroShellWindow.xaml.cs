@@ -16,6 +16,7 @@ using LilacMacro.Core.Services;
 using LilacMacro.Core.Updates;
 using LilacMacro.Runtime.Services;
 using LilacMacro.Windows;
+using LilacMacro.Windows.SystemInformation;
 
 namespace LilacMacro.App;
 
@@ -70,7 +71,11 @@ public partial class MacroShellWindow : Window
             _telemetryTransport,
             deviceContext: WindowsTelemetryDeviceContextProvider.Read());
         _automaticReports = new AutomaticDiagnosticReportService(
-            deepDebug, ownerState, installation, _diagnosticUploads);
+            deepDebug,
+            ownerState,
+            installation,
+            _diagnosticUploads,
+            WindowsVersionDescription.Read());
         _macroPage = new MacroDashboardPage(deepDebug, _ownerState, _control);
         _macroPage.RunningChanged += MacroPage_OnRunningChanged;
         _setupPage = new PlacementSetupPage(deepDebug, _ownerState);

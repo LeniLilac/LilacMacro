@@ -78,12 +78,19 @@ internal sealed class ExpeditionNodeEvidenceService(
         }
 
         PixelPoint clientMarker = new(BarBand.X + marker.Value.X, BarBand.Y + marker.Value.Y);
+        IReadOnlyList<PixelPoint> probes = HoverProbePoints(
+            clientMarker,
+            _learnedMarkerToHoverOffsetX);
         (ExpeditionNodeType Node, PixelPoint Hover)? calibrated =
-            await ObserveTooltipAsync(clientMarker, device, cancellationToken).ConfigureAwait(false);
+            await ObserveTooltipAsync(probes, device, cancellationToken).ConfigureAwait(false);
         ExpeditionNodeType? semantic = calibrated?.Node;
         if (semantic is null)
         {
-            status?.Invoke("EXPEDITION NODE TOOLTIP HOVER SEARCH MISS");
+            status?.Invoke(
+                "EXPEDITION NODE TOOLTIP HOVER SEARCH MISS | " +
+                $"MARKER {clientMarker.X},{clientMarker.Y} | " +
+                $"CACHED OFFSET {_learnedMarkerToHoverOffsetX?.ToString("+#;-#;0") ?? "NONE"} | " +
+                $"PROBES {probes.Count} | RANGE {probes.Min(point => point.X)}-{probes.Max(point => point.X)}");
             return null;
         }
         _learnedMarkerToHoverOffsetX = calibrated!.Value.Hover.X - clientMarker.X;
@@ -142,14 +149,14 @@ internal sealed class ExpeditionNodeEvidenceService(
     }
 
     private async Task<(ExpeditionNodeType Node, PixelPoint Hover)?> ObserveTooltipAsync(
-        PixelPoint marker,
+        IReadOnlyList<PixelPoint> probes,
         string device,
         CancellationToken cancellationToken)
     {
         bool pointerMoved = false;
         try
         {
-            foreach (PixelPoint probe in HoverProbePoints(marker, _learnedMarkerToHoverOffsetX))
+            foreach (PixelPoint probe in probes)
             {
                 await workspace.HoverRobloxAsync(
                     DebugWorkflowCatalog.ClientSize, probe, cancellationToken).ConfigureAwait(false);
@@ -177,28 +184,32 @@ internal sealed class ExpeditionNodeEvidenceService(
     internal static IReadOnlyList<PixelPoint> HoverProbePoints(PixelPoint marker, int? learnedOffsetX)
     {
         int y = HoverLine.Y + HoverLine.Height / 2;
+        List<PixelPoint> probes = [];
         if (learnedOffsetX is int cached)
         {
             int center = Math.Clamp(marker.X + cached, HoverLine.X, HoverLine.Right - 1);
-            List<PixelPoint> local = [new(center, y)];
+            probes.Add(new(center, y));
             for (int distance = LocalHoverSweepStep;
                  distance <= LocalHoverSweepRadius;
                  distance += LocalHoverSweepStep)
             {
                 int right = Math.Min(HoverLine.Right - 1, center + distance);
                 int left = Math.Max(HoverLine.X, center - distance);
-                if (right != center && !local.Any(point => point.X == right)) local.Add(new(right, y));
-                if (left != center && !local.Any(point => point.X == left)) local.Add(new(left, y));
+                AddUniqueProbe(probes, right, y);
+                AddUniqueProbe(probes, left, y);
             }
-            return local;
         }
 
-        int last = Math.Min(HoverLine.Right - 1, marker.X + LocalHoverSweepRadius);
-        List<PixelPoint> initial = [];
+        int last = HoverLine.Right - 1;
         for (int x = HoverLine.X; x <= last; x += InitialHoverSweepStep)
-            initial.Add(new(x, y));
-        if (initial.Count == 0 || initial[^1].X != last) initial.Add(new(last, y));
-        return initial;
+            AddUniqueProbe(probes, x, y);
+        AddUniqueProbe(probes, last, y);
+        return probes;
+    }
+
+    private static void AddUniqueProbe(List<PixelPoint> probes, int x, int y)
+    {
+        if (!probes.Any(point => point.X == x)) probes.Add(new PixelPoint(x, y));
     }
 
     internal static ExpeditionNodeType? ParseNode(IEnumerable<string> text)

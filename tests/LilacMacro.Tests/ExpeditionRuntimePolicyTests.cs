@@ -150,14 +150,14 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
-    public void FirstNodeCalibrationSweepsDatasetHoverLineFromTheLeft()
+    public void FirstNodeCalibrationSweepsTheCompleteDatasetHoverLineFromTheLeft()
     {
         PixelPoint marker = new(507, 74);
         IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(marker, null);
 
         Assert.Equal(ExpeditionNodeEvidenceService.HoverLine.X, probes[0].X);
         Assert.All(probes, point => Assert.Equal(74, point.Y));
-        Assert.True(probes[^1].X >= marker.X);
+        Assert.Equal(ExpeditionNodeEvidenceService.HoverLine.Right - 1, probes[^1].X);
         Assert.All(probes, point => Assert.InRange(
             point.X,
             ExpeditionNodeEvidenceService.HoverLine.X,
@@ -175,14 +175,28 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
-    public void LearnedNodeHoverUsesCachedOffsetThenBoundedLocalSearch()
+    public void LearnedNodeHoverUsesCachedOffsetThenFallsBackToTheCompleteLine()
     {
         PixelPoint marker = new(650, 74);
         IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(marker, 12);
 
         Assert.Equal(new PixelPoint(662, 74), probes[0]);
-        Assert.All(probes, point => Assert.InRange(point.X, 630, 694));
+        Assert.All(probes.Take(17), point => Assert.InRange(point.X, 630, 694));
+        Assert.Contains(new PixelPoint(300, 74), probes);
+        Assert.Contains(new PixelPoint(ExpeditionNodeEvidenceService.HoverLine.Right - 1, 74), probes);
         Assert.Equal(probes.Count, probes.Distinct().Count());
+    }
+
+    [Fact]
+    public void LearnedNodeHoverFallbackCoversAnIconFarBeyondAMisidentifiedBarEndpoint()
+    {
+        PixelPoint falseBarEndpoint = new(420, 74);
+        IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(
+            falseBarEndpoint,
+            1);
+
+        Assert.DoesNotContain(new PixelPoint(516, 74), probes.Take(17));
+        Assert.Contains(new PixelPoint(516, 74), probes);
     }
 
     [Fact]

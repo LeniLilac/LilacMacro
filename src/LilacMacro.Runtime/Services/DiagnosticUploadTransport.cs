@@ -16,6 +16,7 @@ public interface IDiagnosticUploadTransport
         DiagnosticArchiveKind kind,
         string appVersion,
         Guid installId,
+        string operatingSystemVersion,
         IProgress<DiagnosticUploadProgress>? progress = null,
         CancellationToken cancellationToken = default);
 }
@@ -50,6 +51,7 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
         DiagnosticArchiveKind kind,
         string appVersion,
         Guid installId,
+        string operatingSystemVersion,
         IProgress<DiagnosticUploadProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
@@ -59,6 +61,12 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
             parsedVersion.Major < 0 || parsedVersion.Build < 0)
         {
             throw new InvalidDataException("Application version is invalid.");
+        }
+        string normalizedOperatingSystemVersion = operatingSystemVersion.Trim();
+        if (normalizedOperatingSystemVersion.Length is 0 or > 160 ||
+            normalizedOperatingSystemVersion.Any(char.IsControl))
+        {
+            throw new InvalidDataException("Operating system version is invalid.");
         }
 
         FileInfo archive = new(archivePath);
@@ -85,7 +93,8 @@ public sealed class DiagnosticUploadTransport : IDiagnosticUploadTransport, IDis
                 sha256,
                 DiagnosticUploadPolicy.KindValue(kind),
                 true,
-                parsedVersion.ToString(3)),
+                parsedVersion.ToString(3),
+                normalizedOperatingSystemVersion),
             null,
             cancellationToken).ConfigureAwait(false);
         ValidateGrant(grant);

@@ -695,6 +695,7 @@ public sealed class PrivacyTelemetryTests
             DiagnosticArchiveKind kind,
             string appVersion,
             Guid installId,
+            string operatingSystemVersion,
             IProgress<DiagnosticUploadProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
@@ -751,6 +752,7 @@ public sealed class PrivacyTelemetryTests
             DiagnosticArchiveKind kind,
             string appVersion,
             Guid installId,
+            string operatingSystemVersion,
             IProgress<DiagnosticUploadProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {

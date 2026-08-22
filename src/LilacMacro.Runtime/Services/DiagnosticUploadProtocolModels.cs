@@ -9,7 +9,8 @@ internal sealed record CreateUploadRequest(
     [property: JsonPropertyName("sha256")] string Sha256,
     [property: JsonPropertyName("kind")] string Kind,
     [property: JsonPropertyName("explicitConsent")] bool ExplicitConsent,
-    [property: JsonPropertyName("appVersion")] string AppVersion);
+    [property: JsonPropertyName("appVersion")] string AppVersion,
+    [property: JsonPropertyName("osVersion")] string OsVersion);
 
 internal sealed record CreateUploadResponse(
     [property: JsonPropertyName("id")] Guid Id,
