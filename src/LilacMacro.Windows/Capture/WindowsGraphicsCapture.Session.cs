@@ -125,6 +125,8 @@ internal sealed partial class WindowsGraphicsCapture
             extendedBounds.Width == _extendedBounds.Width &&
             extendedBounds.Height == _extendedBounds.Height;
 
+        public CaptureColorDiagnostics ColorDiagnostics => _colorContext.ToDiagnostics();
+
         public RgbImage Capture()
         {
             ObjectDisposedException.ThrowIf(_disposed, this);

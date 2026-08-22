@@ -32,7 +32,14 @@ internal sealed class RobloxGlobalSettingsStore(string? settingsPath = null)
                 throw new InvalidDataException("The staged Roblox settings did not retain the required values.");
 
             if (File.Exists(backupPath)) File.Delete(backupPath);
-            File.Replace(temporaryPath, _settingsPath, backupPath, ignoreMetadataErrors: false);
+            RunSettingsMutation(
+                _settingsPath,
+                "clear-read-only",
+                () => ClearReadOnlyAttribute(_settingsPath));
+            RunSettingsMutation(
+                _settingsPath,
+                "replace",
+                () => File.Replace(temporaryPath, _settingsPath, backupPath, ignoreMetadataErrors: false));
 
             XDocument persisted = await ReadAsync(_settingsPath, cancellationToken).ConfigureAwait(false);
             if (RobloxGlobalSettingsPolicy.Normalize(persisted).Changed)
@@ -52,6 +59,22 @@ internal sealed class RobloxGlobalSettingsStore(string? settingsPath = null)
     }
 
     private string BackupPath => $"{_settingsPath}.lilacmacro-backup";
+
+    private static void ClearReadOnlyAttribute(string path)
+    {
+        FileAttributes attributes = File.GetAttributes(path);
+        if ((attributes & FileAttributes.ReadOnly) == 0) return;
+        File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+    }
+
+    private static void RunSettingsMutation(string path, string operation, Action action)
+    {
+        try { action(); }
+        catch (UnauthorizedAccessException error)
+        {
+            throw RobloxSettingsAccessException.Create(path, operation, error);
+        }
+    }
 
     private void RecoverInterruptedReplacement()
     {
@@ -139,5 +162,29 @@ internal sealed class RobloxGlobalSettingsStore(string? settingsPath = null)
             throw new FileNotFoundException("Roblox settings are missing. Launch and close Roblox once, then start the macro again.", path);
         if (file.Length is <= 0 or > MaximumSettingsBytes)
             throw new InvalidDataException("Roblox settings have an invalid size.");
+    }
+}
+
+public sealed class RobloxSettingsAccessException : IOException
+{
+    private RobloxSettingsAccessException(string message, Exception innerException)
+        : base(message, innerException) { }
+
+    internal static RobloxSettingsAccessException Create(
+        string path,
+        string operation,
+        UnauthorizedAccessException error)
+    {
+        string attributes;
+        try { attributes = File.GetAttributes(path).ToString(); }
+        catch (Exception attributeError) when (attributeError is IOException or UnauthorizedAccessException)
+        {
+            attributes = "unavailable";
+        }
+        return new RobloxSettingsAccessException(
+            $"LilacMacro cannot update Roblox settings (operation: {operation}, attributes: {attributes}, " +
+            $"HRESULT: 0x{error.HResult:X8}). " +
+            "Close Roblox and allow this Windows account to modify its Roblox settings file, then try again.",
+            error);
     }
 }

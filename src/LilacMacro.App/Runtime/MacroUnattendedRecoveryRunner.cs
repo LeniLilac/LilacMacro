@@ -1,5 +1,6 @@
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Views;
+using LilacMacro.Windows;
 
 namespace LilacMacro.App.Runtime;
 
@@ -62,6 +63,10 @@ internal sealed class MacroUnattendedRecoveryRunner(
                 return;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (RobloxSettingsAccessException)
             {
                 throw;
             }

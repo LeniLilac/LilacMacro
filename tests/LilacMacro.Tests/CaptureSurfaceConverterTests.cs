@@ -1,5 +1,6 @@
 using LilacMacro.Core.Imaging;
 using LilacMacro.Windows.Capture;
+using Vortice.DXGI;
 
 namespace LilacMacro.Tests;
 
@@ -64,6 +65,84 @@ public sealed class CaptureSurfaceConverterTests
     public void DisplayConfigInterop_UsesWindowsSdkStructureSizes()
     {
         Assert.Equal([20, 84, 24, 72, 64], DisplayConfigQuery.InteropLayoutSizes);
+    }
+
+    [Fact]
+    public void ElevatedSdrWhiteActivatesReferenceWhiteCorrectionEvenWhenOutputReportsSdr()
+    {
+        CaptureColorContext context = DisplayColorContextProvider.FromOutputObservation(
+            ColorSpaceType.RgbFullG22NoneP709,
+            160f,
+            1000f);
+
+        Assert.True(context.AdvancedColorActive);
+        Assert.Equal(0.5f, context.ScRgbReferenceScale);
+        Assert.Equal("elevated-sdr-white", context.Detection);
+        Assert.False(context.UsedSdrWhiteFallback);
+    }
+
+    [Fact]
+    public void AdvancedOutputWithoutWhiteMeasurementUsesWindowsReferenceFallback()
+    {
+        CaptureColorContext context = DisplayColorContextProvider.FromOutputObservation(
+            ColorSpaceType.RgbFullG2084NoneP2020,
+            null,
+            1000f);
+
+        Assert.True(context.AdvancedColorActive);
+        Assert.Equal(CaptureColorContext.AdvancedColorFallbackWhiteNits, context.SdrWhiteLevelNits);
+        Assert.True(context.UsedSdrWhiteFallback);
+        Assert.Equal("advanced-color-space+fallback-white", context.Detection);
+    }
+
+    [Fact]
+    public void SdrOutputWithReferenceWhiteRemainsUnscaled()
+    {
+        CaptureColorContext context = DisplayColorContextProvider.FromOutputObservation(
+            ColorSpaceType.RgbFullG22NoneP709,
+            80f,
+            80f);
+
+        Assert.False(context.AdvancedColorActive);
+        Assert.Equal(1f, context.ScRgbReferenceScale);
+        Assert.Equal("sdr-color-space", context.Detection);
+    }
+
+    [Fact]
+    public void FrameDiagnosticsSummarizeBrightnessWithoutRetainingPixels()
+    {
+        RgbImage image = new(2, 2,
+        [
+            255, 255, 255,
+            255, 0, 0,
+            0, 0, 0,
+            128, 128, 128,
+        ], takeOwnership: true);
+
+        CaptureFrameDiagnostics diagnostics = RobloxCaptureService.AnalyzeFrame(image);
+
+        Assert.Equal(25, diagnostics.NearWhitePixelPercent);
+        Assert.Equal(50, diagnostics.ClippedPixelPercent);
+        Assert.Equal(25, diagnostics.DarkPixelPercent);
+        Assert.Equal(1, diagnostics.P95SrgbLuminance);
+        Assert.InRange(diagnostics.MeanSrgbLuminance, 0.42, 0.43);
+    }
+
+    [Theory]
+    [InlineData(true, 0, true)]
+    [InlineData(false, 0, true)]
+    [InlineData(true, 1, false)]
+    [InlineData(false, 1, false)]
+    public void CaptureSessionRecoveryIsBoundedToOneRetry(bool disposed, int attempt, bool expected)
+    {
+        Exception error = disposed
+            ? new ObjectDisposedException("capture")
+            : new TimeoutException("capture");
+
+        Assert.Equal(expected, WindowsGraphicsCapture.ShouldRebuildCaptureSession(error, attempt));
+        Assert.False(WindowsGraphicsCapture.ShouldRebuildCaptureSession(
+            new InvalidOperationException("unrelated"),
+            attempt));
     }
 
     private static RgbImage ConvertPixel(

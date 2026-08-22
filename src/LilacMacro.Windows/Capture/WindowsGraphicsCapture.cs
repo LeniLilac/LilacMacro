@@ -19,6 +19,8 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
     private CaptureSession? _active;
     private bool _disposed;
 
+    public CaptureColorDiagnostics? LastColorDiagnostics { get; private set; }
+
     [ComImport]
     [Guid("3628E81B-3CAC-4C60-B7F4-23CE0E0C3356")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -58,9 +60,11 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
                         _active?.Dispose();
                         _active = CaptureSession.Create(window, client, windowBounds, extendedFrameBounds);
                     }
-                    return _active.Capture();
+                    RgbImage image = _active.Capture();
+                    LastColorDiagnostics = _active.ColorDiagnostics;
+                    return image;
                 }
-                catch (TimeoutException) when (attempt == 0)
+                catch (Exception error) when (ShouldRebuildCaptureSession(error, attempt))
                 {
                     _active?.Dispose();
                     _active = null;
@@ -95,9 +99,11 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
                         _active?.Dispose();
                         _active = CaptureSession.Create(window, client, windowBounds, extendedFrameBounds);
                     }
-                    return _active.CaptureRegions(regions);
+                    IReadOnlyList<RgbImage> images = _active.CaptureRegions(regions);
+                    LastColorDiagnostics = _active.ColorDiagnostics;
+                    return images;
                 }
-                catch (TimeoutException) when (attempt == 0)
+                catch (Exception error) when (ShouldRebuildCaptureSession(error, attempt))
                 {
                     _active?.Dispose();
                     _active = null;
@@ -123,6 +129,9 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
             _active = null;
         }
     }
+
+    internal static bool ShouldRebuildCaptureSession(Exception error, int attempt) =>
+        attempt == 0 && error is TimeoutException or ObjectDisposedException;
 
     internal static ScreenRegion ResolveClientCrop(
         int surfaceWidth,

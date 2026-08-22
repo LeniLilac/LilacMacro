@@ -133,11 +133,43 @@ public sealed class RobloxGlobalSettingsTests
         Assert.False(RobloxClientLifecycleService.IsSupportedClient("RobloxStudioBeta"));
     }
 
+    [Theory]
+    [InlineData(808 * 611, 0)]
+    [InlineData(1, 0)]
+    [InlineData(0, 1)]
+    public void WindowSelectionPrefersCapturableClientArea(long clientArea, int expected) =>
+        Assert.Equal(expected, RobloxWindowService.CapturablePreference(clientArea));
+
     [Fact]
     public void Lifecycle_uses_only_bounded_process_tree_termination()
     {
         Assert.Equal(2, RobloxClientLifecycleService.ForcedCloseAttemptCount);
         Assert.Equal(TimeSpan.FromSeconds(1), RobloxClientLifecycleService.ForcedRespawnSettleTime);
+    }
+
+    [Fact]
+    public void SettingsAccessErrorIncludesActionableMetadataWithoutDisclosingThePath()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"private-{Guid.NewGuid():N}.xml");
+        File.WriteAllText(path, "test");
+        try
+        {
+            UnauthorizedAccessException access = new("denied");
+
+            RobloxSettingsAccessException error = RobloxSettingsAccessException.Create(
+                path,
+                "replace",
+                access);
+
+            Assert.Contains("operation: replace", error.Message);
+            Assert.Contains("attributes:", error.Message);
+            Assert.Contains($"HRESULT: 0x{access.HResult:X8}", error.Message);
+            Assert.DoesNotContain(path, error.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     private static string Value(XDocument document, string name) => document.Descendants()

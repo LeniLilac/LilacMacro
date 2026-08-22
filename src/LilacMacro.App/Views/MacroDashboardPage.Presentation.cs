@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using LilacMacro.App.Notifications;
+using LilacMacro.App.Runtime;
 
 namespace LilacMacro.App.Views;
 
@@ -27,7 +29,10 @@ public partial class MacroDashboardPage
 
     private void RefreshRunState(bool running)
     {
-        StartButton.IsEnabled = !running && !_runStarting && !_ocrSetupInProgress;
+        StartButton.IsEnabled = !running &&
+            !_runStarting &&
+            !_ocrSetupInProgress &&
+            MacroPlanPreflight.HasTasks(PlanCombo.SelectedItem as PlanPrototype);
         StopButton.IsEnabled = running;
         PlanCombo.IsEnabled = !running;
         StartButtonText.Text = _ocrReady
@@ -44,12 +49,45 @@ public partial class MacroDashboardPage
 
     private void UpdateStartButtonState()
     {
-        StartButton.IsEnabled = !_runStarting && _runTask is null && !_ocrSetupInProgress;
+        StartButton.IsEnabled = !_runStarting &&
+            _runTask is null &&
+            !_ocrSetupInProgress &&
+            MacroPlanPreflight.HasTasks(PlanCombo.SelectedItem as PlanPrototype);
         StartButtonText.Text = _ocrReady
             ? "START"
             : _ocrSetupInProgress
                 ? "SETTING UP OCR"
                 : _ocrSetupFailed ? "RETRY OCR SETUP" : "SET UP OCR";
+    }
+
+    private bool CanStartPlan(PlanPrototype plan)
+    {
+        if (MacroPlanPreflight.HasTasks(plan)) return true;
+        AppToastService.ShowError("PLAN HAS NO TASKS", "Add at least one task before starting the Macro.");
+        return false;
+    }
+
+    private void PlanCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
+    {
+        UpdateStartButtonState();
+        if (PlanCombo.SelectedItem is not PlanPrototype plan || UpcomingTasksList is null) return;
+        _ownerState.SelectPlan(plan);
+        _currentTask = null;
+        RefreshUpcomingTasks(plan);
+    }
+
+    private void OwnerState_OnSelectedPlanChanged(object? sender, EventArgs eventArgs)
+    {
+        if (!ReferenceEquals(PlanCombo.SelectedItem, _ownerState.SelectedPlan))
+            PlanCombo.SelectedItem = _ownerState.SelectedPlan;
+    }
+
+    private void OwnerState_OnPlansChanged(object? sender, EventArgs eventArgs)
+    {
+        if (PlanCombo.SelectedItem is not PlanPrototype plan) return;
+        PlanCombo.Items.Refresh();
+        PlanCombo.SelectedItem = null;
+        PlanCombo.SelectedItem = plan;
     }
 
     private void RefreshUpcomingTasks(PlanPrototype plan) =>

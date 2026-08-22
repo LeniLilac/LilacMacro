@@ -1,11 +1,50 @@
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Views;
+using LilacMacro.Windows;
 
 namespace LilacMacro.Tests;
 
 public sealed class MacroUnattendedRecoveryPolicyTests
 {
+    [Fact]
+    public async Task RecoveryDoesNotRetryRobloxSettingsAccessFailure()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-recovery-settings-{Guid.NewGuid():N}");
+        int attempts = 0;
+        int recoveries = 0;
+        try
+        {
+            MacroUnattendedRecoveryRunner runner = new(
+                new Dictionary<PlanTaskPrototype, DateTimeOffset>(),
+                () => null,
+                () => { },
+                _ => { },
+                _ => { },
+                new DeepDebugSessionService(root),
+                _ => Task.CompletedTask,
+                (_, _) => { recoveries++; return Task.CompletedTask; });
+            RobloxSettingsAccessException expected = RobloxSettingsAccessException.Create(
+                Path.Combine(root, "settings.xml"),
+                "replace",
+                new UnauthorizedAccessException("denied"));
+
+            RobloxSettingsAccessException actual = await Assert.ThrowsAsync<RobloxSettingsAccessException>(
+                () => runner.RunAsync(
+                    new PlanPrototype("settings", []),
+                    (_, _) => { attempts++; throw expected; },
+                    CancellationToken.None));
+
+            Assert.Same(expected, actual);
+            Assert.Equal(1, attempts);
+            Assert.Equal(0, recoveries);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task RecoveryPreservesOwningSynchronizationContextAcrossSecondAttempt()
     {
@@ -112,12 +151,24 @@ public sealed class MacroUnattendedRecoveryPolicyTests
         PlanPrototype plan = new("empty", []);
         int calls = 0;
 
+        Assert.False(MacroPlanPreflight.HasTasks(plan));
+
         await Assert.ThrowsAsync<InvalidDataException>(() => MacroPlanPreflight.ValidateAsync(
             plan,
             (_, _) => { calls++; return Task.CompletedTask; },
             CancellationToken.None));
 
         Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public void PreflightTaskPresenceIncludesNestedPriorityGroups()
+    {
+        PlanLoopPrototype loop = new();
+        loop.Children.Add(new PlanTaskPrototype { Mode = PlanTaskMode.Story });
+        PlanPrototype plan = new("nested", [loop]);
+
+        Assert.True(MacroPlanPreflight.HasTasks(plan));
     }
 
     [Fact]

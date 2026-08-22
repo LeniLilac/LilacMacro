@@ -4,6 +4,9 @@ namespace LilacMacro.App.Runtime;
 
 internal static class MacroPlanPreflight
 {
+    public static bool HasTasks(PlanPrototype? plan) =>
+        plan is not null && MacroPriorityPolicy.Flatten(plan).Any();
+
     public static async Task ValidateAsync(
         PlanPrototype plan,
         Func<PlanTaskPrototype, CancellationToken, Task> validateTask,

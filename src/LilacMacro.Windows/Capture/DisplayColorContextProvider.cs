@@ -27,11 +27,12 @@ internal static class DisplayColorContextProvider
                             OutputDescription1 description = output6.Description1;
                             if (description.Monitor != monitor) continue;
 
-                            bool advanced = description.ColorSpace != ColorSpaceType.RgbFullG22NoneP709;
-                            float white = advanced
-                                ? DisplayConfigQuery.TryGetSdrWhiteLevelNits(description.DeviceName) ?? 80f
-                                : 80f;
-                            return new CaptureColorContext(advanced, white, description.MaxLuminance);
+                            float? measuredWhite = DisplayConfigQuery.TryGetSdrWhiteLevelNits(
+                                description.DeviceName);
+                            return FromOutputObservation(
+                                description.ColorSpace,
+                                measuredWhite,
+                                description.MaxLuminance);
                         }
                     }
                 }
@@ -42,5 +43,30 @@ internal static class DisplayColorContextProvider
             // Capture must remain available when a driver does not expose IDXGIOutput6.
         }
         return CaptureColorContext.StandardSdr;
+    }
+
+    internal static CaptureColorContext FromOutputObservation(
+        ColorSpaceType colorSpace,
+        float? measuredSdrWhiteNits,
+        float displayMaxLuminanceNits)
+    {
+        bool colorSpaceAdvanced = colorSpace != ColorSpaceType.RgbFullG22NoneP709;
+        bool whiteLevelAdvanced = measuredSdrWhiteNits is >
+            CaptureColorContext.SceneReferenceWhiteNits + 1f;
+        bool advanced = colorSpaceAdvanced || whiteLevelAdvanced;
+        bool fallback = advanced && measuredSdrWhiteNits is not > 0f;
+        float white = advanced
+            ? measuredSdrWhiteNits ?? CaptureColorContext.AdvancedColorFallbackWhiteNits
+            : CaptureColorContext.SceneReferenceWhiteNits;
+        string detection = colorSpaceAdvanced
+            ? measuredSdrWhiteNits is > 0f ? "advanced-color-space+measured-white" : "advanced-color-space+fallback-white"
+            : whiteLevelAdvanced ? "elevated-sdr-white" : "sdr-color-space";
+        return new CaptureColorContext(
+            advanced,
+            white,
+            displayMaxLuminanceNits,
+            colorSpace.ToString(),
+            detection,
+            fallback);
     }
 }

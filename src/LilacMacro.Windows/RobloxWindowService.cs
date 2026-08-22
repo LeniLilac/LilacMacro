@@ -30,20 +30,28 @@ public sealed class RobloxWindowService
 
         nint foreground = NativeMethods.GetForegroundWindow();
         return matches
-            .OrderByDescending(window => window.Handle == foreground)
+            .OrderBy(window => CapturablePreference(TryGetArea(window.Handle)))
+            .ThenByDescending(window => window.Handle == foreground)
             .ThenBy(window => ProcessPreference(window.ProcessName))
             .ThenByDescending(window => TryGetArea(window.Handle))
             .ToArray();
     }
+
+    internal static int CapturablePreference(long clientArea) => clientArea > 0 ? 0 : 1;
 
     public RobloxWindow? FindBest() => FindAll().FirstOrDefault() is { Handle: not 0 } window ? window : null;
 
     public ClientBounds GetClientBounds(RobloxWindow window)
     {
         nint handle = Revalidate(window);
-        if (!NativeMethods.GetClientRect(handle, out NativeMethods.Rect rectangle))
+        NativeMethods.Rect rectangle = ReadClientRect(handle);
+        if ((rectangle.Right <= rectangle.Left || rectangle.Bottom <= rectangle.Top) &&
+            NativeMethods.IsIconic(handle))
         {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not read the Roblox client rectangle.");
+            NativeMethods.ShowWindow(handle, NativeMethods.SwRestore);
+            Thread.Sleep(120);
+            handle = Revalidate(window);
+            rectangle = ReadClientRect(handle);
         }
 
         NativeMethods.Point topLeft = new() { X = rectangle.Left, Y = rectangle.Top };
@@ -74,16 +82,16 @@ public sealed class RobloxWindowService
         try
         {
             nint handle = Revalidate(window);
-            PixelSize previous = GetClientBounds(window).Size;
-            if (await HasStableSizeAsync(window, target, cancellationToken).ConfigureAwait(false))
-            {
-                return new ResizeResult(previous, target, 0, elapsed.Elapsed);
-            }
-
             if (NativeMethods.IsIconic(handle) || NativeMethods.IsZoomed(handle))
             {
                 NativeMethods.ShowWindow(handle, NativeMethods.SwRestore);
                 await Task.Delay(120, cancellationToken).ConfigureAwait(false);
+            }
+
+            PixelSize previous = GetClientBounds(window).Size;
+            if (await HasStableSizeAsync(window, target, cancellationToken).ConfigureAwait(false))
+            {
+                return new ResizeResult(previous, target, 0, elapsed.Elapsed);
             }
 
             for (int attempt = 1; attempt <= MaximumResizeAttempts; attempt++)
@@ -226,6 +234,17 @@ public sealed class RobloxWindowService
             rectangle.Top,
             rectangle.Right - rectangle.Left,
             rectangle.Bottom - rectangle.Top);
+    }
+
+    private static NativeMethods.Rect ReadClientRect(nint handle)
+    {
+        if (!NativeMethods.GetClientRect(handle, out NativeMethods.Rect rectangle))
+        {
+            throw new Win32Exception(
+                Marshal.GetLastWin32Error(),
+                "Windows could not read the Roblox client rectangle.");
+        }
+        return rectangle;
     }
 
     private static (int X, int Y) FitToMonitor(nint handle, int x, int y, int width, int height)

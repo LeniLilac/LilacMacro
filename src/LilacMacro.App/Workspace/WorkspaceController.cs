@@ -145,6 +145,8 @@ public sealed partial class WorkspaceController : IDisposable
                 RequiredSize = requiredSize,
                 ObservedClientSize,
                 CaptureReason = captureReason,
+                image.ColorDiagnostics,
+                image.FrameDiagnostics,
             });
             Changed?.Invoke(this, EventArgs.Empty);
             return image;

@@ -124,25 +124,6 @@ public partial class MacroDashboardPage : UserControl
         StatsCard.SetValue(Grid.ColumnSpanProperty, dockAllowed ? 1 : 3);
         DashboardRoot.MinWidth = dockAllowed ? 1740 : 0;
     }
-    private void PlanCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
-    {
-        if (PlanCombo.SelectedItem is not PlanPrototype plan || UpcomingTasksList is null) return;
-        _ownerState.SelectPlan(plan);
-        _currentTask = null;
-        RefreshUpcomingTasks(plan);
-    }
-    private void OwnerState_OnSelectedPlanChanged(object? sender, EventArgs eventArgs)
-    {
-        if (!ReferenceEquals(PlanCombo.SelectedItem, _ownerState.SelectedPlan))
-            PlanCombo.SelectedItem = _ownerState.SelectedPlan;
-    }
-    private void OwnerState_OnPlansChanged(object? sender, EventArgs eventArgs)
-    {
-        if (PlanCombo.SelectedItem is not PlanPrototype plan) return;
-        PlanCombo.Items.Refresh();
-        PlanCombo.SelectedItem = null;
-        PlanCombo.SelectedItem = plan;
-    }
     private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         if (!_ocrReady)
@@ -170,6 +151,7 @@ public partial class MacroDashboardPage : UserControl
     private async Task StartMacroAsync()
     {
         if (_runTask is not null || _runStarting || PlanCombo.SelectedItem is not PlanPrototype plan) return;
+        if (!CanStartPlan(plan)) return;
         _runStarting = true;
         UpdateStartButtonState();
         try
