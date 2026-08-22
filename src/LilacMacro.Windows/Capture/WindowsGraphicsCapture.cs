@@ -14,6 +14,7 @@ namespace LilacMacro.Windows.Capture;
 internal sealed partial class WindowsGraphicsCapture : IDisposable
 {
     internal const int MaximumCaptureAttempts = 3;
+    internal const int MaximumSurfaceRecreateAttempts = 4;
     private static readonly Guid GraphicsCaptureItemId = new("79C3F95B-31F7-4EC2-A464-632EF5D30760");
     private static readonly Guid Direct3D11Texture2DId = new("6F15AAF2-D208-4E89-9AB4-489535D34F9C");
     private readonly object _gate = new();
@@ -171,6 +172,9 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
     internal static bool ShouldRetryCapture(Exception error, int attempt) =>
         attempt < MaximumCaptureAttempts - 1 &&
         IsRecoverableCaptureFailure(error);
+
+    internal static bool ShouldRecreateSurface(int completedAttempts) =>
+        completedAttempts >= 0 && completedAttempts < MaximumSurfaceRecreateAttempts;
 
     private static bool IsRecoverableCaptureFailure(Exception error) =>
         error is TimeoutException or ObjectDisposedException;

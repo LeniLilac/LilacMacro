@@ -1,4 +1,6 @@
+using LilacMacro.Core.Geometry;
 using LilacMacro.Core.Imaging;
+using LilacMacro.Windows;
 using LilacMacro.Windows.Capture;
 using Vortice.DXGI;
 
@@ -189,6 +191,43 @@ public sealed class CaptureSurfaceConverterTests
         Assert.True(WindowsGraphicsCapture.IsSameTarget((nint)42, 100, (nint)42, 100));
         Assert.False(WindowsGraphicsCapture.IsSameTarget((nint)42, 100, (nint)42, 101));
         Assert.False(WindowsGraphicsCapture.IsSameTarget((nint)42, 100, (nint)43, 100));
+    }
+
+    [Theory]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(3, true)]
+    [InlineData(4, false)]
+    public void CaptureSurfaceRecreationIsBounded(int completedAttempts, bool expected)
+    {
+        Assert.Equal(expected, WindowsGraphicsCapture.ShouldRecreateSurface(completedAttempts));
+    }
+
+    [Fact]
+    public void CaptureSurfaceRecreationCanRemapClientInsideIncomingWindowSurface()
+    {
+        ScreenRegion crop = WindowsGraphicsCapture.ResolveClientCrop(
+            1382,
+            739,
+            new ClientBounds(108, 131, 1366, 700),
+            new WindowBounds(100, 100, 1382, 739),
+            new WindowBounds(100, 100, 1382, 739));
+
+        Assert.Equal(new ScreenRegion(8, 31, 1366, 700), crop);
+    }
+
+    [Fact]
+    public async Task CaptureFrameArrivalNotificationCrossesThreadsAndIgnoresLateCallbacks()
+    {
+        FrameArrivalGate gate = new();
+        long targetGeneration = gate.Generation + 1;
+
+        Task<bool> wait = Task.Run(() => gate.WaitForGeneration(targetGeneration, 1000));
+        await Task.Run(gate.Notify);
+
+        Assert.True(await wait);
+        gate.Dispose();
+        gate.Notify();
     }
 
     private static RgbImage ConvertPixel(

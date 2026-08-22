@@ -20,6 +20,7 @@ public sealed partial class DeepDebugSessionService
     private readonly DeepDebugArchiveLimits _limits;
     private readonly Func<DateTimeOffset> _utcNow;
     private readonly IDeepDebugFrameCodec _frameCodec;
+    private readonly string _operatingSystemVersion;
     private readonly Dictionary<string, DeepDebugFrameCaptureProvider> _frameCaptureProviders =
         new(StringComparer.OrdinalIgnoreCase);
     private DeepDebugSession? _active;
@@ -36,7 +37,8 @@ public sealed partial class DeepDebugSessionService
         Func<string, long>? availableFreeBytes = null,
         DeepDebugArchiveLimits? limits = null,
         Func<DateTimeOffset>? utcNow = null,
-        IDeepDebugFrameCodec? frameCodec = null)
+        IDeepDebugFrameCodec? frameCodec = null,
+        string? operatingSystemVersion = null)
     {
         _appDataRoot = Path.GetFullPath(appDataRoot);
         _diagnosticsRoot = Path.GetFullPath(
@@ -48,6 +50,9 @@ public sealed partial class DeepDebugSessionService
         _limits = limits ?? DeepDebugArchiveLimits.Production;
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
         _frameCodec = frameCodec ?? new DeepDebugFrameCodec(_diagnosticsRoot);
+        _operatingSystemVersion = string.IsNullOrWhiteSpace(operatingSystemVersion)
+            ? Environment.OSVersion.VersionString
+            : operatingSystemVersion;
         _archiveFinalizer = new DeepDebugArchiveFinalizer(
             _appDataRoot,
             _diagnosticsRoot,
@@ -372,7 +377,7 @@ public sealed partial class DeepDebugSessionService
         await WriteJsonAsync(Path.Combine(root, "environment.json"), new
         {
             AppVersion = GetVersion(),
-            OperatingSystem = Environment.OSVersion.VersionString,
+            OperatingSystem = _operatingSystemVersion,
             Framework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
             ProcessArchitecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),
             ProcessId = Environment.ProcessId,

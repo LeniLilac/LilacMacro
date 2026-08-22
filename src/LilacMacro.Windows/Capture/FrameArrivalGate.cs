@@ -44,6 +44,19 @@ internal sealed class FrameArrivalGate : IDisposable
         return true;
     }
 
+    public void Wake()
+    {
+        if (Volatile.Read(ref _disposed) != 0) return;
+        try
+        {
+            _ready.Set();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Disposal can race a capture-session wakeup.
+        }
+    }
+
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;

@@ -34,9 +34,16 @@ public sealed class RobloxCaptureService(RobloxWindowService windows) : IDisposa
             catch (CaptureSurfaceChangedException) when (attempt < 2)
             {
                 Thread.Sleep(100);
+                handle = windows.Revalidate(window);
                 client = windows.GetClientBounds(window);
                 bounds = windows.GetWindowBounds(window);
                 extended = windows.GetExtendedFrameBounds(window) ?? bounds;
+            }
+            catch (CaptureSurfaceChangedException error)
+            {
+                throw new InvalidOperationException(
+                    "Windows could not stabilize the Roblox capture surface after three bounded attempts.",
+                    error);
             }
         }
 
@@ -80,9 +87,16 @@ public sealed class RobloxCaptureService(RobloxWindowService windows) : IDisposa
             catch (CaptureSurfaceChangedException) when (attempt < 2)
             {
                 Thread.Sleep(100);
+                handle = windows.Revalidate(window);
                 client = windows.GetClientBounds(window);
                 bounds = windows.GetWindowBounds(window);
                 extended = windows.GetExtendedFrameBounds(window) ?? bounds;
+            }
+            catch (CaptureSurfaceChangedException error)
+            {
+                throw new InvalidOperationException(
+                    "Windows could not stabilize the Roblox detector capture surface after three bounded attempts.",
+                    error);
             }
         }
 

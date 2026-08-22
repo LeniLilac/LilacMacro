@@ -4,8 +4,11 @@ internal sealed class CaptureSurfaceChangedException(
     int expectedWidth,
     int expectedHeight,
     int actualWidth,
-    int actualHeight)
-    : Exception($"Capture surface changed from {expectedWidth} × {expectedHeight} to {actualWidth} × {actualHeight}.")
+    int actualHeight,
+    Exception? innerException = null)
+    : Exception(
+        $"Capture surface changed from {expectedWidth} × {expectedHeight} to {actualWidth} × {actualHeight}.",
+        innerException)
 {
     public int ExpectedWidth { get; } = expectedWidth;
 

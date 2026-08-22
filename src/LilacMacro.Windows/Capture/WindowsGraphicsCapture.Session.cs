@@ -15,6 +15,7 @@ internal sealed partial class WindowsGraphicsCapture
 {
     private sealed class CaptureSession : IDisposable
     {
+        private readonly object _lifecycleGate = new();
         private readonly FrameArrivalGate _arrival = new();
         private readonly nint _window;
         private readonly int _processId;
@@ -28,11 +29,12 @@ internal sealed partial class WindowsGraphicsCapture
         private readonly Direct3D11CaptureFramePool _framePool;
         private readonly GraphicsCaptureSession _captureSession;
         private readonly CaptureSurfaceFormat _surfaceFormat;
-        private readonly ScreenRegion _clientCrop;
-        private readonly int _surfaceWidth;
-        private readonly int _surfaceHeight;
+        private ScreenRegion _clientCrop;
+        private int _surfaceWidth;
+        private int _surfaceHeight;
         private CaptureColorContext _colorContext;
         private long _colorContextRefreshTicks;
+        private int _processingCallbacks;
         private bool _hasCaptured;
         private bool _disposed;
 
@@ -186,42 +188,150 @@ internal sealed partial class WindowsGraphicsCapture
 
         public void Dispose()
         {
-            if (_disposed) return;
-            _disposed = true;
-            _framePool.FrameArrived -= FrameArrived;
+            lock (_lifecycleGate)
+            {
+                if (_disposed) return;
+                _disposed = true;
+                _framePool.FrameArrived -= FrameArrived;
+            }
             _captureSession.Dispose();
             _framePool.Dispose();
+            _arrival.Wake();
+            bool callbacksDrained = SpinWait.SpinUntil(
+                () => Volatile.Read(ref _processingCallbacks) == 0,
+                TimeSpan.FromSeconds(2));
+            if (!callbacksDrained)
+            {
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    SpinWait.SpinUntil(() => Volatile.Read(ref _processingCallbacks) == 0);
+                    DisposeCaptureResources();
+                });
+                return;
+            }
+
+            DisposeCaptureResources();
+        }
+
+        private void DisposeCaptureResources()
+        {
             _arrival.Dispose();
             (_winRtDevice as IDisposable)?.Dispose();
             _context.Dispose();
             _device.Dispose();
         }
 
-        private void FrameArrived(Direct3D11CaptureFramePool sender, object args) => _arrival.Notify();
+        private void FrameArrived(Direct3D11CaptureFramePool sender, object args)
+        {
+            lock (_lifecycleGate)
+            {
+                if (_disposed) return;
+                Interlocked.Increment(ref _processingCallbacks);
+            }
+            try
+            {
+                // Windows 10 can reject apartment-bound WinRT frame access on this
+                // free-threaded callback. Only signal here; consume frames on Capture().
+                _arrival.Notify();
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _processingCallbacks);
+            }
+        }
 
         private Direct3D11CaptureFrame TakeFreshFrame()
         {
             FrameQueue.DiscardAll(_framePool.TryGetNextFrame);
             long targetGeneration = _arrival.Generation + 1;
             int timeout = _hasCaptured ? 1500 : 3500;
-            if (!_arrival.WaitForGeneration(targetGeneration, timeout))
+            DateTime deadline = DateTime.UtcNow.AddMilliseconds(timeout);
+            int surfaceRecreates = 0;
+            bool stabilizingSurface = false;
+            while (DateTime.UtcNow < deadline)
             {
-                throw new TimeoutException($"Windows did not provide a fresh Roblox frame within {timeout} milliseconds.");
+                int remaining = Math.Max(0, (int)(deadline - DateTime.UtcNow).TotalMilliseconds);
+                if (!_arrival.WaitForGeneration(targetGeneration, remaining)) break;
+                long availableGeneration = _arrival.Generation;
+                Direct3D11CaptureFrame? frame = FrameQueue.TakeLatest(_framePool.TryGetNextFrame);
+                if (frame is null)
+                {
+                    targetGeneration = availableGeneration + 1;
+                    continue;
+                }
+
+                SizeInt32 contentSize;
+                try
+                {
+                    contentSize = frame.ContentSize;
+                }
+                catch
+                {
+                    frame.Dispose();
+                    throw;
+                }
+
+                if (contentSize.Width == _surfaceWidth && contentSize.Height == _surfaceHeight)
+                {
+                    _hasCaptured = true;
+                    return frame;
+                }
+
+                frame.Dispose();
+                if (!ShouldRecreateSurface(surfaceRecreates))
+                {
+                    throw new CaptureSurfaceChangedException(
+                        _surfaceWidth,
+                        _surfaceHeight,
+                        contentSize.Width,
+                        contentSize.Height);
+                }
+
+                surfaceRecreates++;
+                RecreateSurface(contentSize.Width, contentSize.Height);
+                FrameQueue.DiscardAll(_framePool.TryGetNextFrame);
+                targetGeneration = _arrival.Generation + 1;
+                if (!stabilizingSurface)
+                {
+                    deadline = DateTime.UtcNow.AddMilliseconds(3500);
+                    stabilizingSurface = true;
+                }
             }
 
-            Direct3D11CaptureFrame? frame = FrameQueue.TakeLatest(_framePool.TryGetNextFrame);
-            if (frame is null) throw new TimeoutException("Windows announced a frame but returned no capture surface.");
-            if (frame.ContentSize.Width != _surfaceWidth || frame.ContentSize.Height != _surfaceHeight)
+            throw new TimeoutException($"Windows did not provide a fresh Roblox frame within {timeout} milliseconds.");
+        }
+
+        private void RecreateSurface(int surfaceWidth, int surfaceHeight)
+        {
+            ScreenRegion clientCrop;
+            try
             {
-                frame.Dispose();
+                clientCrop = ResolveClientCrop(
+                    surfaceWidth,
+                    surfaceHeight,
+                    _client,
+                    _windowBounds,
+                    _extendedBounds);
+            }
+            catch (InvalidOperationException error)
+            {
                 throw new CaptureSurfaceChangedException(
                     _surfaceWidth,
                     _surfaceHeight,
-                    frame.ContentSize.Width,
-                    frame.ContentSize.Height);
+                    surfaceWidth,
+                    surfaceHeight,
+                    error);
             }
-            _hasCaptured = true;
-            return frame;
+
+            _framePool.Recreate(
+                _winRtDevice,
+                ToDirectXPixelFormat(_surfaceFormat),
+                2,
+                new SizeInt32(surfaceWidth, surfaceHeight));
+            _clientCrop = clientCrop;
+            _surfaceWidth = surfaceWidth;
+            _surfaceHeight = surfaceHeight;
+            _hasCaptured = false;
         }
 
         private void RefreshColorContextIfNeeded()

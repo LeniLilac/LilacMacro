@@ -78,7 +78,8 @@ public sealed class DeepDebugSessionTests : IDisposable
     [Fact]
     public async Task Session_writes_redacted_agent_readable_archive_and_transition_frame()
     {
-        DeepDebugSessionService service = NewService();
+        const string operatingSystem = "Microsoft Windows NT 10.0.19045.6456";
+        DeepDebugSessionService service = NewService(operatingSystemVersion: operatingSystem);
         DeepDebugScope? scope = await service.OpenSessionAsync(
             "wire test",
             new DeepDebugOperationContext(
@@ -120,6 +121,10 @@ public sealed class DeepDebugSessionTests : IDisposable
         Assert.Contains("\"formatVersion\": 3", manifest, StringComparison.Ordinal);
         Assert.Contains("\"transitionFrames\": 1", manifest, StringComparison.Ordinal);
         Assert.Contains("\"validation\"", await ReadAsync(archive, "frames/index.json"), StringComparison.Ordinal);
+        Assert.Contains(
+            $"\"operatingSystem\": \"{operatingSystem}\"",
+            await ReadAsync(archive, "configuration/environment.json"),
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -587,12 +592,14 @@ public sealed class DeepDebugSessionTests : IDisposable
         int freeGiB = 300,
         Func<string, long>? availableFreeBytes = null,
         DeepDebugArchiveLimits? limits = null,
-        IDeepDebugFrameCodec? frameCodec = null) => new(
+        IDeepDebugFrameCodec? frameCodec = null,
+        string? operatingSystemVersion = null) => new(
             _root,
             diagnosticsRoot: null,
             availableFreeBytes ?? (_ => freeGiB * DiagnosticUploadPolicy.OneGiB),
             limits,
-            frameCodec: frameCodec);
+            frameCodec: frameCodec,
+            operatingSystemVersion: operatingSystemVersion);
 
     private static byte[] TestPng(byte red, byte green, byte blue) =>
         PngEncoder.Encode(new RgbImage(2, 2,

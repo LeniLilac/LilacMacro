@@ -9,6 +9,7 @@ using LilacMacro.App.Theming;
 using LilacMacro.App.Updates;
 using LilacMacro.Core.Updates;
 using LilacMacro.Windows.LocalSession;
+using LilacMacro.Windows.SystemInformation;
 using LilacMacro.App.Views;
 
 namespace LilacMacro.App;
@@ -33,7 +34,8 @@ public partial class App : Application
             "LilacMacro");
         _deepDebug = new DeepDebugSessionService(
             localAppDataRoot,
-            MacroInstanceContext.Current.DiagnosticsRoot);
+            MacroInstanceContext.Current.DiagnosticsRoot,
+            operatingSystemVersion: WindowsVersionDescription.Read());
         if (MacroInstanceContext.Current.IsManagedRunner && !AcquireManagedInstanceMutex())
         {
             Shutdown(0);
