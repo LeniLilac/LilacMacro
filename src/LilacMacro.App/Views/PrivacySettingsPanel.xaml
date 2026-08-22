@@ -33,7 +33,7 @@
                         <CheckBox x:Name="AutomaticReportsCheck" Content="Send Deep Debug logs automatically after macro errors"
                                   Checked="Choice_OnChanged" Unchecked="Choice_OnChanged" />
                         <TextBlock Margin="0,5,0,0" FontSize="9" Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
-                                   Text="Requires Deep Debug logging. No log is sent while Deep Debug is off or paused for low disk space. Sent logs are removed locally; failed uploads remain in the Deep Debug folder." />
+                                   Text="Requires Deep Debug logging. No log is sent while Deep Debug is off or paused for low disk space. Sent and failed logs remain in the shared Deep Debug folder until the configured storage limit removes the oldest archives." />
                     </StackPanel>
                 </Grid>
                 <Grid Margin="0,14,0,0">

@@ -47,7 +47,7 @@ public sealed partial class DeepDebugSessionService
             availableFreeBytes);
         _limits = limits ?? DeepDebugArchiveLimits.Production;
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
-        _frameCodec = frameCodec ?? new DeepDebugAvifCodec(_diagnosticsRoot);
+        _frameCodec = frameCodec ?? new DeepDebugFrameCodec(_diagnosticsRoot);
         _archiveFinalizer = new DeepDebugArchiveFinalizer(
             _appDataRoot,
             _diagnosticsRoot,

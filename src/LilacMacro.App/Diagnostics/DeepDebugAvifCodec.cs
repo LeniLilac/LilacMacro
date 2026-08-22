@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Windows.Media.Imaging;
 
 namespace LilacMacro.App.Diagnostics;
 
@@ -15,11 +16,12 @@ internal sealed record DeepDebugFrameEncodingResult(
     bool Success,
     byte[]? Bytes,
     string Validation,
+    string Format,
     int? Quality = null);
 
-internal sealed class DeepDebugAvifCodec(string diagnosticsRoot) : IDeepDebugFrameCodec
+internal sealed class DeepDebugFrameCodec(string diagnosticsRoot) : IDeepDebugFrameCodec
 {
-    private const int LossyQuality = 20;
+    private const int LossyJpegQuality = 14;
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
     private readonly string _encoder = Path.Combine(AppContext.BaseDirectory, "tools", "avif", "avifenc.exe");
     private readonly string _decoder = Path.Combine(AppContext.BaseDirectory, "tools", "avif", "avifdec.exe");
@@ -31,26 +33,26 @@ internal sealed class DeepDebugAvifCodec(string diagnosticsRoot) : IDeepDebugFra
         bool waitForLease,
         CancellationToken cancellationToken = default)
     {
+        if (!lossless) return await EncodeJpegAsync(pngPath, cancellationToken);
         if (!File.Exists(_encoder) || !File.Exists(_decoder))
-            return new(false, null, "codec-unavailable");
+            return new(false, null, "codec-unavailable", "avif");
         Directory.CreateDirectory(Path.GetDirectoryName(_lockPath)!);
         await using FileStream? lease = await AcquireAsync(waitForLease, cancellationToken);
-        if (lease is null) return new(false, null, "encoder-busy");
+        if (lease is null) return new(false, null, "encoder-busy", "avif");
         string temporaryRoot = Path.Combine(Path.GetTempPath(), "LilacMacro", "avif", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporaryRoot);
         string encoded = Path.Combine(temporaryRoot, "frame.avif");
         string decoded = Path.Combine(temporaryRoot, "decoded.png");
         try
         {
-            List<string> encodeArguments = lossless
-                ? ["-l", "-s", "8", "-j", "all", "--ignore-exif", "--ignore-xmp", "--ignore-icc", pngPath, encoded]
-                : ["-q", LossyQuality.ToString(), "--qalpha", LossyQuality.ToString(), "-s", "8", "-j", "all", "-y", "420", "--ignore-exif", "--ignore-xmp", "--ignore-icc", pngPath, encoded];
+            List<string> encodeArguments =
+                ["-l", "-s", "8", "-j", "all", "--ignore-exif", "--ignore-xmp", "--ignore-icc", pngPath, encoded];
             if (!await RunAsync(_encoder, encodeArguments, cancellationToken) || !File.Exists(encoded))
-                return new(false, null, "encode-failed", lossless ? null : LossyQuality);
+                return new(false, null, "encode-failed", "avif");
             if (!await RunAsync(_decoder,
                     ["-j", "all", "--size-limit", "67108864", "--dimension-limit", "16384", encoded, decoded],
                     cancellationToken) || !File.Exists(decoded))
-                return new(false, null, "decode-failed", lossless ? null : LossyQuality);
+                return new(false, null, "decode-failed", "avif");
 
             byte[] original = await File.ReadAllBytesAsync(pngPath, cancellationToken);
             byte[] roundTrip = await File.ReadAllBytesAsync(decoded, cancellationToken);
@@ -58,24 +60,77 @@ internal sealed class DeepDebugAvifCodec(string diagnosticsRoot) : IDeepDebugFra
             (int decodedWidth, int decodedHeight, byte[] decodedDigest) =
                 DeepDebugPerceptualHash.CreatePixelDigest(roundTrip);
             if (width != decodedWidth || height != decodedHeight)
-                return new(false, null, "dimension-mismatch", lossless ? null : LossyQuality);
-            if (lossless && !digest.SequenceEqual(decodedDigest))
-                return new(false, null, "pixel-mismatch");
+                return new(false, null, "dimension-mismatch", "avif");
+            if (!digest.SequenceEqual(decodedDigest))
+                return new(false, null, "pixel-mismatch", "avif");
             byte[] bytes = await File.ReadAllBytesAsync(encoded, cancellationToken);
             if (bytes.LongLength >= original.LongLength)
-                return new(false, null, "not-smaller", lossless ? null : LossyQuality);
-            return new(true, bytes, lossless ? "pixel-exact" : "decode-verified", lossless ? null : LossyQuality);
+                return new(false, null, "not-smaller", "avif");
+            return new(true, bytes, "pixel-exact", "avif");
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException or
                                       OperationCanceledException or System.ComponentModel.Win32Exception)
         {
-            return new(false, null, error is OperationCanceledException ? "timeout-or-cancelled" : "validation-failed",
-                lossless ? null : LossyQuality);
+            return new(false, null,
+                error is OperationCanceledException ? "timeout-or-cancelled" : "validation-failed",
+                "avif");
         }
         finally
         {
             try { Directory.Delete(temporaryRoot, recursive: true); }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+        }
+    }
+
+    private static async Task<DeepDebugFrameEncodingResult> EncodeJpegAsync(
+        string pngPath,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            byte[] original = await File.ReadAllBytesAsync(pngPath, cancellationToken);
+            return await Task.Run<DeepDebugFrameEncodingResult>(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                byte[] encoded;
+                int width;
+                int height;
+                using (MemoryStream source = new(original, writable: false))
+                {
+                    BitmapDecoder decoder = BitmapDecoder.Create(
+                        source,
+                        BitmapCreateOptions.PreservePixelFormat,
+                        BitmapCacheOption.OnLoad);
+                    width = decoder.Frames[0].PixelWidth;
+                    height = decoder.Frames[0].PixelHeight;
+                    JpegBitmapEncoder encoder = new() { QualityLevel = LossyJpegQuality };
+                    encoder.Frames.Add(BitmapFrame.Create(decoder.Frames[0]));
+                    using MemoryStream output = new();
+                    encoder.Save(output);
+                    encoded = output.ToArray();
+                }
+
+                using (MemoryStream verification = new(encoded, writable: false))
+                {
+                    BitmapDecoder decoded = BitmapDecoder.Create(
+                        verification,
+                        BitmapCreateOptions.PreservePixelFormat,
+                        BitmapCacheOption.OnLoad);
+                    if (width != decoded.Frames[0].PixelWidth || height != decoded.Frames[0].PixelHeight)
+                        return new(false, null, "dimension-mismatch", "jpeg", LossyJpegQuality);
+                }
+                if (encoded.LongLength >= original.LongLength)
+                    return new(false, null, "not-smaller", "jpeg", LossyJpegQuality);
+                return new(true, encoded, "decode-verified", "jpeg", LossyJpegQuality);
+            }, cancellationToken);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException or
+                                      OperationCanceledException or NotSupportedException or ArgumentException)
+        {
+            return new(false, null,
+                error is OperationCanceledException ? "timeout-or-cancelled" : "validation-failed",
+                "jpeg",
+                LossyJpegQuality);
         }
     }
 

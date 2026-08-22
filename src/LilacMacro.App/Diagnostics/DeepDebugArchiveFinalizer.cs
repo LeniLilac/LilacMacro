@@ -138,13 +138,14 @@ internal sealed class DeepDebugArchiveFinalizer(
             session.Evidence.DiscardedWindowCount,
             session.Evidence.TransitionFrameCount,
             session.Evidence.AvifFrameCount,
+            session.Evidence.JpegFrameCount,
             session.Evidence.LossyFrameCount,
             session.Evidence.RetainedBytes,
             session.Limits.MaximumArchiveBytes,
             visualProfiles,
             session.Evidence.IsOptimized
-                ? "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-20 AVIF. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. Compression was insufficient, so only enough lower-priority evidence was removed to remain below the hard limit."
-                : "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-20 AVIF. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. No frames were pruned.",
+                ? "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-14 JPEG. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. Compression was insufficient, so only enough lower-priority evidence was removed to remain below the hard limit."
+                : "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-14 JPEG. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. No frames were pruned.",
             session.WriterFailure is null
                 ? null
                 : DeepDebugRedactor.Redact(session.WriterFailure.ToString()),
@@ -169,7 +170,7 @@ internal sealed class DeepDebugArchiveFinalizer(
         "# LilacMacro Deep Debug\n\n" +
         "Start with `manifest.json`, then read `timeline.md` or `events.jsonl`. " +
         "The complete one-second frame stream is retained until it reaches the archive limit. " +
-        "Older ordinary frames can be decode-verified lossy AVIF; important frames are pixel-exact AVIF or PNG. " +
+        "Older ordinary frames can be decode-verified quality-14 JPEG; important frames are pixel-exact AVIF or PNG. " +
         "Under archive pressure, only enough low-priority frames are removed to stay below that limit, " +
         "so a timeline link can then refer to evidence removed by the retention policy. " +
         "`visual-profiles/` contains bounded immutable revisions consulted by this run. " +
@@ -183,7 +184,8 @@ internal sealed class DeepDebugArchiveFinalizer(
         foreach (string file in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
         {
             string relative = Path.GetRelativePath(sourceDirectory, file).Replace('\\', '/');
-            CompressionLevel compression = file.EndsWith(".avif", StringComparison.OrdinalIgnoreCase)
+            CompressionLevel compression = file.EndsWith(".avif", StringComparison.OrdinalIgnoreCase) ||
+                                           file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
                 ? CompressionLevel.NoCompression
                 : CompressionLevel.Optimal;
             ZipArchiveEntry entry = archive.CreateEntry(relative, compression);

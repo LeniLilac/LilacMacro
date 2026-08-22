@@ -249,6 +249,8 @@ internal sealed partial class DeepDebugArchive : IDisposable
 
     private static bool IsFramePath(string path) =>
         path.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
         path.EndsWith(".avif", StringComparison.OrdinalIgnoreCase);
 
     private static DeepDebugSourceRegion? FindSourceRegion(JsonElement data)

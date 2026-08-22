@@ -63,7 +63,7 @@ try {
     $frameDirectory = Join-Path $sessionDirectory 'frames'
     if (Test-Path -LiteralPath $frameDirectory) {
         foreach ($retainedFrame in [System.IO.Directory]::EnumerateFiles($frameDirectory)) {
-            if ([System.IO.Path]::GetExtension($retainedFrame) -in @('.png', '.avif')) {
+            if ([System.IO.Path]::GetExtension($retainedFrame) -in @('.png', '.jpeg', '.jpg', '.avif')) {
                 [void]$retainedFramePaths.Add([System.IO.Path]::GetFullPath($retainedFrame))
             }
         }

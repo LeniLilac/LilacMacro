@@ -53,6 +53,8 @@ internal sealed record MacroSettings
 
     public bool IncludePrereleaseUpdates { get; init; }
 
+    public string LastNotifiedUpdateVersion { get; init; } = string.Empty;
+
     public MacroLayoutProfile LayoutProfile { get; init; } = MacroLayoutProfile.Full1920x1080;
 
     public MacroMinimizeBehavior MinimizeBehavior { get; init; } = MacroMinimizeBehavior.WhileRunning;

@@ -238,9 +238,9 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task Evidence_converts_old_ordinary_frames_and_keeps_recent_png()
+    public async Task Evidence_converts_old_ordinary_frames_to_jpeg_and_keeps_recent_png()
     {
-        string evidenceRoot = Path.Combine(_root, "evidence-avif");
+        string evidenceRoot = Path.Combine(_root, "evidence-jpeg");
         Directory.CreateDirectory(evidenceRoot);
         DateTimeOffset started = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
         DeepDebugEvidenceRetention retention = new();
@@ -249,19 +249,20 @@ public sealed class DeepDebugSessionTests : IDisposable
 
         await retention.CompleteAsync(new FakeFrameCodec(success: true), long.MaxValue);
 
-        Assert.True(File.Exists(Path.Combine(evidenceRoot, "old.avif")));
+        Assert.True(File.Exists(Path.Combine(evidenceRoot, "old.jpeg")));
         Assert.False(File.Exists(Path.Combine(evidenceRoot, "old.png")));
         Assert.True(File.Exists(Path.Combine(evidenceRoot, "recent.png")));
-        Assert.Equal(1, retention.AvifFrameCount);
-        DeepDebugEvidenceFrame encoded = Assert.Single(retention.Frames, frame => frame.Format == "avif");
+        Assert.Equal(1, retention.JpegFrameCount);
+        Assert.Equal(0, retention.AvifFrameCount);
+        DeepDebugEvidenceFrame encoded = Assert.Single(retention.Frames, frame => frame.Format == "jpeg");
         Assert.Equal("decode-verified", encoded.Validation);
-        Assert.Equal(20, encoded.Quality);
+        Assert.Equal(14, encoded.Quality);
     }
 
     [Fact]
-    public async Task Evidence_keeps_png_when_avif_validation_fails()
+    public async Task Evidence_keeps_png_when_jpeg_validation_fails()
     {
-        string evidenceRoot = Path.Combine(_root, "evidence-avif-failure");
+        string evidenceRoot = Path.Combine(_root, "evidence-jpeg-failure");
         Directory.CreateDirectory(evidenceRoot);
         DateTimeOffset started = new(2026, 8, 21, 12, 0, 0, TimeSpan.Zero);
         DeepDebugEvidenceRetention retention = new();
@@ -271,8 +272,30 @@ public sealed class DeepDebugSessionTests : IDisposable
         await retention.CompleteAsync(new FakeFrameCodec(success: false), long.MaxValue);
 
         Assert.True(File.Exists(Path.Combine(evidenceRoot, "old.png")));
+        Assert.Equal(0, retention.JpegFrameCount);
         Assert.Equal(0, retention.AvifFrameCount);
         Assert.Contains(retention.Frames, frame => frame.Validation == "decode-failed");
+    }
+
+    [Fact]
+    public async Task Production_codec_writes_decode_verified_quality_14_jpeg_without_external_tools()
+    {
+        string evidenceRoot = Path.Combine(_root, "jpeg-codec");
+        Directory.CreateDirectory(evidenceRoot);
+        string pngPath = Path.Combine(evidenceRoot, "source.png");
+        await File.WriteAllBytesAsync(pngPath, NoisyPng(42));
+        DeepDebugFrameCodec codec = new(evidenceRoot);
+
+        DeepDebugFrameEncodingResult result = await codec.EncodeAsync(
+            pngPath,
+            lossless: false,
+            waitForLease: false);
+
+        Assert.True(result.Success, result.Validation);
+        Assert.Equal("jpeg", result.Format);
+        Assert.Equal(14, result.Quality);
+        Assert.Equal([0xff, 0xd8], result.Bytes![..2]);
+        Assert.True(result.Bytes.Length < new FileInfo(pngPath).Length);
     }
 
     [Fact]
@@ -638,9 +661,18 @@ public sealed class DeepDebugSessionTests : IDisposable
             bool lossless,
             bool waitForLease,
             CancellationToken cancellationToken = default) => Task.FromResult(success
-                ? new DeepDebugFrameEncodingResult(true, [1], lossless ? "pixel-exact" : "decode-verified",
-                    lossless ? null : 20)
-                : new DeepDebugFrameEncodingResult(false, null, "decode-failed", lossless ? null : 20));
+                ? new DeepDebugFrameEncodingResult(
+                    true,
+                    [1],
+                    lossless ? "pixel-exact" : "decode-verified",
+                    lossless ? "avif" : "jpeg",
+                    lossless ? null : 14)
+                : new DeepDebugFrameEncodingResult(
+                    false,
+                    null,
+                    "decode-failed",
+                    lossless ? "avif" : "jpeg",
+                    lossless ? null : 14));
     }
 
     public void Dispose()

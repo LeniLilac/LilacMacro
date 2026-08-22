@@ -25,10 +25,13 @@ public partial class SettingsPage : UserControl
     private readonly ApplicationUpdateService _updates;
     private readonly DiscordWebhookClient _discord = new();
     private readonly PrivacySettingsPanel _privacySettingsPanel;
+    private readonly SemaphoreSlim _updateCheckGate = new(1, 1);
     private MacroKeyBinding? _capturingBinding;
     private bool _updatingDisplayControls;
     private bool _updatingThemeControls;
     private bool _refreshingDiagnosticsControls;
+
+    internal event Action<VerifiedUpdateRelease>? UpdateAvailable;
 
     internal SettingsPage(
         DeepDebugSessionService deepDebug,
@@ -139,30 +142,35 @@ public partial class SettingsPage : UserControl
         if (_initialized) GeneralStatusText.Text = "Changed in this session";
     }
 
-    internal async Task CheckOnStartupAsync()
+    internal async Task CheckAutomaticallyAsync(CancellationToken cancellationToken = default)
     {
         if (!await _ownerState.IsOnlineFeaturesDurablyEnabledAsync()
             || !_ownerState.CheckForUpdatesOnStartup
             || MacroInstanceContext.Current.IsManagedRunner) return;
-        await CheckUpdatesAsync(showErrors: false);
+        await CheckUpdatesAsync(showErrors: false, cancellationToken);
     }
 
     private async void CheckUpdates_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await CheckUpdatesAsync(showErrors: true);
 
-    private async Task CheckUpdatesAsync(bool showErrors)
+    private async Task CheckUpdatesAsync(
+        bool showErrors,
+        CancellationToken cancellationToken = default)
     {
-        if (!await _ownerState.IsOnlineFeaturesDurablyEnabledAsync())
-        {
-            GeneralStatusText.Text = "Online features are disabled";
-            return;
-        }
-        CheckUpdatesButton.IsEnabled = false;
-        InstallUpdateButton.Visibility = Visibility.Collapsed;
-        GeneralStatusText.Text = "Checking official GitHub Releases...";
+        if (!await _updateCheckGate.WaitAsync(0, cancellationToken)) return;
         try
         {
-            VerifiedUpdateRelease? release = await _updates.CheckAsync(_ownerState.IncludePrereleaseUpdates);
+            if (!await _ownerState.IsOnlineFeaturesDurablyEnabledAsync())
+            {
+                GeneralStatusText.Text = "Online features are disabled";
+                return;
+            }
+            CheckUpdatesButton.IsEnabled = false;
+            InstallUpdateButton.Visibility = Visibility.Collapsed;
+            GeneralStatusText.Text = "Checking official GitHub Releases...";
+            VerifiedUpdateRelease? release = await _updates.CheckAsync(
+                _ownerState.IncludePrereleaseUpdates,
+                cancellationToken);
             if (release is null)
             {
                 GeneralStatusText.Text = $"Version {_updates.CurrentVersion} is current";
@@ -173,7 +181,9 @@ public partial class SettingsPage : UserControl
                 : $"Version {release.Version} is available; install from the Program Files build";
             InstallUpdateButton.Content = $"UPDATE {release.Version}";
             InstallUpdateButton.Visibility = _updates.CanInstall ? Visibility.Visible : Visibility.Collapsed;
+            if (_updates.CanInstall) UpdateAvailable?.Invoke(release);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch (Exception exception) when (exception is HttpRequestException or InvalidDataException or TaskCanceledException)
         {
             GeneralStatusText.Text = showErrors
@@ -183,18 +193,25 @@ public partial class SettingsPage : UserControl
         finally
         {
             RefreshUpdateOwnership();
+            _updateCheckGate.Release();
         }
     }
 
     private async void InstallUpdate_OnClick(object sender, RoutedEventArgs eventArgs)
+        => await InstallAvailableUpdateAsync(showConfirmation: true);
+
+    internal async Task InstallAvailableUpdateAsync(bool showConfirmation)
     {
         VerifiedUpdateRelease? release = _updates.AvailableRelease;
         if (release is null) return;
-        UpdateConfirmationWindow confirmation = new(release)
+        if (showConfirmation)
         {
-            Owner = Window.GetWindow(this),
-        };
-        if (confirmation.ShowDialog() != true) return;
+            UpdateConfirmationWindow confirmation = new(release)
+            {
+                Owner = Window.GetWindow(this),
+            };
+            if (confirmation.ShowDialog() != true) return;
+        }
 
         CheckUpdatesButton.IsEnabled = false;
         InstallUpdateButton.IsEnabled = false;
@@ -226,6 +243,8 @@ public partial class SettingsPage : UserControl
             CheckUpdatesOnStartupCheck.IsChecked == true,
             IncludePrereleaseCheck.IsChecked == true);
         GeneralStatusText.Text = "Update options saved";
+        if (CheckUpdatesOnStartupCheck.IsChecked == true)
+            _ = CheckAutomaticallyAsync();
     }
 
     private void DisplayOptions_OnChanged(object sender, SelectionChangedEventArgs eventArgs)

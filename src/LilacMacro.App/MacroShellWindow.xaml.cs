@@ -13,6 +13,7 @@ using LilacMacro.App.Runtime;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Updates;
 using LilacMacro.Core.Services;
+using LilacMacro.Core.Updates;
 using LilacMacro.Runtime.Services;
 using LilacMacro.Windows;
 
@@ -36,7 +37,9 @@ public partial class MacroShellWindow : Window
     private readonly AutomaticDiagnosticReportService _automaticReports;
     private readonly ControlSnapshotPollingService _control;
     private readonly CancellationTokenSource _controlCancellation = new();
+    private readonly CancellationTokenSource _updateCancellation = new();
     private Task? _controlTask;
+    private Task? _updateTask;
     private MacroShellPage _currentPage;
     private bool _minimizedForRun;
 
@@ -77,6 +80,7 @@ public partial class MacroShellWindow : Window
             _instanceManager,
             _updates,
             SetMacroHotkeyCaptureSuspended);
+        _settingsPage.UpdateAvailable += SettingsPage_OnUpdateAvailable;
         _pages = new Dictionary<MacroShellPage, UserControl>
         {
             [MacroShellPage.Macro] = _macroPage,
@@ -93,11 +97,11 @@ public partial class MacroShellWindow : Window
         Navigate(MacroShellPage.Macro);
     }
 
-    private async void MacroShellWindow_OnLoaded(object sender, RoutedEventArgs eventArgs)
+    private void MacroShellWindow_OnLoaded(object sender, RoutedEventArgs eventArgs)
     {
         _telemetry.Start();
         _controlTask ??= RunControlPollingAsync();
-        await _settingsPage.CheckOnStartupAsync();
+        _updateTask ??= RunUpdatePollingAsync();
         if (_ownerState.EffectiveMinimizeBehavior == MacroMinimizeBehavior.OnApplicationStart)
             WindowState = WindowState.Minimized;
     }
@@ -128,6 +132,17 @@ public partial class MacroShellWindow : Window
             WindowState = WindowState.Normal;
             Activate();
         }
+        if (!running) _ = _settingsPage.CheckAutomaticallyAsync(_updateCancellation.Token);
+    }
+
+    private async void SettingsPage_OnUpdateAvailable(VerifiedUpdateRelease release)
+    {
+        string version = release.Version.ToString();
+        if (_macroPage.IsRunning || _ownerState.WasUpdateNotificationShown(version)) return;
+        _ownerState.MarkUpdateNotificationShown(version);
+        UpdateConfirmationWindow confirmation = new(release) { Owner = this };
+        if (confirmation.ShowDialog() == true)
+            await _settingsPage.InstallAvailableUpdateAsync(showConfirmation: false);
     }
 
     private MacroLayoutProfile EffectiveLayoutProfile()
@@ -222,10 +237,12 @@ public partial class MacroShellWindow : Window
         try
         {
             _controlCancellation.Cancel();
+            _updateCancellation.Cancel();
             _setupPage.PrepareForClose();
             await _macroPage.CompleteForCloseAsync();
             await _setupPage.CompleteForCloseAsync();
             await CompleteControlPollingAsync();
+            await CompleteUpdatePollingAsync();
             await _telemetry.DisposeAsync();
             await _automaticReports.DisposeAsync();
             await _ownerState.FlushAsync();
@@ -281,8 +298,11 @@ public partial class MacroShellWindow : Window
         DisposeWindowSizing();
         _macroPage.RunningChanged -= MacroPage_OnRunningChanged;
         _ownerState.DisplayOptionsChanged -= OwnerState_OnDisplayOptionsChanged;
+        _settingsPage.UpdateAvailable -= SettingsPage_OnUpdateAvailable;
         _controlCancellation.Cancel();
         _controlCancellation.Dispose();
+        _updateCancellation.Cancel();
+        _updateCancellation.Dispose();
         _controlTransport.Dispose();
         _diagnosticUploads.Dispose();
         _telemetryTransport.Dispose();
@@ -304,6 +324,25 @@ public partial class MacroShellWindow : Window
         {
             AppToastService.ShowError("SERVICE STATUS PAUSED", exception.Message);
         }
+    }
+
+    private async Task RunUpdatePollingAsync()
+    {
+        try
+        {
+            await _settingsPage.CheckAutomaticallyAsync(_updateCancellation.Token);
+            using PeriodicTimer timer = new(ApplicationUpdateService.AutomaticCheckInterval);
+            while (await timer.WaitForNextTickAsync(_updateCancellation.Token))
+                await _settingsPage.CheckAutomaticallyAsync(_updateCancellation.Token);
+        }
+        catch (OperationCanceledException) when (_updateCancellation.IsCancellationRequested) { }
+    }
+
+    private async Task CompleteUpdatePollingAsync()
+    {
+        if (_updateTask is null) return;
+        await _updateTask;
+        _updateTask = null;
     }
 
     private async Task CompleteControlPollingAsync()

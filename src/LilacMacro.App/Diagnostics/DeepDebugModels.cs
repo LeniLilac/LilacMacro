@@ -120,6 +120,7 @@ internal sealed record DeepDebugManifest(
     int ErrorWindowsDiscarded,
     int TransitionFrames,
     int AvifFrames,
+    int JpegFrames,
     int LossyFrames,
     long FrameEvidenceBytes,
     long MaximumArchiveBytes,

@@ -63,7 +63,7 @@
                                 <TextBlock FontSize="16" FontWeight="Bold" Text="Deep Debug error uploads" />
                                 <TextBlock Margin="0,7,0,0" FontSize="12" LineHeight="18" TextWrapping="Wrap"
                                            Foreground="{DynamicResource InkSoftBrush}"
-                                           Text="After a classified macro error, sends the completed Deep Debug log. This pauses when Deep Debug logging is off or low disk space temporarily disables it. A sent log is removed locally; a failed upload stays in the shared Deep Debug folder." />
+                                           Text="After a classified macro error, sends the completed Deep Debug log. This pauses when Deep Debug logging is off or low disk space temporarily disables it. Sent and failed logs remain in the shared Deep Debug folder until the configured storage limit removes the oldest archives." />
                             </StackPanel>
                             <CheckBox x:Name="AutomaticReportsCheck" Grid.Column="1"
                                       Style="{StaticResource ChoiceCheckStyle}" Content="ENABLED" IsChecked="True" />

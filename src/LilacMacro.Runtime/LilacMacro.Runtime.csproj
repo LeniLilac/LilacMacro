@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\LilacMacro.Core\LilacMacro.Core.csproj" />
     <ProjectReference Include="..\LilacMacro.Windows\LilacMacro.Windows.csproj" />
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\eng\runtime-state-contexts.json"

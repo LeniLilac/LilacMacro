@@ -60,6 +60,7 @@ internal sealed class MacroOwnerState
         AutomaticErrorReportsEnabled = settings.AutomaticErrorReportsEnabled;
         CheckForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
+        LastNotifiedUpdateVersion = settings.LastNotifiedUpdateVersion?.Trim() ?? string.Empty;
         LayoutProfile = Enum.IsDefined(settings.LayoutProfile)
             ? settings.LayoutProfile
             : MacroLayoutProfile.Full1920x1080;
@@ -131,6 +132,8 @@ internal sealed class MacroOwnerState
     public bool CheckForUpdatesOnStartup { get; private set; }
 
     public bool IncludePrereleaseUpdates { get; private set; }
+
+    public string LastNotifiedUpdateVersion { get; private set; }
 
     public MacroLayoutProfile LayoutProfile { get; private set; }
 
@@ -328,6 +331,19 @@ internal sealed class MacroOwnerState
         QueueSave();
     }
 
+    public bool WasUpdateNotificationShown(string version) =>
+        string.Equals(LastNotifiedUpdateVersion, version, StringComparison.Ordinal);
+
+    public void MarkUpdateNotificationShown(string version)
+    {
+        string normalized = version.Trim();
+        if (normalized.Length is 0 or > 32)
+            throw new ArgumentException("Update version is invalid.", nameof(version));
+        if (WasUpdateNotificationShown(normalized)) return;
+        LastNotifiedUpdateVersion = normalized;
+        QueueSave();
+    }
+
     public void SetDisplayOptions(MacroLayoutProfile layout, MacroMinimizeBehavior minimizeBehavior)
     {
         if (!Enum.IsDefined(layout) || !Enum.IsDefined(minimizeBehavior))
@@ -406,6 +422,7 @@ internal sealed class MacroOwnerState
         AutomaticErrorReportsEnabled = AutomaticErrorReportsEnabled,
         CheckForUpdatesOnStartup = CheckForUpdatesOnStartup,
         IncludePrereleaseUpdates = IncludePrereleaseUpdates,
+        LastNotifiedUpdateVersion = LastNotifiedUpdateVersion,
         LayoutProfile = LayoutProfile,
         MinimizeBehavior = MinimizeBehavior,
         ThemeMode = ThemeMode,

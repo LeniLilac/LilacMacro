@@ -11,7 +11,6 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
 {
     private sealed record Consent(long Generation, CancellationToken Token);
 
-    internal const string PendingDeepDebugDeleteSuffix = ".uploaded-delete-pending";
     private readonly DeepDebugSessionService _deepDebug;
     private readonly MacroOwnerState _ownerState;
     private readonly DiagnosticInstallationStore _installation;
@@ -37,7 +36,6 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
         _deepDebug.AutomaticReportArchiveSaved += DeepDebug_OnArchiveSaved;
         _deepDebug.OptionsChanged += DeepDebug_OnOptionsChanged;
         _ownerState.PrivacyOptionsChanged += OwnerState_OnPrivacyOptionsChanged;
-        RetryPendingDeepDebugDeletes();
     }
 
     public async ValueTask DisposeAsync()
@@ -50,7 +48,6 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
         lock (_taskGate) tasks = _tasks.ToArray();
         try { await Task.WhenAll(tasks).ConfigureAwait(false); }
         catch (OperationCanceledException) { }
-        RetryPendingDeepDebugDeletes();
         lock (_choiceGate)
         {
             _choiceCancellation.Dispose();
@@ -133,7 +130,6 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
                 installId,
                 progress: null,
                 consent.Token).ConfigureAwait(false);
-            DeleteUploadedArchiveOrMarkPending(archivePath);
         }
         catch (Exception exception) when (exception is HttpRequestException or IOException
             or UnauthorizedAccessException or InvalidDataException or JsonException
@@ -163,96 +159,4 @@ internal sealed class AutomaticDiagnosticReportService : IAsyncDisposable
     private static string BuildVersion() =>
         typeof(AutomaticDiagnosticReportService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
-    private static bool TryDeleteFile(string path)
-    {
-        for (int attempt = 1; attempt <= 3; attempt++)
-        {
-            try
-            {
-                if (File.Exists(path)) File.Delete(path);
-                return true;
-            }
-            catch (Exception exception) when (
-                attempt < 3 && exception is (IOException or UnauthorizedAccessException))
-            {
-                Thread.Sleep(25 * attempt);
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    private void DeleteUploadedArchiveOrMarkPending(string archivePath)
-    {
-        string? validatedArchive = ValidateDeepDebugArchivePath(archivePath);
-        if (validatedArchive is null) return;
-        string marker = validatedArchive + PendingDeepDebugDeleteSuffix;
-        if (TryDeleteFile(validatedArchive))
-        {
-            TryDeleteFile(marker);
-            return;
-        }
-        try
-        {
-            using FileStream pending = new(
-                marker,
-                FileMode.OpenOrCreate,
-                FileAccess.Write,
-                FileShare.Read,
-                1,
-                FileOptions.WriteThrough);
-            pending.SetLength(0);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            // Shared storage retention provides a later bounded cleanup opportunity.
-        }
-    }
-
-    private void RetryPendingDeepDebugDeletes()
-    {
-        try
-        {
-            DirectoryInfo root = new(_deepDebug.DiagnosticsRoot);
-            if (!root.Exists || (root.Attributes & FileAttributes.ReparsePoint) != 0) return;
-            foreach (FileInfo marker in root
-                .EnumerateFiles($"deep-debug-*.zip{PendingDeepDebugDeleteSuffix}", SearchOption.TopDirectoryOnly)
-                .Take(64))
-            {
-                if ((marker.Attributes & FileAttributes.ReparsePoint) != 0) continue;
-                string markerPath = Path.GetFullPath(marker.FullName);
-                string archivePath = markerPath[..^PendingDeepDebugDeleteSuffix.Length];
-                string? validatedArchive = ValidateDeepDebugArchivePath(archivePath);
-                if (validatedArchive is not null && TryDeleteFile(validatedArchive))
-                    TryDeleteFile(markerPath);
-            }
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            // Cleanup is bounded and retried at the next startup or orderly close.
-        }
-    }
-
-    private string? ValidateDeepDebugArchivePath(string archivePath)
-    {
-        string root = Path.GetFullPath(_deepDebug.DiagnosticsRoot)
-            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        string fullPath;
-        try { fullPath = Path.GetFullPath(archivePath); }
-        catch (Exception exception) when (exception is ArgumentException or NotSupportedException
-            or PathTooLongException)
-        {
-            return null;
-        }
-        if (!string.Equals(Path.GetDirectoryName(fullPath), root, StringComparison.OrdinalIgnoreCase))
-            return null;
-        string name = Path.GetFileName(fullPath);
-        return name.StartsWith("deep-debug-", StringComparison.OrdinalIgnoreCase) &&
-               name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
-            ? fullPath
-            : null;
-    }
 }

@@ -8,6 +8,7 @@ namespace LilacMacro.App.Updates;
 
 internal sealed class ApplicationUpdateService : IDisposable
 {
+    public static readonly TimeSpan AutomaticCheckInterval = TimeSpan.FromMinutes(30);
     private readonly UpdateHttpTransport transport;
     private readonly GitHubUpdateClient client;
     private readonly UpdatePackageDownloader downloader;

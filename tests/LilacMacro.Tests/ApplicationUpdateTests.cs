@@ -206,6 +206,7 @@ public sealed class ApplicationUpdateTests
         {
             MacroOwnerState first = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
             first.SetUpdateOptions(checkOnStartup: false, includePrerelease: true);
+            first.MarkUpdateNotificationShown("1.2.3");
             first.SetDisplayOptions(MacroLayoutProfile.Full1920x1080, configuredBehavior);
             MacroMinimizeBehavior compactMinimize = MacroDisplayPolicy.ConfiguredMinimizeBehaviorForSelection(
                 first.LayoutProfile,
@@ -219,6 +220,9 @@ public sealed class ApplicationUpdateTests
             MacroOwnerState restored = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
             Assert.False(restored.CheckForUpdatesOnStartup);
             Assert.True(restored.IncludePrereleaseUpdates);
+            Assert.True(restored.WasUpdateNotificationShown("1.2.3"));
+            Assert.False(restored.WasUpdateNotificationShown("1.2.4"));
+            Assert.Equal(TimeSpan.FromMinutes(30), ApplicationUpdateService.AutomaticCheckInterval);
             Assert.Equal(MacroLayoutProfile.Compact1366x768, restored.LayoutProfile);
             Assert.Equal(configuredBehavior, restored.MinimizeBehavior);
             Assert.Equal(MacroMinimizeBehavior.WhileRunning, restored.EffectiveMinimizeBehavior);

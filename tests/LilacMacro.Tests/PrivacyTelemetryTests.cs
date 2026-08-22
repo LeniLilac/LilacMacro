@@ -520,7 +520,7 @@ public sealed class PrivacyTelemetryTests
             Assert.Contains("manifest.json", uploads.EntryNames);
             Assert.Contains("events.jsonl", uploads.EntryNames);
             await reports.DisposeAsync();
-            Assert.False(File.Exists(uploads.ArchivePath));
+            Assert.True(File.Exists(uploads.ArchivePath));
         }
         finally
         {
@@ -566,13 +566,13 @@ public sealed class PrivacyTelemetryTests
     }
 
     [Fact]
-    public async Task Automatic_report_retries_only_marked_deep_debug_archive_deletion()
+    public async Task Automatic_report_service_preserves_existing_archives_and_legacy_markers()
     {
         string settingsRoot = NewTemporaryDirectory();
         DeepDebugSessionService deepDebug = new(settingsRoot);
         Directory.CreateDirectory(deepDebug.DiagnosticsRoot);
         string archive = Path.Combine(deepDebug.DiagnosticsRoot, "deep-debug-test-20000101-000000-id.zip");
-        string marker = archive + AutomaticDiagnosticReportService.PendingDeepDebugDeleteSuffix;
+        string marker = archive + ".uploaded-delete-pending";
         string unrelated = Path.Combine(deepDebug.DiagnosticsRoot, "owner-kept.zip");
         await File.WriteAllTextAsync(archive, "sent");
         await File.WriteAllTextAsync(marker, string.Empty);
@@ -586,8 +586,8 @@ public sealed class PrivacyTelemetryTests
                 new DiagnosticInstallationStore(settingsRoot),
                 new RecordingUploadTransport());
 
-            Assert.False(File.Exists(archive));
-            Assert.False(File.Exists(marker));
+            Assert.True(File.Exists(archive));
+            Assert.True(File.Exists(marker));
             Assert.True(File.Exists(unrelated));
         }
         finally

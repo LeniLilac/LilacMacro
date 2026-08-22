@@ -237,7 +237,7 @@
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource FieldLabelStyle}" Text="UPDATE OPTIONS" />
                                     <StackPanel Grid.Column="1">
-                                        <CheckBox x:Name="CheckUpdatesOnStartupCheck" Content="Check for updates on startup" Checked="UpdateOptions_OnChanged" Unchecked="UpdateOptions_OnChanged" />
+                                        <CheckBox x:Name="CheckUpdatesOnStartupCheck" Content="Auto check for updates" Checked="UpdateOptions_OnChanged" Unchecked="UpdateOptions_OnChanged" />
                                         <CheckBox x:Name="IncludePrereleaseCheck" Margin="0,9,0,0" Content="Include prerelease builds" Checked="UpdateOptions_OnChanged" Unchecked="UpdateOptions_OnChanged" />
                                     </StackPanel>
                                 </Grid>

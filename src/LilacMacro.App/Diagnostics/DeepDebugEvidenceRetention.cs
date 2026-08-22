@@ -17,6 +17,7 @@ internal sealed class DeepDebugEvidenceRetention
     public long RetainedBytes => _frames.Where(frame => !frame.Deleted).Sum(frame => frame.Length);
     public bool IsOptimized => _optimized;
     public int AvifFrameCount => _frames.Count(frame => !frame.Deleted && frame.Format == "avif");
+    public int JpegFrameCount => _frames.Count(frame => !frame.Deleted && frame.Format == "jpeg");
     public int LossyFrameCount => _frames.Count(frame => !frame.Deleted && frame.EncodingMode == "lossy");
     public IReadOnlyList<DeepDebugEvidenceFrame> Frames => _frames;
 
@@ -165,24 +166,24 @@ internal sealed class DeepDebugEvidenceRetention
         frame.Quality = result.Quality;
         if (result.Validation == "encoder-busy") frame.EncodingAttempted = false;
         if (!result.Success || result.Bytes is null) return;
-        string avifPath = Path.ChangeExtension(frame.Path, ".avif");
-        string temporary = avifPath + ".tmp";
+        string encodedPath = Path.ChangeExtension(frame.Path, "." + result.Format);
+        string temporary = encodedPath + ".tmp";
         try
         {
             await File.WriteAllBytesAsync(temporary, result.Bytes);
-            File.Move(temporary, avifPath, overwrite: false);
+            File.Move(temporary, encodedPath, overwrite: false);
             File.Delete(frame.Path);
-            frame.Path = avifPath;
-            frame.ArtifactPath = Path.ChangeExtension(frame.ArtifactPath, ".avif").Replace('\\', '/');
+            frame.Path = encodedPath;
+            frame.ArtifactPath = Path.ChangeExtension(frame.ArtifactPath, "." + result.Format).Replace('\\', '/');
             frame.Length = result.Bytes.LongLength;
-            frame.Format = "avif";
+            frame.Format = result.Format;
             frame.EncodingMode = lossless ? "lossless" : "lossy";
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             frame.Validation = "replacement-failed";
             TryDelete(temporary);
-            if (File.Exists(frame.Path)) TryDelete(avifPath);
+            if (File.Exists(frame.Path)) TryDelete(encodedPath);
         }
     }
 
