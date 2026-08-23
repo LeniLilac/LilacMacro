@@ -59,6 +59,8 @@ internal sealed class DeepDebugSession
 
     public required IDeepDebugFrameCodec FrameCodec { get; init; }
 
+    public DeepDebugCompletionGate Completion { get; } = new();
+
     public DeepDebugFrameCaptureLoop? FrameCaptureLoop { get; set; }
 
     public ConcurrentDictionary<string, DeepDebugVisualProfileReference> VisualProfiles { get; } =
@@ -76,6 +78,19 @@ internal sealed class DeepDebugSession
     public int WrittenEventCount;
     public int DiscardedEventCount;
     public bool TimelineTruncated;
+}
+
+internal sealed class DeepDebugCompletionGate
+{
+    private readonly TaskCompletionSource<Exception?> _finished = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+    private int _started;
+
+    public bool TryOwn() => Interlocked.CompareExchange(ref _started, 1, 0) == 0;
+
+    public Task<Exception?> WaitAsync() => _finished.Task;
+
+    public void Finish(Exception? error) => _finished.TrySetResult(error);
 }
 
 internal sealed record DeepDebugWriteItem(

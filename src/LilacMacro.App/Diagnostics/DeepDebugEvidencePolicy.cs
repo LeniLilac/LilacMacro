@@ -35,6 +35,7 @@ internal static partial class DeepDebugEvidencePolicy
             ("macro", "runtime_recovery") => DeepDebugErrorSeverity.Recoverable,
             ("ocr_setup", "setup_failed") => DeepDebugErrorSeverity.Recoverable,
             ("ocr", "inference_failed") => DeepDebugErrorSeverity.Recoverable,
+            ("ocr", "worker_timeout") => DeepDebugErrorSeverity.Recoverable,
             ("local_instance", "operation_failed") => DeepDebugErrorSeverity.Recoverable,
             ("vision", "profile_refresh_failed") => DeepDebugErrorSeverity.Recoverable,
             ("route_optimizer_test", "trial_failed") => DeepDebugErrorSeverity.Recoverable,

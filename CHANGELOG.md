@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.164 — Public beta
+
+- Added bounded OCR worker lifecycle diagnostics and a 30-second watchdog so startup failures identify whether model loading, inference, or response handoff stalled.
+- Retried recoverable GPU OCR worker failures once and fell back to the bundled CPU runtime for the current run after a second consecutive failure.
+- Preloaded OCR before Roblox restart for both desktop and managed-session runs, reducing startup uncertainty while keeping GPU eligibility for each new run.
+- Serialized Deep Debug completion so concurrent crash and normal-stop finalization produce one valid archive without orphaned staging data.
+
 ## 1.0.159 — Public beta
 
 - Reobserved Roblox window candidates for up to three seconds during startup instead of failing on the first transient zero-area window.

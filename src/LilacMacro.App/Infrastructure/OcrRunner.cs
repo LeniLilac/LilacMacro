@@ -22,6 +22,7 @@ public sealed partial class OcrRunner : IDisposable
     private readonly string _gpuRuntimeMarkerPath;
     private readonly object _modelCacheGate = new();
     private readonly PersistentOcrWorker _persistentWorker;
+    private readonly OcrRunDevicePolicy _runDevices = new();
     private bool _keepLoaded;
     private bool _disposed;
     private bool _modelCachePrepared;
@@ -38,7 +39,7 @@ public sealed partial class OcrRunner : IDisposable
         _gpuRoot = Path.Combine(_ocrRoot, "gpu");
         _runtimeMarkerPath = Path.Combine(_ocrRoot, "runtime-device.txt");
         _gpuRuntimeMarkerPath = Path.Combine(_gpuRoot, "runtime-device.txt");
-        _persistentWorker = new PersistentOcrWorker(CreateWorkerStartInfo);
+        _persistentWorker = new PersistentOcrWorker(CreateWorkerStartInfo, RecordWorkerLifecycle);
     }
 
     public bool IsInstalled => IsDeviceReady(CpuDevice) || IsDeviceReady(GpuDevice);
@@ -113,16 +114,18 @@ public sealed partial class OcrRunner : IDisposable
         string outputPath = Path.Combine(temporaryRoot, "result.json");
         try
         {
+            string requestedDevice = device;
             OcrWorkerResult result = KeepLoaded
-                ? await RunPersistentWithAccessRecoveryAsync(
-                    imagePath, crop, cropPath, modelName, device, cancellationToken, scale)
+                ? await RunPersistentWithRunRecoveryAsync(
+                    imagePath, crop, cropPath, modelName, requestedDevice, cancellationToken, scale)
                 : await RunOneShotAsync(imagePath, crop, cropPath, outputPath, modelName, device, cancellationToken, scale);
             _deepDebug.RecordPng(await File.ReadAllBytesAsync(cropPath, cancellationToken), "ocr-crop", new
             {
                 Source = imagePath,
                 Crop = crop,
                 Model = modelName,
-                Device = device,
+                RequestedDevice = requestedDevice,
+                Device = result.Device,
                 KeepLoaded,
             });
             OcrWorkerResult offset = OffsetRegions(result, crop, scale);
@@ -145,6 +148,11 @@ public sealed partial class OcrRunner : IDisposable
         }
         catch (OperationCanceledException error)
         {
+            _deepDebug.RecordEvent("ocr", "inference_canceled", new
+            {
+                Model = modelName,
+                RequestedDevice = device,
+            });
             if (scope is not null) await scope.CompleteAsync("canceled", error);
             throw;
         }

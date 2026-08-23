@@ -18,6 +18,9 @@
     <Compile Remove="Infrastructure\AppSettings.cs" />
     <Compile Remove="Infrastructure\AppSettingsStore.cs" />
     <Compile Remove="Infrastructure\OcrRunner.cs" />
+    <Compile Remove="Infrastructure\OcrRunner.RunRecovery.cs" />
+    <Compile Remove="Infrastructure\OcrRunDevicePolicy.cs" />
+    <Compile Remove="Infrastructure\OcrWorkerLifecycle.cs" />
     <Compile Remove="Infrastructure\OcrWorkerResponseReader.cs" />
     <Compile Remove="Infrastructure\OcrWorkerResult.cs" />
     <Compile Remove="Infrastructure\PersistentOcrWorker.cs" />

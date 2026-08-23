@@ -25,6 +25,12 @@
              Link="Infrastructure\AppSettingsStore.cs" />
     <Compile Include="..\LilacMacro.App\Infrastructure\OcrRunner.cs"
              Link="Infrastructure\OcrRunner.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\OcrRunner.RunRecovery.cs"
+             Link="Infrastructure\OcrRunner.RunRecovery.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\OcrRunDevicePolicy.cs"
+             Link="Infrastructure\OcrRunDevicePolicy.cs" />
+    <Compile Include="..\LilacMacro.App\Infrastructure\OcrWorkerLifecycle.cs"
+             Link="Infrastructure\OcrWorkerLifecycle.cs" />
     <Compile Include="..\LilacMacro.App\Infrastructure\OcrGpuInfo.cs"
              Link="Infrastructure\OcrGpuInfo.cs" />
     <Compile Include="..\LilacMacro.App\Infrastructure\OcrRunner.Setup.cs"

@@ -296,6 +296,26 @@ public sealed partial class DeepDebugSessionService
 
     internal async Task CompleteAsync(DeepDebugSession session, string outcome, Exception? error)
     {
+        if (!session.Completion.TryOwn())
+        {
+            Exception? completionError = await session.Completion.WaitAsync();
+            if (completionError is not null) throw completionError;
+            return;
+        }
+        try
+        {
+            await CompleteOwnedAsync(session, outcome, error);
+            session.Completion.Finish(null);
+        }
+        catch (Exception finalizationError)
+        {
+            session.Completion.Finish(finalizationError);
+            throw;
+        }
+    }
+
+    private async Task CompleteOwnedAsync(DeepDebugSession session, string outcome, Exception? error)
+    {
         if (!ReferenceEquals(ActiveSession(), session)) return;
         if (session.FrameCaptureLoop is { } frameCaptureLoop)
         {

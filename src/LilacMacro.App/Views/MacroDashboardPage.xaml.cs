@@ -152,6 +152,7 @@ public partial class MacroDashboardPage : UserControl
     {
         if (_runTask is not null || _runStarting || PlanCombo.SelectedItem is not PlanPrototype plan) return;
         if (!CanStartPlan(plan)) return;
+        bool ocrRunStarted = false;
         _runStarting = true;
         UpdateStartButtonState();
         try
@@ -192,6 +193,9 @@ public partial class MacroDashboardPage : UserControl
                 await _workspace.InitializeAsync();
                 _initialized = true;
             }
+            device = await _ocr.BeginWorkflowRunAsync(device, _runCancellation.Token);
+            ocrRunStarted = true;
+            AppendLog($"OCR RUN READY | {device.ToUpperInvariant()}");
             await BeginDiscordRunAsync(plan);
             await MacroPlanPreflight.ValidateAsync(
                 plan,
@@ -240,6 +244,7 @@ public partial class MacroDashboardPage : UserControl
         }
         finally
         {
+            if (ocrRunStarted) _ocr.EndWorkflowRun();
             _runStarting = false;
             _runtime.Stop();
             _runtimeTimer.Stop();

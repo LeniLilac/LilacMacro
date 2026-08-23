@@ -5,14 +5,19 @@ using LilacMacro.Core.Geometry;
 
 namespace LilacMacro.App.Infrastructure;
 
-internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> createStartInfo) : IDisposable
+internal sealed class PersistentOcrWorker(
+    Func<string?, ProcessStartInfo> createStartInfo,
+    Action<OcrWorkerLifecycleEvent>? observe = null) : IDisposable
 {
+    private static readonly TimeSpan OperationTimeout = TimeSpan.FromSeconds(30);
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _errorLock = new();
     private readonly StringBuilder _errorTail = new();
     private Process? _process;
     private string? _channel;
     private bool _disposed;
+
+    internal static TimeSpan OperationDeadline => OperationTimeout;
 
     public async Task WarmUpAsync(
         string modelName,
@@ -21,12 +26,15 @@ internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> create
         int scale = 1)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        Stopwatch elapsed = Stopwatch.StartNew();
+        Observe("worker_gate_waiting", "preload-gate", device, modelName, elapsed);
         await _gate.WaitAsync(cancellationToken);
         try
         {
+            Observe("worker_gate_acquired", "preload-gate", device, modelName, elapsed);
             Stop();
             Process process = EnsureWorker(modelName, device);
-            await WaitForReadyAsync(process, cancellationToken);
+            await WaitForReadyAsync(process, device, modelName, cancellationToken, elapsed);
         }
         catch
         {
@@ -49,13 +57,17 @@ internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> create
         int scale = 1)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        Stopwatch elapsed = Stopwatch.StartNew();
+        Observe("request_queued", "request-gate", device, modelName, elapsed);
         await _gate.WaitAsync(cancellationToken);
         try
         {
+            Observe("request_gate_acquired", "request-gate", device, modelName, elapsed);
             Process process = EnsureWorker(preloadModel: null, preloadDevice: device);
             string requestId = Guid.NewGuid().ToString("N");
             string requestPath = Path.Combine(_channel!, $"request-{requestId}.json");
             string responsePath = Path.Combine(_channel!, $"response-{requestId}.json");
+            string statusPath = Path.Combine(_channel!, $"status-{requestId}.json");
             string temporaryRequest = requestPath + ".tmp";
             string request = JsonSerializer.Serialize(new
             {
@@ -73,27 +85,43 @@ internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> create
                 new UTF8Encoding(false),
                 cancellationToken);
             File.Move(temporaryRequest, requestPath);
+            Observe("request_sent", "response-wait", device, modelName, elapsed);
 
             using CancellationTokenSource timeout = CreateTimeout(cancellationToken);
+            string phase = "response-wait";
             try
             {
-                await WaitForFileAsync(process, responsePath, timeout.Token);
+                await WaitForFileAsync(
+                    process,
+                    responsePath,
+                    timeout.Token,
+                    statusPath,
+                    observed =>
+                    {
+                        phase = observed;
+                        Observe("worker_phase", observed, device, modelName, elapsed);
+                    });
+                Observe("response_detected", "response-read", device, modelName, elapsed);
                 string json = await OcrWorkerResponseReader.ReadAsync(responsePath, timeout.Token)
                     .ConfigureAwait(false);
                 using JsonDocument document = JsonDocument.Parse(json);
                 if (document.RootElement.TryGetProperty("error", out JsonElement error))
                     throw new InvalidOperationException($"OCR worker failed: {error.GetString()}");
-                return JsonSerializer.Deserialize<OcrWorkerResult>(json)
+                OcrWorkerResult result = JsonSerializer.Deserialize<OcrWorkerResult>(json)
                     ?? throw new InvalidDataException("OCR worker returned an empty result.");
+                Observe("response_completed", "response-read", device, modelName, elapsed);
+                return result;
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new TimeoutException("OCR worker did not finish within 2 minutes.");
+                Observe("worker_timeout", phase, device, modelName, elapsed);
+                throw new OcrWorkerTimeoutException(phase, OperationTimeout);
             }
             finally
             {
                 TryDeleteFile(requestPath);
                 TryDeleteFile(responsePath);
+                TryDeleteFile(statusPath);
                 TryDeleteFile(temporaryRequest);
             }
         }
@@ -140,7 +168,11 @@ internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> create
 
     private Process EnsureWorker(string? preloadModel = null, string? preloadDevice = null)
     {
-        if (_process is { HasExited: false } running) return running;
+        if (_process is { HasExited: false } running)
+        {
+            Observe("worker_reused", "worker-start", preloadDevice, preloadModel, Stopwatch.StartNew());
+            return running;
+        }
         Stop();
         lock (_errorLock) _errorTail.Clear();
         string channel = Path.Combine(Path.GetTempPath(), "LilacMacro", $"worker-{Guid.NewGuid():N}");
@@ -156,6 +188,8 @@ internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> create
             startInfo.ArgumentList.Add("--preload-device");
             startInfo.ArgumentList.Add(preloadDevice);
         }
+        Stopwatch elapsed = Stopwatch.StartNew();
+        Observe("worker_starting", "worker-start", preloadDevice, preloadModel, elapsed);
         Process process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Could not start the persistent OCR worker.");
         process.ErrorDataReceived += Worker_OnErrorDataReceived;
@@ -164,38 +198,97 @@ internal sealed class PersistentOcrWorker(Func<string?, ProcessStartInfo> create
         process.BeginOutputReadLine();
         _process = process;
         _channel = channel;
+        Observe("worker_started", "worker-start", preloadDevice, preloadModel, elapsed);
         return process;
     }
 
-    private async Task WaitForReadyAsync(Process process, CancellationToken cancellationToken)
+    private async Task WaitForReadyAsync(
+        Process process,
+        string device,
+        string modelName,
+        CancellationToken cancellationToken,
+        Stopwatch elapsed)
     {
+        Observe("preload_waiting", "preload-ready", device, modelName, elapsed);
         using CancellationTokenSource timeout = CreateTimeout(cancellationToken);
+        string phase = "preload-ready";
         try
         {
-            await WaitForFileAsync(process, Path.Combine(_channel!, "ready"), timeout.Token);
+            await WaitForFileAsync(
+                process,
+                Path.Combine(_channel!, "ready"),
+                timeout.Token,
+                Path.Combine(_channel!, "preload-status.json"),
+                observed =>
+                {
+                    phase = observed;
+                    Observe("worker_phase", observed, device, modelName, elapsed);
+                });
+            Observe("preload_completed", "preload-ready", device, modelName, elapsed);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new TimeoutException("OCR worker did not preload within 2 minutes.");
+            Observe("worker_timeout", phase, device, modelName, elapsed);
+            throw new OcrWorkerTimeoutException(phase, OperationTimeout);
         }
     }
 
-    private async Task WaitForFileAsync(Process process, string path, CancellationToken cancellationToken)
+    private async Task WaitForFileAsync(
+        Process process,
+        string path,
+        CancellationToken cancellationToken,
+        string? statusPath = null,
+        Action<string>? statusChanged = null)
     {
+        string? lastStatus = null;
         while (!File.Exists(path))
         {
             if (process.HasExited)
                 throw new InvalidOperationException($"OCR worker stopped unexpectedly. {ReadErrorTail()}");
+            string? status = TryReadStatus(statusPath);
+            if (!string.IsNullOrWhiteSpace(status) && status != lastStatus)
+            {
+                lastStatus = status;
+                statusChanged?.Invoke(status);
+            }
             await Task.Delay(25, cancellationToken);
+        }
+    }
+
+    private static string? TryReadStatus(string? path)
+    {
+        if (path is null || !File.Exists(path)) return null;
+        try
+        {
+            using JsonDocument status = JsonDocument.Parse(File.ReadAllText(path));
+            return status.RootElement.TryGetProperty("stage", out JsonElement stage)
+                ? stage.GetString()
+                : null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return null;
         }
     }
 
     private static CancellationTokenSource CreateTimeout(CancellationToken cancellationToken)
     {
         CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(TimeSpan.FromMinutes(2));
+        timeout.CancelAfter(OperationTimeout);
         return timeout;
     }
+
+    private void Observe(
+        string action,
+        string stage,
+        string? device,
+        string? model,
+        Stopwatch elapsed) => observe?.Invoke(new(
+            action,
+            stage,
+            device,
+            model,
+            elapsed.ElapsedMilliseconds));
 
     private void Worker_OnErrorDataReceived(object sender, DataReceivedEventArgs eventArgs)
     {

@@ -30,6 +30,51 @@ public sealed class OcrSetupTests
         Assert.Equal(expected, OcrRunner.SelectPreferredDevice(gpuReady, cpuReady));
 
     [Fact]
+    public void Run_device_policy_retries_gpu_once_then_uses_cpu_for_the_run()
+    {
+        OcrRunDevicePolicy policy = new();
+        policy.Begin();
+
+        Assert.Equal(
+            OcrGpuFailureDecision.RetryGpu,
+            policy.ObserveGpuFailure(cpuReady: true));
+        Assert.Equal(OcrRunner.GpuDevice, policy.Resolve(OcrRunner.GpuDevice));
+        Assert.Equal(
+            OcrGpuFailureDecision.UseCpu,
+            policy.ObserveGpuFailure(cpuReady: true));
+        Assert.Equal(OcrRunner.CpuDevice, policy.Resolve(OcrRunner.GpuDevice));
+
+        policy.End();
+        policy.Begin();
+        Assert.Equal(OcrRunner.GpuDevice, policy.Resolve(OcrRunner.GpuDevice));
+    }
+
+    [Fact]
+    public void Successful_gpu_recovery_restores_the_next_incident_retry()
+    {
+        OcrRunDevicePolicy policy = new();
+        policy.Begin();
+
+        Assert.Equal(
+            OcrGpuFailureDecision.RetryGpu,
+            policy.ObserveGpuFailure(cpuReady: true));
+        policy.ObserveGpuSuccess();
+
+        Assert.Equal(
+            OcrGpuFailureDecision.RetryGpu,
+            policy.ObserveGpuFailure(cpuReady: true));
+    }
+
+    [Fact]
+    public void Worker_timeout_is_a_recoverable_gpu_failure() =>
+        Assert.True(OcrRunner.IsRecoverableGpuWorkerFailure(
+            new OcrWorkerTimeoutException("response", TimeSpan.FromSeconds(30))));
+
+    [Fact]
+    public void Persistent_worker_watchdog_is_shorter_than_lobby_deadline() =>
+        Assert.Equal(TimeSpan.FromSeconds(30), PersistentOcrWorker.OperationDeadline);
+
+    [Fact]
     public async Task EnsureReadyUsesExistingCpuRuntimeWithoutReinstalling()
     {
         string root = Path.Combine(Path.GetTempPath(), "LilacMacro.Tests", Guid.NewGuid().ToString("N"));
@@ -55,6 +100,17 @@ public sealed class OcrSetupTests
 
         Assert.Contains("if device == \"cpu\":", worker);
         Assert.Contains("options[\"enable_mkldnn\"] = False", worker);
+    }
+
+    [Fact]
+    public void Persistent_worker_reports_bounded_model_and_inference_phases()
+    {
+        string worker = File.ReadAllText(Path.Combine(RepositoryRoot(), "tools", "ocr_worker.py"));
+
+        Assert.Contains("write_status(preload_status, \"model-loading\")", worker);
+        Assert.Contains("notify(progress, \"crop-ready\")", worker);
+        Assert.Contains("notify(progress, \"inference-running\")", worker);
+        Assert.Contains("write_status(status_path, \"response-writing\")", worker);
     }
 
     [Theory]

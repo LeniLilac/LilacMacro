@@ -394,6 +394,7 @@ public sealed class DeepDebugSessionTests : IDisposable
     [InlineData("macro", "runtime_recovery", false)]
     [InlineData("ocr_setup", "setup_failed", false)]
     [InlineData("ocr", "inference_failed", false)]
+    [InlineData("ocr", "worker_timeout", false)]
     [InlineData("local_instance", "operation_failed", false)]
     [InlineData("window", "capture_exhausted", false)]
     [InlineData("route_optimizer_test", "trial_failed", false)]
@@ -427,6 +428,53 @@ public sealed class DeepDebugSessionTests : IDisposable
 
         Assert.False(classified);
         Assert.Null(marker);
+    }
+
+    [Fact]
+    public async Task Completion_gate_allows_one_finalizer_and_releases_other_callers()
+    {
+        DeepDebugCompletionGate gate = new();
+        bool[] owners = await Task.WhenAll(Enumerable.Range(0, 32)
+            .Select(_ => Task.Run(gate.TryOwn)));
+
+        Assert.Single(owners, owner => owner);
+        Task<Exception?> waiter = gate.WaitAsync();
+        Assert.False(waiter.IsCompleted);
+        gate.Finish(null);
+        Assert.Null(await waiter);
+    }
+
+    [Fact]
+    public async Task Crash_and_scope_completion_share_one_archive_finalizer()
+    {
+        DeepDebugSessionService service = NewService();
+        TaskCompletionSource captureStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource releaseCapture = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using IDisposable registration = service.RegisterFrameCaptureProvider(
+            "completion-race",
+            async _ =>
+            {
+                captureStarted.TrySetResult();
+                await releaseCapture.Task;
+            });
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "completion race",
+            new DeepDebugOperationContext("completion-race"));
+        await captureStarted.Task.WaitAsync(TimeSpan.FromSeconds(3));
+
+        Task ordinary = scope!.CompleteAsync("stopped");
+        Task crash = service.CompleteActiveAsync("unhandled-error", new InvalidOperationException("test"));
+        releaseCapture.TrySetResult();
+        await Task.WhenAll(ordinary, crash);
+
+        Assert.Single(Directory.EnumerateFiles(service.DiagnosticsRoot, "deep-debug-*.zip"));
+        Assert.Empty(Directory.EnumerateFiles(
+            service.DiagnosticsRoot,
+            "finalization-error.txt",
+            SearchOption.AllDirectories));
+        Assert.Empty(Directory.EnumerateDirectories(service.DiagnosticsRoot, ".deep-debug-*"));
     }
 
     [Fact]

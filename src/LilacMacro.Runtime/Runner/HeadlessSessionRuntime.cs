@@ -109,6 +109,8 @@ public sealed partial class HeadlessSessionRuntime(LocalSessionPaths paths) : IS
         Dictionary<string, DateTimeOffset> blockedUntil = new(StringComparer.Ordinal);
         Dictionary<string, DateTimeOffset> utilityDueAt = new(StringComparer.Ordinal);
         string device = SelectDevice(ocr, snapshot.PreferGpu);
+        device = await PrepareOcrRunAsync(
+            ocr, device, snapshot.OcrModel, progress, cancellationToken).ConfigureAwait(false);
 
         await ResetLobbyAsync(
             rejoin,
@@ -325,22 +327,6 @@ public sealed partial class HeadlessSessionRuntime(LocalSessionPaths paths) : IS
         Environment.SetEnvironmentVariable("LILACMACRO_RUNNER_CHALLENGE_ROTATION", Path.Combine(revisionRoot, ChallengeFileName));
     }
 
-    private static async Task EnsureOcrAsync(
-        OcrRunner ocr,
-        RunnerRuntimeSnapshot snapshot,
-        IProgress<SessionRuntimeProgress> progress,
-        CancellationToken cancellationToken)
-    {
-        if (!ocr.IsInstalled)
-        {
-            progress.Report(new SessionRuntimeProgress { Stage = "ocr-setup", Detail = "Installing the runner OCR runtime." });
-            await ocr.SetupAsync(snapshot.PreferGpu ? OcrRunner.GpuDevice : OcrRunner.CpuDevice, cancellationToken).ConfigureAwait(false);
-        }
-        string device = SelectDevice(ocr, snapshot.PreferGpu);
-        await ocr.WarmUpAsync(snapshot.OcrModel, device, cancellationToken).ConfigureAwait(false);
-        progress.Report(new SessionRuntimeProgress { Stage = "ocr-ready", Detail = $"OCR ready on {device}." });
-    }
-
     private static RunnerTaskSnapshot? SelectTask(
         IReadOnlyList<RunnerTaskSnapshot> tasks,
         IReadOnlyDictionary<string, int> wins,
@@ -489,9 +475,6 @@ public sealed partial class HeadlessSessionRuntime(LocalSessionPaths paths) : IS
 
     private static int RequiredKey(IReadOnlyDictionary<string, int?> keys, string name) =>
         OptionalKey(keys, name) ?? throw new InvalidDataException($"Runner key binding {name} is missing.");
-
-    private static string SelectDevice(OcrRunner ocr, bool preferGpu) =>
-        preferGpu && ocr.IsDeviceReady(OcrRunner.GpuDevice) ? OcrRunner.GpuDevice : OcrRunner.CpuDevice;
 
     private static string RouteId(StoryAct act) => act switch
     {

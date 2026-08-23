@@ -7,7 +7,7 @@ import sys
 import traceback
 from pathlib import Path
 from time import perf_counter, sleep
-from typing import Any
+from typing import Any, Callable
 
 
 MODEL_PAIRS = {
@@ -67,6 +67,7 @@ def run_ocr(
     crop: list[int] | tuple[int, int, int, int] | None = None,
     crop_output: str | None = None,
     scale: int = 1,
+    progress: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     from paddleocr import __version__ as paddleocr_version
 
@@ -74,19 +75,26 @@ def run_ocr(
         raise ValueError(f"Unsupported OCR model: {model_name}")
     if device not in SUPPORTED_DEVICES:
         raise ValueError(f"Unsupported OCR device: {device}")
+    notify(progress, "input-validating")
     input_path = Path(input_value).resolve(strict=True)
+    notify(progress, "crop-preparing")
     inference_path = prepare_crop(input_path, crop, crop_output, scale)
+    notify(progress, "crop-ready")
     cache_key = (model_name, device)
     cached = cache_key in cache
     load_ms = 0
     if not cached:
+        notify(progress, "model-loading")
         load_started = perf_counter()
         cache[cache_key] = create_pipeline(model_name, device)
         load_ms = round((perf_counter() - load_started) * 1000)
+        notify(progress, "model-ready")
 
+    notify(progress, "inference-running")
     inference_started = perf_counter()
     results = list(cache[cache_key].predict(input=str(inference_path)))
     inference_ms = round((perf_counter() - inference_started) * 1000)
+    notify(progress, "inference-complete")
     if len(results) != 1:
         raise RuntimeError(f"Expected one OCR pipeline result, received {len(results)}.")
 
@@ -121,6 +129,7 @@ def run_ocr(
         if regions
         else 0.0
     )
+    notify(progress, "result-serializing")
     return {
         "detector_model_name": MODEL_PAIRS[model_name],
         "model_name": model_name,
@@ -173,6 +182,15 @@ def write_result(path_value: str, payload: dict[str, Any]) -> None:
     temporary.replace(output_path)
 
 
+def notify(progress: Callable[[str], None] | None, stage: str) -> None:
+    if progress is not None:
+        progress(stage)
+
+
+def write_status(path: Path, stage: str) -> None:
+    write_result(str(path), {"stage": stage})
+
+
 def read_request(path: Path, attempts: int = 8) -> dict[str, Any]:
     """Read an atomically published request through transient Windows access races."""
     for attempt in range(attempts):
@@ -193,10 +211,13 @@ def serve(
     channel = Path(channel_value).resolve(strict=True)
     cache: dict[tuple[str, str], Any] = {}
     if preload_model is not None and preload_device is not None:
+        preload_status = channel / "preload-status.json"
+        write_status(preload_status, "model-loading")
         cache[(preload_model, preload_device)] = create_pipeline(
             preload_model,
             preload_device,
         )
+        write_status(preload_status, "model-ready")
     (channel / "ready").write_text("ready", encoding="utf-8")
     while not (channel / "stop").exists():
         requests = sorted(channel.glob("request-*.json"))
@@ -205,7 +226,9 @@ def serve(
             continue
         for request_path in requests:
             request_id = request_path.stem.removeprefix("request-")
+            status_path = channel / f"status-{request_id}.json"
             try:
+                write_status(status_path, "request-reading")
                 request = read_request(request_path)
                 payload = run_ocr(
                     str(request["input"]),
@@ -215,6 +238,7 @@ def serve(
                     request.get("crop"),
                     request.get("crop_output"),
                     int(request.get("scale", 1)),
+                    lambda stage: write_status(status_path, stage),
                 )
                 payload["request_id"] = str(request.get("request_id", request_id))
             except Exception as error:  # The caller needs a bounded protocol error, not a hung worker.
@@ -222,6 +246,7 @@ def serve(
                 payload = {"request_id": request_id, "error": str(error)}
             finally:
                 request_path.unlink(missing_ok=True)
+            write_status(status_path, "response-writing")
             write_result(str(channel / f"response-{request_id}.json"), payload)
     return 0
 
