@@ -28,7 +28,7 @@
       "annotations": [
         {
           "id": "67ef134e-c8ca-46ee-a1b1-01de2ca46cd4",
-          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "global_group_id": "783ac6cc-3793-4140-8e4a-41dd018890b9",
           "bounds": {
             "x": 348,
             "y": 61,
@@ -42,11 +42,25 @@
         },
         {
           "id": "21282c95-7b60-43a8-8774-598fcdb76ddd",
-          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "global_group_id": "d98fe714-16ee-4131-a9d8-c4fe8c5eff48",
           "bounds": {
             "x": 300,
             "y": 73,
             "width": 746,
+            "height": 3
+          },
+          "label": "Hover Line (OLD)",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "5733f040-c574-4ef4-a5ae-d5be9a5731dc",
+          "global_group_id": "870455e1-e1a0-4190-a668-83c414f525e3",
+          "bounds": {
+            "x": 458,
+            "y": 73,
+            "width": 138,
             "height": 3
           },
           "label": "Hover Line",
@@ -80,8 +94,22 @@
       "notes": "",
       "annotations": [
         {
-          "id": "9a3ace9b-55b3-41d0-b265-dd3d7a46affa",
-          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "id": "ac168395-2a70-4ed7-8e58-dad206426a6a",
+          "global_group_id": "870455e1-e1a0-4190-a668-83c414f525e3",
+          "bounds": {
+            "x": 458,
+            "y": 73,
+            "width": 138,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "2a6c5f54-17c9-4dfa-9800-acb4fb4b8077",
+          "global_group_id": "783ac6cc-3793-4140-8e4a-41dd018890b9",
           "bounds": {
             "x": 348,
             "y": 61,
@@ -94,15 +122,15 @@
           "minimum_pool_matches": 0
         },
         {
-          "id": "596d925f-e0c1-48cc-b396-d540d3a8245f",
-          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "id": "51c86007-7619-4774-a88f-d77ecceb7427",
+          "global_group_id": "d98fe714-16ee-4131-a9d8-c4fe8c5eff48",
           "bounds": {
             "x": 300,
             "y": 73,
             "width": 746,
             "height": 3
           },
-          "label": "Hover Line",
+          "label": "Hover Line (OLD)",
           "notes": "",
           "ocr_trials": [],
           "minimum_pool_matches": 0
@@ -119,8 +147,22 @@
       "notes": "",
       "annotations": [
         {
-          "id": "7f2a8e42-fd71-4a04-ad0a-6d2be97d242f",
-          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "id": "26b47b24-5739-4d3d-957f-79f6663408c1",
+          "global_group_id": "870455e1-e1a0-4190-a668-83c414f525e3",
+          "bounds": {
+            "x": 458,
+            "y": 73,
+            "width": 138,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "9a784df2-e1e9-4251-9406-49b17ed4ab2c",
+          "global_group_id": "783ac6cc-3793-4140-8e4a-41dd018890b9",
           "bounds": {
             "x": 348,
             "y": 61,
@@ -133,15 +175,15 @@
           "minimum_pool_matches": 0
         },
         {
-          "id": "8bdd6bd8-d38a-47f4-948a-a173ebeeefbf",
-          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "id": "73d36222-37a4-4f76-bcda-2bb86bd2dc30",
+          "global_group_id": "d98fe714-16ee-4131-a9d8-c4fe8c5eff48",
           "bounds": {
             "x": 300,
             "y": 73,
             "width": 746,
             "height": 3
           },
-          "label": "Hover Line",
+          "label": "Hover Line (OLD)",
           "notes": "",
           "ocr_trials": [],
           "minimum_pool_matches": 0
@@ -158,8 +200,22 @@
       "notes": "",
       "annotations": [
         {
-          "id": "5d4efa9b-fb2a-4f0d-b9cb-703c4369639b",
-          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "id": "568e0ccc-a94d-422a-94b8-f04c39cd8746",
+          "global_group_id": "870455e1-e1a0-4190-a668-83c414f525e3",
+          "bounds": {
+            "x": 458,
+            "y": 73,
+            "width": 138,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "b1e7bce8-8f38-4d44-bf07-c277fd21a722",
+          "global_group_id": "783ac6cc-3793-4140-8e4a-41dd018890b9",
           "bounds": {
             "x": 348,
             "y": 61,
@@ -172,15 +228,15 @@
           "minimum_pool_matches": 0
         },
         {
-          "id": "4146c84f-adc0-4068-bd63-cd7bad013ae9",
-          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "id": "9f2eebbd-507f-4abb-bc25-f8a0e89f176b",
+          "global_group_id": "d98fe714-16ee-4131-a9d8-c4fe8c5eff48",
           "bounds": {
             "x": 300,
             "y": 73,
             "width": 746,
             "height": 3
           },
-          "label": "Hover Line",
+          "label": "Hover Line (OLD)",
           "notes": "",
           "ocr_trials": [],
           "minimum_pool_matches": 0
@@ -197,8 +253,22 @@
       "notes": "",
       "annotations": [
         {
-          "id": "39f5ea1b-86c5-49b4-bd9e-8b4b64fb7abe",
-          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "id": "4f86460f-0955-4b04-861a-f7f097482f31",
+          "global_group_id": "870455e1-e1a0-4190-a668-83c414f525e3",
+          "bounds": {
+            "x": 458,
+            "y": 73,
+            "width": 138,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "0d73161a-f8a1-44f9-8085-a4aa3e309a76",
+          "global_group_id": "783ac6cc-3793-4140-8e4a-41dd018890b9",
           "bounds": {
             "x": 348,
             "y": 61,
@@ -211,15 +281,15 @@
           "minimum_pool_matches": 0
         },
         {
-          "id": "e277eb87-cc98-4535-a6db-3676d8f630b9",
-          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "id": "93562a02-63b4-4f36-9676-816b80d969dc",
+          "global_group_id": "d98fe714-16ee-4131-a9d8-c4fe8c5eff48",
           "bounds": {
             "x": 300,
             "y": 73,
             "width": 746,
             "height": 3
           },
-          "label": "Hover Line",
+          "label": "Hover Line (OLD)",
           "notes": "",
           "ocr_trials": [],
           "minimum_pool_matches": 0
@@ -236,8 +306,22 @@
       "notes": "",
       "annotations": [
         {
-          "id": "e2f02b60-1f63-4317-b73f-7f65e21c2ae0",
-          "global_group_id": "f05004ba-0e5a-4d69-a03e-2285f67d87e5",
+          "id": "56af18bd-ef91-4d90-b039-fb8baeea40cd",
+          "global_group_id": "870455e1-e1a0-4190-a668-83c414f525e3",
+          "bounds": {
+            "x": 458,
+            "y": 73,
+            "width": 138,
+            "height": 3
+          },
+          "label": "Hover Line",
+          "notes": "",
+          "ocr_trials": [],
+          "minimum_pool_matches": 0
+        },
+        {
+          "id": "dbffb2df-adc1-4ec3-99e3-4a3616bfc0cd",
+          "global_group_id": "783ac6cc-3793-4140-8e4a-41dd018890b9",
           "bounds": {
             "x": 348,
             "y": 61,
@@ -250,15 +334,15 @@
           "minimum_pool_matches": 0
         },
         {
-          "id": "0f712782-d866-4917-b0aa-8e4fdcc38231",
-          "global_group_id": "3fa83931-4005-423a-9dd5-fd480bae4e33",
+          "id": "fce78d0a-f8e7-4c92-acfa-a08433002690",
+          "global_group_id": "d98fe714-16ee-4131-a9d8-c4fe8c5eff48",
           "bounds": {
             "x": 300,
             "y": 73,
             "width": 746,
             "height": 3
           },
-          "label": "Hover Line",
+          "label": "Hover Line (OLD)",
           "notes": "",
           "ocr_trials": [],
           "minimum_pool_matches": 0

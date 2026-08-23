@@ -24,6 +24,29 @@ internal static class MacroLoopProgressPolicy
         IReadOnlyDictionary<PlanLoopPrototype, int> completedRuns) =>
         loop.Forever || completedRuns.GetValueOrDefault(loop) < loop.RepeatCount;
 
+    public static PlanLoopPrototype? AbandonContainingIteration(
+        PlanPrototype plan,
+        PlanTaskPrototype failedTask,
+        Dictionary<PlanTaskPrototype, int> victories,
+        Dictionary<PlanTaskPrototype, int> defeats,
+        Dictionary<PlanLoopPrototype, int> completedRuns)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(failedTask);
+        ArgumentNullException.ThrowIfNull(victories);
+        ArgumentNullException.ThrowIfNull(defeats);
+        ArgumentNullException.ThrowIfNull(completedRuns);
+
+        PlanLoopPrototype? containingLoop = plan.Blocks
+            .OfType<PlanLoopPrototype>()
+            .Select(loop => FindInnermostContainingLoop(loop, failedTask))
+            .FirstOrDefault(loop => loop is not null);
+        if (containingLoop is null) return null;
+
+        ResetAbandonedIteration(containingLoop, victories, defeats, completedRuns);
+        return containingLoop;
+    }
+
     private static void Advance(
         PlanLoopPrototype loop,
         Dictionary<PlanTaskPrototype, int> victories,
@@ -73,6 +96,43 @@ internal static class MacroLoopProgressPolicy
 
     private static bool IsBounded(PlanTaskPrototype task) =>
         task.Mode is not PlanTaskMode.Challenge and not PlanTaskMode.Utilities;
+
+    private static PlanLoopPrototype? FindInnermostContainingLoop(
+        PlanLoopPrototype loop,
+        PlanTaskPrototype task)
+    {
+        foreach (PlanLoopPrototype child in loop.Children.OfType<PlanLoopPrototype>())
+        {
+            PlanLoopPrototype? found = FindInnermostContainingLoop(child, task);
+            if (found is not null) return found;
+        }
+        return loop.Children.Contains(task) ? loop : null;
+    }
+
+    private static void ResetAbandonedIteration(
+        PlanLoopPrototype loop,
+        Dictionary<PlanTaskPrototype, int> victories,
+        Dictionary<PlanTaskPrototype, int> defeats,
+        Dictionary<PlanLoopPrototype, int> completedRuns)
+    {
+        foreach (PlanBlockPrototype child in loop.Children)
+        {
+            if (child is PlanTaskPrototype task)
+            {
+                if (IsBounded(task))
+                {
+                    victories.Remove(task);
+                    defeats.Remove(task);
+                }
+                continue;
+            }
+
+            if (child is not PlanLoopPrototype childLoop) continue;
+            completedRuns.Remove(childLoop);
+            childLoop.CompletedRuns = 0;
+            ResetAbandonedIteration(childLoop, victories, defeats, completedRuns);
+        }
+    }
 
     private static void ResetIteration(
         PlanLoopPrototype loop,

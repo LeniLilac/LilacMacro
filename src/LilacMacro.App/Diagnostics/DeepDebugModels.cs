@@ -59,6 +59,11 @@ internal sealed class DeepDebugSession
 
     public required IDeepDebugFrameCodec FrameCodec { get; init; }
 
+    public DeepDebugFrameOptimizationWorker? FrameOptimizer { get; set; }
+
+    public DeepDebugOptimizationMetrics OptimizationMetrics { get; set; } =
+        DeepDebugOptimizationMetrics.Empty;
+
     public DeepDebugCompletionGate Completion { get; } = new();
 
     public DeepDebugFrameCaptureLoop? FrameCaptureLoop { get; set; }
@@ -115,6 +120,15 @@ internal sealed record DeepDebugVisualProfileReference(
     string RevisionDirectory,
     string? LocatorPath);
 
+internal sealed record DeepDebugOptimizationMetrics(
+    int BackgroundEncodingAttempts,
+    int CompletionEncodingAttempts,
+    bool CompletionDrainTimedOut,
+    long CompletionDrainMilliseconds)
+{
+    public static DeepDebugOptimizationMetrics Empty { get; } = new(0, 0, false, 0);
+}
+
 internal sealed record DeepDebugManifest(
     int FormatVersion,
     string Operation,
@@ -139,6 +153,10 @@ internal sealed record DeepDebugManifest(
     int LossyFrames,
     long FrameEvidenceBytes,
     long MaximumArchiveBytes,
+    int BackgroundEncodingAttempts,
+    int CompletionEncodingAttempts,
+    bool CompletionDrainTimedOut,
+    long CompletionDrainMilliseconds,
     int VisualProfiles,
     string ArtifactPolicy,
     string? WriterFailure,

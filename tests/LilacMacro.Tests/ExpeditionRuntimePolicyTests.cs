@@ -150,7 +150,7 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
-    public void FirstNodeCalibrationSweepsTheCompleteDatasetHoverLineFromTheLeft()
+    public void FirstNodeCalibrationSweepsOnlyTheDatasetOwnedLeftmostNodeBand()
     {
         PixelPoint marker = new(507, 74);
         IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(marker, null);
@@ -162,6 +162,8 @@ public sealed class ExpeditionRuntimePolicyTests
             point.X,
             ExpeditionNodeEvidenceService.HoverLine.X,
             ExpeditionNodeEvidenceService.HoverLine.Right - 1));
+        Assert.Equal(new PixelRect(458, 73, 138, 3), ExpeditionNodeEvidenceService.HoverLine);
+        Assert.DoesNotContain(probes, point => point.X >= 596);
     }
 
     [Fact]
@@ -175,28 +177,31 @@ public sealed class ExpeditionRuntimePolicyTests
     }
 
     [Fact]
-    public void LearnedNodeHoverUsesCachedOffsetThenFallsBackToTheCompleteLine()
+    public void LearnedNodeHoverClampsCachedOffsetAndFallbackToTheLeftmostNodeBand()
     {
         PixelPoint marker = new(650, 74);
         IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(marker, 12);
 
-        Assert.Equal(new PixelPoint(662, 74), probes[0]);
-        Assert.All(probes.Take(17), point => Assert.InRange(point.X, 630, 694));
-        Assert.Contains(new PixelPoint(300, 74), probes);
+        Assert.Equal(new PixelPoint(ExpeditionNodeEvidenceService.HoverLine.Right - 1, 74), probes[0]);
+        Assert.Contains(new PixelPoint(ExpeditionNodeEvidenceService.HoverLine.X, 74), probes);
         Assert.Contains(new PixelPoint(ExpeditionNodeEvidenceService.HoverLine.Right - 1, 74), probes);
+        Assert.All(probes, point => Assert.InRange(
+            point.X,
+            ExpeditionNodeEvidenceService.HoverLine.X,
+            ExpeditionNodeEvidenceService.HoverLine.Right - 1));
         Assert.Equal(probes.Count, probes.Distinct().Count());
     }
 
     [Fact]
-    public void LearnedNodeHoverFallbackCoversAnIconFarBeyondAMisidentifiedBarEndpoint()
+    public void LearnedNodeHoverFallbackCoversTheCrossScaleLeftmostNodeRange()
     {
         PixelPoint falseBarEndpoint = new(420, 74);
         IReadOnlyList<PixelPoint> probes = ExpeditionNodeEvidenceService.HoverProbePoints(
             falseBarEndpoint,
             1);
 
-        Assert.DoesNotContain(new PixelPoint(516, 74), probes.Take(17));
-        Assert.Contains(new PixelPoint(516, 74), probes);
+        Assert.Contains(probes, point => Math.Abs(point.X - 516) <= 4);
+        Assert.DoesNotContain(probes, point => point.X >= 596);
     }
 
     [Fact]

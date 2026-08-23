@@ -46,11 +46,11 @@ internal static class RuntimeSearchRegionEvidenceCatalog
 
     public static readonly RuntimeSearchRegionEvidence ExpeditionNodeHoverLine = new(
         "ExpeditionNodeEvidenceService.HoverLine",
-        new PixelRect(300, 73, 746, 3),
+        new PixelRect(458, 73, 138, 3),
         "expedition-node-set4-20260812-204347",
         1,
         "Hover Line",
-        "Sweep left to right to discover the first live node hover target.");
+        "Sweep only the cross-scale leftmost-node band; later node targets remain out of reach.");
 
     public static readonly RuntimeSearchRegionEvidence ExpeditionNodeTooltip = new(
         "ExpeditionNodeEvidenceService.TooltipTitleBand",

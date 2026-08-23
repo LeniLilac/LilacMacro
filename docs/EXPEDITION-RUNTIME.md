@@ -33,7 +33,7 @@ On the first semantic calibration after match start:
 
 The color sample is limited to the seven-pixel fill stripe centered on the located marker. Saturated map scenery above the stripe is excluded; it previously could dominate a median and teach a semantic node the background hue instead of the bar hue. Color-profile version 2 invalidates those earlier samples.
 
-The `Hover Line` (`300,73,746,3`) and tooltip-title band (`348,61,660,55`) come from `expedition-node-set4-20260812-204347` and cover all three recorded UI scales. The tooltip geometry establishes that the cursor is over a real node. OCR supplies the semantic label. OCR alone does not authorize unrelated input.
+The `Hover Line` (`458,73,138,3`) and tooltip-title band (`348,61,660,55`) come from `expedition-node-set4-20260812-204347` and cover all three recorded UI scales. The narrow line covers the leftmost revealed node at every recorded scale and explicitly excludes later nodes, preventing a tooltip from a future node from being associated with the current marker. The tooltip geometry establishes that the cursor is over a real leftmost node. OCR supplies the semantic label. OCR alone does not authorize unrelated input.
 
 Unknown is relevant only while a marker is in the future. When that marker becomes current, wait for its revealed live type and calibrate that type; do not classify current Unknown as Boss or any other node.
 

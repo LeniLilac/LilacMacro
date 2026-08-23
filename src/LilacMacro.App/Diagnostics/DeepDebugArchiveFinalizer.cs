@@ -15,7 +15,7 @@ internal sealed class DeepDebugArchiveFinalizer(
         Exception? operationError,
         DateTimeOffset completedAtUtc)
     {
-        await session.Evidence.CompleteAsync(session.FrameCodec, session.Limits.MaximumArchiveBytes);
+        session.Evidence.Complete(session.Limits.MaximumArchiveBytes);
         await DeepDebugFrameArtifactIndex.RewriteAsync(session.StagingDirectory, session.Evidence.Frames, jsonOptions);
         int visualProfiles = WriteVisualProfiles(session);
         await CopyLatestCrashLogAsync(session);
@@ -142,10 +142,14 @@ internal sealed class DeepDebugArchiveFinalizer(
             session.Evidence.LossyFrameCount,
             session.Evidence.RetainedBytes,
             session.Limits.MaximumArchiveBytes,
+            session.OptimizationMetrics.BackgroundEncodingAttempts,
+            session.OptimizationMetrics.CompletionEncodingAttempts,
+            session.OptimizationMetrics.CompletionDrainTimedOut,
+            session.OptimizationMetrics.CompletionDrainMilliseconds,
             visualProfiles,
             session.Evidence.IsOptimized
-                ? "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-14 JPEG. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. Compression was insufficient, so only enough lower-priority evidence was removed to remain below the hard limit."
-                : "Events and actions cover the run subject only to explicit archive safety bounds. During capture the newest ten seconds remain PNG; older ordinary frames use decode-verified quality-14 JPEG. At finalization, important frames use pixel-exact AVIF only when smaller, otherwise PNG. No frames were pruned.",
+                ? "Events and actions cover the run subject only to explicit archive safety bounds. A background optimizer keeps the newest ten seconds as PNG, converts stable ordinary frames to decode-verified quality-14 JPEG, and converts stable important frames to pixel-exact AVIF only when smaller. Stop drains compression for at most ten seconds and preserves remaining PNGs. Compression was insufficient, so only enough lower-priority evidence was removed to remain below the hard limit."
+                : "Events and actions cover the run subject only to explicit archive safety bounds. A background optimizer keeps the newest ten seconds as PNG, converts stable ordinary frames to decode-verified quality-14 JPEG, and converts stable important frames to pixel-exact AVIF only when smaller. Stop drains compression for at most ten seconds and preserves remaining PNGs. No frames were pruned.",
             session.WriterFailure is null
                 ? null
                 : DeepDebugRedactor.Redact(session.WriterFailure.ToString()),
@@ -185,7 +189,8 @@ internal sealed class DeepDebugArchiveFinalizer(
         {
             string relative = Path.GetRelativePath(sourceDirectory, file).Replace('\\', '/');
             CompressionLevel compression = file.EndsWith(".avif", StringComparison.OrdinalIgnoreCase) ||
-                                           file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                           file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                                           file.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
                 ? CompressionLevel.NoCompression
                 : CompressionLevel.Optimal;
             ZipArchiveEntry entry = archive.CreateEntry(relative, compression);

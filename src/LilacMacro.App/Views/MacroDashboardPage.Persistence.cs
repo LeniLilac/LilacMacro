@@ -63,6 +63,28 @@ public partial class MacroDashboardPage
         _ = _progressStore.QueueSave(snapshot);
     }
 
+    private void AbandonLoopIterationAfterTaskQuarantine(
+        PlanPrototype plan,
+        PlanTaskPrototype failedTask)
+    {
+        PlanLoopPrototype? loop = MacroLoopProgressPolicy.AbandonContainingIteration(
+            plan,
+            failedTask,
+            _victories,
+            _defeats,
+            _completedLoopRuns);
+        if (loop is null) return;
+
+        AppendLog($"LOOP ITERATION ABANDONED | {loop.Label} | RESET AFTER {failedTask.Name}");
+        _deepDebug.RecordEvent("macro", "loop_iteration_abandoned", new
+        {
+            Loop = loop.Label,
+            FailedTask = failedTask.Name,
+            Reason = "temporary_task_quarantine",
+        });
+        QueueRuntimeProgressSave();
+    }
+
     private async Task FlushRuntimeProgressAsync()
     {
         if (!_progressLoaded) return;

@@ -159,6 +159,65 @@ public sealed class MacroPriorityPolicyTests
     }
 
     [Fact]
+    public void QuarantinedTaskAbandonsPartialForeverLoopIterationAndRestartsAtFirstTask()
+    {
+        PlanTaskPrototype eventTask = Task(PlanTaskMode.Event, 1, 150);
+        PlanTaskPrototype expedition = Task(PlanTaskMode.Expedition, 2, 10);
+        PlanLoopPrototype loop = new() { Forever = true, CompletedRuns = 3 };
+        loop.Children.Add(eventTask);
+        loop.Children.Add(expedition);
+        PlanPrototype plan = new("test", [loop]);
+        Dictionary<PlanTaskPrototype, int> victories = new()
+        {
+            [eventTask] = 150,
+            [expedition] = 8,
+        };
+        Dictionary<PlanTaskPrototype, int> defeats = new()
+        {
+            [eventTask] = 1,
+            [expedition] = 2,
+        };
+        Dictionary<PlanLoopPrototype, int> completedRuns = new() { [loop] = 3 };
+
+        PlanLoopPrototype? abandoned = MacroLoopProgressPolicy.AbandonContainingIteration(
+            plan,
+            expedition,
+            victories,
+            defeats,
+            completedRuns);
+
+        Assert.Same(loop, abandoned);
+        Assert.Empty(victories);
+        Assert.Empty(defeats);
+        Assert.Equal(3, completedRuns[loop]);
+        Assert.Equal(3, loop.CompletedRuns);
+        Assert.Same(eventTask, MacroPriorityPolicy.Select(plan, victories, completedRuns));
+    }
+
+    [Fact]
+    public void QuarantinedTopLevelTaskDoesNotResetUnrelatedLoopProgress()
+    {
+        PlanTaskPrototype eventTask = Task(PlanTaskMode.Event, 1, 150);
+        PlanLoopPrototype loop = new() { Forever = true };
+        loop.Children.Add(eventTask);
+        PlanTaskPrototype expedition = Task(PlanTaskMode.Expedition, 2, 10);
+        PlanPrototype plan = new("test", [loop, expedition]);
+        Dictionary<PlanTaskPrototype, int> victories = new() { [eventTask] = 100 };
+        Dictionary<PlanTaskPrototype, int> defeats = [];
+        Dictionary<PlanLoopPrototype, int> completedRuns = [];
+
+        PlanLoopPrototype? abandoned = MacroLoopProgressPolicy.AbandonContainingIteration(
+            plan,
+            expedition,
+            victories,
+            defeats,
+            completedRuns);
+
+        Assert.Null(abandoned);
+        Assert.Equal(100, victories[eventTask]);
+    }
+
+    [Fact]
     public void FiniteLoopStopsAfterConfiguredRunsAndHandsOffToNextTask()
     {
         PlanTaskPrototype loopTask = Task(PlanTaskMode.Event, 1, 1);

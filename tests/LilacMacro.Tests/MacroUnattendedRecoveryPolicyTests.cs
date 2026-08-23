@@ -95,6 +95,50 @@ public sealed class MacroUnattendedRecoveryPolicyTests
         }
     }
 
+    [Fact]
+    public async Task ThirdMatchTaskFailureReportsTemporaryQuarantineToScheduler()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-recovery-loop-{Guid.NewGuid():N}");
+        try
+        {
+            PlanTaskPrototype task = new() { Mode = PlanTaskMode.Expedition };
+            PlanPrototype plan = new("loop recovery", [task]);
+            Dictionary<PlanTaskPrototype, DateTimeOffset> blockedUntil = [];
+            int attempts = 0;
+            int quarantineCallbacks = 0;
+            MacroUnattendedRecoveryRunner runner = new(
+                blockedUntil,
+                () => task,
+                () => { },
+                _ => { },
+                _ => { },
+                new DeepDebugSessionService(root),
+                _ => Task.CompletedTask,
+                (_, _) => Task.CompletedTask,
+                (_, _) => Task.CompletedTask,
+                (_, quarantinedTask) =>
+                {
+                    Assert.Same(task, quarantinedTask);
+                    quarantineCallbacks++;
+                });
+
+            await runner.RunAsync(
+                plan,
+                (_, _) => ++attempts <= 3
+                    ? Task.FromException(new InvalidOperationException("retry"))
+                    : Task.CompletedTask,
+                CancellationToken.None);
+
+            Assert.Equal(4, attempts);
+            Assert.Equal(1, quarantineCallbacks);
+            Assert.True(blockedUntil.ContainsKey(task));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData(1, 2)]
     [InlineData(2, 5)]

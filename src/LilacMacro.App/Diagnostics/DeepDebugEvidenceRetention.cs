@@ -3,54 +3,68 @@ namespace LilacMacro.App.Diagnostics;
 internal sealed class DeepDebugEvidenceRetention
 {
     private static readonly TimeSpan RawFrameWindow = TimeSpan.FromSeconds(10);
+    private readonly object _gate = new();
     private readonly List<DeepDebugEvidenceFrame> _frames = [];
     private readonly List<DeepDebugEvidenceWindow> _windows = [];
     private readonly List<string> _pendingTransitions = [];
     private int _nextWindowId;
     private bool _optimized;
 
-    public int RetainedFrameCount => _frames.Count(frame => !frame.Deleted);
+    public int RetainedFrameCount { get { lock (_gate) return _frames.Count(frame => !frame.Deleted); } }
     public int DiscardedFrameCount { get; private set; }
-    public int WindowCount => _windows.Count;
+    public int WindowCount { get { lock (_gate) return _windows.Count; } }
     public int DiscardedWindowCount { get; private set; }
-    public int TransitionFrameCount => _frames.Count(frame => !frame.Deleted && frame.Transitions.Count > 0);
-    public long RetainedBytes => _frames.Where(frame => !frame.Deleted).Sum(frame => frame.Length);
+    public int TransitionFrameCount
+    {
+        get { lock (_gate) return _frames.Count(frame => !frame.Deleted && frame.Transitions.Count > 0); }
+    }
+    public long RetainedBytes { get { lock (_gate) return RetainedBytesNoLock(); } }
     public bool IsOptimized => _optimized;
-    public int AvifFrameCount => _frames.Count(frame => !frame.Deleted && frame.Format == "avif");
-    public int JpegFrameCount => _frames.Count(frame => !frame.Deleted && frame.Format == "jpeg");
-    public int LossyFrameCount => _frames.Count(frame => !frame.Deleted && frame.EncodingMode == "lossy");
-    public IReadOnlyList<DeepDebugEvidenceFrame> Frames => _frames;
+    public int AvifFrameCount
+    {
+        get { lock (_gate) return _frames.Count(frame => !frame.Deleted && frame.Format == "avif"); }
+    }
+    public int JpegFrameCount
+    {
+        get { lock (_gate) return _frames.Count(frame => !frame.Deleted && frame.Format == "jpeg"); }
+    }
+    public int LossyFrameCount
+    {
+        get { lock (_gate) return _frames.Count(frame => !frame.Deleted && frame.EncodingMode == "lossy"); }
+    }
+    public IReadOnlyList<DeepDebugEvidenceFrame> Frames
+    {
+        get { lock (_gate) return _frames.ToArray(); }
+    }
 
     public void ObserveEvent(string category, string action, object? data, DateTimeOffset timestampUtc)
     {
-        if (DeepDebugEvidencePolicy.TryClassifyError(
-                category, action, data, timestampUtc, out DeepDebugErrorMarker? error))
-            BeginErrorWindow(error!);
-        if (DeepDebugEvidencePolicy.TransitionSignature(category, action) is { } transition)
-            MarkTransition(transition);
+        lock (_gate)
+        {
+            if (DeepDebugEvidencePolicy.TryClassifyError(
+                    category, action, data, timestampUtc, out DeepDebugErrorMarker? error))
+                BeginErrorWindow(error!);
+            if (DeepDebugEvidencePolicy.TransitionSignature(category, action) is { } transition)
+                MarkTransition(transition, timestampUtc);
+        }
     }
 
-    public void RecordFrame(
-        string path,
-        DateTimeOffset timestampUtc,
-        byte[] png,
-        bool fullClient)
+    public void RecordFrame(string path, DateTimeOffset timestampUtc, byte[] png, bool fullClient)
     {
-        DeepDebugEvidenceFrame frame = new(
-            path,
-            timestampUtc,
-            png.LongLength,
-            DeepDebugPerceptualHash.Create(png),
-            fullClient);
-        _frames.Add(frame);
+        lock (_gate)
+        {
+            DeepDebugEvidenceFrame frame = new(
+                path,
+                timestampUtc,
+                png.LongLength,
+                DeepDebugPerceptualHash.Create(png),
+                fullClient);
+            _frames.Add(frame);
 
-        DeepDebugEvidenceWindow? active = _windows.LastOrDefault();
-        if (active is not null && timestampUtc >= active.StartUtc && timestampUtc <= active.EndUtc)
-        {
-            active.Add(frame);
-        }
-        if (_pendingTransitions.Count > 0)
-        {
+            DeepDebugEvidenceWindow? active = _windows.LastOrDefault();
+            if (active is not null && timestampUtc >= active.StartUtc && timestampUtc <= active.EndUtc)
+                active.Add(frame);
+            if (_pendingTransitions.Count <= 0) return;
             foreach (string transition in _pendingTransitions) frame.Transitions.Add(transition);
             _pendingTransitions.Clear();
         }
@@ -58,48 +72,169 @@ internal sealed class DeepDebugEvidenceRetention
 
     public async Task CompleteAsync(IDeepDebugFrameCodec codec, long maximumFrameBytes)
     {
-        if (_frames.Count == 0) return;
-        DateTimeOffset newest = _frames.Max(frame => frame.TimestampUtc);
-        DateTimeOffset ordinaryCutoff = newest - RawFrameWindow;
-        foreach (DeepDebugEvidenceFrame frame in _frames.Where(frame =>
-                     !frame.Deleted && frame.Format == "png" && !frame.EncodingAttempted &&
-                     (frame.IsImportant || frame.TimestampUtc < ordinaryCutoff)).ToArray())
-            await EncodeAsync(frame, codec, frame.IsImportant, waitForLease: true);
-        if (RetainedBytes <= maximumFrameBytes) return;
-        TrimToBudget(maximumFrameBytes);
+        DateTimeOffset newest;
+        lock (_gate)
+        {
+            if (_frames.Count == 0) return;
+            newest = _frames.Max(frame => frame.TimestampUtc);
+        }
+        while (await OptimizeNextReadyFrameAsync(
+                   codec, newest, maximumFrameBytes, finalizing: true, CancellationToken.None)) { }
+        Complete(maximumFrameBytes);
     }
 
     internal void Complete(long maximumFrameBytes)
     {
-        if (RetainedBytes > maximumFrameBytes) TrimToBudget(maximumFrameBytes);
+        lock (_gate)
+        {
+            if (RetainedBytesNoLock() > maximumFrameBytes) TrimToBudget(maximumFrameBytes);
+        }
     }
 
     internal void OptimizeWhenAbove(long maximumFrameBytes) => Complete(maximumFrameBytes);
 
-    public async Task OptimizeAfterFrameAsync(
+    internal async Task<bool> OptimizeNextReadyFrameAsync(
         IDeepDebugFrameCodec codec,
         DateTimeOffset newestTimestampUtc,
-        long maximumFrameBytes)
+        long maximumFrameBytes,
+        bool finalizing,
+        CancellationToken cancellationToken)
     {
-        DeepDebugEvidenceFrame? ordinary = _frames.FirstOrDefault(frame =>
-            !frame.Deleted && !frame.EncodingAttempted && !frame.IsImportant &&
-            frame.TimestampUtc < newestTimestampUtc - RawFrameWindow);
-        if (ordinary is not null)
-            await EncodeAsync(ordinary, codec, lossless: false, waitForLease: false);
-        if (RetainedBytes <= maximumFrameBytes) return;
-        foreach (DeepDebugEvidenceFrame frame in _frames.Where(frame =>
-                     !frame.Deleted && !frame.EncodingAttempted && !frame.IsImportant).ToArray())
+        DeepDebugEvidenceFrame? frame;
+        bool lossless;
+        lock (_gate)
         {
-            await EncodeAsync(frame, codec, lossless: false, waitForLease: false);
-            if (RetainedBytes <= maximumFrameBytes) return;
+            DateTimeOffset cutoff = newestTimestampUtc - RawFrameWindow;
+            frame = _frames.FirstOrDefault(candidate =>
+                !candidate.Deleted && !candidate.EncodingAttempted && !candidate.EncodingInProgress &&
+                candidate.Format == "png" && candidate.IsImportant &&
+                (finalizing || candidate.TimestampUtc < cutoff));
+            lossless = frame is not null;
+            frame ??= _frames.FirstOrDefault(candidate =>
+                !candidate.Deleted && !candidate.EncodingAttempted && !candidate.EncodingInProgress &&
+                candidate.Format == "png" && !candidate.IsImportant && candidate.TimestampUtc < cutoff);
+            if (frame is null)
+            {
+                if (RetainedBytesNoLock() > maximumFrameBytes) TrimToBudget(maximumFrameBytes);
+                return false;
+            }
+            frame.EncodingInProgress = true;
+            frame.EncodingAttempted = true;
         }
-        TrimToBudget(maximumFrameBytes);
+
+        await EncodeReservedAsync(frame, codec, lossless, finalizing, cancellationToken);
+        return true;
     }
 
     public bool DropLowestPriorityEvidence()
     {
+        lock (_gate) return DropLowestPriorityEvidenceNoLock();
+    }
+
+    public long DropLowestPriorityEvidence(long minimumBytes)
+    {
+        lock (_gate)
+        {
+            long before = RetainedBytesNoLock();
+            while (before - RetainedBytesNoLock() < minimumBytes && DropLowestPriorityEvidenceNoLock()) { }
+            long discarded = before - RetainedBytesNoLock();
+            if (discarded > 0) _optimized = true;
+            return discarded;
+        }
+    }
+
+    private async Task EncodeReservedAsync(
+        DeepDebugEvidenceFrame frame,
+        IDeepDebugFrameCodec codec,
+        bool lossless,
+        bool waitForLease,
+        CancellationToken cancellationToken)
+    {
+        string originalPath = frame.Path;
+        bool replacementCompleted = false;
+        DeepDebugFrameEncodingResult result;
+        try
+        {
+            result = await codec.EncodeAsync(frame.Path, lossless, waitForLease, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            lock (_gate)
+            {
+                frame.Validation = "encoder-canceled";
+                frame.EncodingInProgress = false;
+            }
+            throw;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException or
+                                      System.ComponentModel.Win32Exception)
+        {
+            lock (_gate)
+            {
+                frame.Validation = error is OperationCanceledException ? "encoder-canceled" : "encoder-exception";
+                frame.EncodingInProgress = false;
+            }
+            return;
+        }
+
+        string encodedPath = Path.ChangeExtension(frame.Path, "." + result.Format);
+        string temporary = encodedPath + ".tmp";
+        try
+        {
+            if (result.Success && result.Bytes is not null)
+                await File.WriteAllBytesAsync(temporary, result.Bytes, cancellationToken);
+            lock (_gate)
+            {
+                frame.Validation = result.Validation;
+                frame.Quality = result.Quality;
+                if (result.Validation == "encoder-busy") frame.EncodingAttempted = false;
+                if (!result.Success || result.Bytes is null) return;
+                if (!lossless && frame.IsImportant)
+                {
+                    frame.EncodingAttempted = false;
+                    frame.Validation = "importance-upgraded-before-replacement";
+                    return;
+                }
+                File.Move(temporary, encodedPath, overwrite: false);
+                File.Delete(frame.Path);
+                frame.Path = encodedPath;
+                frame.ArtifactPath = Path.ChangeExtension(frame.ArtifactPath, "." + result.Format)
+                    .Replace('\\', '/');
+                frame.Length = result.Bytes.LongLength;
+                frame.Format = result.Format;
+                frame.EncodingMode = lossless ? "lossless" : "lossy";
+                replacementCompleted = true;
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            lock (_gate) frame.Validation = "encoder-canceled";
+            throw;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            lock (_gate)
+                frame.Validation = error is OperationCanceledException ? "encoder-canceled" : "replacement-failed";
+        }
+        finally
+        {
+            lock (_gate) frame.EncodingInProgress = false;
+            TryDelete(temporary);
+            if (!replacementCompleted && File.Exists(originalPath)) TryDelete(encodedPath);
+        }
+    }
+
+    private void TrimToBudget(long maximumBytes)
+    {
+        _optimized = true;
+        while (RetainedBytesNoLock() > maximumBytes && DropLowestPriorityEvidenceNoLock()) { }
+    }
+
+    private bool DropLowestPriorityEvidenceNoLock()
+    {
         foreach (DeepDebugEvidenceFrame ordinary in _frames
-            .Where(frame => !frame.Deleted && frame.WindowId is null && frame.Transitions.Count == 0)
+            .Where(frame => !frame.Deleted && !frame.EncodingInProgress &&
+                            frame.WindowId is null && frame.Transitions.Count == 0)
             .OrderBy(frame => frame.EncodingMode == "lossy" ? 0 : 1)
             .ThenBy(frame => frame.TimestampUtc))
         {
@@ -107,22 +242,22 @@ internal sealed class DeepDebugEvidenceRetention
         }
 
         foreach (DeepDebugEvidenceFrame transition in _frames
-            .Where(frame => !frame.Deleted && frame.WindowId is null)
+            .Where(frame => !frame.Deleted && !frame.EncodingInProgress && frame.WindowId is null)
             .OrderBy(frame => frame.TimestampUtc))
         {
             if (Delete(transition)) return true;
         }
 
         DeepDebugEvidenceWindow? window = _windows
-            .Where(candidate => candidate.Frames.Any(frame => !frame.Deleted))
+            .Where(candidate => candidate.Frames.Any(frame => !frame.Deleted && !frame.EncodingInProgress))
             .OrderBy(candidate => candidate.MaximumSeverity)
             .ThenBy(candidate => candidate.IsFirstOccurrence)
-            .ThenBy(candidate => RedundancyDistance(candidate))
+            .ThenBy(RedundancyDistance)
             .ThenBy(candidate => candidate.StartUtc)
             .FirstOrDefault();
         if (window is null) return false;
         DeepDebugEvidenceFrame? leastUsefulFrame = window.Frames
-            .Where(frame => !frame.Deleted)
+            .Where(frame => !frame.Deleted && !frame.EncodingInProgress)
             .OrderByDescending(frame => window.Errors.Min(error =>
                 Math.Abs((frame.TimestampUtc - error.TimestampUtc).Ticks)))
             .ThenBy(frame => frame.TimestampUtc)
@@ -130,67 +265,6 @@ internal sealed class DeepDebugEvidenceRetention
         if (leastUsefulFrame is null || !Delete(leastUsefulFrame)) return false;
         if (!window.Frames.Any(frame => !frame.Deleted)) DiscardedWindowCount++;
         return true;
-    }
-
-    public long DropLowestPriorityEvidence(long minimumBytes)
-    {
-        long before = RetainedBytes;
-        while (before - RetainedBytes < minimumBytes && DropLowestPriorityEvidence()) { }
-        long discarded = before - RetainedBytes;
-        if (discarded > 0) _optimized = true;
-        return discarded;
-    }
-
-    private void TrimToBudget(long maximumBytes)
-    {
-        _optimized = true;
-        while (RetainedBytes > maximumBytes && DropLowestPriorityEvidence()) { }
-    }
-
-    private async Task EncodeAsync(
-        DeepDebugEvidenceFrame frame,
-        IDeepDebugFrameCodec codec,
-        bool lossless,
-        bool waitForLease)
-    {
-        frame.EncodingAttempted = true;
-        DeepDebugFrameEncodingResult result;
-        try { result = await codec.EncodeAsync(frame.Path, lossless, waitForLease); }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException or
-                                      OperationCanceledException or System.ComponentModel.Win32Exception)
-        {
-            frame.Validation = "encoder-exception";
-            return;
-        }
-        frame.Validation = result.Validation;
-        frame.Quality = result.Quality;
-        if (result.Validation == "encoder-busy") frame.EncodingAttempted = false;
-        if (!result.Success || result.Bytes is null) return;
-        string encodedPath = Path.ChangeExtension(frame.Path, "." + result.Format);
-        string temporary = encodedPath + ".tmp";
-        try
-        {
-            await File.WriteAllBytesAsync(temporary, result.Bytes);
-            File.Move(temporary, encodedPath, overwrite: false);
-            File.Delete(frame.Path);
-            frame.Path = encodedPath;
-            frame.ArtifactPath = Path.ChangeExtension(frame.ArtifactPath, "." + result.Format).Replace('\\', '/');
-            frame.Length = result.Bytes.LongLength;
-            frame.Format = result.Format;
-            frame.EncodingMode = lossless ? "lossless" : "lossy";
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-        {
-            frame.Validation = "replacement-failed";
-            TryDelete(temporary);
-            if (File.Exists(frame.Path)) TryDelete(encodedPath);
-        }
-    }
-
-    private static void TryDelete(string path)
-    {
-        try { if (File.Exists(path)) File.Delete(path); }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
     }
 
     private void BeginErrorWindow(DeepDebugErrorMarker marker)
@@ -216,34 +290,32 @@ internal sealed class DeepDebugEvidenceRetention
             window.Add(frame);
     }
 
-    private void MarkTransition(string signature)
+    private void MarkTransition(string signature, DateTimeOffset timestampUtc)
     {
+        DateTimeOffset oldestEligible = timestampUtc - RawFrameWindow;
         DeepDebugEvidenceFrame? frame = _frames
-            .Where(candidate => !candidate.Deleted && candidate.FullClient)
+            .Where(candidate => !candidate.Deleted && candidate.FullClient &&
+                                candidate.Format == "png" && !candidate.EncodingAttempted &&
+                                candidate.TimestampUtc >= oldestEligible)
             .OrderByDescending(candidate => candidate.TimestampUtc)
             .FirstOrDefault() ?? _frames
-            .Where(candidate => !candidate.Deleted)
+            .Where(candidate => !candidate.Deleted && candidate.Format == "png" &&
+                                !candidate.EncodingAttempted && candidate.TimestampUtc >= oldestEligible)
             .OrderByDescending(candidate => candidate.TimestampUtc)
             .FirstOrDefault();
         if (frame is null) _pendingTransitions.Add(signature);
         else frame.Transitions.Add(signature);
     }
 
-    private int RedundancyDistance(DeepDebugEvidenceWindow candidate)
-    {
-        return _windows
-            .Where(window => window.Id != candidate.Id &&
-                             window.Frames.Any(frame => !frame.Deleted))
-            .Select(window => DeepDebugPerceptualHash.Distance(
-                candidate.RepresentativeHash,
-                window.RepresentativeHash))
-            .DefaultIfEmpty(64)
-            .Min();
-    }
+    private int RedundancyDistance(DeepDebugEvidenceWindow candidate) => _windows
+        .Where(window => window.Id != candidate.Id && window.Frames.Any(frame => !frame.Deleted))
+        .Select(window => DeepDebugPerceptualHash.Distance(candidate.RepresentativeHash, window.RepresentativeHash))
+        .DefaultIfEmpty(64)
+        .Min();
 
     private bool Delete(DeepDebugEvidenceFrame frame)
     {
-        if (frame.Deleted) return false;
+        if (frame.Deleted || frame.EncodingInProgress) return false;
         try
         {
             if (File.Exists(frame.Path)) File.Delete(frame.Path);
@@ -253,9 +325,16 @@ internal sealed class DeepDebugEvidenceRetention
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            // Finalization can retry after ZIP creation fails; never hide the primary operation.
             return false;
         }
+    }
+
+    private long RetainedBytesNoLock() => _frames.Where(frame => !frame.Deleted).Sum(frame => frame.Length);
+
+    private static void TryDelete(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
     }
 }
 
@@ -306,6 +385,7 @@ internal sealed class DeepDebugEvidenceFrame(
     public HashSet<string> Transitions { get; } = new(StringComparer.Ordinal);
     public bool Deleted { get; set; }
     public bool EncodingAttempted { get; set; }
+    public bool EncodingInProgress { get; set; }
     public string Format { get; set; } = "png";
     public string EncodingMode { get; set; } = "none";
     public int? Quality { get; set; }

@@ -20,6 +20,7 @@ public sealed partial class DeepDebugSessionService
     private readonly DeepDebugArchiveLimits _limits;
     private readonly Func<DateTimeOffset> _utcNow;
     private readonly IDeepDebugFrameCodec _frameCodec;
+    private readonly TimeSpan _optimizerDrainTimeout;
     private readonly string _operatingSystemVersion;
     private readonly Dictionary<string, DeepDebugFrameCaptureProvider> _frameCaptureProviders =
         new(StringComparer.OrdinalIgnoreCase);
@@ -38,7 +39,8 @@ public sealed partial class DeepDebugSessionService
         DeepDebugArchiveLimits? limits = null,
         Func<DateTimeOffset>? utcNow = null,
         IDeepDebugFrameCodec? frameCodec = null,
-        string? operatingSystemVersion = null)
+        string? operatingSystemVersion = null,
+        TimeSpan? optimizerDrainTimeout = null)
     {
         _appDataRoot = Path.GetFullPath(appDataRoot);
         _diagnosticsRoot = Path.GetFullPath(
@@ -50,6 +52,8 @@ public sealed partial class DeepDebugSessionService
         _limits = limits ?? DeepDebugArchiveLimits.Production;
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
         _frameCodec = frameCodec ?? new DeepDebugFrameCodec(_diagnosticsRoot);
+        _optimizerDrainTimeout = optimizerDrainTimeout ??
+            DeepDebugFrameOptimizationWorker.DefaultCompletionDrainTimeout;
         _operatingSystemVersion = string.IsNullOrWhiteSpace(operatingSystemVersion)
             ? Environment.OSVersion.VersionString
             : operatingSystemVersion;
@@ -165,6 +169,12 @@ public sealed partial class DeepDebugSessionService
             _active = session;
         }
         session.WriterTask = Task.Run(() => DeepDebugSessionWriter.WriteAsync(session, CompactJsonOptions));
+        session.FrameOptimizer = new DeepDebugFrameOptimizationWorker(
+            session.Evidence,
+            session.FrameCodec,
+            session.Limits.MaximumArchiveBytes,
+            _optimizerDrainTimeout);
+        session.FrameOptimizer.Start();
         try
         {
             await WriteConfigurationAsync(session);
@@ -292,67 +302,6 @@ public sealed partial class DeepDebugSessionService
             rgb[target + 2] = gray[index];
         }
         RecordPng(PngEncoder.Encode(new RgbImage(image.Width, image.Height, rgb, true)), source, data);
-    }
-
-    internal async Task CompleteAsync(DeepDebugSession session, string outcome, Exception? error)
-    {
-        if (!session.Completion.TryOwn())
-        {
-            Exception? completionError = await session.Completion.WaitAsync();
-            if (completionError is not null) throw completionError;
-            return;
-        }
-        try
-        {
-            await CompleteOwnedAsync(session, outcome, error);
-            session.Completion.Finish(null);
-        }
-        catch (Exception finalizationError)
-        {
-            session.Completion.Finish(finalizationError);
-            throw;
-        }
-    }
-
-    private async Task CompleteOwnedAsync(DeepDebugSession session, string outcome, Exception? error)
-    {
-        if (!ReferenceEquals(ActiveSession(), session)) return;
-        if (session.FrameCaptureLoop is { } frameCaptureLoop)
-        {
-            await frameCaptureLoop.StopAsync();
-            session.FrameCaptureLoop = null;
-        }
-        RecordEvent("session", "finished", new
-        {
-            Outcome = outcome,
-            Error = error is null ? null : DeepDebugRedactor.Redact(error.ToString()),
-        });
-        lock (_gate)
-        {
-            if (ReferenceEquals(_active, session)) _active = null;
-        }
-        session.Channel.Writer.TryComplete();
-        try
-        {
-            await session.WriterTask;
-        }
-        catch (Exception writerError)
-        {
-            session.WriterFailure ??= writerError;
-        }
-
-        DateTimeOffset completedAtUtc = _utcNow();
-        string archive = await Task.Run(() => _archiveFinalizer.FinalizeAsync(
-            session,
-            outcome,
-            error,
-            completedAtUtc));
-        LastArchivePath = archive;
-        TryDeleteDirectory(session.StagingDirectory);
-        _configurationStore.PruneArchives(Options);
-        NotifyArchiveSaved(ArchiveSaved, archive);
-        if (session.Evidence.WindowCount > 0)
-            NotifyArchiveSaved(AutomaticReportArchiveSaved, archive);
     }
 
     private void Enqueue(

@@ -89,7 +89,8 @@ public partial class MacroDashboardPage : UserControl
             new MacroInternetConnectivityGate(
                 new InternetConnectivityProbe().IsAvailable,
                 AppendLog).WaitUntilAvailableAsync,
-            NotifyDiscordRecoveryAsync);
+            NotifyDiscordRecoveryAsync,
+            taskTemporarilyQuarantined: AbandonLoopIterationAfterTaskQuarantine);
         InitializeComponent();
         InitializeRuntimeProgressPersistence();
         InitializeDiscordEvents();
@@ -124,6 +125,7 @@ public partial class MacroDashboardPage : UserControl
         StatsCard.SetValue(Grid.ColumnSpanProperty, dockAllowed ? 1 : 3);
         DashboardRoot.MinWidth = dockAllowed ? 1740 : 0;
     }
+
     private async void StartButton_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         if (!_ocrReady)

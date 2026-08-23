@@ -13,7 +13,8 @@ internal sealed class MacroUnattendedRecoveryRunner(
     DeepDebugSessionService deepDebug,
     Func<CancellationToken, Task> waitForInternet,
     Func<PlanTaskPrototype?, TimeSpan, Task> recoveryStarted,
-    Func<TimeSpan, CancellationToken, Task>? waitBeforeRetry = null)
+    Func<TimeSpan, CancellationToken, Task>? waitBeforeRetry = null,
+    Action<PlanPrototype, PlanTaskPrototype>? taskTemporarilyQuarantined = null)
 {
     private readonly Dictionary<PlanTaskPrototype, int> _taskFailures = [];
     private readonly HashSet<PlanTaskPrototype> _indefinitelyQuarantinedUtilities = [];
@@ -76,7 +77,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
                 consecutiveFailures++;
                 PlanTaskPrototype? failedTask = currentTask();
                 clearCurrentTask();
-                int failedTaskFailures = QuarantineWhenRequired(failedTask);
+                int failedTaskFailures = QuarantineWhenRequired(plan, failedTask);
                 TimeSpan delay = MacroUnattendedRecoveryPolicy.RetryDelay(consecutiveFailures);
                 appendLog($"RECOVERABLE ANOMALY | {error.Message}");
                 appendLog(failedTask is not null && _indefinitelyQuarantinedUtilities.Contains(failedTask)
@@ -100,7 +101,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
         }
     }
 
-    private int QuarantineWhenRequired(PlanTaskPrototype? failedTask)
+    private int QuarantineWhenRequired(PlanPrototype plan, PlanTaskPrototype? failedTask)
     {
         if (failedTask is null) return 0;
         if (_indefinitelyQuarantinedUtilities.Contains(failedTask))
@@ -123,6 +124,7 @@ internal sealed class MacroUnattendedRecoveryRunner(
         blockedUntil[failedTask] = until;
         _taskFailures.Remove(failedTask);
         appendLog($"TASK QUARANTINED UNTIL {until:yyyy-MM-dd HH:mm:ss}Z | {failedTask.Name}");
+        taskTemporarilyQuarantined?.Invoke(plan, failedTask);
         return failures;
     }
 }

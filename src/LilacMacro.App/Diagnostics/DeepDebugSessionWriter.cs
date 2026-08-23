@@ -32,6 +32,7 @@ internal static class DeepDebugSessionWriter
                     item.Data,
                     item.TimestampUtc);
                 await WriteArtifactAsync(session, item);
+                session.FrameOptimizer?.Signal(item.TimestampUtc);
 
                 DeepDebugEventRecord record = new(
                     item.Sequence,
@@ -112,10 +113,6 @@ internal static class DeepDebugSessionWriter
             item.TimestampUtc,
             item.ArtifactBytes,
             string.Equals(item.Action, "live-client", StringComparison.Ordinal));
-        await session.Evidence.OptimizeAfterFrameAsync(
-            session.FrameCodec,
-            item.TimestampUtc,
-            session.Limits.MaximumArchiveBytes);
     }
 
     private static bool CanWrite(long writtenBytes, string value, long limit) =>

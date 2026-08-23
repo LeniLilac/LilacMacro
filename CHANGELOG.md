@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.165 — Public beta
+
+- Moved stable Deep Debug JPEG/AVIF compression into a background worker and bounded Stop-time compression drain to ten seconds, preserving remaining PNG evidence without redundant ZIP deflation.
+- Prevented frames promoted to transition or error evidence during an in-flight lossy encode from being retained as lossy JPEG.
+- Restored the Expedition leftmost-node hover search to the field-observed bounded line instead of allowing the fallback sweep to reach neighboring nodes.
+- Made unattended loop recovery reset partial child progress after a recoverable task failure so the scheduler continues the configured loop instead of waiting in Lobby.
+
 ## 1.0.164 — Public beta
 
 - Added bounded OCR worker lifecycle diagnostics and a 30-second watchdog so startup failures identify whether model loading, inference, or response handoff stalled.
