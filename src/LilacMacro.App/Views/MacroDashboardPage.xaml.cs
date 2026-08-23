@@ -283,6 +283,7 @@ public partial class MacroDashboardPage : UserControl
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (!_control.CanContinue(AppendLog)) return;
+            if (ReconcileCompletedLoopProgress(plan)) QueueRuntimeProgressSave();
             DateTimeOffset now = DateTimeOffset.UtcNow;
             bool repeatedEntry = repeatedTask is not null;
             PlanTaskPrototype? task = repeatedTask ?? SelectEligibleTask(plan, now);
@@ -425,9 +426,7 @@ public partial class MacroDashboardPage : UserControl
             StatsChart.SetPoints(_runStats);
             RefreshUpcomingTasks(plan);
 
-            if (victory && MacroLoopProgressReporter.AdvanceAndReport(
-                    plan, _victories, _completedLoopRuns, _deepDebug, AppendLog))
-                RefreshUpcomingTasks(plan);
+            if (victory) ReconcileCompletedLoopProgress(plan);
             QueueRuntimeProgressSave();
 
             DateTimeOffset terminalDecisionAt = DateTimeOffset.UtcNow;

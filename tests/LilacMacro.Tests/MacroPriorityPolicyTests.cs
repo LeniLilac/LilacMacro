@@ -130,10 +130,10 @@ public sealed class MacroPriorityPolicyTests
     }
 
     [Fact]
-    public void ForeverLoopResetsItsTargetsAndSelectsFirstTaskAfterCompleting150And10()
+    public void RestoredForeverLoopResetsAfterTargetDropsFromTenToSeven()
     {
         PlanTaskPrototype eventTask = Task(PlanTaskMode.Event, 1, 150);
-        PlanTaskPrototype expedition = Task(PlanTaskMode.Expedition, 2, 10);
+        PlanTaskPrototype expedition = Task(PlanTaskMode.Expedition, 2, 7);
         PlanLoopPrototype loop = new() { Forever = true };
         loop.Children.Add(eventTask);
         loop.Children.Add(expedition);
@@ -141,7 +141,7 @@ public sealed class MacroPriorityPolicyTests
         Dictionary<PlanTaskPrototype, int> victories = new()
         {
             [eventTask] = 150,
-            [expedition] = 10,
+            [expedition] = 8,
         };
         Dictionary<PlanLoopPrototype, int> completedRuns = [];
 

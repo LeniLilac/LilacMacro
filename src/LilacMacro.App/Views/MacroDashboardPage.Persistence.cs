@@ -63,6 +63,18 @@ public partial class MacroDashboardPage
         _ = _progressStore.QueueSave(snapshot);
     }
 
+    private bool ReconcileCompletedLoopProgress(PlanPrototype plan)
+    {
+        bool advanced = MacroLoopProgressReporter.AdvanceAndReport(
+            plan,
+            _victories,
+            _completedLoopRuns,
+            _deepDebug,
+            AppendLog);
+        if (advanced) RefreshUpcomingTasks(plan);
+        return advanced;
+    }
+
     private void AbandonLoopIterationAfterTaskQuarantine(
         PlanPrototype plan,
         PlanTaskPrototype failedTask)

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.166 — Public beta
+
+- Reconciled restored Forever-loop progress before every scheduler selection so lowering a completed child target cannot strand the macro waiting in Lobby instead of starting the next loop iteration.
+
 ## 1.0.165 — Public beta
 
 - Moved stable Deep Debug JPEG/AVIF compression into a background worker and bounded Stop-time compression drain to ten seconds, preserving remaining PNG evidence without redundant ZIP deflation.
