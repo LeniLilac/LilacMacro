@@ -27,9 +27,9 @@ public partial class MacroDashboardPage
             catch (OperationCanceledException) { }
         }
         _runCancellation?.Cancel();
-        if (_runTask is not null)
+        if (_runLifecycleTask is not null)
         {
-            try { await _runTask; }
+            try { await _runLifecycleTask; }
             catch (OperationCanceledException) { }
         }
         StopRunLogTimer();
@@ -40,6 +40,7 @@ public partial class MacroDashboardPage
         _ocr.Dispose();
         _workspace.Dispose();
         _ownerState.PlansChanged -= OwnerState_OnPlansChanged;
+        _ownerState.OcrModeChanged -= OwnerState_OnOcrModeChanged;
         _ownerState.RuntimeProgressResetRequested -= OwnerState_OnRuntimeProgressResetRequested;
         _lifecycleCancellation.Dispose();
     }

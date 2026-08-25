@@ -4,6 +4,7 @@ param(
     [string]$Device = 'cpu',
     [string]$InstallRoot = '',
     [string]$BundledPythonPath = '',
+    [switch]$Repair,
     [switch]$ProbeGpu
 )
 
@@ -126,8 +127,8 @@ if ($Device -eq 'gpu') {
 New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
 if (Test-Path -LiteralPath $runtimeMarker) { Remove-Item -LiteralPath $runtimeMarker -Force }
 if (Test-Path -LiteralPath $profileMarker) { Remove-Item -LiteralPath $profileMarker -Force }
-if ($Device -eq 'gpu' -and (Test-Path -LiteralPath $venvRoot)) {
-    Write-Stage 10 'Removing the incomplete or previous GPU environment.'
+if (($Device -eq 'gpu' -or $Repair) -and (Test-Path -LiteralPath $venvRoot)) {
+    Write-Stage 10 'Removing the incomplete or previous OCR environment.'
     Remove-Item -LiteralPath $venvRoot -Recurse -Force
 }
 

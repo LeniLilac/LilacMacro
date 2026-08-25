@@ -4,6 +4,7 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Theming;
 using LilacMacro.App.Views;
 using LilacMacro.Core.LocalSession;
+using LilacMacro.Core.Ocr;
 using LilacMacro.Core.Security;
 using LilacMacro.Windows;
 
@@ -61,6 +62,9 @@ internal sealed class MacroOwnerState
         CheckForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         LastNotifiedUpdateVersion = settings.LastNotifiedUpdateVersion?.Trim() ?? string.Empty;
+        OcrMode = Enum.IsDefined(settings.OcrMode)
+            ? settings.OcrMode
+            : OcrExecutionMode.Automatic;
         LayoutProfile = Enum.IsDefined(settings.LayoutProfile)
             ? settings.LayoutProfile
             : MacroLayoutProfile.Full1920x1080;
@@ -84,6 +88,8 @@ internal sealed class MacroOwnerState
     public event EventHandler? AppearanceChanged;
 
     public event EventHandler? PrivacyOptionsChanged;
+
+    public event EventHandler? OcrModeChanged;
 
     public event EventHandler? RuntimeProgressResetRequested;
 
@@ -134,6 +140,8 @@ internal sealed class MacroOwnerState
     public bool IncludePrereleaseUpdates { get; private set; }
 
     public string LastNotifiedUpdateVersion { get; private set; }
+
+    public OcrExecutionMode OcrMode { get; private set; }
 
     public MacroLayoutProfile LayoutProfile { get; private set; }
 
@@ -331,6 +339,15 @@ internal sealed class MacroOwnerState
         QueueSave();
     }
 
+    public void SetOcrMode(OcrExecutionMode mode)
+    {
+        if (!Enum.IsDefined(mode)) throw new ArgumentOutOfRangeException(nameof(mode));
+        if (mode == OcrMode) return;
+        OcrMode = mode;
+        QueueSave();
+        OcrModeChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public bool WasUpdateNotificationShown(string version) =>
         string.Equals(LastNotifiedUpdateVersion, version, StringComparison.Ordinal);
 
@@ -423,6 +440,7 @@ internal sealed class MacroOwnerState
         CheckForUpdatesOnStartup = CheckForUpdatesOnStartup,
         IncludePrereleaseUpdates = IncludePrereleaseUpdates,
         LastNotifiedUpdateVersion = LastNotifiedUpdateVersion,
+        OcrMode = OcrMode,
         LayoutProfile = LayoutProfile,
         MinimizeBehavior = MinimizeBehavior,
         ThemeMode = ThemeMode,

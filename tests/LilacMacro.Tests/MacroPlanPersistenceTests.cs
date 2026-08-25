@@ -2,11 +2,69 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Runtime;
 using LilacMacro.App.Views;
 using LilacMacro.Core.Security;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.Tests;
 
 public sealed class MacroPlanPersistenceTests
 {
+    [Fact]
+    public async Task Ocr_mode_persists_with_owner_settings()
+    {
+        string root = TemporaryRoot();
+        try
+        {
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+            owner.SetOcrMode(OcrExecutionMode.CpuOnly);
+            await owner.FlushAsync();
+
+            MacroOwnerState restored = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+
+            Assert.Equal(OcrExecutionMode.CpuOnly, restored.OcrMode);
+        }
+        finally
+        {
+            Delete(root);
+        }
+    }
+
+    [Fact]
+    public async Task Schema_thirteen_preserves_existing_notification_choices()
+    {
+        string root = TemporaryRoot();
+        try
+        {
+            Directory.CreateDirectory(root);
+            await File.WriteAllTextAsync(
+                Path.Combine(root, "macro-settings.json"),
+                """
+                {
+                  "schema_version": 13,
+                  "notify_on_run_start": true,
+                  "notify_on_run_stop": true,
+                  "notify_on_task_change": true,
+                  "notify_on_victory": true,
+                  "notify_on_defeat": true,
+                  "notify_on_recovery": true
+                }
+                """);
+
+            MacroOwnerState owner = await MacroOwnerState.LoadAsync(new MacroSettingsStore(root));
+
+            Assert.True(owner.NotifyOnRunStart);
+            Assert.True(owner.NotifyOnRunStop);
+            Assert.True(owner.NotifyOnTaskChange);
+            Assert.True(owner.NotifyOnVictory);
+            Assert.True(owner.NotifyOnDefeat);
+            Assert.True(owner.NotifyOnRecovery);
+            Assert.Equal(OcrExecutionMode.Automatic, owner.OcrMode);
+        }
+        finally
+        {
+            Delete(root);
+        }
+    }
+
     [Fact]
     public void TowerTaskRoundTripsTypeGoalAndDefeatStopLimit()
     {

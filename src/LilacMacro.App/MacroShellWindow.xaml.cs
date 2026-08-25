@@ -84,6 +84,7 @@ public partial class MacroShellWindow : Window
             _ownerState,
             _instanceManager,
             _updates,
+            _macroPage.Ocr,
             installation,
             SetMacroHotkeyCaptureSuspended);
         _settingsPage.UpdateAvailable += SettingsPage_OnUpdateAvailable;

@@ -7,12 +7,14 @@ namespace LilacMacro.Tests;
 public sealed class ExpeditionRewardPopupPolicyTests
 {
     [Fact]
-    public void Popup_requires_three_select_upgrade_matches()
+    public void Popup_accepts_the_current_two_or_three_choice_layouts()
     {
         Assert.True(ExpeditionRewardPopupPolicy.IsPopup(
             [Button(260), Button(620), Button(980)]));
-        Assert.False(ExpeditionRewardPopupPolicy.IsPopup(
+        Assert.True(ExpeditionRewardPopupPolicy.IsPopup(
             [Button(260), Button(620)]));
+        Assert.False(ExpeditionRewardPopupPolicy.IsPopup([Button(260)]));
+        Assert.True(ExpeditionRewardPopupPolicy.HasBlockingEvidence([Button(260)]));
     }
 
     [Fact]

@@ -150,6 +150,25 @@ public sealed class UnitPanelLayoutTests
         Assert.True(background.SellSimilarity < UnitPanelColorClassifier.MinimumReferenceSimilarity);
     }
 
+    [Fact]
+    public void SelectedPanelRetainsOwnershipWhenMutableControlContentChanges()
+    {
+        RgbImage priorityReference = PanelControl(100, 31, 0, 44, 25);
+        RgbImage sellReference = PanelControl(100, 0, 24, 51, 25);
+        RgbImage changedPriority = PanelControl(100, 20, 0, 0, 80);
+        RgbImage changedSell = PanelControl(100, 0, 18, 0, 82);
+
+        UnitPanelImageMatch match = UnitPanelColorClassifier.MatchSelectedPanel(
+            priorityReference,
+            sellReference,
+            changedPriority,
+            changedSell);
+
+        Assert.True(match.IsMatch);
+        Assert.True(match.PrioritySimilarity < UnitPanelColorClassifier.MinimumReferenceSimilarity);
+        Assert.True(match.SellSimilarity < UnitPanelColorClassifier.MinimumReferenceSimilarity);
+    }
+
     private static OcrTextRegion Region(string text, int x, int y, int width, int height) => new()
     {
         Text = text,

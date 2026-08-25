@@ -1,4 +1,5 @@
 using LilacMacro.App.Notifications;
+using LilacMacro.App.Infrastructure;
 
 namespace LilacMacro.App.Views;
 
@@ -9,6 +10,20 @@ public partial class MacroDashboardPage
     private bool _ocrReady;
     private bool _ocrSetupFailed;
     private bool _ocrSetupInProgress;
+
+    internal OcrRunner Ocr => _ocr;
+
+    private void OwnerState_OnOcrModeChanged(object? sender, EventArgs eventArgs)
+    {
+        RefreshOcrReadyState();
+        _ocrSetupFailed = !_ocrReady;
+        UpdateStartButtonState();
+    }
+
+    private void RefreshOcrReadyState() => _ocrReady = OcrRunner.SelectDevice(
+        _ownerState.OcrMode,
+        _ocr.IsDeviceReady(OcrRunner.GpuDevice),
+        _ocr.IsDeviceReady(OcrRunner.CpuDevice)) is not null;
 
     internal Task<bool> EnsureOcrReadyAsync() =>
         _ocrReady
@@ -23,7 +38,9 @@ public partial class MacroDashboardPage
         AppendLog("OCR SETUP | Checking local runtime");
         try
         {
-            string device = await _ocr.EnsureReadyAsync(_lifecycleCancellation.Token);
+            string device = await _ocr.EnsureReadyAsync(
+                _ownerState.OcrMode,
+                _lifecycleCancellation.Token);
             _ocrReady = true;
             AppendLog($"OCR READY | {device.ToUpperInvariant()}");
             return true;

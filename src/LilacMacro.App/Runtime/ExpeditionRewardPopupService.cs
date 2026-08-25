@@ -11,6 +11,7 @@ internal sealed class ExpeditionRewardPopupService(
     OcrRunner ocr)
 {
     private static readonly TimeSpan SettleDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan IncompleteChoiceDelay = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan SelectionDelay = TimeSpan.FromSeconds(3);
     private readonly DebugOcrStateRunner _states = new(workspace, ocr);
 
@@ -20,20 +21,32 @@ internal sealed class ExpeditionRewardPopupService(
         CancellationToken cancellationToken)
     {
         bool handled = false;
-        for (int attempt = 1;
-             attempt <= ExpeditionRewardPopupPolicy.MaximumConsecutivePopups;
-             attempt++)
+        int selections = 0;
+        for (int observation = 1;
+             observation <= ExpeditionRewardPopupPolicy.MaximumObservationAttempts;
+             observation++)
         {
             DebugOcrSnapshot observed = await _states.RunAsync(
                 ExpeditionRewardStateCatalog.Popup,
                 device,
                 cancellationToken).ConfigureAwait(false);
-            if (!ExpeditionRewardPopupPolicy.IsPopup(observed.Regions)) return handled;
+            if (!ExpeditionRewardPopupPolicy.HasBlockingEvidence(observed.Regions)) return handled;
 
             handled = true;
+            if (!ExpeditionRewardPopupPolicy.IsPopup(observed.Regions))
+            {
+                status?.Invoke(
+                    $"EXPEDITION REWARD POPUP SETTLING " +
+                    $"{observation}/{ExpeditionRewardPopupPolicy.MaximumObservationAttempts}");
+                await Task.Delay(IncompleteChoiceDelay, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+            if (selections >= ExpeditionRewardPopupPolicy.MaximumConsecutivePopups)
+                break;
+
             status?.Invoke(
                 $"EXPEDITION REWARD POPUP DETECTED; WAITING {SettleDelay.TotalSeconds:0}S " +
-                $"FOR FRESH SELECTION {attempt}/{ExpeditionRewardPopupPolicy.MaximumConsecutivePopups}");
+                $"FOR FRESH SELECTION {selections + 1}/{ExpeditionRewardPopupPolicy.MaximumConsecutivePopups}");
             await Task.Delay(SettleDelay, cancellationToken).ConfigureAwait(false);
 
             DebugOcrSnapshot settled = await _states.RunAsync(
@@ -42,7 +55,7 @@ internal sealed class ExpeditionRewardPopupService(
                 cancellationToken).ConfigureAwait(false);
             if (!ExpeditionRewardPopupPolicy.IsPopup(settled.Regions))
             {
-                status?.Invoke("EXPEDITION REWARD POPUP CLEARED DURING SETTLE");
+                status?.Invoke("EXPEDITION REWARD POPUP CHANGED DURING SETTLE");
                 continue;
             }
 
@@ -58,11 +71,11 @@ internal sealed class ExpeditionRewardPopupService(
                 target.Bounds.Center,
                 cancellationToken).ConfigureAwait(false);
             status?.Invoke("EXPEDITION REWARD RIGHTMOST SELECT UPGRADE CLICKED");
+            selections++;
             await Task.Delay(SelectionDelay, cancellationToken).ConfigureAwait(false);
         }
 
         throw new TimeoutException(
-            $"Expedition reward popup remained visible after " +
-            $"{ExpeditionRewardPopupPolicy.MaximumConsecutivePopups} selections.");
+            "Expedition reward popup did not clear within its bounded observation window.");
     }
 }

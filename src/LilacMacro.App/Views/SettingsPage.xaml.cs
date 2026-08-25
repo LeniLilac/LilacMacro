@@ -12,6 +12,7 @@ using LilacMacro.App.Notifications;
 using LilacMacro.App.Updates;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.Core.Updates;
+using LilacMacro.Core.Ocr;
 using LilacMacro.Runtime.Services;
 using LilacMacro.Windows;
 
@@ -24,6 +25,7 @@ public partial class SettingsPage : UserControl
     private readonly MacroOwnerState _ownerState;
     private readonly Action<bool> _keyCaptureStateChanged;
     private readonly ApplicationUpdateService _updates;
+    private readonly OcrRunner _ocr;
     private readonly DiagnosticInstallationStore _installation;
     private readonly DiscordWebhookClient _discord = new();
     private readonly PrivacySettingsPanel _privacySettingsPanel;
@@ -40,12 +42,14 @@ public partial class SettingsPage : UserControl
         MacroOwnerState ownerState,
         LocalInstanceManagerController instanceManager,
         ApplicationUpdateService updates,
+        OcrRunner ocr,
         DiagnosticInstallationStore installation,
         Action<bool> keyCaptureStateChanged)
     {
         _deepDebug = deepDebug;
         _ownerState = ownerState;
         _updates = updates;
+        _ocr = ocr;
         _installation = installation;
         _keyCaptureStateChanged = keyCaptureStateChanged;
         InitializeComponent();
@@ -79,6 +83,7 @@ public partial class SettingsPage : UserControl
         NotifyVictoryCheck.IsChecked = ownerState.NotifyOnVictory;
         NotifyDefeatCheck.IsChecked = ownerState.NotifyOnDefeat;
         NotifyRecoveryCheck.IsChecked = ownerState.NotifyOnRecovery;
+        InitializeOcrControls();
         RefreshDiagnosticsControls();
         _initialized = true;
         RefreshDisplayControls();
@@ -122,6 +127,7 @@ public partial class SettingsPage : UserControl
 
     private void GeneralTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(GeneralTabButton, GeneralPanel);
     private void RobloxTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(RobloxTabButton, RobloxPanel);
+    private void OcrTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(OcrTabButton, OcrPanel);
     private void DiscordTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(DiscordTabButton, DiscordPanel);
     private void KeybindsTab_OnClick(object sender, RoutedEventArgs eventArgs) => ShowPanel(KeybindsTabButton, KeybindsPanel);
     private void DiagnosticsTab_OnClick(object sender, RoutedEventArgs eventArgs)
@@ -134,8 +140,8 @@ public partial class SettingsPage : UserControl
     private void ShowPanel(Button selectedButton, UIElement selectedPanel)
     {
         FinishKeyCapture();
-        Button[] buttons = [GeneralTabButton, RobloxTabButton, DiscordTabButton, KeybindsTabButton, DiagnosticsTabButton];
-        UIElement[] panels = [GeneralPanel, RobloxPanel, DiscordPanel, KeybindsPanel, DiagnosticsPanel];
+        Button[] buttons = [GeneralTabButton, RobloxTabButton, OcrTabButton, DiscordTabButton, KeybindsTabButton, DiagnosticsTabButton];
+        UIElement[] panels = [GeneralPanel, RobloxPanel, OcrPanel, DiscordPanel, KeybindsPanel, DiagnosticsPanel];
         foreach (Button button in buttons) button.Tag = string.Empty;
         foreach (UIElement panel in panels) panel.Visibility = Visibility.Collapsed;
         selectedButton.Tag = "Active";
@@ -304,67 +310,7 @@ public partial class SettingsPage : UserControl
             ? "Privacy choices saved"
             : "Online features are disabled";
     }
-    private void LocalPath_OnClick(object sender, RoutedEventArgs eventArgs)
-    {
-        if (sender is not Button { Tag: string folderKind }) return;
-
-        string path = folderKind switch
-        {
-            "data" => MacroInstanceContext.Current.ConfigurationRoot,
-            "logs" => Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "LilacMacro",
-                "logs"),
-            _ => throw new InvalidOperationException("The requested LilacMacro folder is unknown."),
-        };
-
-        try
-        {
-            Directory.CreateDirectory(path);
-            _ = Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })
-                ?? throw new InvalidOperationException("Windows did not open the requested folder.");
-        }
-        catch (Exception exception) when (exception is IOException
-            or UnauthorizedAccessException
-            or InvalidOperationException
-            or System.ComponentModel.Win32Exception)
-        {
-            AppToastService.ShowError("FOLDER OPEN FAILED", exception.Message);
-        }
-    }
-    private async void TestPrivateServer_OnClick(object sender, RoutedEventArgs eventArgs)
-    {
-        TestPrivateServerButton.IsEnabled = false;
-        try
-        {
-            RobloxPrivateServerLaunchTarget target = RobloxPrivateServerLaunchTarget.Parse(PrivateServerText.Text);
-            await new RobloxProtocolLauncher().LaunchAsync(target.LaunchUri, CancellationToken.None);
-            AppToastService.ShowSuccess("PRIVATE SERVER READY", "Roblox launch requested.");
-        }
-        catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException or ArgumentException)
-        {
-            AppToastService.ShowError("PRIVATE SERVER TEST FAILED", exception.Message);
-        }
-        finally
-        {
-            TestPrivateServerButton.IsEnabled = true;
-        }
-    }
-
     private static string BuildVersion() => typeof(SettingsPage).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-
-    private void PrivateServerText_OnTextChanged(object sender, TextChangedEventArgs eventArgs)
-    {
-        if (!_initialized) return;
-        try
-        {
-            _ownerState.SetPrivateServerLink(PrivateServerText.Text);
-        }
-        catch (System.ComponentModel.Win32Exception exception)
-        {
-            AppToastService.ShowError("PRIVATE SERVER SAVE FAILED", exception.Message);
-        }
-    }
 
     private void WebhookPassword_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)
     {

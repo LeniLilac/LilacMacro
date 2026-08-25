@@ -152,6 +152,7 @@
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="GeneralTabButton" Tag="Active" Style="{StaticResource SettingsTabStyle}" Click="GeneralTab_OnClick" Content="GENERAL" />
                 <Button x:Name="RobloxTabButton" Style="{StaticResource SettingsTabStyle}" Click="RobloxTab_OnClick" Content="ROBLOX" />
+                <Button x:Name="OcrTabButton" Style="{StaticResource SettingsTabStyle}" Click="OcrTab_OnClick" Content="OCR" />
                 <Button x:Name="DiscordTabButton" Style="{StaticResource SettingsTabStyle}" Click="DiscordTab_OnClick" Content="DISCORD" />
                 <Button x:Name="KeybindsTabButton" Style="{StaticResource SettingsTabStyle}" Click="KeybindsTab_OnClick" Content="KEYBINDS" />
                 <Button x:Name="DiagnosticsTabButton" Style="{StaticResource SettingsTabStyle}" Click="DiagnosticsTab_OnClick" Content="DIAGNOSTICS" />
@@ -309,6 +310,62 @@
                                                  TextChanged="PrivateServerText_OnTextChanged" />
                                         <Button x:Name="TestPrivateServerButton" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SettingsFieldActionButtonStyle}" Click="TestPrivateServer_OnClick" Content="TEST LINK" />
                                     </Grid>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel x:Name="OcrPanel" Visibility="Collapsed">
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBlock FontSize="15" FontWeight="Bold" Text="OCR" />
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="MODE" />
+                                    <StackPanel Grid.Column="1">
+                                        <ComboBox x:Name="OcrModeCombo"
+                                                  Width="260"
+                                                  HorizontalAlignment="Left"
+                                                  DisplayMemberPath="Name"
+                                                  SelectionChanged="OcrMode_OnSelectionChanged" />
+                                        <TextBlock x:Name="OcrModeDescriptionText"
+                                                   Width="560"
+                                                   Margin="0,5,0,0"
+                                                   HorizontalAlignment="Left"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource InkSoftBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,13,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="RUNTIME" />
+                                    <TextBlock x:Name="OcrRuntimeText"
+                                               Grid.Column="1"
+                                               VerticalAlignment="Center"
+                                               FontSize="10"
+                                               Foreground="{DynamicResource InkSoftBrush}" />
+                                </Grid>
+                                <Grid Margin="0,13,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Style="{StaticResource FieldLabelStyle}" Text="ACTIONS" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button x:Name="TestOcrButton" Style="{StaticResource SettingsButtonStyle}" Click="TestOcr_OnClick">
+                                            <StackPanel Orientation="Horizontal">
+                                                <controls:LucideIcon Width="14" Height="14" Margin="0,0,7,0" Data="{StaticResource Lucide.Crosshair}" />
+                                                <TextBlock Text="TEST OCR" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="RepairOcrButton" Margin="8,0,0,0" Style="{StaticResource SettingsButtonStyle}" Click="RepairOcr_OnClick">
+                                            <StackPanel Orientation="Horizontal">
+                                                <controls:LucideIcon Width="14" Height="14" Margin="0,0,7,0" Data="{StaticResource Lucide.Settings2}" />
+                                                <TextBlock Text="REPAIR OCR" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </Grid>

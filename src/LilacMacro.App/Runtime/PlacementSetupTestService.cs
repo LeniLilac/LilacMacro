@@ -104,9 +104,12 @@ internal sealed class PlacementSetupTestService : IDisposable
 
     private string SelectOcrDevice()
     {
-        if (_ocr.IsDeviceReady(OcrRunner.GpuDevice)) return OcrRunner.GpuDevice;
-        if (_ocr.IsDeviceReady(OcrRunner.CpuDevice)) return OcrRunner.CpuDevice;
-        throw new InvalidOperationException("Set up OCR in Dataset Builder before testing a setup.");
+        string? selected = OcrRunner.SelectDevice(
+            _ownerState.OcrMode,
+            _ocr.IsDeviceReady(OcrRunner.GpuDevice),
+            _ocr.IsDeviceReady(OcrRunner.CpuDevice));
+        return selected ?? throw new InvalidOperationException(
+            "Set up the selected OCR mode in Settings before testing a setup.");
     }
 
     public void Dispose()

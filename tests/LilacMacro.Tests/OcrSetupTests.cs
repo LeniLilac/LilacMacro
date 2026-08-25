@@ -1,25 +1,29 @@
 using LilacMacro.App.Diagnostics;
 using LilacMacro.App.Infrastructure;
 using LilacMacro.Core.Services;
+using LilacMacro.Core.Ocr;
 using LilacMacro.Runtime.Services;
+using System.Diagnostics;
 
 namespace LilacMacro.Tests;
 
 public sealed class OcrSetupTests
 {
     [Theory]
-    [InlineData(true, false, true)]
-    [InlineData(false, false, false)]
-    [InlineData(true, true, true)]
-    [InlineData(false, true, true)]
+    [InlineData(true, false, OcrExecutionMode.Automatic, true)]
+    [InlineData(false, false, OcrExecutionMode.Automatic, false)]
+    [InlineData(true, true, OcrExecutionMode.GpuPreferred, true)]
+    [InlineData(false, true, OcrExecutionMode.Automatic, true)]
+    [InlineData(true, true, OcrExecutionMode.CpuOnly, false)]
     public void Managed_instances_check_their_profile_local_gpu_runtime(
         bool acceptedPrivacyThisLaunch,
         bool isManagedRunner,
+        OcrExecutionMode mode,
         bool expected)
     {
         Assert.Equal(
             expected,
-            global::LilacMacro.App.App.ShouldCheckGpuSetup(acceptedPrivacyThisLaunch, isManagedRunner));
+            global::LilacMacro.App.App.ShouldCheckGpuSetup(acceptedPrivacyThisLaunch, isManagedRunner, mode));
     }
 
     [Theory]
@@ -28,6 +32,19 @@ public sealed class OcrSetupTests
     [InlineData(false, false, null)]
     public void PreferredDeviceUsesReadyRuntime(bool gpuReady, bool cpuReady, string? expected) =>
         Assert.Equal(expected, OcrRunner.SelectPreferredDevice(gpuReady, cpuReady));
+
+    [Theory]
+    [InlineData(OcrExecutionMode.Automatic, true, true, OcrRunner.GpuDevice)]
+    [InlineData(OcrExecutionMode.Automatic, false, true, OcrRunner.CpuDevice)]
+    [InlineData(OcrExecutionMode.GpuPreferred, false, true, null)]
+    [InlineData(OcrExecutionMode.GpuPreferred, true, true, OcrRunner.GpuDevice)]
+    [InlineData(OcrExecutionMode.CpuOnly, true, true, OcrRunner.CpuDevice)]
+    public void Selected_mode_owns_runtime_selection(
+        OcrExecutionMode mode,
+        bool gpuReady,
+        bool cpuReady,
+        string? expected) =>
+        Assert.Equal(expected, OcrRunner.SelectDevice(mode, gpuReady, cpuReady));
 
     [Fact]
     public void Run_device_policy_retries_gpu_once_then_uses_cpu_for_the_run()
@@ -73,6 +90,28 @@ public sealed class OcrSetupTests
     [Fact]
     public void Persistent_worker_watchdog_is_shorter_than_lobby_deadline() =>
         Assert.Equal(TimeSpan.FromSeconds(30), PersistentOcrWorker.OperationDeadline);
+
+    [Fact]
+    public void Persistent_worker_allows_slow_cold_model_loading() =>
+        Assert.Equal(TimeSpan.FromMinutes(2), PersistentOcrWorker.ModelLoadingDeadline);
+
+    [Fact]
+    public void Bundled_worker_ignores_ambient_python_runtime_paths()
+    {
+        ProcessStartInfo startInfo = new("python.exe") { UseShellExecute = false };
+        startInfo.Environment["PYTHONHOME"] = @"C:\Python313";
+        startInfo.Environment["PYTHONPATH"] = @"C:\Python313\Lib";
+        startInfo.Environment["PYTHONSTARTUP"] = @"C:\startup.py";
+        startInfo.Environment["PYTHONUSERBASE"] = @"C:\PythonUser";
+
+        OcrRunner.ConfigureWorkerEnvironment(startInfo);
+
+        Assert.False(startInfo.Environment.ContainsKey("PYTHONHOME"));
+        Assert.False(startInfo.Environment.ContainsKey("PYTHONPATH"));
+        Assert.False(startInfo.Environment.ContainsKey("PYTHONSTARTUP"));
+        Assert.False(startInfo.Environment.ContainsKey("PYTHONUSERBASE"));
+        Assert.Equal("1", startInfo.Environment["PYTHONNOUSERSITE"]);
+    }
 
     [Fact]
     public async Task EnsureReadyUsesExistingCpuRuntimeWithoutReinstalling()

@@ -1,4 +1,5 @@
 using LilacMacro.App.Theming;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.App.Runtime;
 
@@ -11,7 +12,7 @@ internal enum PrivacyChoiceKind
 
 internal sealed record MacroSettings
 {
-    public const int CurrentSchemaVersion = 13;
+    public const int CurrentSchemaVersion = 14;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
 
@@ -54,6 +55,8 @@ internal sealed record MacroSettings
     public bool IncludePrereleaseUpdates { get; init; }
 
     public string LastNotifiedUpdateVersion { get; init; } = string.Empty;
+
+    public OcrExecutionMode OcrMode { get; init; } = OcrExecutionMode.Automatic;
 
     public MacroLayoutProfile LayoutProfile { get; init; } = MacroLayoutProfile.Full1920x1080;
 

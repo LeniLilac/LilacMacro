@@ -45,6 +45,7 @@ internal sealed class MacroSettingsStore
                     1 or 2 => MigrateLegacySettings(settings),
                     3 or 4 or 5 or 6 or 7 or 8 or 9 or 10 or 11 or 12 =>
                         MigratePreEventSettings(settings),
+                    13 => MigrateOcrSettings(settings),
                     _ => new MacroSettings(),
                 };
             }
@@ -86,6 +87,11 @@ internal sealed class MacroSettingsStore
         NotifyOnVictory = false,
         NotifyOnDefeat = false,
         NotifyOnRecovery = false,
+    };
+
+    private static MacroSettings MigrateOcrSettings(MacroSettings settings) => settings with
+    {
+        SchemaVersion = MacroSettings.CurrentSchemaVersion,
     };
 
     public async Task SaveAsync(MacroSettings settings, CancellationToken cancellationToken = default)

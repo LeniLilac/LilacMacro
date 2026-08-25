@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using LilacMacro.Core.Geometry;
+using LilacMacro.Core.Ocr;
 using LilacMacro.App.Diagnostics;
 using LilacMacro.Runtime.Services;
 
@@ -49,16 +50,31 @@ public sealed partial class OcrRunner : IDisposable
     public bool IsDeviceReady(string device) => RuntimePythonPath(device) is not null;
 
     public async Task<string> EnsureReadyAsync(CancellationToken cancellationToken = default)
+        => await EnsureReadyAsync(OcrExecutionMode.Automatic, cancellationToken).ConfigureAwait(false);
+
+    public async Task<string> EnsureReadyAsync(
+        OcrExecutionMode mode,
+        CancellationToken cancellationToken = default)
     {
-        string? readyDevice = SelectPreferredDevice(IsDeviceReady(GpuDevice), IsDeviceReady(CpuDevice));
+        if (!Enum.IsDefined(mode)) throw new ArgumentOutOfRangeException(nameof(mode));
+        string? readyDevice = SelectDevice(mode, IsDeviceReady(GpuDevice), IsDeviceReady(CpuDevice));
         if (readyDevice is not null) return readyDevice;
 
-        await SetupAsync(CpuDevice, cancellationToken).ConfigureAwait(false);
-        return CpuDevice;
+        string setupDevice = mode == OcrExecutionMode.GpuPreferred ? GpuDevice : CpuDevice;
+        await SetupAsync(setupDevice, cancellationToken).ConfigureAwait(false);
+        return setupDevice;
     }
 
     internal static string? SelectPreferredDevice(bool gpuReady, bool cpuReady) =>
         gpuReady ? GpuDevice : cpuReady ? CpuDevice : null;
+
+    internal static string? SelectDevice(OcrExecutionMode mode, bool gpuReady, bool cpuReady) => mode switch
+    {
+        OcrExecutionMode.CpuOnly => cpuReady ? CpuDevice : null,
+        OcrExecutionMode.GpuPreferred => gpuReady ? GpuDevice : null,
+        OcrExecutionMode.Automatic => SelectPreferredDevice(gpuReady, cpuReady),
+        _ => throw new ArgumentOutOfRangeException(nameof(mode)),
+    };
 
     public bool KeepLoaded
     {
@@ -284,12 +300,22 @@ public sealed partial class OcrRunner : IDisposable
             StandardErrorEncoding = Encoding.UTF8,
         };
         startInfo.ArgumentList.Add(worker);
-        startInfo.Environment["PADDLE_PDX_MODEL_SOURCE"] = "BOS";
-        startInfo.Environment["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True";
-        startInfo.Environment["PYTHONDONTWRITEBYTECODE"] = "1";
+        ConfigureWorkerEnvironment(startInfo);
         PrepareBundledModelCache();
         startInfo.Environment["PADDLE_PDX_CACHE_HOME"] = Path.Combine(_ocrRoot, "model-cache");
         return startInfo;
+    }
+
+    internal static void ConfigureWorkerEnvironment(ProcessStartInfo startInfo)
+    {
+        startInfo.Environment["PADDLE_PDX_MODEL_SOURCE"] = "BOS";
+        startInfo.Environment["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True";
+        startInfo.Environment["PYTHONDONTWRITEBYTECODE"] = "1";
+        startInfo.Environment["PYTHONNOUSERSITE"] = "1";
+        startInfo.Environment.Remove("PYTHONHOME");
+        startInfo.Environment.Remove("PYTHONPATH");
+        startInfo.Environment.Remove("PYTHONSTARTUP");
+        startInfo.Environment.Remove("PYTHONUSERBASE");
     }
 
     private void PrepareBundledModelCache()

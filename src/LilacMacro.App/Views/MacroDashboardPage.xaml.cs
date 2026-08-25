@@ -45,6 +45,7 @@ public partial class MacroDashboardPage : UserControl
     private readonly IDisposable _deepDebugFrameCaptureRegistration;
     private CancellationTokenSource? _runCancellation;
     private Task? _runTask;
+    private Task? _runLifecycleTask;
     private bool _runStarting;
     private bool _initialized;
     private PlanTaskPrototype? _currentTask;
@@ -108,8 +109,9 @@ public partial class MacroDashboardPage : UserControl
         PlanCombo.SelectedItem = ownerState.SelectedPlan;
         ownerState.SelectedPlanChanged += OwnerState_OnSelectedPlanChanged;
         ownerState.PlansChanged += OwnerState_OnPlansChanged;
+        ownerState.OcrModeChanged += OwnerState_OnOcrModeChanged;
         ApplyLayoutProfile(ownerState.LayoutProfile);
-        _ocrReady = _ocr.IsDeviceReady(OcrRunner.GpuDevice) || _ocr.IsDeviceReady(OcrRunner.CpuDevice);
+        RefreshOcrReadyState();
         _ocrSetupFailed = !_ocrReady;
         UpdateStartButtonState();
     }
@@ -144,15 +146,23 @@ public partial class MacroDashboardPage : UserControl
         }
         if (!_ocrReady)
         {
-            AppToastService.ShowError("OCR SETUP REQUIRED", "Use SET UP OCR before starting the Macro.");
+            AppToastService.ShowError("OCR SETUP REQUIRED", "Open Settings > OCR, then test or repair the selected mode.");
             return;
         }
         _ = StartMacroAsync();
     }
 
-    private async Task StartMacroAsync()
+    private Task StartMacroAsync()
+    {
+        if (_runLifecycleTask is { IsCompleted: false }) return _runLifecycleTask;
+        _runLifecycleTask = StartMacroCoreAsync();
+        return _runLifecycleTask;
+    }
+
+    private async Task StartMacroCoreAsync()
     {
         if (_runTask is not null || _runStarting || PlanCombo.SelectedItem is not PlanPrototype plan) return;
+        _lifecycleCancellation.Token.ThrowIfCancellationRequested();
         if (!CanStartPlan(plan)) return;
         bool ocrRunStarted = false;
         _runStarting = true;
@@ -162,7 +172,7 @@ public partial class MacroDashboardPage : UserControl
             await EnsureRuntimeProgressLoadedAsync();
             if (!_ocrReady)
             {
-                AppToastService.ShowError("OCR SETUP REQUIRED", "Use SET UP OCR before starting the Macro.");
+                AppToastService.ShowError("OCR SETUP REQUIRED", "Open Settings > OCR, then test or repair the selected mode.");
                 return;
             }
             if (!_control.CanStart(out string unavailableMessage))

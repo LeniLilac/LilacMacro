@@ -8,8 +8,11 @@ public partial class MacroDashboardPage
 {
     private string SelectOcrDevice()
     {
-        if (_ocr.IsDeviceReady(OcrRunner.GpuDevice)) return OcrRunner.GpuDevice;
-        if (_ocr.IsDeviceReady(OcrRunner.CpuDevice)) return OcrRunner.CpuDevice;
+        string? selected = OcrRunner.SelectDevice(
+            _ownerState.OcrMode,
+            _ocr.IsDeviceReady(OcrRunner.GpuDevice),
+            _ocr.IsDeviceReady(OcrRunner.CpuDevice));
+        if (selected is not null) return selected;
         throw new InvalidOperationException("Automatic OCR setup did not complete. Retry OCR setup before starting the macro.");
     }
 

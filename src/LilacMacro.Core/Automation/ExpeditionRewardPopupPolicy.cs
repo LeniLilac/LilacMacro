@@ -5,8 +5,9 @@ namespace LilacMacro.Core.Automation;
 
 public static class ExpeditionRewardPopupPolicy
 {
-    public const int MinimumSelectUpgradeMatches = 3;
+    public const int MinimumSelectUpgradeMatches = 2;
     public const int MaximumConsecutivePopups = 8;
+    public const int MaximumObservationAttempts = 30;
 
     public static readonly OcrTargetRule SelectUpgradeTarget = new(
         "Select Upgrade",
@@ -30,6 +31,9 @@ public static class ExpeditionRewardPopupPolicy
         IReadOnlyList<OcrTextRegion> buttons = FindSelectUpgradeButtons(regions);
         return buttons.Count >= MinimumSelectUpgradeMatches && SameActionRow(buttons);
     }
+
+    public static bool HasBlockingEvidence(IReadOnlyList<OcrTextRegion> regions) =>
+        FindSelectUpgradeButtons(regions).Count > 0;
 
     public static OcrTextRegion? SelectRightmost(
         IReadOnlyList<OcrTextRegion> regions)

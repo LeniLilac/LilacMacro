@@ -10,6 +10,7 @@ internal sealed class PersistentOcrWorker(
     Action<OcrWorkerLifecycleEvent>? observe = null) : IDisposable
 {
     private static readonly TimeSpan OperationTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ModelLoadingTimeout = TimeSpan.FromMinutes(2);
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _errorLock = new();
     private readonly StringBuilder _errorTail = new();
@@ -18,6 +19,8 @@ internal sealed class PersistentOcrWorker(
     private bool _disposed;
 
     internal static TimeSpan OperationDeadline => OperationTimeout;
+
+    internal static TimeSpan ModelLoadingDeadline => ModelLoadingTimeout;
 
     public async Task WarmUpAsync(
         string modelName,
@@ -87,7 +90,7 @@ internal sealed class PersistentOcrWorker(
             File.Move(temporaryRequest, requestPath);
             Observe("request_sent", "response-wait", device, modelName, elapsed);
 
-            using CancellationTokenSource timeout = CreateTimeout(cancellationToken);
+            using CancellationTokenSource timeout = CreateTimeout(cancellationToken, OperationTimeout);
             string phase = "response-wait";
             try
             {
@@ -99,6 +102,8 @@ internal sealed class PersistentOcrWorker(
                     observed =>
                     {
                         phase = observed;
+                        if (IsModelLoadingStage(observed))
+                            timeout.CancelAfter(ModelLoadingTimeout);
                         Observe("worker_phase", observed, device, modelName, elapsed);
                     });
                 Observe("response_detected", "response-read", device, modelName, elapsed);
@@ -115,7 +120,9 @@ internal sealed class PersistentOcrWorker(
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 Observe("worker_timeout", phase, device, modelName, elapsed);
-                throw new OcrWorkerTimeoutException(phase, OperationTimeout);
+                throw new OcrWorkerTimeoutException(
+                    phase,
+                    IsModelLoadingStage(phase) ? ModelLoadingTimeout : OperationTimeout);
             }
             finally
             {
@@ -210,7 +217,7 @@ internal sealed class PersistentOcrWorker(
         Stopwatch elapsed)
     {
         Observe("preload_waiting", "preload-ready", device, modelName, elapsed);
-        using CancellationTokenSource timeout = CreateTimeout(cancellationToken);
+        using CancellationTokenSource timeout = CreateTimeout(cancellationToken, ModelLoadingTimeout);
         string phase = "preload-ready";
         try
         {
@@ -229,7 +236,7 @@ internal sealed class PersistentOcrWorker(
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             Observe("worker_timeout", phase, device, modelName, elapsed);
-            throw new OcrWorkerTimeoutException(phase, OperationTimeout);
+            throw new OcrWorkerTimeoutException(phase, ModelLoadingTimeout);
         }
     }
 
@@ -260,7 +267,12 @@ internal sealed class PersistentOcrWorker(
         if (path is null || !File.Exists(path)) return null;
         try
         {
-            using JsonDocument status = JsonDocument.Parse(File.ReadAllText(path));
+            using FileStream stream = new(
+                path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            using JsonDocument status = JsonDocument.Parse(stream);
             return status.RootElement.TryGetProperty("stage", out JsonElement stage)
                 ? stage.GetString()
                 : null;
@@ -271,12 +283,18 @@ internal sealed class PersistentOcrWorker(
         }
     }
 
-    private static CancellationTokenSource CreateTimeout(CancellationToken cancellationToken)
+    private static CancellationTokenSource CreateTimeout(
+        CancellationToken cancellationToken,
+        TimeSpan deadline)
     {
         CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(OperationTimeout);
+        timeout.CancelAfter(deadline);
         return timeout;
     }
+
+    private static bool IsModelLoadingStage(string stage) =>
+        stage.Contains("model", StringComparison.OrdinalIgnoreCase) &&
+        stage.Contains("load", StringComparison.OrdinalIgnoreCase);
 
     private void Observe(
         string action,

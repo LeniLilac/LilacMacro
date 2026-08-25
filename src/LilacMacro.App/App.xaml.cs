@@ -8,6 +8,7 @@ using LilacMacro.App.Infrastructure;
 using LilacMacro.App.Theming;
 using LilacMacro.App.Updates;
 using LilacMacro.Core.Updates;
+using LilacMacro.Core.Ocr;
 using LilacMacro.Windows.LocalSession;
 using LilacMacro.Windows.SystemInformation;
 using LilacMacro.App.Views;
@@ -65,7 +66,10 @@ public partial class App : Application
                     return;
                 }
             }
-            if (ShouldCheckGpuSetup(firstRunPrivacy, MacroInstanceContext.Current.IsManagedRunner))
+            if (ShouldCheckGpuSetup(
+                firstRunPrivacy,
+                MacroInstanceContext.Current.IsManagedRunner,
+                ownerState.OcrMode))
                 await ShowGpuSetupIfNeededAsync();
             startupWindow = new MacroShellWindow(_deepDebug, ownerState);
         }
@@ -136,8 +140,11 @@ public partial class App : Application
         ShutdownMode = previousMode;
     }
 
-    internal static bool ShouldCheckGpuSetup(bool acceptedPrivacyThisLaunch, bool isManagedRunner) =>
-        acceptedPrivacyThisLaunch || isManagedRunner;
+    internal static bool ShouldCheckGpuSetup(
+        bool acceptedPrivacyThisLaunch,
+        bool isManagedRunner,
+        OcrExecutionMode mode) =>
+        OcrExecutionModePolicy.PrefersGpu(mode) && (acceptedPrivacyThisLaunch || isManagedRunner);
 
     protected override void OnExit(ExitEventArgs eventArgs)
     {

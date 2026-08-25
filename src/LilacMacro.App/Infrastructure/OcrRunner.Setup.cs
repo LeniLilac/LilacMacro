@@ -42,16 +42,49 @@ public sealed partial class OcrRunner
         string device,
         CancellationToken cancellationToken = default,
         IProgress<string>? progress = null)
+        => await SetupCoreAsync(device, force: false, cancellationToken, progress).ConfigureAwait(false);
+
+    public async Task<string> RepairAsync(
+        LilacMacro.Core.Ocr.OcrExecutionMode mode,
+        CancellationToken cancellationToken = default,
+        IProgress<string>? progress = null)
+    {
+        if (!Enum.IsDefined(mode)) throw new ArgumentOutOfRangeException(nameof(mode));
+        string device = mode switch
+        {
+            LilacMacro.Core.Ocr.OcrExecutionMode.CpuOnly => CpuDevice,
+            LilacMacro.Core.Ocr.OcrExecutionMode.GpuPreferred => GpuDevice,
+            _ when IsDeviceReady(GpuDevice) => GpuDevice,
+            _ => CpuDevice,
+        };
+        if (device == CpuDevice && BundledCpuReady())
+        {
+            _persistentWorker.Stop();
+            ResetBundledModelCache();
+            progress?.Report("Restored the bundled CPU OCR model cache.");
+            if (KeepLoaded) await WarmUpAsync(SmallModel, device, cancellationToken);
+            return device;
+        }
+
+        await SetupCoreAsync(device, force: true, cancellationToken, progress).ConfigureAwait(false);
+        return device;
+    }
+
+    private async Task SetupCoreAsync(
+        string device,
+        bool force,
+        CancellationToken cancellationToken,
+        IProgress<string>? progress)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!SupportedDevices.Contains(device)) throw new ArgumentOutOfRangeException(nameof(device));
-        if (device == CpuDevice && IsDeviceReady(CpuDevice))
+        if (!force && device == CpuDevice && IsDeviceReady(CpuDevice))
         {
             progress?.Report("CPU OCR is bundled and ready.");
             if (KeepLoaded) await WarmUpAsync(SmallModel, device, cancellationToken);
             return;
         }
-        if (device == GpuDevice && IsDeviceReady(GpuDevice))
+        if (!force && device == GpuDevice && IsDeviceReady(GpuDevice))
         {
             progress?.Report("GPU OCR is already ready.");
             if (KeepLoaded) await WarmUpAsync(SmallModel, device, cancellationToken);
@@ -65,7 +98,7 @@ public sealed partial class OcrRunner
             progress?.Report(device == GpuDevice
                 ? "Preparing the per-user GPU OCR environment."
                 : "Preparing the local OCR environment.");
-            ProcessStartInfo startInfo = CreateSetupStartInfo(device);
+            ProcessStartInfo startInfo = CreateSetupStartInfo(device, force);
 
             using Process process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Could not start the OCR setup process.");
@@ -117,7 +150,7 @@ public sealed partial class OcrRunner
         }
     }
 
-    private ProcessStartInfo CreateSetupStartInfo(string operation)
+    private ProcessStartInfo CreateSetupStartInfo(string operation, bool repair = false)
     {
         string script = ResolveBundledFile("scripts", "Setup-Ocr.ps1");
         ProcessStartInfo startInfo = new("powershell.exe")
@@ -149,7 +182,16 @@ public sealed partial class OcrRunner
             startInfo.ArgumentList.Add("-BundledPythonPath");
             startInfo.ArgumentList.Add(bundledPython);
         }
+        if (repair) startInfo.ArgumentList.Add("-Repair");
         return startInfo;
+    }
+
+    private void ResetBundledModelCache()
+    {
+        string cache = Path.Combine(_ocrRoot, "model-cache");
+        if (Directory.Exists(cache)) Directory.Delete(cache, recursive: true);
+        _modelCachePrepared = false;
+        PrepareBundledModelCache();
     }
 
     private static async Task<string> DrainSetupStreamAsync(

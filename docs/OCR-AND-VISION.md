@@ -15,6 +15,8 @@ GPU setup queries NVIDIA GPU 0 through `nvidia-smi`, rejects hardware older than
 
 The 3.3.0 GPU runtime has completed tensor and PP-OCRv6 small inference smoke tests on a hosted GTX 1080 Ti (Pascal, compute capability 6.1), a hosted Titan RTX (Turing), a Windows RTX 3070 (Ampere), a hosted RTX 4060 (Ada), and a hosted RTX 5060 (Blackwell). The Pascal qualification used the official CUDA 11.8 package path and recognized the synthetic `LILAC GPU OCR 12345` probe correctly. Each installed machine still performs the same setup-time device and import verification before its GPU runtime is accepted; untested GTX 10 models remain guarded by that device-local probe.
 
+Macro Settings exposes three persisted runtime modes. `Auto` uses a ready GPU and otherwise the bundled CPU runtime; `GPU` requires the per-profile NVIDIA runtime; `CPU` always uses the bundle. Managed-runner snapshots preserve whether GPU is allowed. `TEST OCR` generates a deterministic high-contrast `TEST` card locally and requires the selected runtime to recognize it. `REPAIR OCR` rebuilds the selected runtime or restores the bundled model cache; neither action sends the test image or OCR result over the network.
+
 The allowlisted model pairs are:
 
 | UI model | Detector | Recognizer |
@@ -54,7 +56,7 @@ Startup UI-scale normalization deliberately does not OCR the displayed numeric s
 - One-shot mode starts a helper process for a run and exits afterward.
 - `KEEP LOADED` starts one persistent helper and caches detector/recognizer pipelines by model and device for the app session.
 - Dataset Builder and Runtime Lab default to GPU with `KEEP LOADED` enabled. When the GPU runtime is ready, each tool preloads the PP-OCRv6 small detector/recognizer pair as it opens; a missing GPU runtime remains an explicit setup state and never triggers an automatic install or CPU fallback.
-- Requests and responses use a unique temporary channel with a 30-second worker watchdog, worker-exit detection, bounded JSON, and cleanup. The worker publishes fixed lifecycle phases for input validation, crop preparation, model loading, inference, and response writing so Deep Debug can distinguish the stage of a stall without recording input paths.
+- Requests and responses use a unique temporary channel, worker-exit detection, bounded JSON, and cleanup. The worker publishes fixed lifecycle phases for input validation, crop preparation, model loading, inference, and response writing so Deep Debug can distinguish the stage of a stall without recording input paths. Cold model loading has a separate two-minute bound; every other phase retains the 30-second watchdog. Readers share status/response files with atomic replacement, and workers ignore inherited Python runtime paths and user-site packages.
 - A user-started Macro run preloads its preferred resident worker before Roblox is restarted. A recoverable GPU worker failure receives one fresh-worker retry; a second consecutive failure switches that run to the bundled CPU worker. The next run begins GPU-eligible again, so one transient fault never permanently changes the configured device preference. Dataset Builder and owner-triggered Runtime Lab trials retain their explicit device behavior.
 - Turning `KEEP LOADED` off or exiting the app terminates the worker and releases its cached pipelines.
 - Batch size is currently one crop or one Debug ROI. GPU speedup therefore depends on image size, model, driver, warm-up, and transfer overhead; never encode assumed timing thresholds as correctness rules.

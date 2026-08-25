@@ -61,12 +61,19 @@ public static class UnitPanelColorClassifier
     {
         ArgumentNullException.ThrowIfNull(priority);
         ArgumentNullException.ThrowIfNull(sell);
-        double blue = Fraction(priority, static (red, green, blue) =>
-            blue >= 80 && blue - red >= 20 && blue >= green && red <= 120);
-        double redScore = Fraction(sell, static (red, green, blue) =>
-            red >= 105 && red - green >= 35 && red - blue >= 25);
-        return blue >= 0.18 && redScore >= 0.15;
+        double priorityBlue = Fraction(priority, IsControlBlue);
+        double priorityRed = Fraction(priority, IsControlRed);
+        double sellRed = Fraction(sell, IsControlRed);
+        double sellBlue = Fraction(sell, IsControlBlue);
+        return priorityBlue >= 0.18 && sellRed >= 0.15 &&
+               priorityRed <= 0.12 && sellBlue <= 0.12;
     }
+
+    private static bool IsControlBlue(byte red, byte green, byte blue) =>
+        blue >= 80 && blue - red >= 20 && blue >= green && red <= 120;
+
+    private static bool IsControlRed(byte red, byte green, byte blue) =>
+        red >= 105 && red - green >= 35 && red - blue >= 25;
 
     public static UnitPanelImageMatch MatchSelectedPanel(
         RgbImage referencePriority,
@@ -80,9 +87,10 @@ public static class UnitPanelColorClassifier
         ArgumentNullException.ThrowIfNull(sell);
         double prioritySimilarity = Similarity(referencePriority, priority);
         double sellSimilarity = Similarity(referenceSell, sell);
-        bool matched = IsSelectedPanel(priority, sell)
-            && prioritySimilarity >= MinimumReferenceSimilarity
-            && sellSimilarity >= MinimumReferenceSimilarity;
+        // The controls change text, price, highlight, and upgrade state while the panel remains
+        // selected. Their independent blue-priority and red-sell fill regions own visibility;
+        // whole-control similarity is retained only as diagnostic evidence.
+        bool matched = IsSelectedPanel(priority, sell);
         return new UnitPanelImageMatch(matched, prioritySimilarity, sellSimilarity);
     }
 

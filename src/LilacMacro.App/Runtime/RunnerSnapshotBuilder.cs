@@ -3,6 +3,7 @@ using System.Text.Json;
 using LilacMacro.App.Debugging;
 using LilacMacro.App.Views;
 using LilacMacro.Core.LocalSession;
+using LilacMacro.Core.Ocr;
 
 namespace LilacMacro.App.Runtime;
 
@@ -42,6 +43,7 @@ internal sealed class RunnerSnapshotBuilder
             PlacementSetups = placementSetups,
             StateContexts = await LoadContextsAsync(cancellationToken).ConfigureAwait(false),
             KeyBindings = ownerState.KeyBindings.CreatePersistedSnapshot(),
+            PreferGpu = OcrExecutionModePolicy.PrefersGpu(ownerState.OcrMode),
         };
     }
 
