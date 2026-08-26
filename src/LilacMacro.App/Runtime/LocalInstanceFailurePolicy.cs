@@ -5,10 +5,14 @@ namespace LilacMacro.App.Runtime;
 internal sealed record LocalInstanceFailureObservation(
     string Operation,
     string FailureCode,
+    string? StatusCode,
     string ConfigurationMode,
     int DurationMilliseconds,
     int? ProcessExitCode,
-    int RunnerCount);
+    int RunnerCount,
+    bool HelperStarted,
+    string FailureType,
+    string Error);
 
 internal static class LocalInstanceFailurePolicy
 {

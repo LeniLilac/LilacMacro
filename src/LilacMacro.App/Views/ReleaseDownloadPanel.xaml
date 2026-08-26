@@ -1,0 +1,36 @@
+<UserControl x:Class="LilacMacro.App.Views.ReleaseDownloadPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Unloaded="ReleaseDownloadPanel_OnUnloaded">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock VerticalAlignment="Center"
+                   Style="{StaticResource FieldLabelStyle}"
+                   Text="DOWNLOAD VERSION" />
+        <StackPanel Grid.Column="1">
+            <StackPanel Orientation="Horizontal">
+                <ComboBox x:Name="VersionCombo"
+                          Width="210"
+                          MinHeight="38"
+                          Padding="9,6"
+                          DisplayMemberPath="Label"
+                          DropDownOpened="VersionCombo_OnDropDownOpened"
+                          SelectionChanged="VersionCombo_OnSelectionChanged" />
+                <Button x:Name="DownloadButton"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource SettingsFieldActionButtonStyle}"
+                        IsEnabled="False"
+                        Click="DownloadButton_OnClick"
+                        Content="DOWNLOAD" />
+            </StackPanel>
+            <TextBlock x:Name="StatusText"
+                       Margin="0,6,0,0"
+                       FontSize="10"
+                       Foreground="{DynamicResource InkSoftBrush}"
+                       Text="Open the list to load official releases." />
+        </StackPanel>
+    </Grid>
+</UserControl>

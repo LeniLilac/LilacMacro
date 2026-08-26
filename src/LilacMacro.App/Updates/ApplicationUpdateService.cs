@@ -36,6 +36,51 @@ internal sealed class ApplicationUpdateService : IDisposable
         return AvailableRelease;
     }
 
+    public Task<IReadOnlyList<VerifiedUpdateRelease>> ListReleasesAsync(
+        bool includePrerelease,
+        CancellationToken cancellationToken = default) =>
+        client.ListAsync(includePrerelease, cancellationToken);
+
+    public async Task DownloadReleaseInstallerAsync(
+        VerifiedUpdateRelease release,
+        string destinationPath,
+        CancellationToken cancellationToken = default)
+    {
+        if (MacroInstanceContext.Current.IsManagedRunner)
+            throw new InvalidOperationException("Download releases from This desktop.");
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
+        string destination = Path.GetFullPath(destinationPath);
+        string? destinationDirectory = Path.GetDirectoryName(destination);
+        if (destinationDirectory is null || !Directory.Exists(destinationDirectory))
+            throw new DirectoryNotFoundException("The selected download folder does not exist.");
+
+        Guid operationId = Guid.NewGuid();
+        string root = CoordinatedUpdateStateStore.CacheRoot(operationId);
+        string temporary = destination + $".{operationId:N}.tmp";
+        try
+        {
+            (string installerPath, string installerSha256) = await downloader.DownloadAsync(
+                release,
+                root,
+                cancellationToken).ConfigureAwait(false);
+            await UpdatePackageDownloader.VerifyBeforeLaunchAsync(
+                installerPath,
+                installerSha256,
+                cancellationToken).ConfigureAwait(false);
+            File.Copy(installerPath, temporary, overwrite: true);
+            await UpdatePackageDownloader.VerifyBeforeLaunchAsync(
+                temporary,
+                installerSha256,
+                cancellationToken).ConfigureAwait(false);
+            File.Move(temporary, destination, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+            TryDeleteDirectory(root);
+        }
+    }
+
     public async Task LaunchAvailableUpdateAsync(CancellationToken cancellationToken = default)
     {
         VerifiedUpdateRelease release = AvailableRelease
@@ -93,6 +138,12 @@ internal sealed class ApplicationUpdateService : IDisposable
         string baseDirectory = Path.GetFullPath(AppContext.BaseDirectory);
         return baseDirectory.StartsWith(programFiles, StringComparison.OrdinalIgnoreCase)
             && File.Exists(Path.Combine(baseDirectory, "LilacMacro.SessionSetup.exe"));
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        try { if (Directory.Exists(path)) Directory.Delete(path, recursive: true); }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { }
     }
 
     public void Dispose() => transport.Dispose();

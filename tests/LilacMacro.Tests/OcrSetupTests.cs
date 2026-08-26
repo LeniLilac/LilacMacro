@@ -88,6 +88,11 @@ public sealed class OcrSetupTests
             new OcrWorkerTimeoutException("response", TimeSpan.FromSeconds(30))));
 
     [Fact]
+    public void Application_control_block_is_not_retried_as_a_gpu_failure() =>
+        Assert.False(OcrRunner.IsRecoverableGpuWorkerFailure(
+            new OcrWorkerApplicationControlException("blocked module")));
+
+    [Fact]
     public void Persistent_worker_watchdog_is_shorter_than_lobby_deadline() =>
         Assert.Equal(TimeSpan.FromSeconds(30), PersistentOcrWorker.OperationDeadline);
 
@@ -150,6 +155,16 @@ public sealed class OcrSetupTests
         Assert.Contains("notify(progress, \"crop-ready\")", worker);
         Assert.Contains("notify(progress, \"inference-running\")", worker);
         Assert.Contains("write_status(status_path, \"response-writing\")", worker);
+        Assert.Contains("for attempt in range(8):", worker);
+        Assert.Contains("temporary.replace(output_path)", worker);
+    }
+
+    [Fact]
+    public void Ocr_installers_pin_pure_python_chardet_for_application_control_compatibility()
+    {
+        string root = RepositoryRoot();
+        Assert.Contains("'chardet==5.2.0'", File.ReadAllText(Path.Combine(root, "scripts", "Build-OcrRuntime.ps1")));
+        Assert.Contains("'chardet==5.2.0'", File.ReadAllText(Path.Combine(root, "scripts", "Setup-Ocr.ps1")));
     }
 
     [Theory]

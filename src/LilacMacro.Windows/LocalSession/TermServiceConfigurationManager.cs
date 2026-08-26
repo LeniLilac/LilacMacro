@@ -34,6 +34,18 @@ public sealed class TermServiceConfigurationManager(LocalSessionPaths paths)
 
     public void Apply() => RegistryStateJournal.Apply(GetMutations());
 
+    public bool IsRunning()
+    {
+        using ServiceHandle scm = OpenManager();
+        using ServiceHandle service = OpenService(scm, "TermService", 0x0004);
+        if (service.IsInvalid)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "TermService could not be opened.");
+        ServiceStatus status = default;
+        if (!QueryServiceStatus(service, ref status))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "TermService state could not be queried.");
+        return status.CurrentState == 4;
+    }
+
     public void ApplyAndRestart(IReadOnlyList<OriginalSystemValue> originalSystemState)
     {
         ArgumentNullException.ThrowIfNull(originalSystemState);

@@ -59,6 +59,41 @@ public static class GitHubReleasePolicy
         if (selected is null) return null;
         if (!LilacSemanticVersion.TryParseTag(selected.TagName, out LilacSemanticVersion selectedVersion))
             throw new InvalidDataException("The selected release tag is not an exact semantic version.");
+        return ToVerifiedRelease(selected, selectedVersion);
+    }
+
+    public static IReadOnlyList<VerifiedUpdateRelease> ListDownloadable(
+        IReadOnlyList<GitHubReleaseCandidate> releases,
+        bool includePrerelease)
+    {
+        ArgumentNullException.ThrowIfNull(releases);
+        return releases
+            .Where(release => !release.Draft && (includePrerelease || !release.Prerelease))
+            .Select(release => (
+                Release: release,
+                Valid: LilacSemanticVersion.TryParseTag(release.TagName, out LilacSemanticVersion version),
+                Version: version))
+            .Where(item => item.Valid)
+            .OrderByDescending(item => item.Version)
+            .ThenByDescending(item => item.Release.PublishedAtUtc)
+            .Select(item => TryToVerifiedRelease(item.Release, item.Version))
+            .Where(release => release is not null)
+            .Select(release => release!)
+            .ToArray();
+    }
+
+    private static VerifiedUpdateRelease? TryToVerifiedRelease(
+        GitHubReleaseCandidate release,
+        LilacSemanticVersion version)
+    {
+        try { return ToVerifiedRelease(release, version); }
+        catch (InvalidDataException) { return null; }
+    }
+
+    private static VerifiedUpdateRelease ToVerifiedRelease(
+        GitHubReleaseCandidate selected,
+        LilacSemanticVersion selectedVersion)
+    {
         ValidateRelease(selected, selectedVersion);
         GitHubReleaseAsset installer = selected.Assets.Single(asset => asset.Name == InstallerName);
         GitHubReleaseAsset checksums = selected.Assets.Single(asset => asset.Name == ChecksumName);

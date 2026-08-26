@@ -7,19 +7,32 @@ namespace LilacMacro.App.Updates;
 internal sealed class GitHubUpdateClient(UpdateHttpTransport transport)
 {
     private static readonly Uri ReleasesUri = new(
-        $"https://api.github.com/repos/{GitHubReleasePolicy.Repository}/releases?per_page=20");
+        $"https://api.github.com/repos/{GitHubReleasePolicy.Repository}/releases?per_page=100");
 
     public async Task<VerifiedUpdateRelease?> CheckAsync(
         LilacSemanticVersion currentVersion,
         bool includePrerelease,
         CancellationToken cancellationToken)
     {
-        byte[] payload = await transport.GetBytesAsync(ReleasesUri, 2 * 1024 * 1024, cancellationToken)
+        GitHubReleaseCandidate[] candidates = await FetchAsync(cancellationToken).ConfigureAwait(false);
+        return GitHubReleasePolicy.Select(candidates, currentVersion, includePrerelease);
+    }
+
+    public async Task<IReadOnlyList<VerifiedUpdateRelease>> ListAsync(
+        bool includePrerelease,
+        CancellationToken cancellationToken)
+    {
+        GitHubReleaseCandidate[] candidates = await FetchAsync(cancellationToken).ConfigureAwait(false);
+        return GitHubReleasePolicy.ListDownloadable(candidates, includePrerelease);
+    }
+
+    private async Task<GitHubReleaseCandidate[]> FetchAsync(CancellationToken cancellationToken)
+    {
+        byte[] payload = await transport.GetBytesAsync(ReleasesUri, 4 * 1024 * 1024, cancellationToken)
             .ConfigureAwait(false);
         List<ReleaseDto>? releases = JsonSerializer.Deserialize<List<ReleaseDto>>(payload);
-        if (releases is null) throw new InvalidDataException("GitHub returned an invalid release response.");
-        GitHubReleaseCandidate[] candidates = releases.Select(ToCandidate).ToArray();
-        return GitHubReleasePolicy.Select(candidates, currentVersion, includePrerelease);
+        return releases?.Select(ToCandidate).ToArray()
+            ?? throw new InvalidDataException("GitHub returned an invalid release response.");
     }
 
     private static GitHubReleaseCandidate ToCandidate(ReleaseDto release) => new(

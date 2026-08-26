@@ -16,3 +16,8 @@ internal sealed class OcrWorkerTimeoutException(
 
     public TimeSpan Timeout { get; } = timeout;
 }
+
+internal sealed class OcrWorkerApplicationControlException(string detail)
+    : InvalidOperationException(
+        "Windows Application Control blocked part of the OCR runtime. " +
+        "Repair OCR in Settings after installing the latest LilacMacro update. " + detail);

@@ -215,7 +215,7 @@ public sealed partial class OcrRunner
     private string? RuntimePythonPath(string? device)
     {
         if (device == CpuDevice && BundledCpuReady()) return BundledPythonPath();
-        if (device == GpuDevice && File.Exists(Path.Combine(_gpuRoot, "venv", "Scripts", "python.exe"))
+        if (device == GpuDevice && HasUsableVirtualEnvironment(Path.Combine(_gpuRoot, "venv"))
             && ReadMarker(_gpuRuntimeMarkerPath) == "gpu")
             return Path.Combine(_gpuRoot, "venv", "Scripts", "python.exe");
         return File.Exists(_pythonPath) && ReadRuntimeDevice() == device ? _pythonPath : null;
@@ -230,6 +230,24 @@ public sealed partial class OcrRunner
     private bool BundledCpuReady() =>
         BundledPythonPath() is not null
         && File.Exists(Path.Combine(AppContext.BaseDirectory, "ocr", "cpu-runtime.json"));
+
+    private static bool HasUsableVirtualEnvironment(string root)
+    {
+        string python = Path.Combine(root, "Scripts", "python.exe");
+        string config = Path.Combine(root, "pyvenv.cfg");
+        if (!File.Exists(python) || !File.Exists(config)) return false;
+        try
+        {
+            return File.ReadLines(config)
+                .Where(line => line.StartsWith("home", StringComparison.OrdinalIgnoreCase) ||
+                               line.StartsWith("executable", StringComparison.OrdinalIgnoreCase))
+                .All(line => !line[(line.IndexOf('=') + 1)..].Trim().StartsWith('"'));
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
 
     private string? ReadRuntimeDevice() => ReadMarker(_runtimeMarkerPath);
 

@@ -25,7 +25,7 @@ The retained-frame policy recognizes:
 - terminal macro/runtime errors and unhandled application exceptions;
 - recoverable failures that trigger unattended restart or rejoin;
 - bounded UI-state, input, window, docking, or capture failures after retries are exhausted;
-- periodic capture gaps while Roblox is intentionally closed, restarting, or temporarily unavailable remain in the event timeline but do not create classified error windows;
+- periodic capture gaps while Roblox is intentionally closed, restarting, or temporarily unavailable remain in the event timeline but do not create classified error windows; one repeated gap records its first failure, a bounded periodic summary, and a recovery or stop summary rather than one stack trace per second;
 - OCR inference/setup failures that prevent progress;
 - failed Setup, Runtime Lab, route-optimizer, or team-swap trials;
 - local-session provisioning, launch, or communication failures.
@@ -48,7 +48,7 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 | `visual-profiles/` | Bounded immutable profile revisions and locators consulted by the run |
 | `latest-crash-sanitized.txt` | Bounded tail of the latest crash log when available |
 
-Events include window discovery and observed client size, resize results, capture ownership, OCR device/model/cache/timing, OCR and state evaluations, visual-profile scores and coordinates, requested Windows input, cancellation, exceptions, and terminal outcome. Main Macro dashboard lines are recorded as timestamped `macro/log` events even after the dashboard's newest-1,000-line display window rolls over.
+Events include window discovery and observed client size, resize results, capture ownership, OCR device/model/cache/timing, OCR and state evaluations, visual-profile scores and coordinates, requested Windows input, cancellation, exceptions, and terminal outcome. Failed input records its initial and final observable Roblox client size, process, elapsed time, bounded action data, and failure type. Main Macro dashboard lines are recorded as timestamped `macro/log` events even after the dashboard's newest-1,000-line display window rolls over.
 
 Events and the timeline normally cover the complete operation. Explicit 128 MiB event and 64 MiB timeline safety bounds prevent an abnormal producer from breaking the single-archive limit; truncation is recorded in the manifest and stream. Visual-profile snapshots remain usage-scoped: at most 64 referenced revisions, 32 files and 8 MiB per revision, and 32 MiB total.
 

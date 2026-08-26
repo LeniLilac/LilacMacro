@@ -153,10 +153,21 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
             }
             tasks.RemoveLegacyWorkerTask();
 
-            manifest = await RecordAsync(manifest, "term-service-mutation-started", cancellationToken).ConfigureAwait(false);
             await firewall.InstallAsync(cancellationToken).ConfigureAwait(false);
             rdpCertificates.RemoveCertificatesWithMissingKeys(manifest.OriginalSystemState);
-            termService.ApplyAndRestart(manifest.OriginalSystemState);
+            IReadOnlyList<string> termServiceMismatches = repair
+                ? RegistryStateJournal.FindApplyMismatches(mutations)
+                : ["Fresh installation requires the owned Remote Desktop configuration."];
+            bool termServiceRunning = repair && termService.IsRunning();
+            if (ShouldRestartTermService(repair, termServiceRunning, termServiceMismatches))
+            {
+                manifest = await RecordAsync(manifest, "term-service-mutation-started", cancellationToken).ConfigureAwait(false);
+                termService.ApplyAndRestart(manifest.OriginalSystemState);
+            }
+            else
+            {
+                manifest = await RecordAsync(manifest, "term-service-restart-not-required", cancellationToken).ConfigureAwait(false);
+            }
             FirewallIsolationVerification isolation = await firewall.VerifyLoopbackOnlyAsync(cancellationToken).ConfigureAwait(false);
             if (!isolation.Passed)
             {
@@ -319,6 +330,12 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         manifest.CompletedSteps.Contains("term-service-mutation-started", StringComparer.Ordinal)
         || manifest.CompletedSteps.Contains("loopback-isolation-verified", StringComparer.Ordinal)
         || registryMismatches.Count > 0;
+
+    internal static bool ShouldRestartTermService(
+        bool repair,
+        bool serviceRunning,
+        IReadOnlyList<string> configurationMismatches) =>
+        !repair || !serviceRunning || configurationMismatches.Count > 0;
 
     private static void Attempt(List<string> failures, string step, Action action)
     {

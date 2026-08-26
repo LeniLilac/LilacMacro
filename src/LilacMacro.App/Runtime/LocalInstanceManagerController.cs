@@ -282,10 +282,14 @@ internal sealed class LocalInstanceManagerController
                 error,
                 processExitCode,
                 helperStarted),
+            snapshot?.Status.StatusCode,
             configurationMode,
             LocalInstanceFailurePolicy.BoundedDuration(operationTimer.Elapsed),
             LocalInstanceFailurePolicy.BoundedExitCode(processExitCode),
-            LocalInstanceFailurePolicy.BoundedRunnerCount(snapshot?.Profiles.Count ?? 0)));
+            LocalInstanceFailurePolicy.BoundedRunnerCount(snapshot?.Profiles.Count ?? 0),
+            helperStarted,
+            error.GetType().Name,
+            error.ToString()));
 
     private static string ConfigurationModeFor(LocalInstanceManagerSnapshot snapshot, string profileId) =>
         snapshot.Profiles.SingleOrDefault(item => item.Profile.Id == profileId)?.Profile.ConfigurationMode

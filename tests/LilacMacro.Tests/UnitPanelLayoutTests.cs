@@ -169,6 +169,25 @@ public sealed class UnitPanelLayoutTests
         Assert.True(match.SellSimilarity < UnitPanelColorClassifier.MinimumReferenceSimilarity);
     }
 
+    [Fact]
+    public void SelectedPanelToleratesBoundedPriorityBlueOverlapInSellCrop()
+    {
+        RgbImage priorityReference = PanelControl(1000, 310, 0, 440, 50);
+        RgbImage sellReference = PanelControl(1000, 140, 180, 510, 40);
+        RgbImage priorityPanel = PanelControl(1000, 287, 0, 500, 50);
+        RgbImage sellPanel = PanelControl(1000, 145, 181, 500, 40);
+
+        UnitPanelImageMatch match = UnitPanelColorClassifier.MatchSelectedPanel(
+            priorityReference,
+            sellReference,
+            priorityPanel,
+            sellPanel);
+
+        Assert.True(match.IsMatch);
+        Assert.InRange(match.SellBlueFraction, 0.14, 0.15);
+        Assert.InRange(match.SellRedFraction, 0.18, 0.19);
+    }
+
     private static OcrTextRegion Region(string text, int x, int y, int width, int height) => new()
     {
         Text = text,

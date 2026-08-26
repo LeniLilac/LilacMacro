@@ -94,11 +94,12 @@ internal sealed class UnitPanelEvidenceService(
     {
         DateTimeOffset deadline = DateTimeOffset.UtcNow + PanelTimeout;
         int stable = 0;
+        UnitPanelImageMatch? last = null;
         while (DateTimeOffset.UtcNow <= deadline || stable > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            bool visible = await ObserveSelectedPanelAsync(layout, cancellationToken);
-            stable = visible ? stable + 1 : 0;
+            last = await ObserveSelectedPanelAsync(layout, cancellationToken);
+            stable = last.IsMatch ? stable + 1 : 0;
             if (stable >= 2)
             {
                 status?.Invoke("SELECTED UNIT PANEL VERIFIED");
@@ -106,7 +107,12 @@ internal sealed class UnitPanelEvidenceService(
             }
             await Task.Delay(100, cancellationToken);
         }
-        status?.Invoke("SELECTED UNIT PANEL PROOF TIMEOUT");
+        status?.Invoke(last is null
+            ? "SELECTED UNIT PANEL PROOF TIMEOUT; NO OBSERVATION"
+            : $"SELECTED UNIT PANEL PROOF TIMEOUT; " +
+              $"PRIORITY BLUE {last.PriorityBlueFraction:F3} RED {last.PriorityRedFraction:F3}; " +
+              $"SELL RED {last.SellRedFraction:F3} BLUE {last.SellBlueFraction:F3}; " +
+              $"SIMILARITY {last.PrioritySimilarity:F3}/{last.SellSimilarity:F3}");
         return false;
     }
 
@@ -236,15 +242,15 @@ internal sealed class UnitPanelEvidenceService(
         int hidden = 0;
         while (DateTimeOffset.UtcNow <= deadline || hidden > 0)
         {
-            bool visible = await ObserveSelectedPanelAsync(layout, cancellationToken);
-            hidden = visible ? 0 : hidden + 1;
+            UnitPanelImageMatch observation = await ObserveSelectedPanelAsync(layout, cancellationToken);
+            hidden = observation.IsMatch ? 0 : hidden + 1;
             if (hidden >= 2) return true;
             await Task.Delay(100, cancellationToken);
         }
         return false;
     }
 
-    private async Task<bool> ObserveSelectedPanelAsync(
+    private async Task<UnitPanelImageMatch> ObserveSelectedPanelAsync(
         UnitPanelLayout layout,
         CancellationToken cancellationToken)
     {
@@ -258,7 +264,7 @@ internal sealed class UnitPanelEvidenceService(
             reference.Priority,
             reference.Sell,
             captures[0].Image,
-            captures[1].Image).IsMatch;
+            captures[1].Image);
     }
 
     private async Task<PanelObservation> ObservePanelAsync(

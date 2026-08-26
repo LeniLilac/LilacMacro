@@ -16,7 +16,7 @@ $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalA
 if ([string]::IsNullOrWhiteSpace($localAppData)) {
     throw 'The local application data directory could not be located for the OCR build cache.'
 }
-$cacheRoot = Join-Path $localAppData 'LilacMacro\BuildCache\ocr\python312-paddle330-paddleocr370'
+$cacheRoot = Join-Path $localAppData 'LilacMacro\BuildCache\ocr\python312-paddle330-paddleocr370-chardet520'
 $packageCache = Join-Path $cacheRoot 'pip'
 $modelCache = Join-Path $cacheRoot 'models'
 $runtimeCache = Join-Path $cacheRoot 'bundled-runtime'
@@ -81,7 +81,8 @@ function Test-RuntimeCache([string]$PythonFullVersion) {
             $manifest.builderSha256 -eq $builderScriptHash -and
             $manifest.pythonFullVersion -eq $PythonFullVersion -and
             $manifest.paddle -eq '3.3.0' -and
-            $manifest.paddleOcr -eq '3.7.0'
+            $manifest.paddleOcr -eq '3.7.0' -and
+            $manifest.chardet -eq '5.2.0'
     }
     catch {
         return $false
@@ -99,6 +100,7 @@ function Save-RuntimeCache([string]$PythonFullVersion) {
         pythonFullVersion = $PythonFullVersion
         paddle = '3.3.0'
         paddleOcr = '3.7.0'
+        chardet = '5.2.0'
     } | ConvertTo-Json -Depth 3
     [IO.File]::WriteAllText(
         (Join-Path $stagedCache 'build-cache.json'),
@@ -169,7 +171,8 @@ try {
         '-i', 'https://www.paddlepaddle.org.cn/packages/stable/cpu/',
         '--extra-index-url', 'https://pypi.org/simple',
         'paddlepaddle==3.3.0',
-        'paddleocr==3.7.0'
+        'paddleocr==3.7.0',
+        'chardet==5.2.0'
     )
 
     $previousCache = $env:PADDLE_PDX_CACHE_HOME
@@ -211,6 +214,7 @@ try {
         python = $pythonVersion
         paddle = '3.3.0'
         paddleOcr = '3.7.0'
+        chardet = '5.2.0'
         device = 'cpu'
         modelPairs = @('PP-OCRv6_small', 'PP-OCRv6_tiny')
     } | ConvertTo-Json -Depth 4

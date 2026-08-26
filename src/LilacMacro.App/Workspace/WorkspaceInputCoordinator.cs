@@ -2,6 +2,7 @@ using LilacMacro.App.Diagnostics;
 using LilacMacro.Core.Automation;
 using LilacMacro.Core.Geometry;
 using LilacMacro.Windows;
+using System.Diagnostics;
 
 namespace LilacMacro.App.Workspace;
 
@@ -90,16 +91,21 @@ internal sealed class WorkspaceInputCoordinator(
         CancellationToken cancellationToken)
     {
         await operationGate.WaitAsync(cancellationToken);
+        Stopwatch elapsed = Stopwatch.StartNew();
+        RobloxWindow? activeWindow = null;
+        PixelSize? initialSize = null;
         try
         {
             using IDisposable processLease = _crossProcessGate.Acquire();
             RobloxWindow window = getWindow() ?? windows.FindBest()
                 ?? throw new InvalidOperationException("Start Roblox in windowed mode before sending input.");
+            activeWindow = window;
             WindowsRobloxDisplayScale.EnsureOneHundredPercent(window);
+            initialSize = windows.GetClientBounds(window).Size;
             deepDebug.RecordInput($"{action}_started", new
             {
                 window.ProcessId,
-                ClientSize = windows.GetClientBounds(window).Size,
+                ClientSize = initialSize,
                 Data = data,
             });
             await operation(window, cancellationToken);
@@ -107,9 +113,37 @@ internal sealed class WorkspaceInputCoordinator(
             updateWindow(window, observed);
             deepDebug.RecordInput($"{action}_completed", new { ObservedClientSize = observed });
         }
+        catch (Exception error)
+        {
+            PixelSize? observed = TryObserveClientSize(activeWindow);
+            deepDebug.RecordInput($"{action}_failed", new
+            {
+                ProcessId = activeWindow?.ProcessId,
+                InitialClientSize = initialSize,
+                ObservedClientSize = observed,
+                ElapsedMilliseconds = elapsed.ElapsedMilliseconds,
+                FailureType = error.GetType().Name,
+                Error = error.Message,
+                Data = data,
+            });
+            throw;
+        }
         finally
         {
             operationGate.Release();
+        }
+    }
+
+    private PixelSize? TryObserveClientSize(RobloxWindow? window)
+    {
+        if (window is not { } present) return null;
+        try
+        {
+            return windows.GetClientBounds(present).Size;
+        }
+        catch (Exception error) when (error is InvalidOperationException or ArgumentException)
+        {
+            return null;
         }
     }
 }

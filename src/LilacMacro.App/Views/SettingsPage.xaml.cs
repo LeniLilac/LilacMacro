@@ -71,6 +71,7 @@ public partial class SettingsPage : UserControl
             ownerState.MinimizeBehavior);
         CheckUpdatesOnStartupCheck.IsChecked = ownerState.CheckForUpdatesOnStartup;
         IncludePrereleaseCheck.IsChecked = ownerState.IncludePrereleaseUpdates;
+        ReleaseDownloadPanel.Initialize(updates, ownerState);
         LocalInstancesPanel.Initialize(instanceManager, ownerState);
         KeyBindingsItems.ItemsSource = ownerState.KeyBindings.Items;
         PrivateServerText.Text = ownerState.PrivateServerLink;
@@ -253,6 +254,7 @@ public partial class SettingsPage : UserControl
         _ownerState.SetUpdateOptions(
             CheckUpdatesOnStartupCheck.IsChecked == true,
             IncludePrereleaseCheck.IsChecked == true);
+        if (ReferenceEquals(sender, IncludePrereleaseCheck)) ReleaseDownloadPanel.ResetCatalog();
         GeneralStatusText.Text = "Update options saved";
         if (CheckUpdatesOnStartupCheck.IsChecked == true)
             _ = CheckAutomaticallyAsync();
@@ -300,6 +302,7 @@ public partial class SettingsPage : UserControl
         CheckUpdatesOnStartupCheck.IsEnabled = enabled;
         IncludePrereleaseCheck.IsEnabled = enabled;
         CheckUpdatesButton.IsEnabled = enabled;
+        ReleaseDownloadPanel.RefreshOwnership();
         if (!owner) GeneralStatusText.Text = "Updates are coordinated from This desktop";
     }
 

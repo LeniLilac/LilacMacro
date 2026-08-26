@@ -155,10 +155,11 @@ public sealed partial class OcrRunner
     }
 
     internal static bool IsRecoverableGpuWorkerFailure(Exception error) =>
-        error is OcrWorkerTimeoutException ||
+        error is not OcrWorkerApplicationControlException &&
+        (error is OcrWorkerTimeoutException ||
         error is InvalidOperationException &&
         (error.Message.Contains("OCR worker stopped unexpectedly", StringComparison.OrdinalIgnoreCase) ||
-         error.Message.Contains("OCR worker failed", StringComparison.OrdinalIgnoreCase));
+         error.Message.Contains("OCR worker failed", StringComparison.OrdinalIgnoreCase)));
 
     private void RecordWorkerLifecycle(OcrWorkerLifecycleEvent observation) =>
         _deepDebug.RecordEvent("ocr", observation.Action, new

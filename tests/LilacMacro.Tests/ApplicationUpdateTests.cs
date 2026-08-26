@@ -51,6 +51,29 @@ public sealed class ApplicationUpdateTests
     }
 
     [Fact]
+    public void Download_catalog_includes_current_and_older_official_versions_in_descending_order()
+    {
+        GitHubReleaseCandidate preview = Release("1.0.72", prerelease: true);
+        GitHubReleaseCandidate current = Release("1.0.71");
+        GitHubReleaseCandidate older = Release("1.0.69");
+        GitHubReleaseCandidate unverifiable = Release("1.0.68") with { Assets = [] };
+
+        IReadOnlyList<VerifiedUpdateRelease> stable = GitHubReleasePolicy.ListDownloadable(
+            [older, preview, unverifiable, current],
+            includePrerelease: false);
+        IReadOnlyList<VerifiedUpdateRelease> all = GitHubReleasePolicy.ListDownloadable(
+            [older, preview, unverifiable, current],
+            includePrerelease: true);
+
+        Assert.Equal(
+            [new LilacSemanticVersion(1, 0, 71), new LilacSemanticVersion(1, 0, 69)],
+            stable.Select(release => release.Version));
+        Assert.Equal(
+            [new LilacSemanticVersion(1, 0, 72), new LilacSemanticVersion(1, 0, 71), new LilacSemanticVersion(1, 0, 69)],
+            all.Select(release => release.Version));
+    }
+
+    [Fact]
     public void Selected_release_fails_closed_on_extra_or_untrusted_assets()
     {
         GitHubReleaseCandidate valid = Release("1.0.71");

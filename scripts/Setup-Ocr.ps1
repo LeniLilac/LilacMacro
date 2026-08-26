@@ -27,9 +27,10 @@ function Write-Stage([int]$Percent, [string]$Message) {
 }
 
 function Find-Python312 {
-    if (-not [string]::IsNullOrWhiteSpace($BundledPythonPath) -and
-        (Test-Path -LiteralPath $BundledPythonPath -PathType Leaf)) {
-        return [IO.Path]::GetFullPath($BundledPythonPath)
+    $bundledCandidate = $BundledPythonPath.Trim().Trim('"')
+    if (-not [string]::IsNullOrWhiteSpace($bundledCandidate) -and
+        (Test-Path -LiteralPath $bundledCandidate -PathType Leaf)) {
+        return [IO.Path]::GetFullPath($bundledCandidate)
     }
 
     $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
@@ -138,6 +139,20 @@ if (-not (Test-Path -LiteralPath $venvPython)) {
     if ($LASTEXITCODE -ne 0) { throw 'Could not create the LilacMacro OCR environment.' }
 }
 
+$venvConfig = Join-Path $venvRoot 'pyvenv.cfg'
+if (Test-Path -LiteralPath $venvConfig -PathType Leaf) {
+    $normalizedConfig = (Get-Content -LiteralPath $venvConfig) | ForEach-Object {
+        if ($_ -match '^(home|executable)\s*=\s*"(.*)"\s*$') {
+            '{0} = {1}' -f $Matches[1], $Matches[2]
+        } else {
+            $_
+        }
+    }
+    [IO.File]::WriteAllLines($venvConfig, $normalizedConfig, [Text.UTF8Encoding]::new($false))
+}
+& $venvPython -c 'import sys; print(sys.executable)'
+if ($LASTEXITCODE -ne 0) { throw 'The LilacMacro OCR environment points to an invalid Python runtime. Repair OCR and try again.' }
+
 Write-Stage 25 'Preparing the OCR package installer.'
 & $venvPython -m pip install --disable-pip-version-check --upgrade pip
 if ($LASTEXITCODE -ne 0) { throw 'Could not update pip in the LilacMacro OCR environment.' }
@@ -154,7 +169,7 @@ else {
 }
 
 Write-Stage 70 'Installing PaddleOCR.'
-& $venvPython -m pip install --disable-pip-version-check 'paddleocr==3.7.0'
+& $venvPython -m pip install --disable-pip-version-check 'paddleocr==3.7.0' 'chardet==5.2.0'
 if ($LASTEXITCODE -ne 0) { throw 'Could not install PaddleOCR.' }
 
 Write-Stage 90 'Verifying the OCR runtime.'

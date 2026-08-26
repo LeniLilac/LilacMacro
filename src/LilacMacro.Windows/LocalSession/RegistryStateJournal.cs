@@ -38,6 +38,37 @@ public static class RegistryStateJournal
         }
     }
 
+    public static IReadOnlyList<string> FindApplyMismatches(IEnumerable<RegistryMutation> mutations)
+    {
+        List<string> problems = [];
+        foreach (RegistryMutation mutation in mutations.DistinctBy(
+                     item => $"{item.SubKey}|{item.ValueName}",
+                     StringComparer.OrdinalIgnoreCase))
+        {
+            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(mutation.SubKey, writable: false);
+            object? current = key?.GetValue(
+                mutation.ValueName,
+                null,
+                RegistryValueOptions.DoNotExpandEnvironmentNames);
+            if (current is null)
+            {
+                problems.Add($"Registry value is missing: HKLM\\{mutation.SubKey}\\{mutation.ValueName}");
+                continue;
+            }
+
+            RegistryValueKind kind = key!.GetValueKind(mutation.ValueName);
+            if (kind != mutation.Kind
+                || !string.Equals(
+                    Encode(current, kind),
+                    Encode(mutation.Value, mutation.Kind),
+                    StringComparison.Ordinal))
+            {
+                problems.Add($"Registry value differs from the owned configuration: HKLM\\{mutation.SubKey}\\{mutation.ValueName}");
+            }
+        }
+        return problems;
+    }
+
     public static void Restore(IEnumerable<OriginalSystemValue> originals)
     {
         foreach (OriginalSystemValue original in originals.Where(item => item.Kind == "registry-hklm").Reverse())

@@ -111,7 +111,7 @@ internal sealed class PersistentOcrWorker(
                     .ConfigureAwait(false);
                 using JsonDocument document = JsonDocument.Parse(json);
                 if (document.RootElement.TryGetProperty("error", out JsonElement error))
-                    throw new InvalidOperationException($"OCR worker failed: {error.GetString()}");
+                    throw CreateWorkerFailure(error.GetString());
                 OcrWorkerResult result = JsonSerializer.Deserialize<OcrWorkerResult>(json)
                     ?? throw new InvalidDataException("OCR worker returned an empty result.");
                 Observe("response_completed", "response-read", device, modelName, elapsed);
@@ -251,7 +251,7 @@ internal sealed class PersistentOcrWorker(
         while (!File.Exists(path))
         {
             if (process.HasExited)
-                throw new InvalidOperationException($"OCR worker stopped unexpectedly. {ReadErrorTail()}");
+                throw CreateWorkerFailure(ReadErrorTail(), stoppedUnexpectedly: true);
             string? status = TryReadStatus(statusPath);
             if (!string.IsNullOrWhiteSpace(status) && status != lastStatus)
             {
@@ -326,6 +326,21 @@ internal sealed class PersistentOcrWorker(
     private string ReadErrorTail()
     {
         lock (_errorLock) return _errorTail.ToString().Trim();
+    }
+
+    private static Exception CreateWorkerFailure(
+        string? detail,
+        bool stoppedUnexpectedly = false)
+    {
+        string bounded = string.IsNullOrWhiteSpace(detail) ? "No worker detail was available." : detail;
+        if (bounded.Contains(
+                "Application Control policy has blocked this file",
+                StringComparison.OrdinalIgnoreCase))
+            return new OcrWorkerApplicationControlException(bounded);
+        string prefix = stoppedUnexpectedly
+            ? "OCR worker stopped unexpectedly. "
+            : "OCR worker failed: ";
+        return new InvalidOperationException(prefix + bounded);
     }
 
     private static void TryDeleteFile(string path)

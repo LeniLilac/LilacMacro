@@ -177,9 +177,21 @@ def prepare_crop(
 def write_result(path_value: str, payload: dict[str, Any]) -> None:
     output_path = Path(path_value).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output_path.with_suffix(output_path.suffix + ".tmp")
-    temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    temporary.replace(output_path)
+    temporary = output_path.with_name(
+        f"{output_path.name}.{os.getpid()}.{perf_counter_ns()}.tmp"
+    )
+    try:
+        temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        for attempt in range(8):
+            try:
+                temporary.replace(output_path)
+                return
+            except (PermissionError, OSError):
+                if attempt == 7:
+                    raise
+                sleep(0.025 * (attempt + 1))
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def notify(progress: Callable[[str], None] | None, stage: str) -> None:

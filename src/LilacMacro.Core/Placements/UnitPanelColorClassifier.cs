@@ -21,7 +21,11 @@ public sealed record UnitUpgradeObservation(
 public sealed record UnitPanelImageMatch(
     bool IsMatch,
     double PrioritySimilarity,
-    double SellSimilarity);
+    double SellSimilarity,
+    double PriorityBlueFraction,
+    double PriorityRedFraction,
+    double SellRedFraction,
+    double SellBlueFraction);
 
 public static class UnitPanelColorClassifier
 {
@@ -58,6 +62,13 @@ public static class UnitPanelColorClassifier
         green >= 75 && green - red >= 25 && green - blue >= 25;
 
     public static bool IsSelectedPanel(RgbImage priority, RgbImage sell)
+        => AnalyzeSelectedPanel(priority, sell).IsMatch;
+
+    private static UnitPanelImageMatch AnalyzeSelectedPanel(
+        RgbImage priority,
+        RgbImage sell,
+        double prioritySimilarity = 0,
+        double sellSimilarity = 0)
     {
         ArgumentNullException.ThrowIfNull(priority);
         ArgumentNullException.ThrowIfNull(sell);
@@ -65,8 +76,19 @@ public static class UnitPanelColorClassifier
         double priorityRed = Fraction(priority, IsControlRed);
         double sellRed = Fraction(sell, IsControlRed);
         double sellBlue = Fraction(sell, IsControlBlue);
-        return priorityBlue >= 0.18 && sellRed >= 0.15 &&
-               priorityRed <= 0.12 && sellBlue <= 0.12;
+        // The scaled Sell crop can overlap the adjacent blue Priority control by one or two
+        // rendered pixels. Field captures reached 0.145 blue while retaining independent red
+        // Sell and blue Priority ownership, so tolerate that bounded overlap.
+        bool matched = priorityBlue >= 0.18 && sellRed >= 0.15 &&
+                       priorityRed <= 0.12 && sellBlue <= 0.18;
+        return new UnitPanelImageMatch(
+            matched,
+            prioritySimilarity,
+            sellSimilarity,
+            priorityBlue,
+            priorityRed,
+            sellRed,
+            sellBlue);
     }
 
     private static bool IsControlBlue(byte red, byte green, byte blue) =>
@@ -90,8 +112,7 @@ public static class UnitPanelColorClassifier
         // The controls change text, price, highlight, and upgrade state while the panel remains
         // selected. Their independent blue-priority and red-sell fill regions own visibility;
         // whole-control similarity is retained only as diagnostic evidence.
-        bool matched = IsSelectedPanel(priority, sell);
-        return new UnitPanelImageMatch(matched, prioritySimilarity, sellSimilarity);
+        return AnalyzeSelectedPanel(priority, sell, prioritySimilarity, sellSimilarity);
     }
 
     private static bool IsControlGray(byte red, byte green, byte blue) =>

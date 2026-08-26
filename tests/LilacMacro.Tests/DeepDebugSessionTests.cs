@@ -13,6 +13,15 @@ public sealed class DeepDebugSessionTests : IDisposable
         "LilacMacro.Tests",
         Guid.NewGuid().ToString("N"));
 
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    [InlineData(59, false)]
+    [InlineData(60, true)]
+    [InlineData(120, true)]
+    public void Periodic_capture_failures_are_coalesced(int failures, bool expected) =>
+        Assert.Equal(expected, DeepDebugCaptureFailurePolicy.ShouldReport(failures));
+
     [Fact]
     public void New_install_defaults_enable_fixed_interval_and_capacity_tier()
     {
