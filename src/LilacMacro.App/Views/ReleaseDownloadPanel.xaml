@@ -21,7 +21,7 @@
                           SelectionChanged="VersionCombo_OnSelectionChanged" />
                 <Button x:Name="DownloadButton"
                         Margin="8,0,0,0"
-                        Style="{StaticResource SettingsFieldActionButtonStyle}"
+                        Style="{DynamicResource SettingsFieldActionButtonStyle}"
                         IsEnabled="False"
                         Click="DownloadButton_OnClick"
                         Content="DOWNLOAD" />
