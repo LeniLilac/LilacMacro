@@ -156,6 +156,8 @@ public sealed class OcrSetupTests
         Assert.Contains("notify(progress, \"inference-running\")", worker);
         Assert.Contains("write_status(status_path, \"response-writing\")", worker);
         Assert.Contains("for attempt in range(8):", worker);
+        Assert.Contains("os.urandom(8).hex()", worker);
+        Assert.DoesNotContain("perf_counter_ns", worker);
         Assert.Contains("temporary.replace(output_path)", worker);
     }
 

@@ -178,7 +178,7 @@ def write_result(path_value: str, payload: dict[str, Any]) -> None:
     output_path = Path(path_value).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temporary = output_path.with_name(
-        f"{output_path.name}.{os.getpid()}.{perf_counter_ns()}.tmp"
+        f"{output_path.name}.{os.getpid()}.{os.urandom(8).hex()}.tmp"
     )
     try:
         temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
