@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using LilacMacro.Core.LocalSession;
-using Microsoft.Win32;
 
 namespace LilacMacro.Windows.LocalSession;
 
@@ -14,8 +13,6 @@ public enum LocalSessionProbePurpose
 
 public sealed class LocalSessionCompatibilityProbe(LocalSessionPaths paths)
 {
-    private const string TerminalServerKey = @"SYSTEM\CurrentControlSet\Control\Terminal Server";
-
     public async Task<LocalSessionCompatibilityResult> ProbeAsync(
         LocalSessionProbePurpose purpose = LocalSessionProbePurpose.Install,
         CancellationToken cancellationToken = default)
@@ -24,6 +21,11 @@ public sealed class LocalSessionCompatibilityProbe(LocalSessionPaths paths)
         string osBuild = Environment.OSVersion.Version.ToString();
         if (!OperatingSystem.IsWindowsVersionAtLeast(10)) problems.Add("Windows 10 or later is required.");
         if (RuntimeInformation.OSArchitecture != Architecture.X64) problems.Add("Only Windows x64 is supported.");
+
+        RemoteDesktopOwnershipInspector ownership = new(paths);
+        problems.AddRange(purpose == LocalSessionProbePurpose.Install
+            ? ownership.FindFreshInstallConflicts()
+            : ownership.FindManagedConflicts());
 
         string termServicePath = Path.Combine(Environment.SystemDirectory, "termsrv.dll");
         string termServiceHash = await HashAsync(termServicePath, cancellationToken).ConfigureAwait(false);
@@ -51,12 +53,6 @@ public sealed class LocalSessionCompatibilityProbe(LocalSessionPaths paths)
 
         if (purpose == LocalSessionProbePurpose.Install)
         {
-            using RegistryKey? terminalServer = Registry.LocalMachine.OpenSubKey(TerminalServerKey, writable: false);
-            int denyConnections = Convert.ToInt32(
-                terminalServer?.GetValue("fDenyTSConnections", 1),
-                System.Globalization.CultureInfo.InvariantCulture);
-            if (denyConnections == 0)
-                problems.Add("Remote Desktop is already enabled; LilacMacro will not replace an existing configuration.");
             if (HasActiveRemoteSession()) problems.Add("An active Remote Desktop session exists.");
         }
 

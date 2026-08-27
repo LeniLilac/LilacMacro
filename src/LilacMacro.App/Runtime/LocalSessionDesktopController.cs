@@ -42,11 +42,14 @@ internal sealed class LocalSessionDesktopController : IAsyncDisposable
             .ProbeAsync(LocalSessionProbePurpose.Health, cancellationToken)
             .ConfigureAwait(false);
         if (compatibility.IsCompatible) return status;
+        bool ownershipConflict = RemoteDesktopOwnershipPolicy.IsOwnershipConflict(compatibility.Problems);
         return status with
         {
             State = LocalSessionState.Degraded,
-            StatusCode = "native-compatibility-changed",
-            Detail = "Windows or the pinned native payload changed. Repair must revalidate the local runner.",
+            StatusCode = ownershipConflict ? "rdp-ownership-conflict" : "native-compatibility-changed",
+            Detail = ownershipConflict
+                ? "Another RDP configuration owns this machine. LilacMacro will not overwrite it."
+                : "Windows or the pinned native payload changed. Repair must revalidate the local runner.",
             CompatibilityPassed = false,
             Problems = compatibility.Problems,
             ObservedAtUtc = DateTimeOffset.UtcNow,

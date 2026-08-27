@@ -29,6 +29,8 @@ The versioned native payload is install-once. Upgrades do not overwrite loaded n
 
 Ordinary installation does not create an account, enable TermWrap, or change RDP. The owner must choose Settings, Roblox, Local instances, Set Up and approve UAC for runner provisioning. After the first-run privacy choices are saved, a supported NVIDIA GPU receives a separate per-user OCR setup screen; it downloads the matching GPU package without installing a driver or requesting another elevation. The initial setup creates Runner 1; additional shared/separate runners use the same allowlisted elevated helper.
 
+Installing or running LilacMacro inside an existing user-managed RDP session does not require local-instance setup. The helper refuses to replace enabled Remote Desktop, a custom listener port, a third-party TermService wrapper, or a listener already using LilacMacro's reserved port. If another RDP tool changes the listener after LilacMacro setup, repair, update, and removal refuse to overwrite that drift.
+
 The installer displays `TERMS.md` before installation while preserving the repository-license page, and installs both `TERMS.md` and `PRIVACY.md` beside the executable. The application—not the elevated installer—owns the versioned first-run privacy choices so the same screen applies to new installs, existing profiles receiving a changed notice, and managed configuration roots. No choice-covered request occurs before that screen is saved; GPU OCR setup begins only after the user saves those choices.
 
 ## Build and publish

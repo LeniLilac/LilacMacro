@@ -30,8 +30,15 @@ public partial class LocalInstanceManagerPanel : UserControl
         _ = RefreshAsync();
     }
 
-    private async void Setup_OnClick(object sender, RoutedEventArgs eventArgs) =>
-        await MutateAsync(manager => manager.InstallAsync());
+    private async void Setup_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        LocalInstanceSetupConfirmationWindow confirmation = new()
+        {
+            Owner = Window.GetWindow(this),
+        };
+        if (confirmation.ShowDialog() == true)
+            await MutateAsync(manager => manager.InstallAsync());
+    }
 
     private async void Repair_OnClick(object sender, RoutedEventArgs eventArgs) =>
         await MutateAsync(manager => manager.RepairAsync());
@@ -137,11 +144,12 @@ public partial class LocalInstanceManagerPanel : UserControl
         ManagerDetailText.Text = snapshot.Status.Problems.FirstOrDefault() ?? snapshot.Status.Detail;
         bool ownerUi = !MacroInstanceContext.Current.IsManagedRunner;
         bool installed = snapshot.Status.State is not LocalSessionState.Absent;
-        InstanceItems.IsEnabled = ownerUi && !_busy;
+        bool ownershipConflict = string.Equals(snapshot.Status.StatusCode, "rdp-ownership-conflict", StringComparison.Ordinal);
+        InstanceItems.IsEnabled = ownerUi && !_busy && !ownershipConflict;
         SetupButton.IsEnabled = ownerUi && !_busy && !installed;
-        RepairButton.IsEnabled = ownerUi && !_busy && installed;
-        AddSharedButton.IsEnabled = ownerUi && !_busy && installed && _rows.Count < 16;
-        AddIsolatedButton.IsEnabled = ownerUi && !_busy && installed && _rows.Count < 16;
+        RepairButton.IsEnabled = ownerUi && !_busy && installed && !ownershipConflict;
+        AddSharedButton.IsEnabled = ownerUi && !_busy && installed && !ownershipConflict && _rows.Count < 16;
+        AddIsolatedButton.IsEnabled = ownerUi && !_busy && installed && !ownershipConflict && _rows.Count < 16;
         RemoveAllButton.IsEnabled = ownerUi && !_busy && installed;
     }
 

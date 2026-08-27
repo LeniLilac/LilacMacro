@@ -159,7 +159,9 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
                 ? RegistryStateJournal.FindApplyMismatches(mutations)
                 : ["Fresh installation requires the owned Remote Desktop configuration."];
             bool termServiceRunning = repair && termService.IsRunning();
-            if (ShouldRestartTermService(repair, termServiceRunning, termServiceMismatches))
+            if (repair && termServiceMismatches.Count > 0)
+                throw new InvalidOperationException(RemoteDesktopOwnershipPolicy.EvaluateManagedConfiguration(termServiceMismatches)[0]);
+            if (ShouldRestartTermService(repair, termServiceRunning))
             {
                 manifest = await RecordAsync(manifest, "term-service-mutation-started", cancellationToken).ConfigureAwait(false);
                 termService.ApplyAndRestart(manifest.OriginalSystemState);
@@ -216,7 +218,13 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         }
         catch (Exception setupError)
         {
-            try { await RemoveInternalAsync(manifest, cancellationToken).ConfigureAwait(false); }
+            try
+            {
+                await RemoveInternalAsync(
+                    manifest,
+                    RemoteDesktopCleanupDisposition.RollbackPartialConfiguration,
+                    cancellationToken).ConfigureAwait(false);
+            }
             catch (Exception rollbackError)
             {
                 await WriteRecoveryAsync(setupError, rollbackError, cancellationToken).ConfigureAwait(false);
@@ -261,10 +269,27 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         EnsureElevated();
         LocalSessionProvisioningManifest? manifest = await journalStore.ReadAsync(cancellationToken).ConfigureAwait(false);
         if (manifest is null) { await statusStore.WriteAsync(new LocalSessionStatus(), cancellationToken).ConfigureAwait(false); return; }
+        manifest = LocalSessionProfileCompatibility.NormalizeManifest(manifest)!;
+        RemoteDesktopCleanupDisposition cleanupDisposition;
+        try
+        {
+            cleanupDisposition = InspectCleanupDisposition(manifest);
+        }
+        catch (Exception ownershipError)
+        {
+            await statusStore.WriteAsync(new LocalSessionStatus
+            {
+                State = LocalSessionState.Degraded,
+                StatusCode = "rdp-ownership-conflict",
+                Detail = "Another RDP configuration owns this machine. LilacMacro will not overwrite it.",
+                Problems = [ownershipError.Message],
+            }, cancellationToken).ConfigureAwait(false);
+            throw;
+        }
         await statusStore.WriteAsync(new LocalSessionStatus { State = LocalSessionState.Removing, StatusCode = "removing", Detail = "Removing local instances and restoring Windows." }, cancellationToken).ConfigureAwait(false);
         try
         {
-            await RemoveInternalAsync(manifest, cancellationToken).ConfigureAwait(false);
+            await RemoveInternalAsync(manifest, cleanupDisposition, cancellationToken).ConfigureAwait(false);
             if (purgeStatusAfterSuccess && Directory.Exists(paths.SessionRoot)) Directory.Delete(paths.SessionRoot, recursive: true);
         }
         catch (Exception error)
@@ -274,7 +299,10 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         }
     }
 
-    private async Task RemoveInternalAsync(LocalSessionProvisioningManifest manifest, CancellationToken cancellationToken)
+    private async Task RemoveInternalAsync(
+        LocalSessionProvisioningManifest manifest,
+        RemoteDesktopCleanupDisposition cleanupDisposition,
+        CancellationToken cancellationToken)
     {
         manifest = LocalSessionProfileCompatibility.NormalizeManifest(manifest)!;
         List<string> failures = [];
@@ -290,7 +318,9 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
             failures.Add($"registry inspection: {exception.Message}");
             registryMismatches = ["Registry state could not be inspected."];
         }
-        if (RequiresTermServiceRestore(manifest, registryMismatches))
+        if (cleanupDisposition is (RemoteDesktopCleanupDisposition.RestoreOwnedConfiguration
+                or RemoteDesktopCleanupDisposition.RollbackPartialConfiguration)
+            && RequiresTermServiceRestore(manifest, registryMismatches))
         {
             Attempt(failures, "registry restoration", () => RegistryStateJournal.Restore(manifest.OriginalSystemState));
             Attempt(failures, "TermService restart", termService.Restart);
@@ -331,11 +361,18 @@ public sealed class LocalSessionProvisioner(LocalSessionPaths paths)
         || manifest.CompletedSteps.Contains("loopback-isolation-verified", StringComparer.Ordinal)
         || registryMismatches.Count > 0;
 
-    internal static bool ShouldRestartTermService(
-        bool repair,
-        bool serviceRunning,
-        IReadOnlyList<string> configurationMismatches) =>
-        !repair || !serviceRunning || configurationMismatches.Count > 0;
+    internal static bool ShouldRestartTermService(bool repair, bool serviceRunning) =>
+        !repair || !serviceRunning;
+
+    private RemoteDesktopCleanupDisposition InspectCleanupDisposition(LocalSessionProvisioningManifest manifest)
+    {
+        bool mutationStarted = manifest.CompletedSteps.Contains("term-service-mutation-started", StringComparer.Ordinal)
+            || manifest.CompletedSteps.Contains("loopback-isolation-verified", StringComparer.Ordinal);
+        return RemoteDesktopOwnershipPolicy.EvaluateCleanup(
+            mutationStarted,
+            RegistryStateJournal.FindApplyMismatches(termService.GetMutations()),
+            RegistryStateJournal.FindRestoreMismatches(manifest.OriginalSystemState));
+    }
 
     private static void Attempt(List<string> failures, string step, Action action)
     {

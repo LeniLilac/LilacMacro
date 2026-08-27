@@ -53,7 +53,7 @@ internal static class LocalInstanceFailurePolicy
         {
             return statusCode switch
             {
-                "preflight-rejected" or "native-compatibility-changed" => "preflight-rejected",
+                "preflight-rejected" or "native-compatibility-changed" or "rdp-ownership-conflict" => "preflight-rejected",
                 "setup-preparation-failed" or "setup-failed-rolled-back" => "setup-rolled-back",
                 "setup-helper-failed" => "helper-failed",
                 "cleanup-incomplete" or "rollback-incomplete" => "cleanup-incomplete",

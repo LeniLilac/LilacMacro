@@ -2,6 +2,8 @@
 
 **Status: Prototype and unavailable by default.** The owner can opt into an installer-owned loopback RDP foundation and create up to 16 local LilacMacro instances. Release distribution remains blocked on signing, disposable-VM lifecycle certification, and owner live acceptance.
 
+LilacMacro also works normally when launched inside a user-managed RDP session. Do not select **Set Up** for that use case. The optional manager below takes ownership of the machine-wide RDP listener and cannot coexist with another RDP wrapper, custom listener port, or already-enabled Remote Desktop configuration. Setup, repair, update, and removal fail closed rather than overwriting a configuration owned by another tool.
+
 ## Model
 
 LilacMacro does not remote-control a hidden worker. Every configured instance is a standard Windows account with its own visible RDP desktop, Roblox installation/login, and full `LilacMacro.exe` UI. Macro work executes locally in that UI and uses the same ordinary Windows capture/input path as **This desktop**.

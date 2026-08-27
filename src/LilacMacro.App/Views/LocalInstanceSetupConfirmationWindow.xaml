@@ -1,0 +1,41 @@
+<Window x:Class="LilacMacro.App.Views.LocalInstanceSetupConfirmationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Set up LilacMacro local instances"
+        Width="500"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        AllowsTransparency="True"
+        Background="Transparent"
+        KeyDown="Dialog_OnKeyDown">
+    <Grid Margin="8">
+        <Border Style="{StaticResource CardStyle}" Padding="22,20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock FontSize="22" FontWeight="Black" Text="SET UP LOCAL INSTANCES?" />
+                <TextBlock Grid.Row="1" Margin="0,10,0,0" FontSize="13" LineHeight="19"
+                           Foreground="{DynamicResource InkSoftBrush}" TextWrapping="Wrap"
+                           Text="This optional feature changes the machine-wide Windows RDP listener to a LilacMacro-owned loopback listener on port 33991." />
+                <Border Grid.Row="2" Margin="0,14,0,0" Padding="12"
+                        Background="{DynamicResource MutedBrush}"
+                        BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1" CornerRadius="3">
+                    <TextBlock FontSize="12" LineHeight="18" TextWrapping="Wrap"
+                               Text="If you already use another RDP service, wrapper, or custom listener, cancel. You can install and run LilacMacro normally inside that existing RDP session without setting up Local instances." />
+                </Border>
+                <StackPanel Grid.Row="3" Margin="0,20,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button MinWidth="96" Style="{StaticResource ButtonStyle}" Content="CANCEL" Click="Cancel_OnClick" />
+                    <Button MinWidth="96" Margin="10,0,0,0" Style="{StaticResource PrimaryButtonStyle}"
+                            Content="CONTINUE" Click="Continue_OnClick" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
