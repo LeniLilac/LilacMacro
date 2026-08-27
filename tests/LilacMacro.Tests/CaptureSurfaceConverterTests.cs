@@ -111,6 +111,24 @@ public sealed class CaptureSurfaceConverterTests
     }
 
     [Fact]
+    public void SdrOutputUsesCompositorNormalizedBgraCapture()
+    {
+        Assert.Equal(
+            CaptureSurfaceFormat.Bgra8,
+            WindowsGraphicsCapture.SelectInitialFormat(CaptureColorContext.StandardSdr));
+    }
+
+    [Fact]
+    public void AdvancedColorOutputUsesScRgbCapture()
+    {
+        CaptureColorContext context = new(true, 203f, 1000f);
+
+        Assert.Equal(
+            CaptureSurfaceFormat.ScRgbFloat,
+            WindowsGraphicsCapture.SelectInitialFormat(context));
+    }
+
+    [Fact]
     public void FrameDiagnosticsSummarizeBrightnessWithoutRetainingPixels()
     {
         RgbImage image = new(2, 2,

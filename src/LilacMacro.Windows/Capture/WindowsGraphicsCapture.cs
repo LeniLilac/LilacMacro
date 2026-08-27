@@ -19,7 +19,7 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
     private static readonly Guid Direct3D11Texture2DId = new("6F15AAF2-D208-4E89-9AB4-489535D34F9C");
     private readonly object _gate = new();
     private CaptureSession? _active;
-    private CaptureSurfaceFormat _surfaceFormat = CaptureSurfaceFormat.ScRgbFloat;
+    private CaptureSurfaceFormat _surfaceFormat = CaptureSurfaceFormat.Bgra8;
     private nint _targetWindow;
     private int _targetProcessId;
     private bool _disposed;
@@ -186,6 +186,11 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
             ? CaptureSurfaceFormat.Bgra8
             : current;
 
+    internal static CaptureSurfaceFormat SelectInitialFormat(CaptureColorContext colorContext) =>
+        colorContext.AdvancedColorActive
+            ? CaptureSurfaceFormat.ScRgbFloat
+            : CaptureSurfaceFormat.Bgra8;
+
     internal static bool IsSameTarget(
         nint currentWindow,
         int currentProcessId,
@@ -200,7 +205,7 @@ internal sealed partial class WindowsGraphicsCapture : IDisposable
         _active = null;
         _targetWindow = window;
         _targetProcessId = processId;
-        _surfaceFormat = CaptureSurfaceFormat.ScRgbFloat;
+        _surfaceFormat = SelectInitialFormat(DisplayColorContextProvider.GetForWindow(window));
     }
 
     private RobloxCaptureUnavailableException CreateUnavailableException(Exception? innerException) =>

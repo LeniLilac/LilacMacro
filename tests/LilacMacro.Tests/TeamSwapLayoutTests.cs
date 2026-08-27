@@ -274,31 +274,13 @@ public sealed class TeamSwapLayoutTests
     }
 
     [Fact]
-    public void ScrollbarDetector_AcceptsCurrentLightNeutralThumb()
-    {
-        PixelRect search = new(1000, 80, 60, 500);
-        RgbImage top = CreateScrollbarImage(search.Width, search.Height, 35, thumbBrightness: 190);
-        RgbImage bottom = CreateScrollbarImage(search.Width, search.Height, 315, thumbBrightness: 190);
-
-        TeamScrollbarEndpoints? endpoints = TeamScrollbarDetector.TryCalibrate(
-            [top, Clone(top)],
-            [bottom, Clone(bottom)],
-            search,
-            out TeamScrollbarCalibrationDiagnostics diagnostics);
-
-        Assert.NotNull(endpoints);
-        Assert.Contains(new PixelRect(1028, 115, 6, 120), diagnostics.TopCandidates);
-        Assert.Contains(new PixelRect(1028, 395, 6, 120), diagnostics.BottomCandidates);
-    }
-
-    [Fact]
     public void ScrollbarDetector_RejectsColoredTallDistractor()
     {
         PixelRect search = new(1000, 80, 60, 500);
         RgbImage top = CreateScrollbarImage(
-            search.Width, search.Height, 35, thumbBrightness: 190, coloredDistractor: true);
+            search.Width, search.Height, 35, thumbBrightness: 150, coloredDistractor: true);
         RgbImage bottom = CreateScrollbarImage(
-            search.Width, search.Height, 315, thumbBrightness: 190, coloredDistractor: true);
+            search.Width, search.Height, 315, thumbBrightness: 150, coloredDistractor: true);
 
         TeamScrollbarEndpoints? endpoints = TeamScrollbarDetector.TryCalibrate(
             [top, Clone(top)],

@@ -148,7 +148,9 @@ internal sealed partial class WindowsGraphicsCapture
                 _colorContext.SdrWhiteLevelNits,
                 _colorContext.DisplayMaxLuminanceNits,
                 1f,
-                "bgra8-compatibility-fallback",
+                _colorContext.AdvancedColorActive
+                    ? "bgra8-compatibility-fallback"
+                    : "bgra8-sdr-compositor-output",
                 _colorContext.UsedSdrWhiteFallback);
 
         public RgbImage Capture()

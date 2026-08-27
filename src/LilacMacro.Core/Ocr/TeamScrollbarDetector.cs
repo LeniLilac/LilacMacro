@@ -14,8 +14,8 @@ public sealed record TeamScrollbarCalibrationDiagnostics(
 public static class TeamScrollbarDetector
 {
     private const int MinimumBrightness = 112;
-    private const int MaximumBrightness = 208;
-    private const int MaximumChannelSpread = 18;
+    private const int MaximumBrightness = 168;
+    private const int MaximumChannelSpread = 10;
     private const int MinimumWidth = 3;
     private const int MaximumWidth = 20;
 
