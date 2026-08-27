@@ -41,9 +41,22 @@ internal sealed class DeepDebugFrameCaptureLoop(
     {
         try
         {
+            DateTimeOffset lastTick = DateTimeOffset.UtcNow;
             using PeriodicTimer timer = new(Interval);
             while (await timer.WaitForNextTickAsync(_cancellation.Token).ConfigureAwait(false))
             {
+                DateTimeOffset tick = DateTimeOffset.UtcNow;
+                TimeSpan observedGap = tick - lastTick;
+                lastTick = tick;
+                if (DeepDebugCaptureGapPolicy.ShouldReport(observedGap))
+                {
+                    service.RecordEvent("diagnostic", "periodic_live_frame_capture_gap", new
+                    {
+                        ExpectedIntervalMilliseconds = (long)Interval.TotalMilliseconds,
+                        ObservedGapMilliseconds = (long)observedGap.TotalMilliseconds,
+                        ObservedAtUtc = tick,
+                    });
+                }
                 try
                 {
                     await capture(_cancellation.Token).ConfigureAwait(false);
@@ -111,4 +124,11 @@ internal static class DeepDebugCaptureFailurePolicy
 
     public static bool ShouldReport(int consecutiveFailures) =>
         consecutiveFailures == 1 || consecutiveFailures % SummaryInterval == 0;
+}
+
+internal static class DeepDebugCaptureGapPolicy
+{
+    internal static readonly TimeSpan ReportingThreshold = TimeSpan.FromSeconds(5);
+
+    public static bool ShouldReport(TimeSpan observedGap) => observedGap >= ReportingThreshold;
 }

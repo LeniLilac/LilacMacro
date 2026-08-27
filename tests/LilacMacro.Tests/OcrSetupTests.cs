@@ -93,6 +93,30 @@ public sealed class OcrSetupTests
             new OcrWorkerApplicationControlException("blocked module")));
 
     [Fact]
+    public void Stable_gpu_policy_failure_falls_back_to_ready_cpu_immediately()
+    {
+        OcrRunDevicePolicy policy = new();
+        policy.Begin();
+
+        Assert.Equal(
+            OcrGpuFailureDecision.UseCpu,
+            policy.ObserveStableGpuFailure(cpuReady: true));
+        Assert.Equal(OcrRunner.CpuDevice, policy.Resolve(OcrRunner.GpuDevice));
+    }
+
+    [Fact]
+    public void Stable_gpu_policy_failure_rethrows_without_cpu_runtime()
+    {
+        OcrRunDevicePolicy policy = new();
+        policy.Begin();
+
+        Assert.Equal(
+            OcrGpuFailureDecision.Rethrow,
+            policy.ObserveStableGpuFailure(cpuReady: false));
+        Assert.Equal(OcrRunner.GpuDevice, policy.Resolve(OcrRunner.GpuDevice));
+    }
+
+    [Fact]
     public void Persistent_worker_watchdog_is_shorter_than_lobby_deadline() =>
         Assert.Equal(TimeSpan.FromSeconds(30), PersistentOcrWorker.OperationDeadline);
 

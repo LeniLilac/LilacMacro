@@ -22,6 +22,13 @@ public sealed class DeepDebugSessionTests : IDisposable
     public void Periodic_capture_failures_are_coalesced(int failures, bool expected) =>
         Assert.Equal(expected, DeepDebugCaptureFailurePolicy.ShouldReport(failures));
 
+    [Theory]
+    [InlineData(4_999, false)]
+    [InlineData(5_000, true)]
+    [InlineData(60_000, true)]
+    public void Periodic_capture_reports_process_or_system_timeline_gaps(int milliseconds, bool expected) =>
+        Assert.Equal(expected, DeepDebugCaptureGapPolicy.ShouldReport(TimeSpan.FromMilliseconds(milliseconds)));
+
     [Fact]
     public void New_install_defaults_enable_fixed_interval_and_capacity_tier()
     {

@@ -5,6 +5,23 @@ namespace LilacMacro.Tests;
 public sealed class ObservedStateTransitionPolicyTests
 {
     [Theory]
+    [InlineData(true, 0, NavigationInputKind.ConfiguredKey)]
+    [InlineData(true, 1, NavigationInputKind.FreshButtonFallback)]
+    [InlineData(false, 0, NavigationInputKind.FreshButtonFallback)]
+    public void Navigation_uses_configured_key_once_then_fresh_button_fallback(
+        bool hasConfiguredKey,
+        int completedAttempts,
+        NavigationInputKind expected) =>
+        Assert.Equal(expected, NavigationInputPolicy.Select(hasConfiguredKey, completedAttempts));
+
+    [Theory]
+    [InlineData(299, false)]
+    [InlineData(300, true)]
+    [InlineData(1800, true)]
+    public void Long_idle_requires_a_fresh_private_server_lobby(int seconds, bool expected) =>
+        Assert.Equal(expected, MacroIdleLobbyRefreshPolicy.RequiresRefresh(TimeSpan.FromSeconds(seconds)));
+
+    [Theory]
     [InlineData(false, true, ObservedStateTransitionOutcome.DestinationReached)]
     [InlineData(true, true, ObservedStateTransitionOutcome.DestinationReached)]
     [InlineData(true, false, ObservedStateTransitionOutcome.SourceRetained)]

@@ -138,6 +138,37 @@ public sealed class RobloxInputProtocolTests
     }
 
     [Fact]
+    public async Task Client_size_stabilization_accepts_a_transient_resize()
+    {
+        Queue<PixelSize> observations = new([
+            new PixelSize(1350, 661),
+            new PixelSize(1366, 700),
+        ]);
+
+        await RobloxClientSizeStabilizer.EnsureExpectedAsync(
+            () => observations.Dequeue(),
+            new PixelSize(1366, 700),
+            "scroll",
+            CancellationToken.None);
+
+        Assert.Empty(observations);
+    }
+
+    [Fact]
+    public async Task Client_size_stabilization_rejects_a_persistent_resize()
+    {
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            RobloxClientSizeStabilizer.EnsureExpectedAsync(
+                () => new PixelSize(1350, 661),
+                new PixelSize(1366, 700),
+                "scroll",
+                CancellationToken.None));
+
+        Assert.Contains("1350", error.Message, StringComparison.Ordinal);
+        Assert.Contains("scroll", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ParkingPoint_MatchesExpeditionsMacroInset()
     {
         Assert.Equal(

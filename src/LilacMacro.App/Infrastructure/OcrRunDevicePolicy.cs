@@ -57,6 +57,16 @@ internal sealed class OcrRunDevicePolicy
         }
     }
 
+    public OcrGpuFailureDecision ObserveStableGpuFailure(bool cpuReady)
+    {
+        lock (_gate)
+        {
+            if (!_active || _cpuFallback || !cpuReady) return OcrGpuFailureDecision.Rethrow;
+            _cpuFallback = true;
+            return OcrGpuFailureDecision.UseCpu;
+        }
+    }
+
     public void ObserveGpuSuccess()
     {
         lock (_gate)

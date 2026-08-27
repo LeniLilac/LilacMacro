@@ -57,7 +57,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         ClientBounds client = await PrepareAsync(window, expectedSize, point, cancellationToken).ConfigureAwait(false);
         MoveCursorWithRegisteredMotion(client, point);
         await Task.Delay(RobloxInputProtocol.HoverRenderSettleMilliseconds, cancellationToken).ConfigureAwait(false);
-        VerifyClientSize(window, expectedSize, "hover");
+        await VerifyClientSizeAsync(window, expectedSize, "hover", cancellationToken).ConfigureAwait(false);
     }
 
     public async Task ScrollClientAsync(
@@ -75,7 +75,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         MoveCursorWithRegisteredMotion(client, point);
         await Task.Delay(RobloxInputProtocol.ClickPositionSettleMilliseconds, cancellationToken).ConfigureAwait(false);
         await SendWheelOverTimeAsync(wheelDelta, duration, cancellationToken).ConfigureAwait(false);
-        VerifyClientSize(window, expectedSize, "scroll");
+        await VerifyClientSizeAsync(window, expectedSize, "scroll", cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DragClientAsync(
@@ -111,7 +111,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
             NativeInputMethods.mouse_event(NativeInputMethods.MouseLeftUp, 0, 0, 0, 0);
         }
         await ParkCursorWithAcknowledgedMotionAsync(client, cancellationToken).ConfigureAwait(false);
-        VerifyClientSize(window, expectedSize, "drag");
+        await VerifyClientSizeAsync(window, expectedSize, "drag", cancellationToken).ConfigureAwait(false);
     }
 
     public async Task RunKeySequenceAsync(
@@ -132,7 +132,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
                 await Task.Delay(RobloxInputProtocol.InterKeyDelayMilliseconds, cancellationToken).ConfigureAwait(false);
             }
         }
-        VerifyClientSize(window, expectedSize, "key chain");
+        await VerifyClientSizeAsync(window, expectedSize, "key chain", cancellationToken).ConfigureAwait(false);
     }
 
     public async Task RunTextInputAsync(
@@ -144,7 +144,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         _ = AutomationTextInput.Create(value, capsLockEnabled: false);
         _ = await PrepareWindowAsync(window, expectedSize, cancellationToken).ConfigureAwait(false);
         await RobloxKeyboardInput.SendTextAsync(value, cancellationToken).ConfigureAwait(false);
-        VerifyClientSize(window, expectedSize, "text input");
+        await VerifyClientSizeAsync(window, expectedSize, "text input", cancellationToken).ConfigureAwait(false);
     }
 
     public async Task RunQuickPlacementBatchAsync(
@@ -200,7 +200,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
                 // The held key is already released. A changed or closed client must not hide the primary failure.
             }
         }
-        VerifyClientSize(window, expectedSize, "quick placement batch");
+        await VerifyClientSizeAsync(window, expectedSize, "quick placement batch", cancellationToken).ConfigureAwait(false);
     }
 
     public async Task AlignCameraAsync(
@@ -248,7 +248,7 @@ public sealed class RobloxInputService(RobloxWindowService windows)
                     CancellationToken.None).ConfigureAwait(false);
             }
         }
-        VerifyClientSize(window, expectedSize, "camera alignment");
+        await VerifyClientSizeAsync(window, expectedSize, "camera alignment", cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<ClientBounds> PrepareAsync(
@@ -400,15 +400,16 @@ public sealed class RobloxInputService(RobloxWindowService windows)
         if (delay > TimeSpan.Zero) await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
     }
 
-    private void VerifyClientSize(RobloxWindow window, PixelSize expectedSize, string operation)
-    {
-        PixelSize observed = windows.GetClientBounds(window).Size;
-        if (observed != expectedSize)
-        {
-            throw new InvalidOperationException(
-                $"Roblox changed to {observed} during {operation}; expected {expectedSize}.");
-        }
-    }
+    private Task VerifyClientSizeAsync(
+        RobloxWindow window,
+        PixelSize expectedSize,
+        string operation,
+        CancellationToken cancellationToken) =>
+        RobloxClientSizeStabilizer.EnsureExpectedAsync(
+            () => windows.GetClientBounds(window).Size,
+            expectedSize,
+            operation,
+            cancellationToken);
 
     private static PixelPoint ClientCenter(PixelSize size) => new(size.Width / 2, size.Height / 2);
 

@@ -132,11 +132,13 @@ public sealed partial class OcrRunner
         string stage,
         Exception error)
     {
-        if (requestedDevice != GpuDevice ||
-            actualDevice != GpuDevice ||
-            !IsRecoverableGpuWorkerFailure(error)) return false;
+        if (requestedDevice != GpuDevice || actualDevice != GpuDevice) return false;
 
-        OcrGpuFailureDecision decision = _runDevices.ObserveGpuFailure(IsDeviceReady(CpuDevice));
+        bool stablePolicyFailure = error is OcrWorkerApplicationControlException;
+        if (!stablePolicyFailure && !IsRecoverableGpuWorkerFailure(error)) return false;
+        OcrGpuFailureDecision decision = stablePolicyFailure
+            ? _runDevices.ObserveStableGpuFailure(IsDeviceReady(CpuDevice))
+            : _runDevices.ObserveGpuFailure(IsDeviceReady(CpuDevice));
         if (decision == OcrGpuFailureDecision.Rethrow) return false;
         _deepDebug.RecordEvent(
             "ocr",
@@ -148,6 +150,7 @@ public sealed partial class OcrRunner
                 Stage = stage,
                 Model = modelName,
                 RequestedDevice = requestedDevice,
+                StablePolicyFailure = stablePolicyFailure,
                 FailureType = error.GetType().Name,
                 Error = error.Message,
             });

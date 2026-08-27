@@ -394,12 +394,26 @@ internal sealed class StoryWireTestRunner(
         IProgress<StoryWireProgress> progress,
         CancellationToken cancellationToken)
     {
-        Func<CancellationToken, Task<ObservedStateTransitionActionResult>> action = virtualKey is int key
-            ? token => PressNavigationKeyAsync(
-                stage, key, options.PlacementKeys.ReservedVirtualKey, progress, token)
-            : async token => ObservedStateTransitionActionResult.From(await clickFallback(token));
+        int completedActionAttempts = 0;
+        async Task<ObservedStateTransitionActionResult> Action(CancellationToken token)
+        {
+            NavigationInputKind input = NavigationInputPolicy.Select(
+                virtualKey is not null, completedActionAttempts++);
+            if (input == NavigationInputKind.ConfiguredKey)
+                return await PressNavigationKeyAsync(
+                    stage, virtualKey!.Value, options.PlacementKeys.ReservedVirtualKey, progress, token);
+
+            deepDebug.RecordEvent("wire", "navigation_button_fallback", new
+            {
+                Stage = Format(stage),
+                ConfiguredVirtualKey = virtualKey,
+                Attempt = completedActionAttempts,
+                Reason = virtualKey is null ? "no_configured_key" : "configured_key_retained_source",
+            });
+            return ObservedStateTransitionActionResult.From(await clickFallback(token));
+        }
         return await TransitionAsync(
-            stage, source, destination, action, options, progress, cancellationToken);
+            stage, source, destination, Action, options, progress, cancellationToken);
     }
 
     private async Task<ObservedStateTransitionActionResult> PressNavigationKeyAsync(

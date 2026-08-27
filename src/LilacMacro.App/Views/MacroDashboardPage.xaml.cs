@@ -289,6 +289,7 @@ public partial class MacroDashboardPage : UserControl
         PlanTaskPrototype? lobbyHandoffFrom = _recovery.TakeOpportunisticHandoff();
         PlanTaskPrototype? repeatedTask = null;
         StoryWireTestOptions? repeatedOptions = null;
+        MacroIdleLobbyRefreshCoordinator idleRefresh = new(AppendLog, _deepDebug, token => _lobbyReset.ResetAsync(device, false, redeemedCodes, token));
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -302,6 +303,7 @@ public partial class MacroDashboardPage : UserControl
             repeatedOptions = null;
             if (task is null)
             {
+                idleRefresh.ObserveIdle(now);
                 PlanTaskPrototype[] allPending = MacroPriorityPolicy.Flatten(plan, _completedLoopRuns)
                     .Where(candidate => MacroPriorityPolicy.IsPending(candidate, _victories))
                     .ToArray();
@@ -331,6 +333,7 @@ public partial class MacroDashboardPage : UserControl
                 await Task.Delay(next - now, cancellationToken);
                 continue;
             }
+            if (await idleRefresh.RefreshIfRequiredAsync(now, cancellationToken)) continue;
             if (!MacroPriorityPolicy.Supported(task))
                 throw new InvalidOperationException($"{task.ModeLabel} runtime is not implemented; priority evaluation stopped.");
 
