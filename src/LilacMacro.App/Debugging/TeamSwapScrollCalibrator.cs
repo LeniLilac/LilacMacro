@@ -66,7 +66,11 @@ internal sealed class TeamSwapScrollCalibrator(
         RgbImage[] topFrames = await CaptureSequenceAsync(searchRegion, cancellationToken);
         DebugOcrSnapshot topSnapshot = await RunTeamStateAsync(device, cancellationToken);
         TeamSwapLayout? topLayout = CreateLayout(topSnapshot);
-        if (topLayout is null) return null;
+        if (topLayout is null)
+        {
+            events.Add("SCROLL CALIBRATION FAILED | TOP TEAM LAYOUT NOT VERIFIED");
+            return null;
+        }
 
         bool needsTopReset = false;
         try
@@ -76,20 +80,36 @@ internal sealed class TeamSwapScrollCalibrator(
             RgbImage[] bottomFrames = await CaptureSequenceAsync(searchRegion, cancellationToken);
             DebugOcrSnapshot bottomSnapshot = await RunTeamStateAsync(device, cancellationToken);
             TeamSwapLayout? bottomLayout = CreateLayout(bottomSnapshot);
-            if (bottomLayout is null) return null;
+            if (bottomLayout is null)
+            {
+                events.Add("SCROLL CALIBRATION FAILED | BOTTOM TEAM LAYOUT NOT VERIFIED");
+                return null;
+            }
 
             TeamScrollbarEndpoints? endpoints = TeamScrollbarDetector.TryCalibrate(
                 topFrames,
                 bottomFrames,
-                searchRegion);
-            if (endpoints is null) return null;
+                searchRegion,
+                out TeamScrollbarCalibrationDiagnostics scrollbarDiagnostics);
+            events.Add(
+                $"SCROLLBAR CANDIDATES | TOP {FormatCandidates(scrollbarDiagnostics.TopCandidates)} | " +
+                $"BOTTOM {FormatCandidates(scrollbarDiagnostics.BottomCandidates)}");
+            if (endpoints is null)
+            {
+                events.Add("SCROLL CALIBRATION FAILED | MOVING THUMB ENDPOINT PAIR NOT FOUND");
+                return null;
+            }
             TeamSwapCalibration? calibration = TeamSwapCalibration.TryCreate(
                 DebugWorkflowCatalog.ClientSize,
                 topLayout,
                 bottomLayout,
                 endpoints.TopBounds,
                 endpoints.BottomBounds);
-            if (calibration is null) return null;
+            if (calibration is null)
+            {
+                events.Add("SCROLL CALIBRATION FAILED | TEAM ROW OR THUMB GEOMETRY REJECTED");
+                return null;
+            }
             events.Add(
                 $"SCROLLBAR TOP [{endpoints.TopBounds.X},{endpoints.TopBounds.Y}," +
                 $"{endpoints.TopBounds.Width},{endpoints.TopBounds.Height}] BOTTOM " +
@@ -110,7 +130,13 @@ internal sealed class TeamSwapScrollCalibrator(
                 : TeamSwapCalibration.EstimateMiddleWheelUnits(
                     ProbeWheelUnits,
                     probe.NormalizedPosition);
-            if (middleUnits is null) return null;
+            if (middleUnits is null)
+            {
+                events.Add(probe is null
+                    ? "SCROLL CALIBRATION FAILED | MIDDLE THUMB NOT OBSERVED"
+                    : $"SCROLL CALIBRATION FAILED | MIDDLE WHEEL ESTIMATE REJECTED AT {probe.NormalizedPosition:P2}");
+                return null;
+            }
             calibration = calibration with { MiddleWheelUnits = middleUnits.Value };
             events.Add(
                 $"WHEEL PROBE {ProbeWheelUnits} -> {probe!.NormalizedPosition:P2}; " +
@@ -119,7 +145,11 @@ internal sealed class TeamSwapScrollCalibrator(
             await ResetTopAsync(topLayout.ScrollAnchor.Bounds.Center, cancellationToken);
             needsTopReset = false;
             DebugOcrSnapshot restoredTop = await RunTeamStateAsync(device, cancellationToken);
-            if (CreateLayout(restoredTop) is null) return null;
+            if (CreateLayout(restoredTop) is null)
+            {
+                events.Add("SCROLL CALIBRATION FAILED | TOP TEAM LAYOUT NOT RESTORED");
+                return null;
+            }
             events.Add("SCROLLBAR RESTORED TOP; WHEEL CALIBRATION STORED");
             return new TeamSwapScrollCalibrationResult(
                 calibration,
@@ -136,9 +166,11 @@ internal sealed class TeamSwapScrollCalibrator(
                     await ResetTopAsync(
                         initialLayout.ScrollAnchor.Bounds.Center,
                         CancellationToken.None);
+                    events.Add("SCROLL CALIBRATION CLEANUP | RESTORED TOP AFTER FAILURE");
                 }
                 catch (InvalidOperationException)
                 {
+                    events.Add("SCROLL CALIBRATION CLEANUP | TOP RESTORE BLOCKED BY CLIENT CHANGE");
                     // Input cleanup is complete; a closed or resized client owns the failure.
                 }
             }
@@ -225,4 +257,10 @@ internal sealed class TeamSwapScrollCalibrator(
 
     private static TeamSwapLayout? CreateLayout(DebugOcrSnapshot snapshot) =>
         TeamSwapLayout.TryCreate(snapshot.Regions, DebugWorkflowCatalog.ClientSize);
+
+    private static string FormatCandidates(IReadOnlyList<PixelRect> candidates) =>
+        candidates.Count == 0
+            ? "NONE"
+            : string.Join(",", candidates.Select(bounds =>
+                $"[{bounds.X},{bounds.Y},{bounds.Width},{bounds.Height}]"));
 }

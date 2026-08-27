@@ -7,11 +7,15 @@ public sealed record TeamScrollbarEndpoints(PixelRect TopBounds, PixelRect Botto
 
 public sealed record TeamScrollbarObservation(PixelRect Bounds, double NormalizedPosition);
 
+public sealed record TeamScrollbarCalibrationDiagnostics(
+    IReadOnlyList<PixelRect> TopCandidates,
+    IReadOnlyList<PixelRect> BottomCandidates);
+
 public static class TeamScrollbarDetector
 {
     private const int MinimumBrightness = 112;
-    private const int MaximumBrightness = 168;
-    private const int MaximumChannelSpread = 10;
+    private const int MaximumBrightness = 208;
+    private const int MaximumChannelSpread = 18;
     private const int MinimumWidth = 3;
     private const int MaximumWidth = 20;
 
@@ -28,11 +32,26 @@ public static class TeamScrollbarDetector
     public static TeamScrollbarEndpoints? TryCalibrate(
         IReadOnlyList<RgbImage> topFrames,
         IReadOnlyList<RgbImage> bottomFrames,
-        PixelRect searchRegion)
+        PixelRect searchRegion) => TryCalibrate(
+            topFrames,
+            bottomFrames,
+            searchRegion,
+            out _);
+
+    public static TeamScrollbarEndpoints? TryCalibrate(
+        IReadOnlyList<RgbImage> topFrames,
+        IReadOnlyList<RgbImage> bottomFrames,
+        PixelRect searchRegion,
+        out TeamScrollbarCalibrationDiagnostics diagnostics)
     {
-        if (topFrames.Count < 2 || bottomFrames.Count < 2) return null;
+        if (topFrames.Count < 2 || bottomFrames.Count < 2)
+        {
+            diagnostics = new TeamScrollbarCalibrationDiagnostics([], []);
+            return null;
+        }
         PixelRect[] top = StableCandidates(topFrames, searchRegion).ToArray();
         PixelRect[] bottom = StableCandidates(bottomFrames, searchRegion).ToArray();
+        diagnostics = new TeamScrollbarCalibrationDiagnostics(top, bottom);
 
         return top
             .SelectMany(topBounds => bottom.Select(bottomBounds => new

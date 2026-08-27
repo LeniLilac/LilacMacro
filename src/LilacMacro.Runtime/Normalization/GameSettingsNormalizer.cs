@@ -141,7 +141,16 @@ internal sealed class GameSettingsNormalizer(
                 return panel;
 
             PixelPoint? gear = panel.Visible ? null : UiScalePanelDetector.DetectSettingsGear(image);
-            if (gear is PixelPoint point && actions < 4)
+            deepDebug.RecordEvent("game_settings", "open_panel_observed", new
+            {
+                Observation = observation + 1,
+                panel.Visible,
+                panel.Settled,
+                panel.RenderedScale,
+                Gear = gear,
+                CompletedAttempts = actions,
+            });
+            if (gear is PixelPoint point && SettingsOpenAttemptPolicy.ShouldAttempt(observation, actions))
             {
                 await workspace.ClickRobloxAsync(
                     DebugWorkflowCatalog.ClientSize, point, cancellationToken).ConfigureAwait(false);

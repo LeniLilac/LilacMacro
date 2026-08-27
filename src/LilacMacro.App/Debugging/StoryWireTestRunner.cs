@@ -360,28 +360,15 @@ internal sealed class StoryWireTestRunner(
                 progress,
                 cancellationToken)) return false;
 
-        return options.NavigationKeys.UnitInventory is int unitInventoryKey
-            ? await TransitionAsync(
-                StoryWireStage.LoadTeam,
-                DebugWorkflowCatalog.TeamSwap,
-                returnState,
-                token => PressNavigationKeyAsync(
-                    StoryWireStage.LoadTeam,
-                    unitInventoryKey,
-                    options.PlacementKeys.ReservedVirtualKey,
-                    progress,
-                    token),
-                options,
-                progress,
-                cancellationToken)
-            : await TransitionAsync(
-                StoryWireStage.LoadTeam,
-                DebugWorkflowCatalog.TeamSwap,
-                returnState,
-                token => _lobby.CloseUnitsViaButtonAsync(options.Device, token),
-                options,
-                progress,
-                cancellationToken);
+        return await OpenNavigationAsync(
+            StoryWireStage.LoadTeam,
+            options.NavigationKeys.UnitInventory,
+            token => _lobby.CloseUnitsViaButtonAsync(options.Device, token),
+            DebugWorkflowCatalog.TeamSwap,
+            returnState,
+            options,
+            progress,
+            cancellationToken);
     }
 
     private async Task<bool> OpenNavigationAsync(

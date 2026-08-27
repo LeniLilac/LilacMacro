@@ -175,7 +175,17 @@ internal sealed class UiScaleNormalizer(
             }
 
             PixelPoint? gear = panel.Visible ? null : UiScalePanelDetector.DetectSettingsGear(image);
-            if (gear is PixelPoint point && actions < 4)
+            Record("open_panel_observed", new
+            {
+                Observation = observation + 1,
+                panel.Visible,
+                panel.Settled,
+                panel.RenderedScale,
+                Stable = stable,
+                Gear = gear,
+                CompletedAttempts = actions,
+            });
+            if (gear is PixelPoint point && SettingsOpenAttemptPolicy.ShouldAttempt(observation, actions))
             {
                 Record("gear_verified", new { Point = point, Attempt = actions + 1 });
                 await workspace.ClickRobloxAsync(

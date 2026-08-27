@@ -274,6 +274,44 @@ public sealed class TeamSwapLayoutTests
     }
 
     [Fact]
+    public void ScrollbarDetector_AcceptsCurrentLightNeutralThumb()
+    {
+        PixelRect search = new(1000, 80, 60, 500);
+        RgbImage top = CreateScrollbarImage(search.Width, search.Height, 35, thumbBrightness: 190);
+        RgbImage bottom = CreateScrollbarImage(search.Width, search.Height, 315, thumbBrightness: 190);
+
+        TeamScrollbarEndpoints? endpoints = TeamScrollbarDetector.TryCalibrate(
+            [top, Clone(top)],
+            [bottom, Clone(bottom)],
+            search,
+            out TeamScrollbarCalibrationDiagnostics diagnostics);
+
+        Assert.NotNull(endpoints);
+        Assert.Contains(new PixelRect(1028, 115, 6, 120), diagnostics.TopCandidates);
+        Assert.Contains(new PixelRect(1028, 395, 6, 120), diagnostics.BottomCandidates);
+    }
+
+    [Fact]
+    public void ScrollbarDetector_RejectsColoredTallDistractor()
+    {
+        PixelRect search = new(1000, 80, 60, 500);
+        RgbImage top = CreateScrollbarImage(
+            search.Width, search.Height, 35, thumbBrightness: 190, coloredDistractor: true);
+        RgbImage bottom = CreateScrollbarImage(
+            search.Width, search.Height, 315, thumbBrightness: 190, coloredDistractor: true);
+
+        TeamScrollbarEndpoints? endpoints = TeamScrollbarDetector.TryCalibrate(
+            [top, Clone(top)],
+            [bottom, Clone(bottom)],
+            search,
+            out TeamScrollbarCalibrationDiagnostics diagnostics);
+
+        Assert.NotNull(endpoints);
+        Assert.DoesNotContain(diagnostics.TopCandidates, candidate => candidate.X - search.X == 15);
+        Assert.DoesNotContain(diagnostics.BottomCandidates, candidate => candidate.X - search.X == 15);
+    }
+
+    [Fact]
     public void ScrollbarDetector_RejectsStaticOrUnstableGrayComponents()
     {
         PixelRect search = new(1000, 80, 60, 500);
@@ -427,11 +465,20 @@ public sealed class TeamSwapLayoutTests
         return TeamSwapLayout.TryCreate(regions, ClientSize)!;
     }
 
-    private static RgbImage CreateScrollbarImage(int width, int height, int thumbY)
+    private static RgbImage CreateScrollbarImage(
+        int width,
+        int height,
+        int thumbY,
+        byte thumbBrightness = 128,
+        bool coloredDistractor = false)
     {
         byte[] pixels = Enumerable.Repeat((byte)30, width * height * 3).ToArray();
         Fill(pixels, width, 6, 210, 5, 80, 130);
-        Fill(pixels, width, 28, thumbY, 6, 120, 128);
+        Fill(pixels, width, 28, thumbY, 6, 120, thumbBrightness);
+        if (coloredDistractor)
+        {
+            Fill(pixels, width, 15, thumbY, 6, 120, 200, 150, 150);
+        }
         return new RgbImage(width, height, pixels, takeOwnership: true);
     }
 
@@ -443,15 +490,27 @@ public sealed class TeamSwapLayoutTests
         int width,
         int height,
         byte value)
+        => Fill(pixels, imageWidth, x, y, width, height, value, value, value);
+
+    private static void Fill(
+        byte[] pixels,
+        int imageWidth,
+        int x,
+        int y,
+        int width,
+        int height,
+        byte red,
+        byte green,
+        byte blue)
     {
         for (int row = y; row < y + height; row++)
         {
             for (int column = x; column < x + width; column++)
             {
                 int index = (row * imageWidth + column) * 3;
-                pixels[index] = value;
-                pixels[index + 1] = value;
-                pixels[index + 2] = value;
+                pixels[index] = red;
+                pixels[index + 1] = green;
+                pixels[index + 2] = blue;
             }
         }
     }
