@@ -19,7 +19,17 @@ internal sealed class ChallengePlacementResolver(PlacementSetupStore store)
         foreach (string mapId in MapIds)
         {
             PlacementMapDefinition map = PlacementMapCatalog.Definitions.First(candidate => candidate.Id == mapId);
-            PlacementSetupDocument document = await store.LoadAsync(mapId, cancellationToken);
+            PlacementSetupDocument document;
+            try
+            {
+                document = await store.LoadAsync(mapId, cancellationToken);
+            }
+            catch (FileNotFoundException error)
+            {
+                throw new InvalidDataException(
+                    $"Configure {map.DisplayName} / Challenge in Setup. Challenge requires a placement setup for every possible random map.",
+                    error);
+            }
             PlacementRouteDefinition definition = PlacementRouteCatalog.For(map)
                 .FirstOrDefault(candidate => candidate.Id == "challenge")
                 ?? throw new InvalidDataException($"{map.DisplayName} has no Challenge route.");

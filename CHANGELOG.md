@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.175 — Public beta
+
+- Made Plan preflight identify the exact missing Challenge map/route setup and stop before OCR preload, Discord run-start delivery, or Roblox input.
+- Kept expected Plan authoring omissions local as `preflight_blocked` instead of misclassifying and automatically uploading them as macro runtime errors; unexpected infrastructure failures remain reportable.
+
 ## 1.0.166 — Public beta
 
 - Reconciled restored Forever-loop progress before every scheduler selection so lowering a completed child target cannot strand the macro waiting in Lobby instead of starting the next loop iteration.

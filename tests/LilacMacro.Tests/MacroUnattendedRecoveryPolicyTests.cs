@@ -197,7 +197,7 @@ public sealed class MacroUnattendedRecoveryPolicyTests
 
         Assert.False(MacroPlanPreflight.HasTasks(plan));
 
-        await Assert.ThrowsAsync<InvalidDataException>(() => MacroPlanPreflight.ValidateAsync(
+        await Assert.ThrowsAsync<MacroPlanPreflightException>(() => MacroPlanPreflight.ValidateAsync(
             plan,
             (_, _) => { calls++; return Task.CompletedTask; },
             CancellationToken.None));
@@ -226,12 +226,72 @@ public sealed class MacroUnattendedRecoveryPolicyTests
         PlanPrototype plan = new("unsupported", [unsupported]);
         int calls = 0;
 
-        await Assert.ThrowsAsync<InvalidDataException>(() => MacroPlanPreflight.ValidateAsync(
-            plan,
-            (_, _) => { calls++; return Task.CompletedTask; },
-            CancellationToken.None));
+        MacroPlanPreflightException error = await Assert.ThrowsAsync<MacroPlanPreflightException>(
+            () => MacroPlanPreflight.ValidateAsync(
+                plan,
+                (_, _) => { calls++; return Task.CompletedTask; },
+                CancellationToken.None));
 
         Assert.Equal(0, calls);
+        Assert.Contains("Event", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PreflightLabelsExpectedTaskConfigurationFailures()
+    {
+        PlanTaskPrototype task = new()
+        {
+            Mode = PlanTaskMode.Story,
+            Route = "Flower Forest · Act 1",
+        };
+        PlanPrototype plan = new("missing setup", [task]);
+
+        MacroPlanPreflightException error = await Assert.ThrowsAsync<MacroPlanPreflightException>(
+            () => MacroPlanPreflight.ValidateAsync(
+                plan,
+                (_, _) => throw new FileNotFoundException("Placement setup was not found."),
+                CancellationToken.None));
+
+        Assert.Contains(task.Name, error.Message, StringComparison.Ordinal);
+        Assert.Contains("Placement setup was not found", error.Message, StringComparison.Ordinal);
+        Assert.IsType<FileNotFoundException>(error.InnerException);
+    }
+
+    [Fact]
+    public async Task PreflightDoesNotRelabelUnexpectedInfrastructureFailures()
+    {
+        PlanTaskPrototype task = new() { Mode = PlanTaskMode.Story };
+        PlanPrototype plan = new("unexpected", [task]);
+        IOException expected = new("Storage read failed unexpectedly.");
+
+        IOException error = await Assert.ThrowsAsync<IOException>(
+            () => MacroPlanPreflight.ValidateAsync(
+                plan,
+                (_, _) => throw expected,
+                CancellationToken.None));
+
+        Assert.Same(expected, error);
+    }
+
+    [Fact]
+    public async Task ChallengePreflightNamesMissingMapAndRoute()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-challenge-preflight-{Guid.NewGuid():N}");
+        try
+        {
+            ChallengePlacementResolver resolver = new(new LilacMacro.Core.Placements.PlacementSetupStore(root));
+
+            InvalidDataException error = await Assert.ThrowsAsync<InvalidDataException>(
+                () => resolver.ResolveCommonTeamAsync(CancellationToken.None));
+
+            Assert.Contains("School Grounds / Challenge", error.Message, StringComparison.Ordinal);
+            Assert.Contains("every possible random map", error.Message, StringComparison.Ordinal);
+            Assert.IsType<FileNotFoundException>(error.InnerException);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

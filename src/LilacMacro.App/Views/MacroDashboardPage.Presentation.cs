@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using LilacMacro.App.Notifications;
 using LilacMacro.App.Runtime;
+using LilacMacro.Core.Automation;
 
 namespace LilacMacro.App.Views;
 
@@ -65,6 +66,38 @@ public partial class MacroDashboardPage
         if (MacroPlanPreflight.HasTasks(plan)) return true;
         AppToastService.ShowError("PLAN HAS NO TASKS", "Add at least one task before starting the Macro.");
         return false;
+    }
+
+    private async Task<bool> ValidatePlanForStartAsync(
+        PlanPrototype plan,
+        string device,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await MacroPlanPreflight.ValidateAsync(
+                plan,
+                async (task, token) =>
+                {
+                    if (task.Mode == PlanTaskMode.Utilities)
+                    {
+                        MacroRuntimeKeySnapshot keys = _ownerState.KeyBindings.Snapshot();
+                        if (UtilityTaskPolicy.RequiresAreasMenu(task.Route) && keys.AreasMenu is null)
+                            throw new InvalidDataException("Areas menu must have a key for shop and refuel tasks.");
+                        return;
+                    }
+                    _ = await _taskOptions.CreateAsync(task, device, token);
+                },
+                cancellationToken);
+            return true;
+        }
+        catch (MacroPlanPreflightException error)
+        {
+            AppToastService.ShowError("PLAN SETUP REQUIRED", error.Message);
+            AppendLog($"PLAN PREFLIGHT BLOCKED | {error.Message}");
+            _deepDebug.RecordEvent("macro", "preflight_blocked", new { error.Message });
+            return false;
+        }
     }
 
     private void PlanCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)

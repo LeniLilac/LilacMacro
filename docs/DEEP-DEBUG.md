@@ -18,6 +18,8 @@
 
 Automatic error uploads are a separate privacy choice and default on for a newly presented notice. They use only a completed Deep Debug archive containing a classified error. No light-report fallback exists: when Deep Debug is off or paused for low disk space, automatic error uploads are also paused. Successfully sent and failed archives remain in the shared Deep Debug folder until the configured storage budget removes the oldest archives. There is no manual diagnostic-upload surface.
 
+Expected Plan authoring omissions are recorded as `macro/preflight_blocked` and shown locally with the exact task and corrective setup action. They are not classified errors and do not trigger automatic upload. Unexpected preflight storage, permission, or infrastructure faults remain terminal runtime errors and keep the normal classified-error path.
+
 ## Classified evidence
 
 The retained-frame policy recognizes:

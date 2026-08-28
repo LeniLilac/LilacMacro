@@ -15,28 +15,46 @@ internal static class MacroPlanPreflight
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(validateTask);
         PlanTaskPrototype[] tasks = MacroPriorityPolicy.Flatten(plan).ToArray();
-        if (tasks.Length == 0) throw new InvalidDataException("The selected plan has no tasks.");
+        if (tasks.Length == 0) throw new MacroPlanPreflightException("The selected plan has no tasks.");
         foreach (PlanTaskPrototype task in tasks)
         {
-            if (!MacroPriorityPolicy.Supported(task))
+            try
             {
-                throw new InvalidDataException(
-                    $"{task.ModeLabel} runtime is not implemented; remove it before starting the plan.");
+                if (!MacroPriorityPolicy.Supported(task))
+                {
+                    throw new InvalidDataException(
+                        $"{task.ModeLabel} runtime is not implemented; remove it before starting the plan.");
+                }
+                if (task.Mode == PlanTaskMode.Utilities)
+                {
+                    LilacMacro.Core.Automation.UtilityTaskPolicy.Validate(task.Route, task.ShopItemIds);
+                }
+                if (task.Mode == PlanTaskMode.Expedition)
+                {
+                    _ = LilacMacro.Core.Automation.ExpeditionRewardPolicy.ParseResource(task.RewardTarget);
+                }
+                if (task.Mode == PlanTaskMode.Event)
+                {
+                    (string map, LilacMacro.Core.Ocr.StoryAct act) = MacroTaskOptionsFactory.ParseRoute(task.Route);
+                    _ = LilacMacro.Core.Automation.EventRunPolicy.MapId(map, act);
+                }
+                await validateTask(task, cancellationToken);
             }
-            if (task.Mode == PlanTaskMode.Utilities)
+            catch (Exception error) when (IsConfigurationFailure(error))
             {
-                LilacMacro.Core.Automation.UtilityTaskPolicy.Validate(task.Route, task.ShopItemIds);
+                throw new MacroPlanPreflightException($"{task.Name}: {error.Message}", error);
             }
-            if (task.Mode == PlanTaskMode.Expedition)
-            {
-                _ = LilacMacro.Core.Automation.ExpeditionRewardPolicy.ParseResource(task.RewardTarget);
-            }
-            if (task.Mode == PlanTaskMode.Event)
-            {
-                (string map, LilacMacro.Core.Ocr.StoryAct act) = MacroTaskOptionsFactory.ParseRoute(task.Route);
-                _ = LilacMacro.Core.Automation.EventRunPolicy.MapId(map, act);
-            }
-            await validateTask(task, cancellationToken);
         }
+    }
+
+    private static bool IsConfigurationFailure(Exception error) =>
+        error is InvalidDataException or FileNotFoundException or ArgumentException;
+}
+
+internal sealed class MacroPlanPreflightException : Exception
+{
+    public MacroPlanPreflightException(string message, Exception? innerException = null)
+        : base(message, innerException)
+    {
     }
 }

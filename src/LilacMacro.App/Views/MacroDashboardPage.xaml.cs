@@ -200,6 +200,7 @@ public partial class MacroDashboardPage : UserControl
             StatsChart.SetPoints(_runStats);
             RefreshRunState(true);
             string device = SelectOcrDevice();
+            if (!await ValidatePlanForStartAsync(plan, device, _runCancellation.Token)) return;
             if (!_initialized)
             {
                 await _workspace.InitializeAsync();
@@ -209,20 +210,6 @@ public partial class MacroDashboardPage : UserControl
             ocrRunStarted = true;
             AppendLog($"OCR RUN READY | {device.ToUpperInvariant()}");
             await BeginDiscordRunAsync(plan);
-            await MacroPlanPreflight.ValidateAsync(
-                plan,
-                async (task, token) =>
-                {
-                    if (task.Mode == PlanTaskMode.Utilities)
-                    {
-                        MacroRuntimeKeySnapshot keys = _ownerState.KeyBindings.Snapshot();
-                        if (UtilityTaskPolicy.RequiresAreasMenu(task.Route) && keys.AreasMenu is null)
-                            throw new InvalidDataException("Areas menu must have a key for shop and refuel tasks.");
-                        return;
-                    }
-                    _ = await _taskOptions.CreateAsync(task, device, token);
-                },
-                _runCancellation.Token);
             bool startupSettingsNormalized = false;
             MacroRunTeamState teamState = new();
             HashSet<string> redeemedCodes = new(StringComparer.OrdinalIgnoreCase);
