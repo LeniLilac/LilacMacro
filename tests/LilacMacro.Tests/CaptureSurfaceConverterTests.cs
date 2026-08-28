@@ -139,7 +139,7 @@ public sealed class CaptureSurfaceConverterTests
             128, 128, 128,
         ], takeOwnership: true);
 
-        CaptureFrameDiagnostics diagnostics = RobloxCaptureService.AnalyzeFrame(image);
+        CaptureFrameDiagnostics diagnostics = CaptureFrameAnalyzer.Analyze(image);
 
         Assert.Equal(25, diagnostics.NearWhitePixelPercent);
         Assert.Equal(50, diagnostics.ClippedPixelPercent);

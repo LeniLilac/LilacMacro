@@ -278,8 +278,10 @@ internal sealed class PlacementPlaybackService(
             if (!selected || layout is null)
             {
                 status?.Invoke(
-                    $"SKIPPED PLACE STEP; CONFIGURABLE SELECTION PROOF FAILED AFTER " +
-                    $"{PlacementSelectionRetryPolicy.MaximumAttempts} ATTEMPTS UNIT {step.UnitSlot}");
+                    $"SKIPPED PLACE STEP; NO CONFIGURABLE PANEL AFTER " +
+                    $"{PlacementSelectionRetryPolicy.MaximumAttempts} ATTEMPTS UNIT {step.UnitSlot} " +
+                    $"AT [{point.Point.X},{point.Point.Y}]; GAME PLACEMENT REJECTION " +
+                    $"(INCLUDING COST OR PLACEMENT LIMIT) VERSUS PANEL-PROOF FAILURE IS UNRESOLVED");
                 continue;
             }
 

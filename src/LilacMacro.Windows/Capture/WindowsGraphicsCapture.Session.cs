@@ -29,6 +29,7 @@ internal sealed partial class WindowsGraphicsCapture
         private readonly Direct3D11CaptureFramePool _framePool;
         private readonly GraphicsCaptureSession _captureSession;
         private readonly CaptureSurfaceFormat _surfaceFormat;
+        private readonly CaptureColorContext? _fixedColorContext;
         private ScreenRegion _clientCrop;
         private int _surfaceWidth;
         private int _surfaceHeight;
@@ -54,7 +55,8 @@ internal sealed partial class WindowsGraphicsCapture
             ScreenRegion clientCrop,
             int surfaceWidth,
             int surfaceHeight,
-            CaptureColorContext colorContext)
+            CaptureColorContext colorContext,
+            CaptureColorContext? fixedColorContext)
         {
             _window = window;
             _processId = processId;
@@ -72,6 +74,7 @@ internal sealed partial class WindowsGraphicsCapture
             _surfaceWidth = surfaceWidth;
             _surfaceHeight = surfaceHeight;
             _colorContext = colorContext;
+            _fixedColorContext = fixedColorContext;
             _colorContextRefreshTicks = Environment.TickCount64;
             _framePool.FrameArrived += FrameArrived;
             _captureSession.StartCapture();
@@ -83,7 +86,8 @@ internal sealed partial class WindowsGraphicsCapture
             ClientBounds client,
             WindowBounds windowBounds,
             WindowBounds extendedBounds,
-            CaptureSurfaceFormat surfaceFormat)
+            CaptureSurfaceFormat surfaceFormat,
+            CaptureColorContext? fixedColorContext = null)
         {
             if (!GraphicsCaptureSession.IsSupported())
             {
@@ -118,7 +122,8 @@ internal sealed partial class WindowsGraphicsCapture
                 crop,
                 size.Width,
                 size.Height,
-                DisplayColorContextProvider.GetForWindow(window));
+                fixedColorContext ?? DisplayColorContextProvider.GetForWindow(window),
+                fixedColorContext);
         }
 
         public bool Matches(
@@ -338,6 +343,7 @@ internal sealed partial class WindowsGraphicsCapture
 
         private void RefreshColorContextIfNeeded()
         {
+            if (_fixedColorContext is not null) return;
             long now = Environment.TickCount64;
             if (now - _colorContextRefreshTicks < 1000) return;
             _colorContext = DisplayColorContextProvider.GetForWindow(_window);

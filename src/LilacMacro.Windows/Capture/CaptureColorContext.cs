@@ -72,4 +72,9 @@ public sealed record CaptureColorDiagnostics(
     float DisplayMaxLuminanceNits,
     float ScRgbReferenceScale,
     string Detection,
-    bool UsedSdrWhiteFallback);
+    bool UsedSdrWhiteFallback,
+    string ExposureProbeOutcome = "not-needed",
+    double? ExposureSourceClippedPixelPercent = null,
+    double? ExposureCandidateClippedPixelPercent = null,
+    double? ExposureStructuralCorrelation = null,
+    string? ExposureProbeFailureType = null);

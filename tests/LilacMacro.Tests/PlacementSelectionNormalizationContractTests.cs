@@ -46,6 +46,16 @@ public sealed class PlacementSelectionNormalizationContractTests
         Assert.True(evidenceGuard < verifyHidden);
     }
 
+    [Fact]
+    public void ExhaustedPlacementProofNamesBothUnresolvedFailureClasses()
+    {
+        string source = ReadSource("PlacementPlaybackService.cs");
+
+        Assert.Contains("GAME PLACEMENT REJECTION", source, StringComparison.Ordinal);
+        Assert.Contains("PANEL-PROOF FAILURE IS UNRESOLVED", source, StringComparison.Ordinal);
+        Assert.Contains("INCLUDING COST OR PLACEMENT LIMIT", source, StringComparison.Ordinal);
+    }
+
     private static string ReadSource(string fileName) => File.ReadAllText(Path.Combine(
         RepositoryRoot(),
         "src",
