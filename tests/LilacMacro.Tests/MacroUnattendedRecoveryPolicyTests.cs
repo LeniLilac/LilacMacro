@@ -46,6 +46,43 @@ public sealed class MacroUnattendedRecoveryPolicyTests
     }
 
     [Fact]
+    public async Task RecoveryDoesNotRetryMissingRobloxSettingsPrerequisite()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"lilac-recovery-settings-missing-{Guid.NewGuid():N}");
+        int attempts = 0;
+        int recoveries = 0;
+        try
+        {
+            string settingsPath = Path.Combine(root, "GlobalBasicSettings_13.xml");
+            RobloxSettingsMissingException expected = await Assert.ThrowsAsync<RobloxSettingsMissingException>(
+                () => new RobloxGlobalSettingsStore(settingsPath).NormalizeAsync());
+            MacroUnattendedRecoveryRunner runner = new(
+                new Dictionary<PlanTaskPrototype, DateTimeOffset>(),
+                () => null,
+                () => { },
+                _ => { },
+                _ => { },
+                new DeepDebugSessionService(root),
+                _ => Task.CompletedTask,
+                (_, _) => { recoveries++; return Task.CompletedTask; });
+
+            RobloxSettingsMissingException actual = await Assert.ThrowsAsync<RobloxSettingsMissingException>(
+                () => runner.RunAsync(
+                    new PlanPrototype("settings", []),
+                    (_, _) => { attempts++; throw expected; },
+                    CancellationToken.None));
+
+            Assert.Same(expected, actual);
+            Assert.Equal(1, attempts);
+            Assert.Equal(0, recoveries);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task RecoveryPreservesOwningSynchronizationContextAcrossSecondAttempt()
     {
         string root = Path.Combine(Path.GetTempPath(), $"lilac-recovery-context-{Guid.NewGuid():N}");

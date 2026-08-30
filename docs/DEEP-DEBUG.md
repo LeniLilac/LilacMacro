@@ -48,7 +48,7 @@ Each completed operation produces `deep-debug-<operation>-<time>-<id>.zip` conta
 | `frames/` | Complete one-second samples below archive pressure; near the limit, the highest-value samples that fit |
 | `frames/index.json` | Per-frame format, encoding mode/quality, original and retained sizes, validation, and importance |
 | `visual-profiles/` | Bounded immutable profile revisions and locators consulted by the run |
-| `latest-crash-sanitized.txt` | Bounded tail of the latest crash log when available |
+| `latest-crash-sanitized.txt` | Bounded sanitized tail of a crash log written during this session; earlier resolved crashes are excluded |
 
 Events include window discovery and observed client size, resize results, capture ownership, OCR device/model/cache/timing, OCR and state evaluations, visual-profile scores and coordinates, requested Windows input, cancellation, exceptions, and terminal outcome. Failed input records its initial and final observable Roblox client size, process, elapsed time, bounded action data, and failure type. Main Macro dashboard lines are recorded as timestamped `macro/log` events even after the dashboard's newest-1,000-line display window rolls over.
 

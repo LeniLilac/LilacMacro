@@ -114,7 +114,8 @@ public sealed class RobloxGlobalSettingsTests
         Directory.CreateDirectory(root);
         try
         {
-            await Assert.ThrowsAsync<FileNotFoundException>(() => new RobloxGlobalSettingsStore(path).NormalizeAsync());
+            await Assert.ThrowsAsync<RobloxSettingsMissingException>(
+                () => new RobloxGlobalSettingsStore(path).NormalizeAsync());
             await File.WriteAllTextAsync(path, new string('x', (1024 * 1024) + 1));
             await Assert.ThrowsAsync<InvalidDataException>(() => new RobloxGlobalSettingsStore(path).NormalizeAsync());
         }

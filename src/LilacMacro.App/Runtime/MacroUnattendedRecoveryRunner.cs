@@ -67,7 +67,8 @@ internal sealed class MacroUnattendedRecoveryRunner(
             {
                 throw;
             }
-            catch (RobloxSettingsAccessException)
+            catch (Exception error) when (
+                error is RobloxSettingsAccessException or RobloxSettingsMissingException)
             {
                 throw;
             }

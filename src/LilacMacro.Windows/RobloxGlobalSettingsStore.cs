@@ -159,9 +159,19 @@ internal sealed class RobloxGlobalSettingsStore(string? settingsPath = null)
     {
         FileInfo file = new(path);
         if (!file.Exists)
-            throw new FileNotFoundException("Roblox settings are missing. Launch and close Roblox once, then start the macro again.", path);
+            throw new RobloxSettingsMissingException(path);
         if (file.Length is <= 0 or > MaximumSettingsBytes)
             throw new InvalidDataException("Roblox settings have an invalid size.");
+    }
+}
+
+public sealed class RobloxSettingsMissingException : FileNotFoundException
+{
+    internal RobloxSettingsMissingException(string path)
+        : base(
+            "Roblox settings are missing. Launch and close Roblox once, then start the macro again.",
+            path)
+    {
     }
 }
 

@@ -188,6 +188,43 @@ public sealed class UnitPanelLayoutTests
         Assert.InRange(match.SellRedFraction, 0.18, 0.19);
     }
 
+    [Fact]
+    public void SelectedPanelAcceptsFieldObservedSellRedBoundary()
+    {
+        RgbImage priorityReference = PanelControl(1000, 310, 0, 440, 50);
+        RgbImage sellReference = PanelControl(1000, 140, 180, 510, 40);
+        RgbImage priorityPanel = PanelControl(1000, 298, 0, 500, 50);
+        RgbImage sellPanel = PanelControl(1000, 139, 149, 500, 40);
+
+        UnitPanelImageMatch match = UnitPanelColorClassifier.MatchSelectedPanel(
+            priorityReference,
+            sellReference,
+            priorityPanel,
+            sellPanel);
+
+        Assert.True(match.IsMatch);
+        Assert.Equal(0.298, match.PriorityBlueFraction, 3);
+        Assert.Equal(0.149, match.SellRedFraction, 3);
+        Assert.Equal(0.139, match.SellBlueFraction, 3);
+    }
+
+    [Fact]
+    public void SelectedPanelRejectsSellRedBelowBoundedFieldEvidence()
+    {
+        RgbImage reference = PanelControl(1000, 300, 180, 500, 20);
+        RgbImage priorityPanel = PanelControl(1000, 298, 0, 500, 50);
+        RgbImage sellPanel = PanelControl(1000, 139, 139, 500, 40);
+
+        UnitPanelImageMatch match = UnitPanelColorClassifier.MatchSelectedPanel(
+            reference,
+            reference,
+            priorityPanel,
+            sellPanel);
+
+        Assert.False(match.IsMatch);
+        Assert.Equal(0.139, match.SellRedFraction, 3);
+    }
+
     private static OcrTextRegion Region(string text, int x, int y, int width, int height) => new()
     {
         Text = text,

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.0.177 — Public beta
+
+- Stopped unattended startup recovery when Roblox has not created its settings file, surfacing the existing launch-and-close prerequisite once instead of repeatedly restarting Roblox.
+- Accepted the field-observed scaled Sell-control boundary while preserving independent blue Priority and red Sell panel ownership.
+- Excluded crash logs older than the current Deep Debug session so resolved historical crashes no longer contaminate later diagnostic archives.
+
 ## 1.0.176 — Public beta
 
 - Published the cold PaddleOCR import as model-loading before it begins, so first-run CPU OCR receives the intended two-minute cold-model deadline instead of timing out under the 30-second warm-request watchdog.

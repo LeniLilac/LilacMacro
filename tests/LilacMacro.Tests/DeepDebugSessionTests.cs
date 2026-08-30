@@ -494,6 +494,48 @@ public sealed class DeepDebugSessionTests : IDisposable
     }
 
     [Fact]
+    public async Task OrdinarySessionDoesNotIncludeCrashLogFromAnEarlierRun()
+    {
+        string logDirectory = Path.Combine(_root, "logs");
+        string crashPath = Path.Combine(logDirectory, "latest-crash.txt");
+        Directory.CreateDirectory(logDirectory);
+        await File.WriteAllTextAsync(crashPath, "stale crash");
+        File.SetLastWriteTimeUtc(crashPath, DateTime.UtcNow.AddMinutes(-5));
+        DeepDebugSessionService service = NewService();
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "ordinary",
+            new DeepDebugOperationContext("test"));
+
+        await scope!.CompleteAsync("success");
+
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
+        Assert.DoesNotContain(
+            archive.Entries,
+            entry => entry.FullName == "latest-crash-sanitized.txt");
+    }
+
+    [Fact]
+    public async Task SessionIncludesCrashLogWrittenAfterItStarts()
+    {
+        DeepDebugSessionService service = NewService();
+        DeepDebugScope? scope = await service.OpenSessionAsync(
+            "crash",
+            new DeepDebugOperationContext("test"));
+        string logDirectory = Path.Combine(_root, "logs");
+        Directory.CreateDirectory(logDirectory);
+        await File.WriteAllTextAsync(
+            Path.Combine(logDirectory, "latest-crash.txt"),
+            "current crash");
+
+        await scope!.CompleteAsync("unhandled-error");
+
+        using ZipArchive archive = ZipFile.OpenRead(service.LastArchivePath!);
+        Assert.Equal(
+            "current crash",
+            await ReadAsync(archive, "latest-crash-sanitized.txt"));
+    }
+
+    [Fact]
     public void Perceptual_hash_is_stable_for_same_pixels()
     {
         byte[] first = PatternPng(leftBright: true);

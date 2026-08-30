@@ -85,6 +85,8 @@ internal sealed class DeepDebugArchiveFinalizer(
         if (!File.Exists(source)) return;
         try
         {
+            FileInfo crashLog = new(source);
+            if (crashLog.LastWriteTimeUtc < session.StartedAtUtc.UtcDateTime) return;
             await using FileStream stream = new(
                 source,
                 FileMode.Open,

@@ -32,6 +32,8 @@ public static class UnitPanelColorClassifier
     public const double MinimumReferenceSimilarity = 0.85;
     public const double MinimumUpgradeFillFraction = 0.70;
     public const double MinimumMaxedReferenceSimilarity = 0.90;
+    public const double MinimumSelectedPriorityBlueFraction = 0.18;
+    public const double MinimumSelectedSellRedFraction = 0.14;
 
     public static UnitUpgradeObservation ClassifyUpgrade(RgbImage primary, RgbImage secondary)
     {
@@ -76,10 +78,11 @@ public static class UnitPanelColorClassifier
         double priorityRed = Fraction(priority, IsControlRed);
         double sellRed = Fraction(sell, IsControlRed);
         double sellBlue = Fraction(sell, IsControlBlue);
-        // The scaled Sell crop can overlap the adjacent blue Priority control by one or two
-        // rendered pixels. Field captures reached 0.145 blue while retaining independent red
-        // Sell and blue Priority ownership, so tolerate that bounded overlap.
-        bool matched = priorityBlue >= 0.18 && sellRed >= 0.15 &&
+        // Scaled field captures reached 0.149 red in the Sell crop and 0.145 blue overlap from
+        // the adjacent Priority control. The independent blue Priority plus red Sell regions
+        // still own visibility, so preserve both bounded UI-scale variations.
+        bool matched = priorityBlue >= MinimumSelectedPriorityBlueFraction &&
+                       sellRed >= MinimumSelectedSellRedFraction &&
                        priorityRed <= 0.12 && sellBlue <= 0.18;
         return new UnitPanelImageMatch(
             matched,
