@@ -15,16 +15,22 @@ internal static partial class DeepDebugRedactor
     [GeneratedRegex("(?<prefix>[a-z]:[\\\\/]+(?:users|documents and settings)[\\\\/]+)(?<user>[^\\\\/\\s\\\"'<>]+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex WindowsProfilePathPattern();
 
-    public static string Redact(string text)
+    public static string Redact(string text) => Redact(text, Environment.UserName);
+
+    internal static string Redact(string text, string? windowsUser)
     {
         string redacted = DiscordWebhookPattern().Replace(text, "[REDACTED DISCORD WEBHOOK]");
         redacted = RobloxPrivateServerPattern().Replace(redacted, "[REDACTED ROBLOX PRIVATE SERVER LINK]");
         redacted = WindowsProfilePathPattern().Replace(
             redacted,
             match => $"{match.Groups["prefix"].Value}{RedactedUser}");
-        string user = Environment.UserName;
-        return string.IsNullOrWhiteSpace(user)
+        return !IsSafeBareUserToken(windowsUser)
             ? redacted
-            : redacted.Replace(user, RedactedUser, StringComparison.OrdinalIgnoreCase);
+            : redacted.Replace(windowsUser!, RedactedUser, StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool IsSafeBareUserToken(string? value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Length >= 3 &&
+        value.Any(char.IsLetter);
 }

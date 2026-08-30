@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.176 — Public beta
+
+- Published the cold PaddleOCR import as model-loading before it begins, so first-run CPU OCR receives the intended two-minute cold-model deadline instead of timing out under the 30-second warm-request watchdog.
+- Kept Deep Debug JSON structurally valid for short or numeric Windows account names while continuing to redact those names from Windows profile paths.
+
 ## 1.0.175 — Public beta
 
 - Made Plan preflight identify the exact missing Challenge map/route setup and stop before OCR preload, Discord run-start delivery, or Roblox input.

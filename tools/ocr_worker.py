@@ -69,8 +69,6 @@ def run_ocr(
     scale: int = 1,
     progress: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
-    from paddleocr import __version__ as paddleocr_version
-
     if model_name not in MODEL_PAIRS:
         raise ValueError(f"Unsupported OCR model: {model_name}")
     if device not in SUPPORTED_DEVICES:
@@ -86,9 +84,13 @@ def run_ocr(
     if not cached:
         notify(progress, "model-loading")
         load_started = perf_counter()
+        from paddleocr import __version__ as paddleocr_version
+
         cache[cache_key] = create_pipeline(model_name, device)
         load_ms = round((perf_counter() - load_started) * 1000)
         notify(progress, "model-ready")
+    else:
+        from paddleocr import __version__ as paddleocr_version
 
     notify(progress, "inference-running")
     inference_started = perf_counter()

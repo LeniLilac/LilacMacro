@@ -176,6 +176,10 @@ public sealed class OcrSetupTests
         string worker = File.ReadAllText(Path.Combine(RepositoryRoot(), "tools", "ocr_worker.py"));
 
         Assert.Contains("write_status(preload_status, \"model-loading\")", worker);
+        Assert.True(
+            worker.IndexOf("notify(progress, \"model-loading\")", StringComparison.Ordinal) <
+            worker.IndexOf("from paddleocr import __version__", StringComparison.Ordinal),
+            "The cold PaddleOCR import must occur after the worker publishes model-loading.");
         Assert.Contains("notify(progress, \"crop-ready\")", worker);
         Assert.Contains("notify(progress, \"inference-running\")", worker);
         Assert.Contains("write_status(status_path, \"response-writing\")", worker);
